@@ -9,6 +9,8 @@ import { staMax, stageCost } from '../src/game/account';
 import { claimOffline, computeOffline } from '../src/game/idle';
 import { bulk, summon } from '../src/game/gear';
 import { claimMiles, finishRun, towerP } from '../src/game/content';
+import { attend, claimAll } from '../src/game/missions';
+import { guildAttend, joinGuild } from '../src/game/social';
 import { awaken } from '../src/game/growth';
 import { levelCap } from '../src/game/heroes';
 import { buyItem } from '../src/game/shop';
@@ -51,6 +53,12 @@ function simulate(kind: string, days: number): Row[] {
           for (let g = 0; g < 10 && s.heroes[id].lv >= levelCap(id, s) && s.heroes[id].awaken < 5; g++) if (awaken(id, s) === 'poor' && buyItem('awaken', s) !== 'ok') break;
         for (let b = 0; b < P.buys; b++) if (s.cur.stardust >= CONFIG.stamina.buyDust) ((s.cur.stardust -= CONFIG.stamina.buyDust), (s.sta.n += CONFIG.stamina.buyN));
       }
+      // 하루 마지막 접속: 출석(첫 접속) · 미션 받기 (D덩어리)
+      if (k === 0) {
+        attend(s, now);
+        if (!s.guild.id) joinGuild('ai1', s, now);
+        guildAttend(s, now);
+      }
       // 행동력 다 쓸 때까지: 다음 스테이지를 깰 수 있으면 깨고, 아니면 별 3개 최고 스테이지 반복
       for (let guard = 0; guard < 500; guard++) {
         const ns = nextStage(s);
@@ -66,6 +74,7 @@ function simulate(kind: string, days: number): Row[] {
         } else break;
       }
     }
+    for (const kind of ['d', 'w', 'r', 'ach'] as const) claimAll(kind, s, T0 + d * DAY + 20 * 3600e3);
     dustTotal += Math.max(0, s.cur.stardust - dust0) + (P.buys ? 0 : 0);
     const ns = nextStage(s);
     rows.push({ day: d + 1, acc: s.acc.lv, lv: Math.round(partyIds(s).reduce((a, id) => a + s.heroes[id].lv, 0) / partyIds(s).length), stage: `${ns.c}-${ns.s}`, dust: s.cur.stardust, dustTotal, gold: s.cur.gold, gear: Object.keys(s.items).length, heroes: Math.floor(s.cur.stardust / CONFIG.shop.hero.founder) });
@@ -74,14 +83,14 @@ function simulate(kind: string, days: number): Row[] {
 }
 const KINDS: [string, string][] = [['light', '라이트 (하루 2번 · 행동력 절반)'], ['normal', '보통 (하루 4번 · 행동력 다 씀)'], ['heavy', '헤비 (하루 8번 · 별가루로 행동력 3번 삼)']];
 function doc() {
-  const out = ['# 경제 시뮬 표 (자동 생성 · tests/economy.test.ts)', '', '가정: 추천 레벨이면 별 3개로 깸 · 장비 효과는 안 넣음(보수적) · 레벨 상한이면 각성(각성석은 금화) · 하루 무료 장비 소환 · 매일 희귀 이하 분해 · 방치 보상 매일 · C 콘텐츠: 탑(추천 레벨 층까지) · 결투장 5판(반 승) · 월드 보스 3판(보통·헤비, 상위 30%) · 이정표 · **아직 없는 별가루 출처(미션·업적·출석 = D덩어리)는 안 넣음** · 별가루는 영웅 사는 데 안 씀(쌓이는 양)', `영웅 값: 창립 멤버 별가루 ${CONFIG.shop.hero.founder} · 전설/새 영웅 ${CONFIG.shop.hero.legend}`, ''];
+  const out = ['# 경제 시뮬 표 (자동 생성 · tests/economy.test.ts)', '', '가정: 추천 레벨이면 별 3개로 깸 · 장비 효과는 안 넣음(보수적) · 레벨 상한이면 각성(각성석은 금화) · 하루 무료 장비 소환 · 매일 희귀 이하 분해 · 방치 보상 매일 · C 콘텐츠: 탑(추천 레벨 층까지) · 결투장 5판(반 승) · 월드 보스 3판(보통·헤비, 상위 30%) · 이정표 · 출석·이벤트 출석·미션·업적·길드 출석 · 별가루는 영웅 사는 데 안 씀(쌓이는 양)', `영웅 값: 창립 멤버 별가루 ${CONFIG.shop.hero.founder} · 전설/새 영웅 ${CONFIG.shop.hero.legend}`, ''];
   for (const [k, name] of KINDS) {
     const rows = simulate(k, 30);
     out.push(`## ${name}`, '', '| 날 | 원정대 Lv | 파티 평균 Lv | 다음 스테이지 | 별가루 보유 | 금화 보유 | 장비 수 | 살 수 있는 영웅(창립) |', '|---|---|---|---|---|---|---|---|');
     for (const r of rows.filter((x) => [1, 7, 30].includes(x.day))) out.push(`| ${r.day}일 | ${r.acc} | ${r.lv} | ${r.stage} | ${r.dust.toLocaleString('ko-KR')} | ${r.gold.toLocaleString('ko-KR')} | ${r.gear} | ${r.heroes}명 |`);
     out.push('');
   }
-  out.push('## 읽는 법', `- 별가루 출처(지금): 스토리 첫 클리어 ${CONFIG.reward.firstDust}(보스 ${CONFIG.reward.firstDustBoss}) · 별 3개 처음 ${CONFIG.reward.threeStarDust} · 판마다 ${CONFIG.reward.dust.chance * 100}% 확률로 ${CONFIG.reward.dust.n}×(난이도+1) · 탑 처음 깬 층 · 월드 보스 · 이정표 ${CONFIG.content.milestoneDust} · 레이드 승리 30`, '- D덩어리(미션·업적·출석)가 들어오면 더 늘어남 → 그때 다시 만들어 「일주일에 영웅 1~2명」에 맞춤', '- 헤비는 별가루로 행동력을 사서 보유량이 줄지만 진도가 가장 빠름', '');
+  out.push('## 읽는 법', `- 별가루 출처(지금): 스토리 첫 클리어 ${CONFIG.reward.firstDust}(보스 ${CONFIG.reward.firstDustBoss}) · 별 3개 처음 ${CONFIG.reward.threeStarDust} · 판마다 ${CONFIG.reward.dust.chance * 100}% 확률로 ${CONFIG.reward.dust.n}×(난이도+1) · 탑 처음 깬 층 · 월드 보스 · 이정표 ${CONFIG.content.milestoneDust} · 레이드 승리 30`, '- 목표: 보통 플레이어가 「일주일에 영웅 1~2명」 (이벤트 출석 14일 동안은 조금 더)', '- 헤비는 별가루로 행동력을 사서 보유량이 줄지만 진도가 가장 빠름', '');
   return out.join('\n');
 }
 describe('경제 시뮬', () => {

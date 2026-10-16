@@ -48,7 +48,7 @@ register('hero', {
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
               <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
               <span class="xs mute">${esc(h.concept)}</span></div></div>
-          <div class="tabs">${[['grow', '성장'], ['skill', '스킬'], ['trans', '초월'], ['ex', '전용 무기'], ['info', '능력·인연']].map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
+          <div class="tabs">${[['grow', '성장'], ['skill', '스킬'], ['trans', '초월'], ['ex', '전용 무기'], ['costume', '코스튬'], ['info', '능력·인연']].map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
           <div class="panel col grow scroll">${!own ? '<span class="mute">아직 없는 영웅이에요 (영웅 상점)</span>' : tabHtml(tab, id)}</div>
         </div>
         <div class="col eq">
@@ -146,6 +146,9 @@ function tabHtml(tab: string, id: string): string {
       <div class="row"><span class="grow xs dim">공용 조각 ${S.cur.exShard ?? 0}개 (상점)을 이 영웅에게</span><button class="btn mini" data-sh="10" ${(S.cur.exShard ?? 0) >= 10 ? '' : 'disabled'}>10개 넣기</button></div>
       <button class="btn hi" data-exup ${hs.ex < 5 && exShards(id) >= exNeed(id) ? '' : 'disabled'}>${hs.ex ? '별 올리기' : '만들기'}</button>
       <span class="xs mute">장착하면 외형이 바뀌는 자리 (그림은 3단계) · 고유 옵션·룬은 B 다음 단계에서</span>`;
+  if (tab === 'costume')
+    return `<div class="md">코스튬 칸 (STAR_PLAN_v2 §4 · 그림은 3단계)</div>
+      <div class="cards">${[['기본', true], ['별 3 해금 코스튬', hs.star >= 3], ['별 5 해금 코스튬', hs.star >= 5], ['상점 코스튬', false]].map(([n, open]) => `<div class="panel col shopc"><b class="sm">${n}</b><span class="xs ${open ? 'good' : 'mute'}">${open ? (n === '기본' ? '입는 중' : '해금 · 그림 준비 중') : n === '상점 코스튬' ? '상점 「코스튬」 (준비 중)' : '잠김'}</span></div>`).join('')}</div>`;
   const bonds = BONDS.filter((x) => x.members.includes(id));
   return `<b class="sm">인연</b>${bonds.map((x) => `<div class="md"><b class="gold">${x.name}</b> <span class="dim">${x.members.map((m) => heroOf(m).name).join(' · ')} (${x.need}명)</span></div>`).join('') || '<span class="xs mute">인연 조합 없음</span>'}`;
 }
@@ -272,7 +275,7 @@ register('shop', {
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>
           <div class="panel col shopc"><b>장비 소환 10+1회</b><span class="xs dim">11개 · 같은 확률</span><button class="btn hi" data-sum="11">${icon('stardust')}${fmt(sm.ten)}</button></div></div>
           <span class="xs mute">뽑기는 장비·코스튬만, 게임 재화로만 (영웅 뽑기 없음) · 전용 무기 조각은 재화·소모품</span><div class="pk" data-out></div>`;
-      } else if (cat === 'costume') body = '<span class="mute">코스튬 칸 자리 (별 단계 해금·상점 코스튬 · 그림은 3단계)</span>';
+      } else if (cat === 'costume') body = '<span class="mute">코스튬 상점 자리 (별 단계 해금 코스튬은 영웅 정보 「코스튬」 탭 · 그림은 3단계)</span>';
       else
         body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${n}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;

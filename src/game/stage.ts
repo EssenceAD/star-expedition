@@ -7,7 +7,7 @@ import { CHAPTERS } from '../data/story';
 import { T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
 import { addExp, join, statsOf } from './heroes';
-import { addCur, dayKey, partyIds, S, type Save } from './state';
+import { addCur, dayKey, partyIds, S, track, type Save } from './state';
 import { boostMult, stageCost, useStamina } from './account';
 import { bagFull, dropGear, makeRune } from './gear';
 import type { Gear, Rune } from './state';
@@ -181,6 +181,8 @@ export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () =
     rec.mvp = info.mvp;
   }
   s.stages[k] = rec;
+  track('stage', 1, s, now);
+  if (isBoss(st)) track('boss', 1, s, now);
   const ids = partyIds(s);
   const r = baseReward(st, rnd, ids);
   if (first) r.stardust += isBoss(st) ? R.firstDustBoss : R.firstDust;
@@ -227,6 +229,8 @@ export function repeatBattle(st: StageId, n: number, s: Save = S, rnd: () => num
     if (g.chest) h.chests++;
     for (const id of g.ups) if (!h.ups.includes(id)) h.ups.push(id);
     s.stages[stageKey(st)].clears++;
+    track('stage', 1, s, now);
+    track('repeat', 1, s, now);
   }
   return h.runs ? h : null;
 }

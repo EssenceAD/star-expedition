@@ -1,0 +1,304 @@
+// D덩어리 화면 (STAR_PLAN_v2 §4): 미션(일일·주간·이벤트·레이드·업적·출석 + 바로가기) · 길드 · 친구 · 랭킹 · 우편·공지 · 설정(계정·클라우드·소리·이름·칭호) · 채팅 창
+import { CONFIG } from '../config';
+import { prefs, savePrefs, applyPrefs } from '../core/audio/engine';
+import { setPref, getPref } from '../core/save';
+import * as cloud from '../core/net/cloud';
+import { lockOf, triesText } from '../game/content';
+import { attend, attendToday, claim, claimAll, DAILY, eventLeft, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
+import {
+  addFriend, board, BOARD_NAME, buyGuild, checkTitles, claimAllMail, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
+} from '../game/social';
+import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
+import { icon } from '../theme/tokens';
+import { $, $$, CUR_NAME, esc, fmt, go, modal, register, setChatOpener, syncBar, toast } from './core';
+
+const SO = CONFIG.social;
+const giveText = (g: Record<string, number>) => Object.entries(g).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ');
+const after = (draw: () => void, msg: string) => {
+  persist();
+  syncBar();
+  if (msg) toast(msg);
+  draw();
+};
+
+// ───────── 미션 · 업적 · 출석 ─────────
+register('mission', {
+  title: `${icon('mission')} 미션`,
+  enter(root, p) {
+    let tab = (p.tab as string) ?? 'd';
+    const draw = () => {
+      const tabs: [string, string][] = [['d', '일일'], ['w', '주간'], ['ev', '이벤트'], ['r', '레이드'], ['ach', '업적'], ['att', '출석']];
+      let body = '';
+      if (tab === 'd' || tab === 'w' || tab === 'r' || tab === 'ach') {
+        const k = tab as Kind;
+        const list = listOf(k);
+        body = `<div class="row"><span class="grow sm dim">${k === 'd' ? '매일 KST 0시에 새로' : k === 'w' ? '매주 월요일에 새로' : k === 'r' ? '레이드·길드 레이드 (매일)' : '모두 세는 업적'}</span><button class="btn hi" data-all ${readyOf(k).length ? '' : 'disabled'}>모두 받기 (${readyOf(k).length})</button></div>
+          <div class="col">${list.map((m) => {
+            const done = isDone(k, m);
+            const got = isClaimed(k, m);
+            return `<div class="panel row mrow"><div class="col grow"><b class="sm">${m.name}</b><div class="xbar"><i style="width:${(progress(k, m) / m.goal) * 100}%"></i></div><span class="xs dim">${fmt(progress(k, m))} / ${fmt(m.goal)} · ${giveText(m.give)}</span></div>
+              ${got ? `<span class="chip">${icon('check')} 받음</span>` : done ? `<button class="btn mini hi" data-claim="${m.id}">받기</button>` : `<button class="btn mini" data-go='${JSON.stringify(m.go)}'>바로가기</button>`}</div>`;
+          }).join('')}</div>`;
+      } else if (tab === 'ev') {
+        const left = eventLeft();
+        body = `<div class="panel col"><b>${SO.event.name}</b><span class="sm dim">${left ? `남은 ${left}일` : '끝났어요'} · 출석할 때마다 별가루 ${SO.event.dust} · 지금까지 ${S.attend.ev}일</span>${left ? '' : '<span class="xs mute">다음 이벤트는 공지로 알려요</span>'}</div>`;
+      } else {
+        body = `<div class="cards">${SO.attend.map((g, i) => `<div class="panel col shopc${i < S.attend.n % SO.attend.length || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}"><b>${i + 1}일째</b><span class="xs">${giveText(g)}</span></div>`).join('')}</div>
+          <button class="btn hi" data-att ${attendToday() ? '' : 'disabled'}>${attendToday() ? '오늘 출석하기' : '오늘 출석 완료'}</button>`;
+      }
+      root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
+      $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
+      $$('[data-claim]', root).forEach((b) => (b.onclick = () => (claim(tab as Kind, b.dataset.claim!), after(draw, '받았어요'))));
+      $$('[data-go]', root).forEach((b) => (b.onclick = () => {
+        const [to, prm] = JSON.parse(b.dataset.go!) as [string, Record<string, unknown>];
+        go(to as never, prm);
+      }));
+      const all = root.querySelector<HTMLElement>('[data-all]');
+      if (all) all.onclick = () => after(draw, `${claimAll(tab as Kind)}개 받았어요`);
+      const att = root.querySelector<HTMLElement>('[data-att]');
+      if (att) att.onclick = () => {
+        const r = attend();
+        after(draw, r ? `${r.day}일째 출석! ${Object.entries(r.give).map(([k, v]) => `${CUR_NAME[k] ?? k} +${fmt(v)}`).join(' · ')}` : '');
+      };
+    };
+    draw();
+  },
+});
+/** 로비 첫 진입: 출석 창 (하루 한 번) */
+export function attendPopup() {
+  if (!attendToday()) return;
+  const day = (S.attend.n % SO.attend.length) + 1;
+  modal(`${icon('mission')} 출석 ${day}일째`, `<p class="dim">오늘 출석 보상: ${giveText(SO.attend[day - 1])}${eventLeft() ? ` · ${SO.event.name} 별가루 ${SO.event.dust}` : ''}</p>`, [
+    ['받기', () => {
+      attend();
+      persist();
+      syncBar();
+    }, true],
+  ]);
+}
+export const missionBadge = () => (['d', 'w', 'r', 'ach'] as Kind[]).reduce((a, k) => a + readyOf(k).length, 0);
+export const dailyText = () => `${DAILY.filter((m) => isDone('d', m)).length}/${DAILY.length}`;
+
+// ───────── 길드 ─────────
+register('guild', {
+  title: () => `${icon('guild')} 길드${guildOf() ? ` · ${guildOf()!.name}` : ''}`,
+  enter(root, p) {
+    let tab = (p.tab as string) ?? 'info';
+    const draw = () => {
+      const g = guildOf();
+      let body = '';
+      if (!g) {
+        body = `<p class="sm dim">길드에 들어가면 출석·기여·길드 상점·길드 채팅·길드 레이드가 열려요. 실멤버 길드는 단톡방 원정대, 나머지는 AI 길드예요.</p>
+          <div class="cards">${GUILDS.map((x) => `<div class="panel col shopc"><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
+      } else if (tab === 'info') {
+        const bd = guildBoard();
+        body = `<div class="panel col"><b>${g.name} · Lv.${g.lv}</b><span class="xs dim">${esc(g.desc)}</span>
+            <div class="row"><button class="btn hi" data-att ${S.guild.attendDay === dayKey() ? 'disabled' : ''}>출석 (${icon('guildCoin')}${SO.guild.attendCoin})</button>${SO.guild.donate.map(([gold, pts, coin], i) => `<button class="btn" data-don="${i}">기여 ${icon('gold')}${fmt(gold)} = ${pts}점 · ${icon('guildCoin')}${coin}</button>`).join('')}</div>
+            <span class="xs mute">기여는 하루 한 번 · 내 기여 이번 주 ${fmt(S.guild.weekContrib)} · 모두 ${fmt(S.guild.contrib)}</span></div>
+          <div class="panel col"><b class="sm">이번 주 기여 순위</b>${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.pts)}점 · 레이드 ${fmt(x.raid)}</b></div>`).join('')}${g.real ? '<span class="xs mute">실멤버 기록은 서버(클라우드)가 붙으면 보여요</span>' : ''}</div>
+          <button class="btn mini" data-leave>길드 나가기</button>`;
+      } else if (tab === 'shop') {
+        body = `<div class="cards">${GUILD_SHOP.map((x) => `<div class="panel col shopc"><b class="sm">${x.name}</b><button class="btn" data-buy="${x.id}">${icon('guildCoin')}${x.price}</button></div>`).join('')}</div><span class="xs mute">보유 ${icon('guildCoin')}${S.cur.guildCoin ?? 0}</span>`;
+      } else if (tab === 'chat') {
+        body = chatHtml('guild');
+      } else {
+        const gb = guildBoss();
+        const r = { mode: 'graid' as const, arg: 0 };
+        body = `<p class="sm dim">주간 보스 · 길드원 누적 피해 · 하루 ${SO.guild.raidTries}번 (남은 ${triesText(r)}) · 한 판 ${SO.guild.raidSec}초 · 준 피해 = 길드 기여 · 길드 코인</p>
+          <div class="panel col"><b>${esc(gb.name)}</b><div class="xbar big"><i style="width:${(gb.hp / gb.max) * 100}%"></i></div><span class="xs dim">남은 체력 ${fmt(gb.hp)} / ${fmt(gb.max)} · 내 이번 주 피해 ${fmt(S.guild.raid)}</span></div>
+          <button class="btn hi big" data-graid ${lockOf(r) ? 'disabled' : ''}>길드 레이드 도전</button>`;
+      }
+      const tabs: [string, string][] = [['info', '정보·기여'], ['shop', '길드 상점'], ['chat', '길드 채팅'], ['raid', '길드 레이드']];
+      root.innerHTML = `<div class="body">${g ? `<div class="col shopcats">${tabs.map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>` : ''}<div class="col grow scroll">${body}</div></div>`;
+      $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
+      $$('[data-join]', root).forEach((b) => (b.onclick = () => (joinGuild(b.dataset.join!), after(draw, '길드에 들어왔어요 (우편 확인)'))));
+      const at = root.querySelector<HTMLElement>('[data-att]');
+      if (at) at.onclick = () => after(draw, guildAttend() ? '길드 출석!' : '오늘은 이미 했어요');
+      $$('[data-don]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '기여했어요', poor: '금화가 모자라요', done: '기여는 하루 한 번', none: '' }[donate(+b.dataset.don!)])));
+      const lv = root.querySelector<HTMLElement>('[data-leave]');
+      if (lv) lv.onclick = () => modal('길드 나가기', '<p class="dim">기여 점수는 남아요.</p>', [['그만두기', null], ['나가기', () => (leaveGuild(), after(draw, '길드를 나왔어요')), true]]);
+      $$('[data-buy]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '샀어요', poor: '길드 코인이 모자라요', none: '' }[buyGuild(b.dataset.buy!)])));
+      const gr = root.querySelector<HTMLElement>('[data-graid]');
+      if (gr) gr.onclick = () => go('prep', { run: { mode: 'graid', arg: 0 } });
+      wireChat(root, 'guild', draw);
+    };
+    draw();
+  },
+});
+
+// ───────── 친구 ─────────
+register('friends', {
+  title: `${icon('friend')} 친구`,
+  enter(root) {
+    const draw = () => {
+      root.innerHTML = `<div class="body"><div class="col grow scroll">
+          <div class="row"><b class="grow">친구 ${S.friends.list.length}/${SO.friends.max}</b><span class="xs dim">하루 한 번씩 선물(행동력 ${SO.friends.gift}) · 받기 하루 ${SO.friends.giftsPerDay}번</span></div>
+          ${S.friends.list.map((n) => `<div class="panel row"><b class="grow sm">${esc(n)} <span class="xs dim">Lv.${friendLv(n)}</span></b><button class="btn mini" data-gift="${esc(n)}" ${S.friends.sent.includes(n) && S.friends.day === dayKey() ? 'disabled' : ''}>선물</button><button class="btn mini" data-del="${esc(n)}">삭제</button></div>`).join('') || '<span class="mute">아직 친구가 없어요</span>'}
+        </div><div class="col side scroll"><b class="sm">추천 원정대 (실유저는 서버 연결 뒤)</b>${friendSuggest().map((n) => `<div class="row"><span class="grow xs">${esc(n)} · Lv.${friendLv(n)}</span><button class="btn mini" data-add="${esc(n)}">추가</button></div>`).join('')}<span class="xs mute">친구 영웅 빌려 쓰기는 선택 기능 — 나중에</span></div></div>`;
+      $$('[data-gift]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '선물을 보냈어요 (답례 행동력)', done: '오늘은 이미 보냈어요', none: '' }[gift(b.dataset.gift!)])));
+      $$('[data-del]', root).forEach((b) => (b.onclick = () => (removeFriend(b.dataset.del!), after(draw, ''))));
+      $$('[data-add]', root).forEach((b) => (b.onclick = () => after(draw, addFriend(b.dataset.add!) ? '친구가 됐어요' : '친구가 가득 찼어요')));
+    };
+    draw();
+  },
+});
+
+// ───────── 랭킹 · 칭호 ─────────
+register('ranking', {
+  title: `${icon('ranking')} 랭킹`,
+  enter(root, p) {
+    let tab = ((p.tab as string) ?? 'tower') as Board;
+    const draw = () => {
+      const got = checkTitles();
+      if (got.length) persist();
+      const bd = board(tab).slice(0, 13);
+      root.innerHTML = `<div class="body"><div class="col shopcats">${(Object.keys(BOARD_NAME) as Board[]).map((k) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${BOARD_NAME[k]}</button>`).join('')}</div>
+        <div class="col grow scroll"><div class="panel col">${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div>
+          <span class="xs dim">내 순위 ${myRank(tab) || '-'}위 · ${SO.titleTop}위 안이면 랭커 칭호 「${TITLE_OF[tab]}」 (채팅 이름 옆) · 칭호 달기는 설정</span>
+          <span class="xs mute">1단계: AI 원정대 + 나 · 실유저 순위는 서버 연결 뒤</span></div></div>`;
+      $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab as Board), draw())));
+      if (got.length) toast(`랭커 칭호 「${got.join('」「')}」을 얻었어요!`);
+    };
+    draw();
+  },
+});
+
+// ───────── 우편 · 공지 ─────────
+register('mail', {
+  title: `${icon('mail')} 우편`,
+  enter(root) {
+    const draw = () => {
+      root.innerHTML = `<div class="body"><div class="col grow scroll">
+        <div class="row"><b class="grow">우편 ${S.mail.list.length}</b><button class="btn mini" data-notice>${icon('story')} 공지·패치노트</button><button class="btn hi" data-all ${S.mail.list.some((m) => !m.got) ? '' : 'disabled'}>모두 받기</button></div>
+        ${S.mail.list.map((m) => `<div class="panel row"><div class="col grow"><b class="sm">${esc(m.title)} <span class="xs dim">${esc(m.from)} · ${new Date(m.at).toLocaleDateString('ko-KR')}</span></b><span class="xs dim">${esc(m.body)}</span>${Object.keys(m.give).length ? `<span class="xs">${giveText(m.give)}</span>` : ''}</div>${!m.got ? `<button class="btn mini hi" data-get="${m.id}">받기</button>` : '<span class="xs mute">읽음</span>'}</div>`).join('') || '<span class="mute">우편이 없어요</span>'}
+      </div></div>`;
+      $$('[data-get]', root).forEach((b) => (b.onclick = () => (claimMail(+b.dataset.get!), after(draw, '받았어요'))));
+      const all = root.querySelector<HTMLElement>('[data-all]');
+      if (all) all.onclick = () => after(draw, `${claimAllMail()}통 받았어요`);
+      $('[data-notice]', root).onclick = () => notice();
+    };
+    draw();
+  },
+});
+async function notice() {
+  const r = await fetch(`${import.meta.env.BASE_URL}patchnotes.json`).catch(() => null);
+  const notes = r?.ok ? ((await r.json()) as { version: string; title: string; items: string[]; fixes?: string[] }[]) : [];
+  modal(`${icon('story')} 공지`, notes.slice(0, 5).map((n) => `<b class="sm">v${n.version} ${esc(n.title)}</b><ul class="xs dim">${n.items.map((i) => `<li>${esc(i)}</li>`).join('')}${(n.fixes ?? []).map((i) => `<li>고침: ${esc(i)}</li>`).join('')}</ul>`).join('') || '<span class="mute">공지를 못 불러왔어요</span>', [['닫기', null, true]]);
+}
+
+// ───────── 채팅 창 ─────────
+export function chatHtml(ch: ChatLine['ch']) {
+  const lines = S.chat.filter((l) => l.ch === ch).slice(-30);
+  return `<div class="chatlog" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
+    <div class="row"><input class="tab grow chatin" data-in maxlength="${SO.chat.max}" placeholder="${ch === 'world' ? '월드 채팅' : '길드 채팅'} (로그인하면 다른 사람에게도)"><button class="btn mini hi" data-send>보내기</button></div>`;
+}
+function wireChat(root: HTMLElement, ch: ChatLine['ch'], draw: () => void) {
+  const send = root.querySelector<HTMLElement>('[data-send]');
+  const inp = root.querySelector<HTMLInputElement>('[data-in]');
+  if (!send || !inp) return;
+  const go1 = () => {
+    const line = sendChat(inp.value, ch);
+    if (!line) return;
+    persist();
+    void cloud.postChat({ ch, guild: S.guild.id, name: line.name, title: line.title, text: line.text });
+    draw();
+  };
+  send.onclick = go1;
+  inp.onkeydown = (e) => e.key === 'Enter' && go1();
+  const log = root.querySelector<HTMLElement>('[data-log]');
+  if (log) log.scrollTop = log.scrollHeight;
+}
+/** 채팅 창 (상단 바 · 한 줄 티커에서) */
+export function openChat() {
+  const m = document.createElement('div');
+  m.className = 'modal';
+  $('#stage').append(m);
+  let ch: ChatLine['ch'] = 'world';
+  const draw = () => {
+    m.innerHTML = `<div class="panel chatp"><div class="row"><div class="tabs grow"><button class="tab${ch === 'world' ? ' on' : ''}" data-ch="world">월드</button><button class="tab${ch === 'guild' ? ' on' : ''}" data-ch="guild" ${S.guild.id ? '' : 'disabled'}>길드</button></div><button class="btn mini" data-x>${icon('close')}</button></div>${chatHtml(ch)}</div>`;
+    $$('[data-ch]', m).forEach((b) => (b.onclick = () => ((ch = b.dataset.ch as ChatLine['ch']), draw())));
+    $('[data-x]', m).onclick = () => m.remove();
+    wireChat(m, ch, draw);
+  };
+  draw();
+}
+
+// ───────── 설정 (계정 · 클라우드 · 소리 · 이름 · 칭호 · 처음부터) ─────────
+register('settings', {
+  title: `${icon('settings')} 설정`,
+  enter(root) {
+    const draw = async () => {
+      const w = await cloud.who();
+      root.innerHTML = `<div class="body"><div class="col grow scroll">
+          <div class="panel col"><b>계정 (「체크인」과 같은 계정)</b>
+            ${w ? `<span class="sm">${w.guest ? '게스트' : `아이디 ${esc(w.login ?? '')}`} 로그인 중</span><div class="row"><button class="btn" data-push>${icon('next')} 클라우드에 올리기</button><button class="btn" data-pull>클라우드에서 받기</button><button class="btn mini" data-out>로그아웃</button></div>`
+              : `<span class="xs dim">「체크인」 아이디·비밀번호로 로그인하면 클라우드 저장·실유저 채팅이 켜져요</span><div class="row"><input class="tab" data-id placeholder="아이디"><input class="tab" data-pw type="password" placeholder="비밀번호"><button class="btn hi" data-login>로그인</button><button class="btn" data-guest>게스트로</button></div>`}
+            <span class="xs mute">서버 테이블(supabase/star_expedition.sql)을 형철이 적용해야 클라우드 저장이 돼요 · 그 전에는 이 기기에만 저장</span></div>
+          <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
+            <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
+          <div class="panel col"><b>소리 · 화면</b>
+            <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label></div></div>
+          <div class="row"><button class="btn" data-title-screen>타이틀로</button><button class="btn mini" data-reset>처음부터</button></div>
+        </div></div>`;
+      const q = <E extends HTMLElement = HTMLElement>(s: string) => root.querySelector<E>(s);
+      const msg = (e: string | null, ok: string) => toast(e ?? ok);
+      q('[data-login]')?.addEventListener('click', async () => {
+        msg(await cloud.login(q<HTMLInputElement>('[data-id]')!.value, q<HTMLInputElement>('[data-pw]')!.value), '로그인했어요');
+        const u = await cloud.who();
+        if (u && S.acc.name === CONFIG.start.name) {
+          const nick = await cloud.nickname(u.uid);
+          if (nick) ((S.acc.name = nick.slice(0, 10)), persist());
+        }
+        void draw();
+      });
+      q('[data-guest]')?.addEventListener('click', async () => (msg(await cloud.guest(), '게스트로 들어왔어요'), void draw()));
+      q('[data-out]')?.addEventListener('click', async () => (await cloud.logout(), toast('로그아웃했어요'), void draw()));
+      q('[data-push]')?.addEventListener('click', async () => {
+        persist();
+        const e = await cloud.push(S);
+        if (!e) ((S.cloud.pushedAt = Date.now()), persist());
+        msg(e, '클라우드에 올렸어요');
+      });
+      q('[data-pull]')?.addEventListener('click', async () => {
+        const r = await cloud.pull();
+        if (typeof r === 'string') return toast(r);
+        if (!r) return toast('클라우드에 저장이 없어요');
+        modal('클라우드에서 받기', `<p class="dim">클라우드 저장(${new Date(r.at).toLocaleString('ko-KR')})으로 이 기기 저장(${new Date(S.savedAt).toLocaleString('ko-KR')})을 바꿀까요?</p>`, [
+          ['그만두기', null],
+          ['바꾸기', () => {
+            setSave(migrate(r.data));
+            persist();
+            toast('받았어요');
+            go('lobby', {}, false);
+          }, true],
+        ]);
+      });
+      q('[data-rename]')?.addEventListener('click', () => {
+        const n = q<HTMLInputElement>('[data-name]')!.value.trim().slice(0, 10);
+        if (!n) return;
+        S.acc.name = n;
+        after(() => void draw(), '이름을 바꿨어요');
+      });
+      q<HTMLSelectElement>('[data-title]')?.addEventListener('change', (e) => {
+        S.titles.on = (e.target as HTMLSelectElement).value || null;
+        persist();
+      });
+      q<HTMLInputElement>('[data-bgm]')?.addEventListener('change', (e) => ((prefs.bgmOn = (e.target as HTMLInputElement).checked), savePrefs(), applyPrefs()));
+      q<HTMLInputElement>('[data-sfx]')?.addEventListener('change', (e) => ((prefs.sfxOn = (e.target as HTMLInputElement).checked), savePrefs(), applyPrefs()));
+      q<HTMLInputElement>('[data-cut]')?.addEventListener('change', (e) => setPref('cutOff', !(e.target as HTMLInputElement).checked));
+      q('[data-title-screen]')?.addEventListener('click', () => go('title'));
+      q('[data-reset]')?.addEventListener('click', () =>
+        modal('처음부터 할까요?', '<p class="dim">이 기기에 저장된 원정대 기록이 모두 지워져요. (클라우드는 그대로)</p>', [
+          ['그만두기', null],
+          ['처음부터', () => {
+            setSave(newSave());
+            persist();
+            go('title', {}, false);
+          }, true],
+        ]),
+      );
+    };
+    void draw();
+  },
+});
+setChatOpener(openChat);

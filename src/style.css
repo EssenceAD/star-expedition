@@ -83,7 +83,7 @@ button { font-family: inherit; cursor: pointer; }
 .xbar { height: 5px; background: var(--c-panelDeep); border-radius: var(--r-sm); overflow: hidden; }
 .xbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--c-mp2), var(--c-exp)); }
 .lobby .quest { position: absolute; left: var(--s-md); top: 74px; width: 230px; }
-.qrow { height: 26px; text-align: left; font-size: var(--fs-md); font-weight: var(--fw-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qrow { position: relative; height: 26px; text-align: left; font-size: var(--fs-md); font-weight: var(--fw-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lobby .bigs { position: absolute; right: var(--s-lg); top: var(--s-md); display: flex; flex-direction: column; gap: var(--s-md); align-items: flex-end; }
 .round { width: 74px; height: 74px; border-radius: 50%; border: var(--b-thick) solid var(--c-gold2); background: radial-gradient(circle at 50% 35%, var(--c-panelHi), var(--c-panel)); color: var(--c-text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-xxs); font-size: var(--fs-md); font-weight: var(--fw-black); box-shadow: var(--sh-drop); }
 .round .ic { font-size: var(--fs-h2); }
@@ -172,6 +172,16 @@ button { font-family: inherit; cursor: pointer; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s-sm); }
 .shopc { position: relative; align-items: center; text-align: center; gap: var(--s-xs); }
 .shopc .badge { right: var(--s-xs); top: var(--s-xs); }
+
+/* ───────── 미션 · 채팅 (D) ───────── */
+.mrow { align-items: center; }
+.shopc.on { border-color: var(--c-good); }
+.chatlog { flex: 1; min-height: 160px; max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s-xxs); padding: var(--s-sm); background: var(--c-panelDeep); border-radius: var(--r-md); font-size: var(--fs-md); }
+.cl b { color: var(--c-star); }
+.cl.me b { color: var(--c-good); }
+.chatp { min-width: 520px; }
+.chatin { height: 28px; color: var(--c-text); }
+input.tab { color: var(--c-text); }
 
 /* ───────── 전투 HUD ───────── */
 #hud { position: absolute; inset: 0; pointer-events: none; }

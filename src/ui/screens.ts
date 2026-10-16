@@ -10,6 +10,8 @@ import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/acco
 import { freeSummonLeft } from '../game/gear';
 import { buildRun, lockOf, MILESTONES, milesReady, triesText, type Run } from '../game/content';
 import { runTitle } from './screensC';
+import { attendPopup, dailyText, missionBadge } from './screensD';
+import { eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
 import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
@@ -69,16 +71,16 @@ register('lobby', {
     const lead = partyIds()[0] ?? 'woongs';
     const bl = boostLeft();
     root.innerHTML = `
-      <div class="me panel"><div class="pt" style="background-image:url(${heroPortrait(lead)})"></div><div class="col grow"><b>${esc(S.acc.name)} <span class="gold">Lv.${S.acc.lv}</span></b>
+      <div class="me panel"><div class="pt" style="background-image:url(${heroPortrait(lead)})"></div><div class="col grow"><b>${S.titles.on ? `<span class="chip on">${esc(S.titles.on)}</span> ` : ''}${esc(S.acc.name)} <span class="gold">Lv.${S.acc.lv}</span></b>
         <div class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></div>
         <span class="xs dim">${bl ? `${icon('booster')} 부스터 ${fmtTime(bl)}` : `파티 전투력 ${fmt(partyPower())}`}</span></div></div>
       <div class="quest panel col">
         <b class="sm">${icon('mission')} 진행 중</b>
         <button class="btn qrow" data-next>${icon('adventure')} 다음: ${stageName(ns)} ${CHAPTERS[ns.c - 1].name}</button>
-        <button class="btn qrow" data-soon="일일 임무|D">${icon('mission')} 일일 임무 0/5</button>
+        <button class="btn qrow" data-mis="d">${icon('mission')} 일일 미션 ${dailyText()}${missionBadge() ? ` <em class="badge">${missionBadge()}</em>` : ''}</button>
         <button class="btn qrow" data-portal="miles">${icon('star')} 이정표 ${S.miles.length}/${MILESTONES.length}${milesReady().length ? ` <em class="badge">${milesReady().length}</em>` : ''}</button>
         <span class="sm b">${icon('star')} 이벤트</span>
-        <button class="btn qrow" data-soon="이벤트|D">오픈 기념 (준비 중)</button>
+        <button class="btn qrow" data-mis="ev">${CONFIG.social.event.name} ${eventLeft() ? `남은 ${eventLeft()}일` : '(끝)'}</button>
         <div class="bondl">${activeBonds(partyIds()).map((x) => `<span class="chip on">${x.name}</span>`).join('')}</div>
       </div>
       <div class="bigs">
@@ -87,15 +89,17 @@ register('lobby', {
         <button class="round main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
       </div>
       <div class="dock">
-        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['soon:미션|D', '미션', 'mission'], ['soon:업적|D', '업적', 'achieve'], ['soon:친구|D', '친구', 'friend'], ['shop', '상점', 'shop'], ['soon:길드|D', '길드', 'guild'], ['soon:랭킹|D', '랭킹', 'ranking'], ['title', '설정', 'settings']]
-          .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
+        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['mission', '미션', 'mission'], ['mission:ach', '업적', 'achieve'], ['friends', '친구', 'friend'], ['shop', '상점', 'shop'], ['guild', '길드', 'guild'], ['ranking', '랭킹', 'ranking'], ['settings', '설정', 'settings']]
+          .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : to.includes(':') ? `data-mis="${to.split(':')[1]}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : to === 'mission' && missionBadge() ? `<em class="badge">${missionBadge()}</em>` : ''}</button>`)
           .join('')}
       </div>`;
     $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never)));
     $('[data-next]', root).onclick = () => go('prep', { stage: ns });
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
+    $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
     $$('[data-soon]', root).forEach((b) => (b.onclick = () => comingSoon(...(b.dataset.soon!.split('|') as [string, string]))));
     offlinePopup();
+    if (!document.querySelector('.modal')) attendPopup();
   },
 });
 let offlineChecked = false;

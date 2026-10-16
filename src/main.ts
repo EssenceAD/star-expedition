@@ -12,6 +12,8 @@ import { fitView, view } from './ui/view';
 import './ui/screens';
 import './ui/screensB';
 import './ui/screensC';
+import './ui/screensD';
+import * as cloud from './core/net/cloud';
 import { battleNow } from './ui/battle';
 
 applyTheme();
@@ -89,6 +91,14 @@ function loop(now: number) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+// 클라우드 자동 올리기 (로그인했을 때만 · 1분마다 · 앱 내릴 때)
+const autoPush = async () => {
+  if (!(await cloud.who())) return;
+  persist();
+  if (!(await cloud.push(S))) S.cloud.pushedAt = Date.now();
+};
+setInterval(autoPush, CONFIG.social.cloud.pushSec * 1000);
+document.addEventListener('visibilitychange', () => document.hidden && void autoPush());
 if (q.get('go')) {
   const [c, st, d] = (q.get('go') === '1' ? '1-10-0' : q.get('go')!).split('-').map(Number);
   S.prologue = true;

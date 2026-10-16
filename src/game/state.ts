@@ -3,6 +3,7 @@
 //  → v3 = STAR_PLAN_v2 §1 (편성 = 영웅 4명 목록(위치는 직업으로 자동) · 원정대 레벨 · 행동력 · 부스터 · 소탕 없앰 → 반복 전투)
 //  → v4 = §2 B (영웅 각성·별·스킬 레벨·초월·전용 무기·장비 칸 · 가방(장비·룬) · 상점 기록)
 //  → v5 = §3 C (하루 도전 수 · 탑 · 월드 보스 · 결투장 · 영웅 외전·전용 보물 · 이정표)
+//  → v6 = §4 D (기록 세기(미션·업적) · 받은 미션 · 출석·이벤트 · 길드 · 친구 · 칭호 · 우편 · 채팅 · 클라우드)
 import { CONFIG } from '../config';
 import { getPref, setPref } from '../core/save';
 
@@ -61,8 +62,25 @@ export interface StageRec {
   bestDps: number;
   mvp: string;
 }
-export interface SaveV5 {
-  version: 5;
+export interface Mail {
+  id: number;
+  from: string;
+  title: string;
+  body: string;
+  give: Record<string, number>;
+  at: number;
+  got: boolean;
+}
+export interface ChatLine {
+  name: string;
+  text: string;
+  at: number;
+  me?: boolean;
+  title?: string;
+  ch: 'world' | 'guild';
+}
+export interface SaveV6 {
+  version: 6;
   createdAt: number;
   savedAt: number;
   /** 마지막으로 본 시각 (방치 보상 계산) */
@@ -109,9 +127,25 @@ export interface SaveV5 {
   /** 이정표: 받은 것 · 콘텐츠별 이긴 수 */
   miles: string[];
   wins: Record<string, number>;
+  /** D덩어리: 한 일 세기 (오늘 · 이번 주 · 모두) — 미션·업적 */
+  track: { day: string; week: string; d: Record<string, number>; w: Record<string, number>; all: Record<string, number> };
+  /** 받은 미션·업적·이벤트 보상 (오늘·이번 주는 날/주가 바뀌면 비움) */
+  claimed: { d: string[]; w: string[]; ach: string[]; ev: string[] };
+  /** 출석 (7일 돌림) · 이벤트 출석 날 수 */
+  attend: { last: string; n: number; ev: number; evLast: string };
+  /** 길드 (null = 안 듦) · 오늘 출석 · 기여 (모두 · 이번 주) · 길드 레이드 이번 주 피해 */
+  guild: { id: string | null; attendDay: string; donateDay: string; contrib: number; week: string; weekContrib: number; raid: number };
+  /** 친구 · 오늘 선물 보낸 사람 · 받은 수 */
+  friends: { list: string[]; day: string; sent: string[]; got: number };
+  /** 칭호 (랭커 칭호 등) · 단 칭호 */
+  titles: { own: string[]; on: string | null };
+  mail: { list: Mail[]; next: number };
+  chat: ChatLine[];
+  /** 클라우드: 마지막으로 올린 시각 */
+  cloud: { pushedAt: number };
 }
-export type Save = SaveV5;
-export const SAVE_VERSION = 5;
+export type Save = SaveV6;
+export const SAVE_VERSION = 6;
 export const newHero = (): HeroSave => ({ lv: 1, exp: 0, awaken: 0, star: 1, skill: [1, 1, 1], trans: [], ex: 0, gear: { weapon: null, armor: null, acc1: null, acc2: null } });
 export const PARTY_MAX = 4;
 
@@ -120,7 +154,7 @@ export function newSave(now = Date.now()): Save {
   const heroes: Record<string, HeroSave> = {};
   for (const id of CONFIG.start.heroes) heroes[id] = newHero();
   return {
-    version: 5, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
+    version: 6, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
     acc: { name: CONFIG.start.name, lv: 1, exp: 0 }, sta: { n: CONFIG.stamina.base, at: now }, boostUntil: 0,
     cur: { gold: CONFIG.start.gold, stardust: CONFIG.start.stardust },
     heroes, party: [...CONFIG.start.party], stages: {}, seen: {},
@@ -128,6 +162,9 @@ export function newSave(now = Date.now()): Save {
     items: {}, nextUid: 1, bagSize: CONFIG.gear.bag.start, shop: { freeDay: '', packs: [] }, exShards: {},
     daily: { key: '', n: {} }, tower: { best: 0, week: '', weekBest: 0 }, world: { week: '', my: 0, best: 0 },
     arena: { score: CONFIG.content.arena.start, best: CONFIG.content.arena.start, win: 0, lose: 0, log: [] }, side: {}, treasure: {}, miles: [], wins: {},
+    track: { day: '', week: '', d: {}, w: {}, all: {} }, claimed: { d: [], w: [], ach: [], ev: [] }, attend: { last: '', n: 0, ev: 0, evLast: '' },
+    guild: { id: null, attendDay: '', donateDay: '', contrib: 0, week: '', weekContrib: 0, raid: 0 }, friends: { list: [], day: '', sent: [], got: 0 }, titles: { own: [], on: null },
+    mail: { list: [{ id: 1, from: '여관 주인', title: '원정대에 온 걸 환영해요!', body: '작은 선물을 넣었어요. 별을 되찾으러 가 볼까요?', give: { stardust: 200, gold: 20000 }, at: now, got: false }], next: 2 }, chat: [], cloud: { pushedAt: 0 },
   };
 }
 /** 옛 저장 → 지금 버전 (없거나 망가지면 새로) */
@@ -140,7 +177,7 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.pilot = { clears: Number(d.clears) || 0, best };
     return s;
   }
-  if (d.version >= 2 && d.version <= 5) {
+  if (d.version >= 2 && d.version <= 6) {
     const base = newSave(now);
     const s = { ...base, ...(d as unknown as Save) };
     s.cur = { ...base.cur, ...s.cur };
@@ -163,8 +200,8 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.shop ??= base.shop;
     s.exShards ??= {};
     // v4 → v5: 콘텐츠 칸
-    for (const k of ['daily', 'tower', 'world', 'arena', 'side', 'treasure', 'miles', 'wins'] as const) (s as unknown as Record<string, unknown>)[k] ??= structuredClone(base[k]);
-    s.version = 5;
+    for (const k of ['daily', 'tower', 'world', 'arena', 'side', 'treasure', 'miles', 'wins', 'track', 'claimed', 'attend', 'guild', 'friends', 'titles', 'mail', 'chat', 'cloud'] as const) (s as unknown as Record<string, unknown>)[k] ??= structuredClone(base[k]);
+    s.version = 6;
     if (!Array.isArray(s.party) || !s.party.length) s.party = [...base.party];
     s.party = s.party.filter((id) => s.heroes[id]).slice(0, PARTY_MAX);
     return s;
@@ -197,3 +234,22 @@ export function spend(k: string, n: number, s: Save = S): boolean {
   return true;
 }
 export const partyIds = (s: Save = S) => s.party.filter((id) => s.heroes[id]);
+
+/** 한 일 세기 (미션·업적 · 「체크인」 goals 방식) — 날·주가 바뀌면 오늘·이번 주 칸과 받은 미션을 비운다 */
+const KST = 9 * 3600e3;
+export const weekOf = (t = Date.now()) => {
+  const d = new Date(t + KST);
+  const day = (d.getUTCDay() + 6) % 7;
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day)).toISOString().slice(0, 10);
+};
+export function rollTrack(s: Save = S, now = Date.now()) {
+  const t = s.track;
+  if (!t) return;
+  if (t.day !== dayKey(now)) ((t.day = dayKey(now)), (t.d = {}), (s.claimed.d = []));
+  if (t.week !== weekOf(now)) ((t.week = weekOf(now)), (t.w = {}), (s.claimed.w = []));
+}
+export function track(ev: string, n = 1, s: Save = S, now = Date.now()) {
+  if (!s.track || n <= 0) return;
+  rollTrack(s, now);
+  for (const m of [s.track.d, s.track.w, s.track.all]) m[ev] = (m[ev] ?? 0) + n;
+}
