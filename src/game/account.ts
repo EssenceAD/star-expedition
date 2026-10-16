@@ -1,6 +1,6 @@
 // 원정대(계정) 레벨 · 행동력 · 부스터 (STAR_PLAN_v2 §1-6·7 · 킹스레이드 문법: 행동력은 시간 회복 · 레벨업 때 가득)
 import { CONFIG } from '../config';
-import { S, spend, type Save } from './state';
+import { S, spend, track, type Save } from './state';
 
 const ST = CONFIG.stamina;
 const AC = CONFIG.account;
@@ -31,6 +31,7 @@ export function useStamina(n: number, s: Save = S, now = Date.now()): { ok: bool
   if (cur < n) return { ok: false, up: 0 };
   if (cur >= staMax(s)) s.sta.at = now;
   s.sta.n = cur - n;
+  track('sta', n, s, now);
   return { ok: true, up: addAccExp(n, s, now) };
 }
 export function addAccExp(n: number, s: Save = S, now = Date.now()): number {

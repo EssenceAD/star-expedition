@@ -1,7 +1,7 @@
 // 영웅 성장 (STAR_PLAN_v2 §2): 각성(레벨 상한) · 별(1~5성) · 스킬 레벨 · 초월(단계마다 특성 2택) · 경험치 물약 · 전용 무기(조각) · 전용 보물(자리)
 import { CONFIG } from '../config';
 import { addExp, levelCap } from './heroes';
-import { addCur, S, spend, type Save } from './state';
+import { addCur, S, spend, track, type Save } from './state';
 
 const GR = CONFIG.growth;
 /** 초월 특성: 단계마다 둘 중 하나 (빌드 분기) — 값은 능력 보정 비율 */
@@ -30,6 +30,7 @@ export function awaken(id: string, s: Save = S): R {
   addCur('awakenStone', -c.stones, s);
   addCur('gold', -c.gold, s);
   h.awaken++;
+  track('awaken', 1, s);
   return 'ok';
 }
 // ───────── 별 ─────────
@@ -54,6 +55,7 @@ export function skillUp(id: string, i: 0 | 1 | 2, s: Save = S): R {
   addCur('skillBook', -c.books, s);
   addCur('gold', -c.gold, s);
   h.skill[i]++;
+  track('skill', 1, s);
   return 'ok';
 }
 export const skillMult = (lv: number) => 1 + GR.skill.perLv * (lv - 1);

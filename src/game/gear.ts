@@ -3,7 +3,7 @@
 import { CONFIG } from '../config';
 import { JOBS } from '../data/jobs';
 import { heroOf } from '../data/heroes';
-import { addCur, dayKey, GEAR_SLOTS, S, spend, type Gear, type GearSlot, type Item, type Rune, type Save } from './state';
+import { addCur, dayKey, GEAR_SLOTS, S, spend, track, type Gear, type GearSlot, type Item, type Rune, type Save } from './state';
 
 const G = CONFIG.gear;
 const R = CONFIG.rune;
@@ -88,6 +88,7 @@ export function enhance(g: Gear, s: Save = S, rnd: () => number = Math.random): 
   if ((s.cur.enh ?? 0) < c.stones || (s.cur.gold ?? 0) < c.gold) return 'poor';
   addCur('enh', -c.stones, s);
   addCur('gold', -c.gold, s);
+  track('enh', 1, s);
   if (rnd() < enhRate(g)) {
     const great = g.enh + 2 <= G.enhance.greatMax && rnd() < G.enhance.great;
     g.enh += great ? 2 : 1;
@@ -229,6 +230,7 @@ export function summon(n: 1 | 11, ilv: number, s: Save = S, rnd: () => number = 
   const free = n === 1 && freeSummonLeft(s, now) > 0;
   if (free) s.shop.freeDay = dayKey(now);
   else if (!spend('stardust', n === 1 ? G.summon.one : G.summon.ten, s)) return 'poor';
+  track('summon', n, s, now);
   const out: Gear[] = [];
   for (let i = 0; i < n; i++) {
     const g = makeGear(pick(PARTS, rnd), weighted(G.summon.weights, rnd), ilv, s, rnd);

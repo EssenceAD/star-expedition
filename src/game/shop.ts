@@ -3,7 +3,7 @@
 import { CONFIG } from '../config';
 import { HEROES, heroOf } from '../data/heroes';
 import { join, owned } from './heroes';
-import { addCur, S, spend, type Save } from './state';
+import { addCur, S, spend, track, type Save } from './state';
 
 const SH = CONFIG.shop;
 export const heroPrice = (id: string) => SH.hero[heroOf(id).origin];
@@ -13,6 +13,7 @@ export function buyHero(id: string, s: Save = S): 'owned' | 'poor' | 'ok' {
   if (owned(id, s)) return 'owned';
   if (!spend('stardust', heroPrice(id), s)) return 'poor';
   join(id, s);
+  track('hero', 1, s);
   return 'ok';
 }
 const give = (g: Record<string, number>, s: Save) => Object.entries(g).forEach(([k, v]) => addCur(k, v, s));

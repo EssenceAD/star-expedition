@@ -13,11 +13,12 @@ import { addAccExp } from './account';
 import { dropGear, makeGear, makeRune, bagFull } from './gear';
 import { baseStats, heroPower, owned } from './heroes';
 import { bestCleared, buildHeroes, byZone, cleared, mobsAt, powIdx } from './stage';
-import { addCur, dayKey, partyIds, S, type Gear, type Rune, type Save } from './state';
+import { guildBoss } from './social';
+import { addCur, dayKey, partyIds, S, track, type Gear, type Rune, type Save } from './state';
 
 const CC = CONFIG.content;
-export type Mode = 'hunt' | 'dungeon' | 'tower' | 'day' | 'raid' | 'world' | 'arena' | 'side';
-export const MODE_NAME: Record<Mode, string> = { hunt: '토벌 전투', dungeon: '상급 던전', tower: '도전의 탑', day: '요일 던전', raid: '레이드', world: '월드 보스', arena: '결투장', side: '영웅 외전' };
+export type Mode = 'hunt' | 'dungeon' | 'tower' | 'day' | 'raid' | 'world' | 'arena' | 'side' | 'graid';
+export const MODE_NAME: Record<Mode, string> = { hunt: '토벌 전투', dungeon: '상급 던전', tower: '도전의 탑', day: '요일 던전', raid: '레이드', world: '월드 보스', arena: '결투장', side: '영웅 외전', graid: '길드 레이드' };
 export interface Run {
   mode: Mode;
   /** 장(토벌·던전) · 층(탑) · 단계(요일) · 리그(결투장) · 영웅 id(외전) */
@@ -38,7 +39,7 @@ export const weekKey = (t = Date.now()) => {
 };
 export const kstDay = (t = Date.now()) => new Date(t + KST).getUTCDay();
 export const kstHour = (t = Date.now()) => new Date(t + KST).getUTCHours();
-const triesMax: Record<Mode, number> = { hunt: CC.hunt.tries, dungeon: CC.dungeon.tries, tower: Infinity, day: CC.day.tries, raid: CC.raid.tries, world: CC.world.tries, arena: CC.arena.tries, side: Infinity };
+const triesMax: Record<Mode, number> = { hunt: CC.hunt.tries, dungeon: CC.dungeon.tries, tower: Infinity, day: CC.day.tries, raid: CC.raid.tries, world: CC.world.tries, arena: CC.arena.tries, side: Infinity, graid: CONFIG.social.guild.raidTries };
 /** 하루 도전 키 (토벌·던전은 장마다 따로) */
 const tryKey = (r: Run) => (r.mode === 'hunt' || r.mode === 'dungeon' ? `${r.mode}:${r.arg}` : r.mode);
 function daily(s: Save, now: number) {
@@ -55,6 +56,7 @@ export function lockOf(r: Run, s: Save = S, now = Date.now()): string | null {
   if (r.mode === 'arena' && r.arg === 'last' && s.arena.best < CC.arena.lastUnlock) return `최후의 리그는 점수 ${CC.arena.lastUnlock} 이상이면 열려요`;
   if (r.mode === 'raid' && !bestCleared(s)) return '스토리 1-1을 먼저 깨 주세요';
   if (r.mode === 'side' && !owned(String(r.arg), s)) return '이 영웅이 있어야 해요';
+  if (r.mode === 'graid' && !s.guild.id) return '길드에 들어가면 열려요';
   return null;
 }
 export function useTry(r: Run, s: Save = S, now = Date.now()): boolean {
@@ -157,6 +159,11 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
       set.heroes = mine;
       return set;
     }
+    case 'graid': {
+      const gb = guildBoss(s, now);
+      const mobs = mobsAt(top(s) + CONFIG.social.guild.raidAdd, 'B', 6, { hp: 1000, boss: gb.name, patterns: [PATTERNS.slam, PATTERNS.focus, PATTERNS.quake] });
+      return base(s, `${MODE_NAME.graid} · ${CONFIG.social.guild.raidSec}초 동안 피해 주기`, mobs, 6, { limit: CONFIG.social.guild.raidSec, timeUp: 'win' });
+    }
     case 'side': {
       const id = String(r.arg);
       const act = r.sub ?? (s.side[id] ?? 0) + 1;
@@ -217,7 +224,17 @@ const give = (k: string, n: number, s: Save, o: Outcome) => {
 /** 전투가 끝났을 때 (승리·준 피해) → 보상 · 기록 */
 export function finishRun(r: Run, res: { win: boolean; dealt: number; heroes: string[] }, s: Save = S, rnd: () => number = Math.random, now = Date.now()): Outcome {
   const o: Outcome = { win: res.win, lines: [], items: [], gear: [], runes: [] };
+  track(`play:${r.mode}`, 1, s, now);
+  if (res.win || r.mode === 'world' || r.mode === 'graid') track(`win:${r.mode}`, 1, s, now);
   const c = typeof r.arg === 'number' ? r.arg : 1;
+  if (r.mode === 'graid') {
+    // 길드 레이드: 준 피해 = 이번 주 길드 기여 · 길드 코인
+    s.guild.raid += res.dealt;
+    s.guild.weekContrib += Math.round(res.dealt / CONFIG.social.guild.raidCoinPer) * 5;
+    give('guildCoin', 5 + Math.round(res.dealt / CONFIG.social.guild.raidCoinPer), s, o);
+    o.lines.push(`이번 판 피해 ${Math.round(res.dealt).toLocaleString('ko-KR')} · 이번 주 내 길드 레이드 피해 ${Math.round(s.guild.raid).toLocaleString('ko-KR')}`);
+    return o;
+  }
   if (r.mode === 'world') {
     // 월드 보스: 이긴 것과 상관없이 준 피해만큼 · 이번 주 누적
     if (s.world.week !== weekKey(now)) s.world = { week: weekKey(now), my: 0, best: 0 };

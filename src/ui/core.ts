@@ -2,12 +2,12 @@
 //  화면 흐름은 FLOW 표 하나 → tests/flow.test.ts 가 탭 수(로비에서 1탭/3탭 이내)를 확인하고 docs/FLOW.md 흐름도를 만든다
 //  상단 바(STAR_PLAN_v2 §1-8): ← 뒤로 + 화면 이름 / 행동력·금화·별가루 [+] / 우편·채팅 — 모든 화면 같은 자리 (타이틀·전투 빼고)
 import { CONFIG } from '../config';
-import { CHAT_LINES, CHAT_NAMES } from '../data/chat';
-import { heroOf, artOf, HEROES } from '../data/heroes';
-import { CHAPTER_MOBS } from '../data/mobs';
-import { CHAPTERS, SPEAKER, type Line } from '../data/story';
+import { heroOf, artOf } from '../data/heroes';
+import { SPEAKER, type Line } from '../data/story';
+import * as cloud from '../core/net/cloud';
+import { aiLine, mailUnread, pushChat } from '../game/social';
 import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
-import { cur, persist, S } from '../game/state';
+import { cur, persist, S, type ChatLine } from '../game/state';
 import { icon, iconText, T } from '../theme/tokens';
 
 export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as E;
@@ -31,12 +31,12 @@ export interface Screen {
   /** 상단 바 ← 뒤로 (없으면 로비로 · false면 버튼 없음) */
   back?: false | ((p: Record<string, unknown>) => void);
 }
-export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero' | 'bag' | 'shop' | 'portal';
-export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(여관)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점', portal: '콘텐츠' };
+export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero' | 'bag' | 'shop' | 'portal' | 'mission' | 'guild' | 'friends' | 'ranking' | 'mail' | 'settings';
+export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(여관)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점', portal: '콘텐츠', mission: '미션', guild: '길드', friends: '친구', ranking: '랭킹', mail: '우편', settings: '설정' };
 /** 화면 흐름: 이 화면에서 1탭으로 갈 수 있는 곳 [가는 곳, 누르는 것] (흐름도 · 탭 수 시험 · 실제 이동은 go()) */
 export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   title: [['battle', '원정 출발 (처음: 프롤로그 > 1-1)'], ['lobby', '원정 출발 (이어서)']],
-  lobby: [['adventure', '모험 (오른쪽 큰 버튼)'], ['portal', '월드 보스·레이드 (오른쪽 큰 버튼) · 콘텐츠 (아래 줄)'], ['prep', '왼쪽 「다음 스테이지」 > 전투 준비'], ['heroes', '영웅 (아래 줄)'], ['prep', '편성 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['title', '설정 > 타이틀']],
+  lobby: [['adventure', '모험 (오른쪽 큰 버튼)'], ['portal', '월드 보스·레이드 (오른쪽 큰 버튼) · 콘텐츠 (아래 줄)'], ['prep', '왼쪽 「다음 스테이지」 > 전투 준비'], ['heroes', '영웅 (아래 줄)'], ['prep', '편성 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['mission', '미션·업적 (아래 줄 · 진행 중)'], ['guild', '길드 (아래 줄)'], ['friends', '친구 (아래 줄)'], ['ranking', '랭킹 (아래 줄)'], ['mail', '우편 (상단 바)'], ['settings', '설정 (아래 줄)']],
   adventure: [['prep', '스테이지 고르고 「전투 준비」'], ['portal', '지도 위 토벌·상급 던전·탑 입구'], ['lobby', '뒤로']],
   prep: [['battle', '전투 시작'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로']],
   battle: [['portal', '콘텐츠 결과 > 콘텐츠'], ['lobby', '결과 > 로비'], ['adventure', '결과 > 모험'], ['battle', '결과 > 다시 / 다음'], ['prep', '패배 > 편성']],
@@ -45,6 +45,12 @@ export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   bag: [['lobby', '뒤로']],
   shop: [['lobby', '뒤로']],
   portal: [['prep', '콘텐츠·단계 고르기 > 전투 준비'], ['lobby', '뒤로']],
+  mission: [['adventure', '바로가기'], ['portal', '바로가기'], ['shop', '바로가기'], ['bag', '바로가기'], ['guild', '바로가기'], ['lobby', '뒤로']],
+  guild: [['prep', '길드 레이드 > 전투 준비'], ['lobby', '뒤로']],
+  friends: [['lobby', '뒤로']],
+  ranking: [['lobby', '뒤로']],
+  mail: [['lobby', '뒤로']],
+  settings: [['title', '타이틀로'], ['lobby', '뒤로']],
 };
 const screens: Partial<Record<ScreenId, Screen>> = {};
 export const register = (id: ScreenId, s: Screen) => (screens[id] = s);
@@ -81,7 +87,7 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
     <span class="cur" title="행동력">${icon('stamina')}<b data-sta></b><button class="plus" data-plus="sta">+</button></span>
     <span class="cur" title="금화">${icon('gold')}<b data-cur="gold">${fmt(cur('gold'))}</b><button class="plus" data-plus="gold">+</button></span>
     <span class="cur" title="별가루">${icon('stardust')}<b data-cur="stardust">${fmt(cur('stardust'))}</b><button class="plus" data-plus="stardust">+</button></span>
-    <button class="btn mini" data-ic="mail" title="우편">${icon('mail')}</button><button class="btn mini" data-ic="chat" title="채팅">${icon('chat')}</button></div>`;
+    <button class="btn mini" data-ic="mail" title="우편">${icon('mail')}${mailUnread() ? `<em class="badge">${mailUnread()}</em>` : ''}</button><button class="btn mini" data-ic="chat" title="채팅">${icon('chat')}</button></div>`;
   const b = $('[data-back]', bar);
   if (b) b.onclick = () => (typeof s.back === 'function' ? s.back(p) : go('lobby', {}, false));
   $$('[data-plus]', bar).forEach(
@@ -98,8 +104,8 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
         ]);
       }),
   );
-  $$('[data-ic]', bar).forEach((x) => (x.onclick = () => comingSoon(x.dataset.ic === 'mail' ? '우편' : '채팅 창', 'D')));
-  tk.onclick = () => comingSoon('채팅 창', 'D');
+  $$('[data-ic]', bar).forEach((x) => (x.onclick = () => (x.dataset.ic === 'mail' ? go('mail') : chatOpener())));
+  tk.onclick = () => chatOpener();
   syncBar();
 }
 const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
@@ -113,18 +119,41 @@ export function syncBar() {
   e.textContent = `${n}/${staMax()}${next ? ` ${mmss(next)}` : ''}`;
 }
 let chatT = 0;
-/** 채팅 한 줄 티커 (main 루프에서 매 프레임) */
+let pollT = 0;
+let lastReal = Date.now() - 3600e3;
+/** 채팅 한 줄 티커 (main 루프에서 매 프레임): AI 한 줄을 월드 채팅에 쌓고 보여 줌 · 로그인했으면 20초마다 실유저 채팅도 받아 섞음 */
 export function tickChat(dt: number) {
+  pollT -= dt;
+  if (pollT <= 0) {
+    pollT = 20;
+    void cloud.recentChat(lastReal).then((rows) => {
+      for (const r of rows) {
+        lastReal = Math.max(lastReal, r.at);
+        if (r.ch === 'guild' && r.guild !== S.guild.id) continue;
+        if (r.name === S.acc.name && S.chat.some((l) => l.me && l.text === r.text)) continue;
+        pushChat({ name: r.name, title: r.title ?? undefined, text: r.text, at: r.at, ch: r.ch }, S);
+        showTicker(S.chat[S.chat.length - 1]);
+      }
+    });
+  }
   chatT -= dt;
   if (chatT > 0) return;
   const [a, b] = CONFIG.chat.everySec;
   chatT = a + Math.random() * (b - a);
-  const pick = <X,>(xs: X[]) => xs[Math.floor(Math.random() * xs.length)];
-  const line = pick(CHAT_LINES).replace('{영웅}', pick(HEROES).name).replace('{보스}', pick(CHAPTER_MOBS.slice(0, 3)).boss).replace('{장}', `${pick(CHAPTERS.slice(0, 3)).name}`);
-  const tk = $('#ticker');
-  tk.innerHTML = `${icon('chat')} <b>${esc(pick(CHAT_NAMES))}</b> : ${esc(line)}`;
+  // AI 길드에 들었으면 가끔 길드 채팅도 (실멤버 길드는 실유저만)
+  const g = S.guild.id;
+  if (g && g !== 'real' && Math.random() < 0.3) pushChat(aiLine('guild'), S);
+  const line = aiLine('world');
+  pushChat(line, S);
+  showTicker(line);
   syncBar();
 }
+function showTicker(l: ChatLine) {
+  $('#ticker').innerHTML = `${icon('chat')} ${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}<b>${esc(l.name)}</b> : ${esc(l.text)}`;
+}
+/** 채팅 창 열기 (screensD가 등록) */
+let chatOpener: () => void = () => {};
+export const setChatOpener = (f: () => void) => (chatOpener = f);
 /** 뒤로 (없으면 로비) */
 export function back(fallback: ScreenId = 'lobby') {
   const h = history.pop();

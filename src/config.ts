@@ -199,7 +199,7 @@ export const CONFIG = {
   treasure: { slots: 1, atkPct: 0.08 },
   /** 상점 (현금 결제 없음): 영웅 값(별가루) · 재화·소모품 금화 값 · 꾸러미 */
   shop: {
-    hero: { founder: 2000, legend: 3000, new: 3000 },
+    hero: { founder: 3000, legend: 4000, new: 4000 },
     items: [
       { id: 'potion', name: '경험치 물약 ×5', give: { exp: 5 }, gold: 5000 },
       { id: 'enh', name: '강화석 ×20', give: { enh: 20 }, gold: 8000 },
@@ -241,6 +241,24 @@ export const CONFIG = {
     side: { acts: 3, add: 0, shards: 10, dust: 100 },
     /** 이정표 보상 별가루 (단계마다) */
     milestoneDust: 100,
+  },
+  /**
+   * D덩어리 소셜·운영 (STAR_PLAN_v2 §4)
+   */
+  social: {
+    /** 출석: 7일 돌림 보상 (별가루·금화·행동력) · 이벤트 출석(오픈 기념): 기간 · 날마다 별가루 */
+    attend: [{ gold: 10000 }, { stardust: 50 }, { exp: 5 }, { enh: 30 }, { stardust: 100 }, { optTicket: 1 }, { stardust: 300 }] as Record<string, number>[],
+    event: { name: '오픈 기념 출석', start: '2026-10-17', days: 14, dust: 100 },
+    /** 길드: 출석 코인 · 기여(금화 → 기여 점수·코인) · 길드 레이드(주간 · 하루 2 · 90초 · 준 피해 = 기여) */
+    guild: { attendCoin: 20, donate: [[10000, 10, 10], [50000, 60, 50], [200000, 250, 200]] as number[][], raidTries: 2, raidSec: 90, raidHp: 2e9, raidAdd: 15, raidCoinPer: 2e6, members: 30 },
+    /** 친구: 하루 선물 보내기·받기 (행동력) · 최대 친구 수 */
+    friends: { gift: 5, giftsPerDay: 10, max: 30 },
+    /** 랭커 칭호: 이 순위 안이면 칭호 */
+    titleTop: 3,
+    /** 클라우드 저장: 자동 올리기 간격(초) · 「체크인」 계정 이메일 꼴 */
+    cloud: { pushSec: 60, emailDomain: 'players.legacy-of-adventure.app', guestPrefix: 'g_' },
+    /** 월드 채팅: 보관 줄 수 · 내 글 길이 */
+    chat: { keep: 60, max: 60 },
   },
   /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
   econ: {

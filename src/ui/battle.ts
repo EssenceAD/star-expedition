@@ -116,7 +116,7 @@ function setup() {
   b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
   b.auto = keepAuto;
   b.speed = keepSpeed;
-  b.cutIns = flag('cutIn') ? 'big' : 'off';
+  b.cutIns = flag('cutIn') && !getPref('cutOff', false) ? 'big' : 'off';
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
   $('#bAuto i').textContent = iconText('auto');
   $('#bSpeed').textContent = `×${b.speed}`;
@@ -150,13 +150,14 @@ function showRunResult() {
     }
     win = series.wins >= 2;
   }
-  const o = finishRun(r, { win: win && !(r.mode === 'world'), dealt: r.mode === 'world' ? bb.stats.bossDealt : bb.stats.dealt, heroes: bb.heroes.filter((u) => !u.ai).map((u) => u.hero!.def.id) });
+  const scoreRun = r.mode === 'world' || r.mode === 'graid';
+  const o = finishRun(r, { win: win && !scoreRun, dealt: scoreRun ? bb.stats.bossDealt : bb.stats.dealt, heroes: bb.heroes.filter((u) => !u.ai).map((u) => u.hero!.def.id) });
   persist();
   const mvp = mvpOf(bb);
-  const head = r.mode === 'world' ? '결과' : win ? '승리!' : bb.why === 'time' ? '시간 초과' : '패배…';
+  const head = scoreRun ? '결과' : win ? '승리!' : bb.why === 'time' ? '시간 초과' : '패배…';
   const nextFloor = r.mode === 'tower' && win ? { ...r, arg: +r.arg + 1 } : r.mode === 'side' && win && (r.sub ?? 0) < CONFIG.content.side.acts ? { ...r, sub: (r.sub ?? 1) + 1 } : null;
   const left = triesText(r);
-  $('#result').innerHTML = `<h1 class="${win || r.mode === 'world' ? '' : 'lose'}">${head}</h1>
+  $('#result').innerHTML = `<h1 class="${win || scoreRun ? '' : 'lose'}">${head}</h1>
     <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
     <div class="rw">${o.items.map(([k, v]) => `<div><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
     <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div>`;
@@ -166,7 +167,7 @@ function showRunResult() {
       (btn.onclick = () => {
         const a = btn.dataset.a;
         if (a === 'lobby') go('lobby', {}, false);
-        else if (a === 'portal') go('portal', {}, false);
+        else if (a === 'portal') (r.mode === 'graid' ? go('guild', { tab: 'raid' }, false) : go('portal', { tab: r.mode }, false));
         else if (a === 'again') beginRun(r);
         else if (a === 'nextrun' && nextFloor) beginRun(nextFloor);
       }),
