@@ -167,7 +167,7 @@ button { font-family: inherit; cursor: pointer; }
 .gi .by { position: absolute; left: var(--s-xxs); bottom: var(--s-sm); font-size: var(--fs-xxs); color: var(--c-good); }
 .gi .lk { position: absolute; right: 0; bottom: var(--s-sm); font-size: var(--fs-xxs); }
 [data-screen="bag"] .pk .gi { width: 78px; height: 78px; font-size: var(--fs-h2); }
-.slots .gi { width: 82px; height: 82px; font-size: var(--fs-h2); }
+.slots .gi { width: 72px; height: 72px; font-size: var(--fs-h2); }
 .slots .gi .e { font-size: var(--fs-lg); }
 .gi[data-big] { width: 104px; height: 104px; font-size: var(--fs-h1); }
 .gi[data-big] .e { font-size: var(--fs-xl); }
