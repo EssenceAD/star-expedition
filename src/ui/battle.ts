@@ -14,6 +14,7 @@ import { persist, S } from '../game/state';
 import { elemColor, icon, iconText } from '../theme/tokens';
 import { $, $$, esc, fmt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
+import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
 import { view } from './view';
 
@@ -148,7 +149,7 @@ function showResult() {
       <p class="why">클리어 ${iconText('check')} · 아무도 안 쓰러짐 ${allUp ? iconText('check') : iconText('cross')} · ${bb.setup.starTime}초 안 ${bb.stats.time <= bb.setup.starTime ? iconText('check') : iconText('cross')}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP ${mvp.name} ${shortNum(mvp.dealt)}
       ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><b class="good">레벨 업!</b> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
-      <div class="rw">${items.map(([k, n, v]) => `<div><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}</div>
+      <div class="rw">${items.map(([k, n, v]) => `<div><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
       ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}`;
     r.hidden = false;
     wire(next);
@@ -197,7 +198,7 @@ function wire(next?: StageId) {
   });
 }
 export const repeatText = (h: NonNullable<ReturnType<typeof repeatBattle>>) =>
-  `반복 전투 ${h.runs}판: 금화 +${fmt(h.gold)} · 경험치 +${fmt(h.exp)}${h.enh ? ` · 강화석 +${h.enh}` : ''}${h.ups.length ? ` · 레벨 업 ${h.ups.map((id) => heroOf(id).name).join('·')}` : ''}${h.accUp ? ' · 원정대 레벨 업!' : ''}`;
+  `반복 전투 ${h.runs}판: 금화 +${fmt(h.gold)} · 경험치 +${fmt(h.exp)}${h.enh ? ` · 강화석 +${h.enh}` : ''}${h.gear ? ` · 장비 ${h.gear}개` : ''}${h.ups.length ? ` · 레벨 업 ${h.ups.map((id) => heroOf(id).name).join('·')}` : ''}${h.accUp ? ' · 원정대 레벨 업!' : ''}`;
 /** 행동력 쓰고 → 파티를 필드에 세우고 → 대사(있으면) → 전투 시작 */
 function begin(s: StageId) {
   const cost = firstRun ? 0 : stageCost(s.d);

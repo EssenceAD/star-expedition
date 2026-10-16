@@ -133,6 +133,35 @@ button { font-family: inherit; cursor: pointer; }
 .skl { display: flex; gap: var(--s-sm); align-items: flex-start; font-size: var(--fs-md); }
 .skl .si { width: 30px; height: 30px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: var(--r-cutSm); border: var(--b-base) solid var(--c-line); background: var(--c-panelDeep); font-size: var(--fs-xl); }
 
+/* ───────── 영웅 정보 · 장비 · 가방 · 상점 (B) ───────── */
+.hlist { width: 92px; flex: none; }
+.hrow { height: 44px; display: flex; align-items: center; gap: var(--s-xs); padding: 0 var(--s-xs); text-align: left; }
+.hrow.on { border-color: var(--c-gold); box-shadow: var(--sh-glow); }
+.eq { width: 230px; flex: none; }
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-xs); }
+.sl { align-items: center; gap: var(--s-xxs); }
+.gi { position: relative; width: 50px; height: 50px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--r-md); border: var(--b-thick) solid var(--g-common); background: var(--c-panelDeep); color: var(--c-text); font-size: var(--fs-xl); }
+.gi.empty { border-style: dashed; border-color: var(--c-line); }
+.gi.g-uncommon { border-color: var(--g-uncommon); } .gi.g-rare { border-color: var(--g-rare); } .gi.g-epic { border-color: var(--g-epic); } .gi.g-legend { border-color: var(--g-legend); box-shadow: var(--sh-glow); }
+.gi.rune.r1 { border-color: var(--g-uncommon); } .gi.rune.r2 { border-color: var(--g-rare); } .gi.rune.r3 { border-color: var(--g-epic); } .gi.rune.r4 { border-color: var(--g-legend); } .gi.rune.r5 { border-color: var(--g-ancient); }
+.gi.ex.on { border-color: var(--c-gold); }
+.gi .t { position: absolute; left: var(--s-xxs); top: 0; font-size: var(--fs-xxs); font-weight: var(--fw-black); color: var(--c-cool); }
+.gi .e { position: absolute; right: var(--s-xxs); top: 0; font-size: var(--fs-xxs); font-weight: var(--fw-black); color: var(--c-btnHi2); }
+.gi .st { position: absolute; bottom: 0; font-size: var(--fs-xxs); color: var(--c-starOn); }
+.gi .by { position: absolute; left: var(--s-xxs); bottom: var(--s-sm); font-size: var(--fs-xxs); color: var(--c-good); }
+.gi .lk { position: absolute; right: 0; bottom: var(--s-sm); font-size: var(--fs-xxs); }
+.gi.cur-cell { width: 76px; height: 76px; gap: var(--s-xxs); }
+.pk { display: flex; flex-wrap: wrap; gap: var(--s-xs); align-content: flex-start; }
+.modal .gp { min-width: 620px; max-width: 700px; max-height: 370px; overflow-y: auto; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-lg); }
+.pick { border-top: var(--b-thin) solid var(--c-line); padding-top: var(--s-sm); display: flex; flex-direction: column; gap: var(--s-xs); }
+.pick .pk { max-height: 120px; }
+.shopcats { width: 110px; flex: none; }
+.shopcats .tab { height: 34px; text-align: left; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s-sm); }
+.shopc { position: relative; align-items: center; text-align: center; gap: var(--s-xs); }
+.shopc .badge { right: var(--s-xs); top: var(--s-xs); }
+
 /* ───────── 전투 HUD ───────── */
 #hud { position: absolute; inset: 0; pointer-events: none; }
 #hud button { pointer-events: auto; }

@@ -5,11 +5,11 @@ import { activeBonds, BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { CHAPTER_MOBS } from '../data/mobs';
-import { descPassive, descSkill } from '../data/skills';
 import { CHAPTERS } from '../data/story';
 import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/account';
+import { freeSummonLeft } from '../game/gear';
 import { claimOffline, computeOffline } from '../game/idle';
-import { expNeed, heroPower, levelCap, owned, statsOf } from '../game/heroes';
+import { heroPower, owned } from '../game/heroes';
 import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
@@ -84,8 +84,8 @@ register('lobby', {
         <button class="round main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
       </div>
       <div class="dock">
-        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['soon:가방|B', '가방', 'bag'], ['soon:미션|D', '미션', 'mission'], ['soon:업적|D', '업적', 'achieve'], ['soon:친구|D', '친구', 'friend'], ['soon:상점|B', '상점', 'shop'], ['soon:길드|D', '길드', 'guild'], ['soon:랭킹|D', '랭킹', 'ranking'], ['title', '설정', 'settings']]
-          .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'soon:상점|B' ? '<em class="badge">FREE</em>' : ''}</button>`)
+        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['soon:미션|D', '미션', 'mission'], ['soon:업적|D', '업적', 'achieve'], ['soon:친구|D', '친구', 'friend'], ['shop', '상점', 'shop'], ['soon:길드|D', '길드', 'guild'], ['soon:랭킹|D', '랭킹', 'ranking'], ['title', '설정', 'settings']]
+          .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
           .join('')}
       </div>`;
     $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never)));
@@ -256,7 +256,7 @@ register('prep', {
   },
 });
 
-// ───────── 영웅 목록 · 정보 ─────────
+// ───────── 영웅 목록 (정보 화면은 screensB.ts) ─────────
 register('heroes', {
   title: () => `${icon('heroes')} 영웅 (${HEROES.filter((h) => owned(h.id)).length} / ${HEROES.length})`,
   enter(root) {
@@ -270,32 +270,5 @@ register('heroes', {
       $$('[data-h]', root).forEach((b) => (b.onclick = () => go('hero', { id: b.dataset.h })));
     };
     draw();
-  },
-});
-register('hero', {
-  title: (p) => `${heroOf(p.id as string).name} · ${heroOf(p.id as string).title}`,
-  back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : go('heroes', {}, false)),
-  enter(root, p) {
-    const h = heroOf(p.id as string);
-    const own = owned(h.id);
-    const lv = S.heroes[h.id]?.lv ?? 1;
-    const st = statsOf(h.id);
-    const bonds = BONDS.filter((x) => x.members.includes(h.id));
-    root.innerHTML = `<div class="body">
-        <div class="panel col side">
-          <div class="row"><div class="pt l" style="background-image:url(${heroPortrait(h.id)})"></div><div class="col"><b>${h.name}</b><span class="xs dim">${JOBS[h.job].name} · ${ZONE_NAME[zoneOf(h.id)]} · ${h.gender === 'm' ? '남' : '여'} · ${{ founder: '창립 멤버', legend: '「체크인」 전설', new: '새 영웅' }[h.origin]}</span><span class="xs mute">${esc(h.concept)}</span></div></div>
-          <div class="kv"><span>레벨</span><b>${lv} / ${levelCap(h.id)}${own ? ` <span class="xs dim">(${fmt(S.heroes[h.id].exp)} / ${fmt(expNeed(lv))})</span>` : ''}</b></div>
-          <div class="kv"><span>전투력</span><b>${fmt(heroPower(h.id))}</b></div>
-          <div class="kv"><span>체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>방어력</span><b>${fmt(st.def)}</b></div>
-          <div class="kv"><span>치명타</span><b>${Math.round(st.crit * 100)}% · ×${st.critDmg}</b></div>
-          <div class="kv"><span>무기</span><b>${JOBS[h.job].weapon}${h.exWeapon ? ` · 전용 「${h.exWeapon}」` : ''}</b></div>
-          <span class="xs mute">장비 6칸·각성·스킬 레벨·초월은 B덩어리</span>
-        </div>
-        <div class="col grow scroll">
-          <div class="panel col"><b>패시브 · ${h.passive.name}</b><span class="md dim">${descPassive(h.passive)}</span></div>
-          ${h.skills.map((s, i) => `<div class="panel skl"><div class="si">${icon(s.icon)}</div><div class="col grow"><b>${i + 1}. ${s.name} <span class="xs mute">마나 ${s.cost} · ${s.cd}초</span></b><span class="dim">${descSkill(s)}</span></div></div>`).join('')}
-          <div class="panel col"><b>인연</b>${bonds.map((x) => `<div class="md"><b class="gold">${x.name}</b> <span class="dim">${x.members.map((m) => heroOf(m).name).join(' · ')} (${x.need}명)</span></div>`).join('') || '<span class="xs mute">인연 조합 없음</span>'}</div>
-        </div>
-      </div>`;
   },
 });

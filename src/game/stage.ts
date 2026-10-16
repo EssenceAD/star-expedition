@@ -9,6 +9,8 @@ import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
 import { addExp, join, statsOf } from './heroes';
 import { addCur, dayKey, partyIds, S, type Save } from './state';
 import { boostMult, stageCost, useStamina } from './account';
+import { bagFull, dropGear, makeRune } from './gear';
+import type { Gear, Rune } from './state';
 import { JOBS, ZONES } from '../data/jobs';
 
 const C = CONFIG.story;
@@ -124,13 +126,13 @@ export function baseReward(st: StageId, rnd: () => number = Math.random, ids: st
   return {
     gold: Math.round(R.gold.base * Math.pow(R.gold.grow, p) * dm * (chest ? R.chest.gold : 1) * (isBoss(st) ? 2 : 1)),
     exp: Math.round(R.exp.base * Math.pow(R.exp.grow, p) * dm * (isBoss(st) ? 2 : 1)),
-    stardust: 0,
+    stardust: rnd() < R.dust.chance ? R.dust.n * (st.d + 1) : 0,
     enh: rnd() < R.enh.chance ? R.enh.n * (st.d + 1) : 0,
     chest,
   };
 }
 /** 보상 주기 (금화는 오늘 판 수로 줄어듦 · 부스터면 전리품(금화·강화석) 2배 · 경험치는 편성 영웅 모두) → 실제 받은 양 · 레벨업한 영웅 */
-export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now()) {
+export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now(), st?: StageId, rnd: () => number = Math.random) {
   if (s.day.key !== dayKey(now)) s.day = { key: dayKey(now), runs: 0 };
   s.day.runs++;
   const bm = boostMult(s, now);
@@ -141,7 +143,19 @@ export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now()) {
   addCur('enh', enh, s);
   const ups: string[] = [];
   for (const id of ids) if (addExp(id, r.exp, s)) ups.push(id);
-  return { ...r, gold, enh, ups, boosted: bm > 1 };
+  // 장비 드롭 (스테이지 판만 · 가방이 가득이면 없음) · 보스 스테이지 룬
+  const gear: Gear[] = [];
+  const runes: Rune[] = [];
+  if (st) {
+    const g = dropGear(powIdx(st), st.d, s, rnd);
+    if (g) gear.push(g);
+    if (isBoss(st) && !bagFull(s) && rnd() < CONFIG.gear.drop.runeBoss) {
+      const ru = makeRune(Math.min(5, st.d + (rnd() < 0.2 ? 1 : 0)), s, rnd);
+      s.items[ru.uid] = ru;
+      runes.push(ru);
+    }
+  }
+  return { ...r, gold, enh, ups, boosted: bm > 1, gear, runes };
 }
 
 export interface ClearInfo {
@@ -170,7 +184,7 @@ export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () =
   const r = baseReward(st, rnd, ids);
   if (first) r.stardust += isBoss(st) ? R.firstDustBoss : R.firstDust;
   if (firstThree) r.stardust += R.threeStarDust;
-  const got = grant(r, ids, s, now);
+  const got = grant(r, ids, s, now, st, rnd);
   // 장 클리어(보통 x-10 처음) → 지역 전설 합류
   let joined: string | null = null;
   if (first && isBoss(st) && st.d === 0) {
@@ -192,17 +206,19 @@ export interface Haul {
   chests: number;
   ups: string[];
   accUp: number;
+  gear: number;
 }
 /** n판을 바로 끝냄 — 행동력이 모자라면 할 수 있는 만큼(0판이면 null) */
 export function repeatBattle(st: StageId, n: number, s: Save = S, rnd: () => number = Math.random, now = Date.now()): Haul | null {
   if (!canRepeat(st, s)) return null;
-  const h: Haul = { runs: 0, gold: 0, exp: 0, enh: 0, chests: 0, ups: [], accUp: 0 };
+  const h: Haul = { runs: 0, gold: 0, exp: 0, enh: 0, chests: 0, ups: [], accUp: 0, gear: 0 };
   const ids = partyIds(s);
   for (let i = 0; i < n; i++) {
     const u = useStamina(stageCost(st.d), s, now);
     if (!u.ok) break;
     h.accUp += u.up;
-    const g = grant(baseReward(st, rnd, ids), ids, s, now);
+    const g = grant(baseReward(st, rnd, ids), ids, s, now, st, rnd);
+    h.gear += g.gear.length;
     h.runs++;
     h.gold += g.gold;
     h.exp += g.exp;
