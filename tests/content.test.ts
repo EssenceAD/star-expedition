@@ -131,3 +131,38 @@ describe('콘텐츠', () => {
     expect(claimMiles(s)).toBe(0);
   });
 });
+
+describe('결투장 직접 고르기 (영광의 리그 밴픽 · 최후의 리그 편성)', () => {
+  const rich = () => {
+    const s = newSave(NOW);
+    for (const id of ['luna', 'aria', 'grom', 'ceres', 'jin', 'sylas']) s.heroes[id] = newHero();
+    lv(s, 20);
+    return s;
+  };
+  it('영광의 리그: 내가 고른 상대 영웅이 빠지고 · 상대가 막은 내 영웅 대신 고른 영웅이 들어감', async () => {
+    const { gloryBanOf } = await import('../src/game/content');
+    const s = rich();
+    const opp = arenaOpps(s, NOW)[0];
+    const pick = opp.party[3].def.id;
+    const myBan = gloryBanOf(s);
+    const set = buildRun({ mode: 'arena', arg: 'glory', sub: 0, ban: pick, swap: 'luna' }, s, NOW);
+    const foes = set.waves[0].map((m) => m.hero?.def.id);
+    expect(foes).not.toContain(pick);
+    expect(foes.length).toBe(3);
+    const mine = set.heroes.map((h) => h.def.id);
+    expect(mine).not.toContain(myBan);
+    expect(mine).toContain('luna');
+    expect(mine.length).toBe(4);
+  });
+  it('최후의 리그: 직접 편성한 파티 2·3을 씀 · 겹치거나 없는 영웅이면 자동으로', async () => {
+    const { lastParties, validLast } = await import('../src/game/content');
+    const s = rich();
+    s.arena.parties = [['luna', 'aria'], ['grom']];
+    expect(lastParties(s)).toEqual([s.party, ['luna', 'aria'], ['grom']]);
+    s.arena.parties = [['luna', s.party[0]], []];
+    expect(validLast(s.arena.parties, s)).toBe(false);
+    expect(lastParties(s)[1].length).toBeGreaterThan(0);
+    const set = buildRun({ mode: 'arena', arg: 'last', sub: 0, leg: 1 }, { ...s, arena: { ...s.arena, parties: [['jin', 'sylas'], ['ceres']] } }, NOW);
+    expect(set.heroes.map((h) => h.def.id).sort()).toEqual(['jin', 'sylas']);
+  });
+});

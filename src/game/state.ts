@@ -120,7 +120,7 @@ export interface SaveV6 {
   /** 월드 보스: 이번 주 · 내 누적 피해 · 내 최고 한 판 */
   world: { week: string; my: number; best: number };
   /** 결투장: 점수 · 최고 · 승패 · 최근 기록 */
-  arena: { score: number; best: number; win: number; lose: number; log: { league: string; opp: string; win: boolean; at: number }[] };
+  arena: { score: number; best: number; win: number; lose: number; log: { league: string; opp: string; win: boolean; at: number }[]; /** 최후의 리그 파티 2·3 (직접 편성 · 없으면 자동) */ parties?: string[][] };
   /** 영웅 외전: 영웅별 깬 막 수 · 전용 보물 해금 */
   side: Record<string, number>;
   treasure: Record<string, boolean>;

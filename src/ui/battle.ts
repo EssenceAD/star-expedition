@@ -8,6 +8,7 @@ import { combatSynth } from '../core/audio/combatSfx';
 import { heroOf } from '../data/heroes';
 import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
+import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
 import { stageCost, useStamina } from '../game/account';
 import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
@@ -233,13 +234,17 @@ function beginRun(r: Run) {
     const id = String(r.arg);
     const h = heroOf(id);
     const act = r.sub ?? 1;
-    const lines: Line[] = act === 1 ? [['narr', `${h.name} 외전 — 「${h.title}」`], [id, `${h.concept.split('.')[0]}… 그 이야기를 들려줄게.`]] : act === CONFIG.content.side.acts ? [[id, '여기가 마지막이야. 같이 끝내자.']] : [[id, '조금만 더 가 보자.']];
+    const own = SIDE[id];
+    const lines: Line[] = own ? [...(act === 1 ? [['narr', `${h.name} 외전 — 「${own.title}」`] as Line] : []), ...own.acts[act - 1]] : act === 1 ? [['narr', `${h.name} 외전 — 「${h.title}」`], [id, `${h.concept.split('.')[0]}… 그 이야기를 들려줄게.`]] : act === CONFIG.content.side.acts ? [[id, '여기가 마지막이야. 같이 끝내자.']] : [[id, '조금만 더 가 보자.']];
     talking = true;
     playTalk(lines, () => (talking = false));
   }
 }
 
 function showResult() {
+  // 외전 마지막 막을 이기면 끝 대사 → 결과
+  const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
+  if (sideEnd) return playTalk(sideEnd, showRunResult);
   if (run) return showRunResult();
   const bb = b!;
   const win = bb.phase === 'win';

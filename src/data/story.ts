@@ -91,4 +91,5 @@ export const CHAPTERS: ChapterDef[] = [
   { n: 10, region: 'deep', name: '심연의 바닥', star: '마지막 별' },
 ];
 /** 대사의 말하는 사람 이름 (영웅이 아닌 경우) */
-export const SPEAKER: Record<string, string> = { narr: '', cult: '교단원', boss: '' };
+/** 영웅이 아닌 말하는 사람 (외전: 재희 · 정령견 셋) */
+export const SPEAKER: Record<string, string> = { narr: '', cult: '교단원', boss: '', kid: '재희', dogs: '딸기·망고·모찌' };

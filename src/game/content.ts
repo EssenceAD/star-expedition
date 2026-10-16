@@ -27,6 +27,9 @@ export interface Run {
   sub?: number;
   /** 최후의 리그: 몇 번째 판 (0~2 · 파티 3개) */
   leg?: number;
+  /** 영광의 리그 밴픽: 내가 막은 상대 영웅 id · 상대가 막은 내 영웅 대신 들어갈 영웅 id */
+  ban?: string;
+  swap?: string;
 }
 
 // ───────── 날 · 주 · 하루 도전 수 ─────────
@@ -151,10 +154,12 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
         foes = aiParty(hashStr(opp.name) + leg * 13, opp.party[0].lv, 2);
       }
       if (r.arg === 'glory') {
-        // 영광의 리그: 서로 한 명씩 금지 — 나는 상대 가장 센 영웅을 막고, 상대는 내 가장 센 영웅을 막음 (1단계: 자동 밴픽)
-        foes = foes.filter((f) => f !== [...foes].sort((a, b) => b.st.atk - a.st.atk)[0]);
-        const ban = [...mine].sort((a, b) => b.st.atk - a.st.atk)[0];
-        mine = mine.filter((m) => m !== ban);
+        // 영광의 리그: 서로 한 명씩 금지 — 내가 고른 상대 영웅(r.ban · 안 고르면 가장 센 영웅)을 막고, 상대는 내 가장 센 영웅을 막음 → 고른 대신할 영웅(r.swap)이 들어감
+        const myBan = gloryBanOf(s);
+        foes = foes.filter((f) => f.def.id !== (r.ban && foes.some((x) => x.def.id === r.ban) ? r.ban : [...foes].sort((a, b) => b.st.atk - a.st.atk)[0].def.id));
+        const keep = partyIds(s).filter((id) => id !== myBan);
+        if (r.swap && owned(r.swap, s) && !partyIds(s).includes(r.swap)) keep.push(r.swap);
+        mine = buildHeroes({ ...s, party: keep });
       }
       const set = base(s, `${MODE_NAME.arena} · ${LEAGUE_NAME[r.arg as League]} · ${opp.name}`, [foes.map((f) => pvpMob(f))], 6, { limit: 90 });
       set.heroes = mine;
@@ -204,10 +209,25 @@ export function arenaOpps(s: Save = S, now = Date.now()): Opp[] {
     return { name: CHAT_NAMES[(seed + i * 7) % CHAT_NAMES.length], score: Math.max(0, Math.round(s.arena.score + (k - 1) * 600 + (r() - 0.5) * 60)), party, power: party.reduce((a, h) => a + Math.round(h.st.atk * 6 + h.st.hp * 0.5 + h.st.def * 1.5), 0) };
   });
 }
-/** 최후의 리그: 내 파티 3개 (편성 파티 + 나머지를 전투력 순으로 4명씩) */
-export function lastParties(s: Save = S): string[][] {
+/** 영광의 리그: 상대가 막는 내 영웅 (내 파티에서 공격력이 가장 센 영웅) */
+export function gloryBanOf(s: Save = S): string {
+  return [...buildHeroes(s)].sort((a, b) => b.st.atk - a.st.atk)[0].def.id;
+}
+/** 최후의 리그 자동 편성: 편성 파티 빼고 전투력 순으로 4명씩 */
+export function autoLast(s: Save = S): string[][] {
   const rest = HEROES.map((h) => h.id).filter((id) => owned(id, s) && !partyIds(s).includes(id)).sort((a, b) => heroPower(b, s) - heroPower(a, s));
-  return [partyIds(s), rest.slice(0, 4), rest.slice(4, 8)].filter((p) => p.length);
+  return [rest.slice(0, 4), rest.slice(4, 8)];
+}
+/** 직접 편성한 파티 2·3이 쓸 수 있나 (가진 영웅 · 파티 1과 안 겹침 · 서로 안 겹침 · 4명까지) */
+export function validLast(ps: string[][] | undefined, s: Save = S): ps is string[][] {
+  if (!ps || ps.length !== 2) return false;
+  const all = ps.flat();
+  return ps.every((p) => p.length <= 4) && all.every((id) => owned(id, s) && !partyIds(s).includes(id)) && new Set(all).size === all.length;
+}
+/** 최후의 리그: 내 파티 3개 (편성 파티 + 직접 편성한 2·3 · 없거나 못 쓰면 자동) */
+export function lastParties(s: Save = S): string[][] {
+  const two = validLast(s.arena.parties, s) && s.arena.parties.some((p) => p.length) ? s.arena.parties : autoLast(s);
+  return [partyIds(s), ...two].filter((p) => p.length);
 }
 
 // ───────── 끝: 보상 ─────────

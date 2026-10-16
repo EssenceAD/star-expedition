@@ -110,7 +110,7 @@ button { font-family: inherit; cursor: pointer; }
 .stg.boss { border-color: var(--c-warn); }
 .stg.sel { border-color: var(--c-gold); box-shadow: var(--sh-glow); background: var(--c-panelHi); }
 .stg .stars { font-size: var(--fs-sm); }
-.side { width: 280px; flex: none; }
+.side { width: 280px; flex: none; min-height: 0; overflow-y: auto; }
 .kv { display: flex; justify-content: space-between; gap: var(--s-md); font-size: var(--fs-md); }
 .kv b { color: var(--c-star); font-family: var(--f-num); }
 .mobs { display: flex; flex-wrap: wrap; gap: var(--s-xs); }
@@ -309,3 +309,13 @@ input.tab { color: var(--c-text); }
 .why { font-size: var(--fs-md); color: var(--c-textSoft); margin: 0; text-align: center; line-height: 1.5; }
 #rotate { display: none; position: fixed; inset: 0; background: var(--c-bg); color: var(--c-text); font-size: var(--fs-h2); font-weight: var(--fw-bold); align-items: center; justify-content: center; z-index: 99; }
 @media (orientation: portrait) and (max-width: 700px) { #rotate { display: flex; } }
+/* 영광의 리그 밴픽 · 최후의 리그 편성 */
+.banpick .pcard { min-height: 0; width: 56px; cursor: pointer; border: var(--b-base) solid var(--c-line); background: var(--c-panelDeep); color: var(--c-text); }
+.banpick .pcard.ban { border-color: var(--c-warn); box-shadow: var(--sh-glow); filter: grayscale(0.6); }
+.banpick .pt.s, .lfp .pt.s { cursor: pointer; border: var(--b-base) solid var(--c-line); }
+.banpick .pt.s.on { border-color: var(--c-good); box-shadow: var(--sh-glowHi); }
+.lfp { flex: 1; align-items: flex-start; border: var(--b-base) solid var(--c-line); color: var(--c-text); }
+.lfp.on { border-color: var(--c-gold); box-shadow: var(--sh-glow); }
+.lfp .pt.s.empty { border-style: dashed; background: var(--c-panelDeep); }
+.lfr { max-height: 150px; margin-top: var(--s-sm); }
+.row.wrap { flex-wrap: wrap; }
