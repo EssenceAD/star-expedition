@@ -35,10 +35,11 @@ const V = {
   },
   D: {
     name: '밝은 원정',
-    concept: '형철 10/17 요청 — A의 장식·아이콘·폰트·등급 색 그대로, 패널은 크림·아이보리 양피지 + 금 테두리(B 정보 패널 색이 메인), 강조는 하늘색 주 버튼·주황 특수 버튼, 화면 바탕은 밝은 일러스트. 남색은 글자와 얇은 테두리에만. 어두운 톤은 심연의 탑·레이드·밤 이벤트에서만 예외.',
+    concept: '형철 10/17 요청 — A의 장식·아이콘·등급 색 + C의 폰트, 패널은 크림·아이보리 양피지 + 금 테두리(B 정보 패널 색이 메인), 강조는 하늘색 주 버튼·주황 특수 버튼, 화면 바탕은 밝은 일러스트. 남색은 글자와 얇은 테두리에만. 어두운 톤은 심연의 탑·레이드·밤 이벤트에서만 예외.',
     c: { bg: '#f6eedb', bg2: '#fffaf0', panel: '#fbf3e0', edge: '#c9a14a', edge2: '#2b3a6b', parch: '#ead8b0', parchInk: '#1d2a58', text: '#1d2a58', dim: '#5b6488', btn: '#4fb3ff', btn2: '#2a7fd0', btnInk: '#06203a', special: '#ff9a3c', alert: '#e8414f', good: '#2f9a4a', glow: 'rgba(232,197,106,0.65)' },
     grade: ['#c8c8d8', '#7ee08a', '#58b8ff', '#c79bff', '#ffb347', '#ff6a52'],
-    font: { title: ['Gowun Batang', 700], body: ['Noto Sans KR', 400], bodyB: ['Noto Sans KR', 900], num: ['Cinzel', 900] },
+    // 폰트는 C 것 (형철 10/17: 「D에 글씨체는 C」)
+    font: { title: ['Black Han Sans', 400], body: ['IBM Plex Sans KR', 400], bodyB: ['IBM Plex Sans KR', 700], num: ['Oxanium', 800] },
     motif: 'constellation',
     light: true,
   },
