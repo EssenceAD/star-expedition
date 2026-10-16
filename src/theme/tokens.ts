@@ -141,7 +141,7 @@ export const T = {
   },
   /** 아이콘: 지금은 글자 · 2단계에서 그림 경로로 */
   icon: {
-    gold: '🪙', stardust: '✦', token: '🎟', enh: '🔷', tierMat: '🐉', optTicket: '🎫', rune: '🔶', guildCoin: '🛡', arenaCoin: '⚔', towerCoin: '🗼', exp: '🧪', skillBook: '📘', transStone: '💠', exShard: '🗡', treasureShard: '🏺', awakenStone: '🌟', chest: '🎁', bossMat: '🟠', stamina: '⚡', booster: '🚀', badge: '●', achieve: '🎖', friend: '🤝', raid: '🐉', world: '🌋', zone_front: '🛡', zone_mid: '🗡', zone_back: '🏹', join: '🎉', repeat: '🔁', battle: '⚔',
+    gold: '🪙', stardust: '✦', token: '🎟', enh: '🔷', tierMat: '🐉', optTicket: '🎫', rune: '🔶', guildCoin: '🛡', arenaCoin: '⚔', towerCoin: '🗼', exp: '🧪', skillBook: '📘', transStone: '💠', exShard: '🗡', treasureShard: '🏺', awakenStone: '🌟', chest: '🎁', bossMat: '🟠', stamina: '⚡', booster: '🚀', badge: '●', achieve: '🎖', friend: '🤝', raid: '🐉', world: '🌋', zone_front: '🛡', zone_mid: '🗡', zone_back: '🏹', join: '🎉', repeat: '🔁', battle: '⚔', summon: '🎲', craft: '⚒',
     adventure: '🗺', content: '⚔', heroes: '👥', formation: '🧩', bag: '🎒', recruit: '🏠', shop: '🛒', guild: '🏰', ranking: '🏆', mail: '✉', mission: '📜', settings: '⚙', chat: '💬', back: '◀', close: '✕', lock: '🔒', star: '★', starOff: '☆', check: '✓', cross: '✗', auto: '⟳', sweep: '⏩', offline: '💤', warn: '⚠', next: '▶', open: '▸', fold: '◂', rotate: '📱↻', sparkle: '✦', story: '📖', skip: '⏭',
     tower: '🗼', day: '📅', coop: '🐉', guildRaid: '🛡', worldBoss: '🌋', arena: '🏟',
     weapon: '🗡', armor: '🛡', acc: '💍', shield: '🛡', guard: '✦', taunt: '📯', regen: '❀', stun: '💫', silence: '🤐', slow: '❄', burn: '🔥', atkUp: '⬆', atkDown: '⬇', spdUp: '⏫', fury: '🔥', critUp: '🎯',

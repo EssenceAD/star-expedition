@@ -18,6 +18,7 @@ export interface Mods {
   mana: number;
   dmgCut: number;
   skillDmg: number;
+  bossDmg: number;
 }
 export interface Unit {
   uid: number;
@@ -142,7 +143,7 @@ export interface Battle {
 
 let uidN = 1;
 let rand: () => number = Math.random;
-const NO_MODS = (): Mods => ({ atk: 0, crit: 0, spd: 0, heal: 0, mana: 0, dmgCut: 0, skillDmg: 0 });
+const NO_MODS = (): Mods => ({ atk: 0, crit: 0, spd: 0, heal: 0, mana: 0, dmgCut: 0, skillDmg: 0, bossDmg: 0 });
 function unit(side: Unit['side'], name: string, o: Partial<Unit> & Pick<Unit, 'max' | 'atk' | 'def' | 'rate' | 'x' | 'y' | 'anims' | 'h'>): Unit {
   return {
     uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
@@ -153,6 +154,16 @@ function unit(side: Unit['side'], name: string, o: Partial<Unit> & Pick<Unit, 'm
 /** 패시브 · 인연 → 능력치 보정 (전투 시작 때 한 번) */
 function applyMods(b: Battle) {
   const solo = b.setup.bonds.length === 0;
+  // 장비·초월 등에서 온 비율 (crit는 Unit.crit에 이미 들어 있음)
+  for (const u of b.heroes) {
+    const st = u.hero!.st;
+    u.mod.spd += st.spd;
+    u.mod.heal += st.heal;
+    u.mod.mana += st.mana;
+    u.mod.dmgCut += st.dmgCut;
+    u.mod.skillDmg += st.skillDmg;
+    u.mod.bossDmg += st.bossDmg;
+  }
   for (const u of b.heroes) {
     const p = u.hero!.def.passive.p;
     const targets = p.k === 'stat' && p.team ? b.heroes : [u];
@@ -313,7 +324,7 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
   const critP = by.crit + by.mod.crit + sv(by, 'critUp');
   const crit = o.crit ?? rand() < critP;
   const atk = effAtk(by);
-  let dmg = atk * mult * (crit ? by.critDmg : 1) * (0.92 + rand() * 0.16) * (o.skill ? 1 + by.mod.skillDmg : 1);
+  let dmg = atk * mult * (crit ? by.critDmg : 1) * (0.92 + rand() * 0.16) * (o.skill ? 1 + by.mod.skillDmg : 1) * (to.mob?.boss ? 1 + by.mod.bossDmg : 1);
   dmg *= 1 - Math.min(K.defMax, to.def / (to.def + K.defK * by.atk));
   dmg *= 1 - dmgCut(b, to);
   dmg = Math.max(1, Math.round(dmg));
@@ -469,6 +480,8 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
   u.trail = durOf(u.anims, s.act);
   const times = hitTimes(u.anims, s.act);
   const at0 = u.at;
+  /** 스킬 레벨 배수 (피해·회복·보호막) */
+  const lvM = 1 + CONFIG.growth.skill.perLv * ((h.st.skillLv?.[i] ?? 1) - 1);
   for (const e of s.eff) {
     if (e.k === 'dmg') {
       const n = e.n ?? 1;
@@ -479,7 +492,7 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
           fn: () => {
             for (const m of mobTargets(b, e.to)) {
               hitFx(b, u, s, m, k);
-              damage(b, u, m, e.m, { crit: e.crit, skill: true, st: e.st });
+              damage(b, u, m, e.m * lvM, { crit: e.crit, skill: true, st: e.st });
             }
           },
         });
@@ -497,9 +510,9 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
           return;
         }
         for (const t of allyTargets(b, u, e.to)) {
-          if (e.k === 'heal') heal(b, u, t, atk * e.m);
-          else if (e.k === 'regen') addSt(t, 'regen', e.dur, atk * e.m * (1 + u.mod.heal));
-          else if (e.k === 'shield') t.shield += Math.round(atk * e.m);
+          if (e.k === 'heal') heal(b, u, t, atk * e.m * lvM);
+          else if (e.k === 'regen') addSt(t, 'regen', e.dur, atk * e.m * lvM * (1 + u.mod.heal));
+          else if (e.k === 'shield') t.shield += Math.round(atk * e.m * lvM);
           else if (e.k === 'buff') addSt(t, e.s, e.dur, e.v);
           else if (e.k === 'mana') t.mana = Math.min(K.mana.max, t.mana + e.v);
           allyFx(b, s, t, e);

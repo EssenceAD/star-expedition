@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { canCast, has, makeBattle, numMid, placeNum, requestSkill, starsOf, step, shortNum } from '../src/battle/sim';
 import { CONFIG } from '../src/config';
 import { buildStage, recLevel } from '../src/game/stage';
-import { newSave, type Save } from '../src/game/state';
+import { newHero, newSave, type Save } from '../src/game/state';
 import { runBattle, seeded } from './helpers';
 
 const save = (lv: number, party?: string[], extra: string[] = []): Save => {
   const s = newSave(0);
-  for (const id of [...Object.keys(s.heroes), ...extra]) s.heroes[id] = { lv, exp: 0 };
+  for (const id of [...Object.keys(s.heroes), ...extra]) s.heroes[id] = { ...newHero(), lv };
   if (party) s.party = party;
   return s;
 };

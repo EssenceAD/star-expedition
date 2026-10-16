@@ -93,9 +93,11 @@ export const CONFIG = {
     gold: { base: 300, grow: 1.06 },
     exp: { base: 40, grow: 1.065 },
     /** 첫 클리어 별가루 · 보스 스테이지 · 별 3개 처음 */
-    firstDust: 10,
-    firstDustBoss: 40,
-    threeStarDust: 5,
+    firstDust: 30,
+    firstDustBoss: 150,
+    threeStarDust: 20,
+    /** 판마다 별가루 (확률 · 개수 × (난이도+1)) — 경제 시뮬로 맞춤 (docs/ECONOMY.md) */
+    dust: { chance: 0.12, n: 10 },
     /** 강화석 (판마다 · 확률) */
     enh: { n: 1, chance: 0.5 },
     /** 난이도 보상 배수 */
@@ -119,6 +121,100 @@ export const CONFIG = {
   start: { gold: 5000, stardust: 100, heroes: ['woongs', 'gonu', 'ikamolly', 'walwal', 'warmnight'], party: ['woongs', 'gonu', 'ikamolly', 'walwal'], name: '원정대장' },
   /** 월드 채팅 한 줄 티커: 몇 초마다 한 줄 */
   chat: { everySec: [6, 14] as number[] },
+  /**
+   * 영웅 성장 (STAR_PLAN_v2 §2 · SPEC §10) — 각성(상한) · 별(1~5성) · 스킬 레벨 · 초월(단계마다 2택) · 경험치 물약
+   */
+  growth: {
+    /** 각성: 레벨이 상한일 때 · 각성석 · 금화 (단계 1 → 5) */
+    awaken: { stones: [5, 10, 20, 35, 60], gold: [100000, 400000, 1500000, 5000000, 15000000] },
+    /** 별: 1성 시작 · 별마다 능력치 +starStat · 올리는 값 별가루·금화 (→2 … →5) */
+    star: { stat: 0.12, dust: [100, 250, 600, 1200], gold: [10000, 40000, 120000, 300000] },
+    /** 스킬 레벨 1~5: 피해·회복·보호막 배수 +perLv · 스킬북 · 금화 (→2 … →5) */
+    skill: { max: 5, perLv: 0.1, books: [1, 2, 4, 8], gold: [5000, 15000, 40000, 100000] },
+    /** 초월: 5성 + 각성 1 이상부터 · 초월석 · 금화 (단계 1~5) */
+    transcend: { needStar: 5, needAwaken: 1, stones: [3, 6, 10, 15, 25], gold: [50000, 100000, 200000, 400000, 800000] },
+    /** 경험치 물약 1개 = 영웅 경험치 */
+    potionExp: 500,
+  },
+  /** 장비 (SPEC §10 · 「체크인」 강화 확률 그대로) */
+  gear: {
+    /** 등급 0~4 = 일반·고급·희귀·영웅·전설 · 기본 능력 배수 · 옵션 줄 수 · 룬 칸 */
+    grades: [
+      { name: '일반', key: 'common', mult: 1, opts: 3, runes: 0 },
+      { name: '고급', key: 'uncommon', mult: 1.3, opts: 3, runes: 1 },
+      { name: '희귀', key: 'rare', mult: 1.7, opts: 3, runes: 1 },
+      { name: '영웅', key: 'epic', mult: 2.2, opts: 4, runes: 2 },
+      { name: '전설', key: 'legend', mult: 3, opts: 4, runes: 3 },
+    ],
+    /** 기본 능력 (장비 레벨 0 · 1티어 · 1성 · +0) — 장비 레벨(드롭한 스테이지 강함 지수)마다 grow배 */
+    base: { weapon: { atk: 120 }, armor: { hp: 1400, def: 160 }, acc: { hp: 500, atk: 50 } } as Record<string, Record<string, number>>,
+    grow: 1.06,
+    /** 별(1~5성)마다 기본 능력 + · 티어마다 + · 강화 1마다 + */
+    starStat: 0.15,
+    tierStat: 0.25,
+    enhStat: 0.08,
+    /** 강화 +1~+10 성공률 · 실패마다 다음 확률 +pity · +dropFrom 부터 실패하면 dropChance로 −1 (파괴 없음) · 대성공(+2) great 확률 (목표 greatMax까지) */
+    enhance: { rates: [1, 0.95, 0.9, 0.85, 0.8, 0.6, 0.45, 0.32, 0.22, 0.15], pity: 0.03, dropFrom: 7, dropChance: 0.3, great: 0.03, greatMax: 9, stones: 2, gold: 400 },
+    /** 별 올리기: 같은 부위·같은 등급 장비를 먹임 · 성공률(→2 … →5) · 실패할 때마다 다음 확률 + (기본 확률 × pityMult, 상한 1) · 금화 */
+    starUp: { rates: [1, 0.5, 0.16, 0.03], pityMult: 0.5, gold: [2000, 8000, 30000, 100000] },
+    /** 티어: 5성 뒤 · 티어 재료(레이드) · 금화 · 최대 */
+    tier: { max: 6, mats: [10, 20, 40, 80, 150], gold: [50000, 120000, 300000, 700000, 1500000] },
+    /** 옵션 바꾸기: 한 줄 · 옵션 티켓 */
+    reroll: { tickets: 1 },
+    /** 부가 옵션 종류 · 값 범위(장비 레벨 0 · 등급 배수 곱함) — 퍼센트 옵션은 소수 */
+    opts: {
+      atkPct: { name: '공격력', min: 0.02, max: 0.06, pct: true },
+      hpPct: { name: '체력', min: 0.03, max: 0.08, pct: true },
+      defPct: { name: '방어력', min: 0.03, max: 0.08, pct: true },
+      crit: { name: '치명타 확률', min: 0.01, max: 0.04, pct: true },
+      critDmg: { name: '치명타 피해', min: 0.05, max: 0.15, pct: true },
+      spd: { name: '공격 속도', min: 0.02, max: 0.05, pct: true },
+      skillDmg: { name: '스킬 피해', min: 0.02, max: 0.06, pct: true },
+      heal: { name: '회복량', min: 0.03, max: 0.08, pct: true },
+      mana: { name: '마나 회복', min: 0.03, max: 0.08, pct: true },
+      dmgCut: { name: '받는 피해 감소', min: 0.01, max: 0.03, pct: true },
+    } as Record<string, { name: string; min: number; max: number; pct: boolean }>,
+    /** 소프트캡 (SPEC §10: 상한 · 상세 화면에 「상한까지 n」) */
+    cap: { crit: 0.6, spd: 0.5, dmgCut: 0.45, critDmg: 2.5 } as Record<string, number>,
+    /** 전수 (「체크인」 웅스 건의 그대로): 같은 부위 · 주는 장비 +minEnh 이상 · 옮겨지는 단계 = 주는 단계 − gradeDrop[받는 등급이 낮은 만큼] · 결과 = max · 금화 = gold × 결과² */
+    transfer: { minEnh: 3, gradeDrop: [0, 1, 2], gold: 3000 },
+    /** 판매 금화 · 분해 강화석 (등급별) */
+    sell: [200, 500, 1500, 5000, 15000],
+    salvage: [1, 2, 5, 12, 30],
+    /** 드롭: 스테이지 1판에 장비 나올 확률 · 보스 스테이지 룬 확률(탑이 생기기 전 임시 공급) · 등급 가중치(보통·어려움·지옥) */
+    drop: { chance: 0.35, runeBoss: 0.25, weights: [[60, 28, 10, 2, 0], [30, 35, 25, 9, 1], [10, 25, 35, 24, 6]] as number[][] },
+    /** 장비 소환 (게임 재화만): 1회 · 10+1회 별가루 · 하루 무료 1회 · 등급 가중치 */
+    summon: { one: 150, ten: 1500, freePerDay: 1, weights: [0, 50, 35, 12, 3] as number[] },
+    /** 제작: 부위 고르기 · 등급 확정(희귀) · 강화석 · 금화 */
+    craft: { grade: 2, stones: 30, gold: 20000 },
+    /** 가방 칸 · 확장(별가루) */
+    bag: { start: 54, max: 112, step: 10, dust: 100 },
+  },
+  /** 룬: 등급 0~5 (일반~고대) · 능력 · 합성 3개 → 다음 등급 · 금화 */
+  rune: { kinds: ['atkPct', 'hpPct', 'crit', 'spd', 'skillDmg'] as string[], value: [0.01, 0.015, 0.022, 0.03, 0.04, 0.055] as number[], fuse: 3, fuseGold: [1000, 3000, 9000, 25000, 70000] as number[] },
+  /** 전용 무기: 조각 30개 = 획득 · 공격 · 별 1~5 (조각) · 전용 보물: 외전(C덩어리)에서 해금 */
+  exWeapon: { shards: 30, atkPct: 0.12, perStar: 0.06, starShards: [10, 20, 40, 80] },
+  treasure: { slots: 1, atkPct: 0.08 },
+  /** 상점 (현금 결제 없음): 영웅 값(별가루) · 재화·소모품 금화 값 · 꾸러미 */
+  shop: {
+    hero: { founder: 2000, legend: 3000, new: 3000 },
+    items: [
+      { id: 'potion', name: '경험치 물약 ×5', give: { exp: 5 }, gold: 5000 },
+      { id: 'enh', name: '강화석 ×20', give: { enh: 20 }, gold: 8000 },
+      { id: 'book', name: '스킬북 ×1', give: { skillBook: 1 }, gold: 15000 },
+      { id: 'ticket', name: '옵션 티켓 ×1', give: { optTicket: 1 }, gold: 20000 },
+      { id: 'awaken', name: '각성석 ×5', give: { awakenStone: 5 }, gold: 250000 },
+      { id: 'trans', name: '초월석 ×1', give: { transStone: 1 }, dust: 300 },
+      { id: 'exShard', name: '전용 무기 조각 ×10 (고른 영웅)', give: { exShard: 10 }, dust: 400 },
+    ] as { id: string; name: string; give: Record<string, number>; gold?: number; dust?: number }[],
+    packs: [{ id: 'starter', name: '초보 원정대 꾸러미', give: { gold: 50000, enh: 50, exp: 20, skillBook: 3 }, dust: 500, once: true }] as { id: string; name: string; give: Record<string, number>; dust: number; once: boolean }[],
+  },
+  /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
+  econ: {
+    light: { staUse: 0.5, buys: 0, sessions: 2 },
+    normal: { staUse: 1, buys: 0, sessions: 4 },
+    heavy: { staUse: 1, buys: 3, sessions: 8 },
+  } as Record<string, { staUse: number; buys: number; sessions: number }>,
   /** 전투력 = (공격 × atkW + 체력 × hpW + 방어 × defW) 합 */
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */

@@ -27,11 +27,14 @@ describe('저장', () => {
     expect(part.party).toEqual(CONFIG.start.party);
     expect(migrate({ version: 9, x: 1 })).toEqual({ version: 9, x: 1 });
   });
-  it('v2(앞2/뒤2 편성 · 소탕) → v3: 편성은 목록으로, 소탕은 없애고, 다섯 별은 모두 있게', () => {
+  it('v2(앞2/뒤2 편성 · 소탕) → v4: 편성은 목록으로, 소탕은 없애고, 다섯 별은 모두 있게', () => {
     const v2 = { version: 2, party: { f0: 'woongs', f1: 'warmnight', b0: 'ikamolly', b1: null }, heroes: { woongs: { lv: 7, exp: 3 }, warmnight: { lv: 2, exp: 0 }, ikamolly: { lv: 1, exp: 0 }, walwal: { lv: 1, exp: 0 } }, sweep: { stage: '1-1-0' }, cur: { gold: 9 }, stages: {}, seen: {} };
     const s = migrate(v2, 5);
-    expect(s.version).toBe(3);
+    expect(s.version).toBe(SAVE_VERSION);
     expect(s.party).toEqual(['woongs', 'warmnight', 'ikamolly']);
+    expect(s.heroes.woongs.star).toBe(1);
+    expect(s.heroes.woongs.gear.weapon).toBeNull();
+    expect(s.items).toEqual({});
     expect(s.heroes.woongs.lv).toBe(7);
     expect(s.heroes.gonu).toBeTruthy();
     expect((s as unknown as Record<string, unknown>).sweep).toBeUndefined();
@@ -55,7 +58,8 @@ describe('스테이지', () => {
     const s = newSave(0);
     const r = clear(s, 1, 1);
     expect(r.first).toBe(true);
-    expect(r.got.stardust).toBe(CONFIG.reward.firstDust + CONFIG.reward.threeStarDust);
+    const base = CONFIG.reward.firstDust + CONFIG.reward.threeStarDust;
+    expect([base, base + CONFIG.reward.dust.n]).toContain(r.got.stardust);
     expect(clear(s, 1, 1).first).toBe(false);
     for (let n = 2; n <= 10; n++) clear(s, 1, n);
     expect(s.heroes.luna).toBeTruthy();

@@ -31,17 +31,19 @@ export interface Screen {
   /** 상단 바 ← 뒤로 (없으면 로비로 · false면 버튼 없음) */
   back?: false | ((p: Record<string, unknown>) => void);
 }
-export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero';
-export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(여관)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보' };
+export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero' | 'bag' | 'shop';
+export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(여관)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점' };
 /** 화면 흐름: 이 화면에서 1탭으로 갈 수 있는 곳 [가는 곳, 누르는 것] (흐름도 · 탭 수 시험 · 실제 이동은 go()) */
 export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   title: [['battle', '원정 출발 (처음: 프롤로그 > 1-1)'], ['lobby', '원정 출발 (이어서)']],
-  lobby: [['adventure', '모험 (오른쪽 큰 버튼)'], ['prep', '왼쪽 「다음 스테이지」 > 전투 준비'], ['heroes', '영웅 (아래 줄)'], ['prep', '편성 (아래 줄)'], ['title', '설정 > 타이틀']],
+  lobby: [['adventure', '모험 (오른쪽 큰 버튼)'], ['prep', '왼쪽 「다음 스테이지」 > 전투 준비'], ['heroes', '영웅 (아래 줄)'], ['prep', '편성 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['title', '설정 > 타이틀']],
   adventure: [['prep', '스테이지 고르고 「전투 준비」'], ['lobby', '뒤로']],
   prep: [['battle', '전투 시작'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로']],
   battle: [['lobby', '결과 > 로비'], ['adventure', '결과 > 모험'], ['battle', '결과 > 다시 / 다음'], ['prep', '패배 > 편성']],
   heroes: [['hero', '영웅 카드'], ['lobby', '뒤로']],
   hero: [['heroes', '뒤로']],
+  bag: [['lobby', '뒤로']],
+  shop: [['lobby', '뒤로']],
 };
 const screens: Partial<Record<ScreenId, Screen>> = {};
 export const register = (id: ScreenId, s: Screen) => (screens[id] = s);
@@ -84,7 +86,7 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
   $$('[data-plus]', bar).forEach(
     (x) =>
       (x.onclick = () => {
-        if (x.dataset.plus !== 'sta') return comingSoon('상점', 'B');
+        if (x.dataset.plus !== 'sta') return go('shop', { cat: x.dataset.plus === 'gold' ? 'goods' : 'special' });
         modal(`${icon('stamina')} 행동력 채우기`, `<p class="dim">별가루 ${CONFIG.stamina.buyDust}개로 행동력 ${CONFIG.stamina.buyN}을 채워요. (최대를 넘겨 쌓여요)</p>`, [
           ['그만두기', null],
           ['채우기', () => {
@@ -131,6 +133,8 @@ export function back(fallback: ScreenId = 'lobby') {
 export const refresh = () => current && go(current.id, current.params, false);
 
 export function toast(msg: string) {
+  // 겹치지 않게 앞 알림은 바로 지움
+  for (const o of $$('.toast')) o.remove();
   const t = document.createElement('div');
   t.className = 'toast';
   t.textContent = msg;
