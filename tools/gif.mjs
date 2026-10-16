@@ -8,7 +8,7 @@ const { GIFEncoder, quantize, applyPalette } = gifenc;
 const [out, secs = '14', fps = '12', skip = '0', qs = 'auto=1&speed=1'] = process.argv.slice(2);
 const URL = process.env.URL ?? 'http://localhost:5191/';
 const W = +(process.env.W ?? 640);
-const b = await chromium.launch({ channel: 'chrome' });
+const b = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : { channel: 'chrome' });
 const p = await b.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: W / 844 });
 p.on('pageerror', (e) => console.log('pageerror', String(e).slice(0, 200)));
 await p.goto(`${URL}?go=1&rec=1&${qs}`, { waitUntil: 'networkidle' });

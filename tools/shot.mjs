@@ -2,7 +2,7 @@
 import { chromium } from 'playwright-core';
 const [qs, t, out, js] = process.argv.slice(2);
 const URL = process.env.URL ?? 'http://localhost:5191/';
-const b = await chromium.launch({ channel: 'chrome' });
+const b = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : { channel: 'chrome' });
 const p = await b.newPage({ viewport: { width: 960, height: 470 } });
 p.on('pageerror', (e) => console.log('pageerror', String(e).slice(0, 200)));
 p.on('console', (m) => m.type() === 'error' && console.log('console', m.text().slice(0, 200)));

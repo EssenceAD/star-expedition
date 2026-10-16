@@ -1,5 +1,6 @@
 // 그림 실험실: 영웅 도트 동작 보기 · GIF/띠 캡처 (?hero=woongs&act=idle&t=0.3 · window.__at(t))
-import { HEROES, MOBS } from './battle/data';
+import { artOf, heroOf } from './data/heroes';
+import { MOB_KINDS } from './data/mobs';
 import { animOf, drawFrame, frameAt, heightOf, loadSheets, type Act } from './sprite/sheet';
 
 const q = new URLSearchParams(location.search);
@@ -10,9 +11,9 @@ const H = +(q.get('h') ?? 260);
 cv.width = W;
 cv.height = H;
 const id = q.get('hero') ?? 'woongs';
-const def = HEROES.find((h) => h.id === id) ?? null;
-const mob = def ? null : MOBS[id];
-const anims = def?.anims ?? mob!.anims;
+const def = heroOf(id) ?? null;
+const mob = def ? null : MOB_KINDS[id as keyof typeof MOB_KINDS];
+const anims = def ? artOf(def, 1).anims : mob!.anims;
 const dirs = [...new Set(Object.values(anims).flatMap((a) => a!.frames.map((f) => f.split(':')[0])))];
 const sheet = await loadSheets(dirs);
 let act = (q.get('act') ?? 'idle') as Act;

@@ -1,0 +1,195 @@
+// 화면 라우터 + 공통 부품 (공통 상단 바 · 채팅 한 줄 · 재화 · 토스트 · 창 · 대화 재생 · 초상화)
+//  화면 흐름은 FLOW 표 하나 → tests/flow.test.ts 가 탭 수(로비에서 1탭/3탭 이내)를 확인하고 docs/FLOW.md 흐름도를 만든다
+//  상단 바(STAR_PLAN_v2 §1-8): ← 뒤로 + 화면 이름 / 행동력·금화·별가루 [+] / 우편·채팅 — 모든 화면 같은 자리 (타이틀·전투 빼고)
+import { CONFIG } from '../config';
+import { CHAT_LINES, CHAT_NAMES } from '../data/chat';
+import { heroOf, artOf, HEROES } from '../data/heroes';
+import { CHAPTER_MOBS } from '../data/mobs';
+import { CHAPTERS, SPEAKER, type Line } from '../data/story';
+import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
+import { cur, persist, S } from '../game/state';
+import { icon, iconText, T } from '../theme/tokens';
+
+export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as E;
+export const $$ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => [...root.querySelectorAll(s)] as E[];
+const BASE = import.meta.env.BASE_URL;
+export const portraitUrl = (key: string) => `${BASE}art/portraits/${key}.png`;
+export const heroPortrait = (id: string) => portraitUrl(artOf(heroOf(id), T.battle.tint.length).portrait);
+export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
+export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+export interface Screen {
+  /** 화면 그리기 (root = #ui 안의 새 div) */
+  enter(root: HTMLElement, params: Record<string, unknown>): void;
+  leave?(): void;
+  /** 매 프레임 (선택) */
+  tick?(dt: number): void;
+  /** 전투 화면처럼 캔버스를 직접 쓰는가 (아니면 배경만) */
+  canvas?: boolean;
+  /** 공통 상단 바 제목 (없으면 바 없음 — 타이틀·전투) */
+  title?: string | ((p: Record<string, unknown>) => string);
+  /** 상단 바 ← 뒤로 (없으면 로비로 · false면 버튼 없음) */
+  back?: false | ((p: Record<string, unknown>) => void);
+}
+export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero';
+export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(여관)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보' };
+/** 화면 흐름: 이 화면에서 1탭으로 갈 수 있는 곳 [가는 곳, 누르는 것] (흐름도 · 탭 수 시험 · 실제 이동은 go()) */
+export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
+  title: [['battle', '원정 출발 (처음: 프롤로그 > 1-1)'], ['lobby', '원정 출발 (이어서)']],
+  lobby: [['adventure', '모험 (오른쪽 큰 버튼)'], ['prep', '왼쪽 「다음 스테이지」 > 전투 준비'], ['heroes', '영웅 (아래 줄)'], ['prep', '편성 (아래 줄)'], ['title', '설정 > 타이틀']],
+  adventure: [['prep', '스테이지 고르고 「전투 준비」'], ['lobby', '뒤로']],
+  prep: [['battle', '전투 시작'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로']],
+  battle: [['lobby', '결과 > 로비'], ['adventure', '결과 > 모험'], ['battle', '결과 > 다시 / 다음'], ['prep', '패배 > 편성']],
+  heroes: [['hero', '영웅 카드'], ['lobby', '뒤로']],
+  hero: [['heroes', '뒤로']],
+};
+const screens: Partial<Record<ScreenId, Screen>> = {};
+export const register = (id: ScreenId, s: Screen) => (screens[id] = s);
+let current: { id: ScreenId; s: Screen; root: HTMLElement; params: Record<string, unknown> } | null = null;
+const history: { id: ScreenId; params: Record<string, unknown> }[] = [];
+export const currentId = () => current?.id ?? null;
+export const currentScreen = () => current?.s ?? null;
+export function go(id: ScreenId, params: Record<string, unknown> = {}, push = true) {
+  const s = screens[id];
+  if (!s) throw new Error(`화면 없음: ${id}`);
+  if (current) {
+    current.s.leave?.();
+    current.root.remove();
+    if (push) history.push({ id: current.id, params: current.params });
+  }
+  const root = document.createElement('div');
+  root.className = s.title ? 'scr withbar' : 'scr';
+  root.dataset.screen = id;
+  $('#ui').append(root);
+  current = { id, s, root, params };
+  drawBar(id, s, params);
+  s.enter(root, params);
+}
+
+// ───────── 공통 상단 바 + 채팅 한 줄 ─────────
+function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
+  const bar = $('#topbar');
+  const tk = $('#ticker');
+  bar.hidden = tk.hidden = !s.title;
+  if (!s.title) return;
+  const title = typeof s.title === 'function' ? s.title(p) : s.title;
+  const backBtn = s.back === false || id === 'lobby' ? '' : `<button class="btn mini" data-back>${icon('back')}</button>`;
+  bar.innerHTML = `${backBtn}<h2>${title}</h2><div class="curs">
+    <span class="cur" title="행동력">${icon('stamina')}<b data-sta></b><button class="plus" data-plus="sta">+</button></span>
+    <span class="cur" title="금화">${icon('gold')}<b data-cur="gold">${fmt(cur('gold'))}</b><button class="plus" data-plus="gold">+</button></span>
+    <span class="cur" title="별가루">${icon('stardust')}<b data-cur="stardust">${fmt(cur('stardust'))}</b><button class="plus" data-plus="stardust">+</button></span>
+    <button class="btn mini" data-ic="mail" title="우편">${icon('mail')}</button><button class="btn mini" data-ic="chat" title="채팅">${icon('chat')}</button></div>`;
+  const b = $('[data-back]', bar);
+  if (b) b.onclick = () => (typeof s.back === 'function' ? s.back(p) : go('lobby', {}, false));
+  $$('[data-plus]', bar).forEach(
+    (x) =>
+      (x.onclick = () => {
+        if (x.dataset.plus !== 'sta') return comingSoon('상점', 'B');
+        modal(`${icon('stamina')} 행동력 채우기`, `<p class="dim">별가루 ${CONFIG.stamina.buyDust}개로 행동력 ${CONFIG.stamina.buyN}을 채워요. (최대를 넘겨 쌓여요)</p>`, [
+          ['그만두기', null],
+          ['채우기', () => {
+            if (!buyStamina()) toast('별가루가 모자라요');
+            else persist();
+            syncBar();
+          }, true],
+        ]);
+      }),
+  );
+  $$('[data-ic]', bar).forEach((x) => (x.onclick = () => comingSoon(x.dataset.ic === 'mail' ? '우편' : '채팅 창', 'D')));
+  tk.onclick = () => comingSoon('채팅 창', 'D');
+  syncBar();
+}
+const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+/** 상단 바 숫자 새로 (재화 · 행동력 · 회복 남은 시간) */
+export function syncBar() {
+  syncCur();
+  const e = document.querySelector<HTMLElement>('[data-sta]');
+  if (!e) return;
+  const n = stamina();
+  const next = staNextSec();
+  e.textContent = `${n}/${staMax()}${next ? ` ${mmss(next)}` : ''}`;
+}
+let chatT = 0;
+/** 채팅 한 줄 티커 (main 루프에서 매 프레임) */
+export function tickChat(dt: number) {
+  chatT -= dt;
+  if (chatT > 0) return;
+  const [a, b] = CONFIG.chat.everySec;
+  chatT = a + Math.random() * (b - a);
+  const pick = <X,>(xs: X[]) => xs[Math.floor(Math.random() * xs.length)];
+  const line = pick(CHAT_LINES).replace('{영웅}', pick(HEROES).name).replace('{보스}', pick(CHAPTER_MOBS.slice(0, 3)).boss).replace('{장}', `${pick(CHAPTERS.slice(0, 3)).name}`);
+  const tk = $('#ticker');
+  tk.innerHTML = `${icon('chat')} <b>${esc(pick(CHAT_NAMES))}</b> : ${esc(line)}`;
+  syncBar();
+}
+/** 뒤로 (없으면 로비) */
+export function back(fallback: ScreenId = 'lobby') {
+  const h = history.pop();
+  go(h?.id ?? fallback, h?.params ?? {}, false);
+}
+/** 화면 새로 그리기 (같은 화면 · 같은 인자) */
+export const refresh = () => current && go(current.id, current.params, false);
+
+export function toast(msg: string) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  $('#stage').append(t);
+  setTimeout(() => t.remove(), 2300);
+}
+/** 창: 버튼 [글, 할 일, 강조] · 할 일이 false 를 돌려주면 안 닫힘 */
+export function modal(title: string, html: string, buttons: [string, (() => void | boolean) | null, boolean?][]): HTMLElement {
+  const m = document.createElement('div');
+  m.className = 'modal';
+  m.innerHTML = `<div class="panel"><h3>${title}</h3><div class="grow scroll">${html}</div><div class="row" style="justify-content:flex-end">${buttons.map(([t, , hi], i) => `<button class="btn${hi ? ' hi' : ''}" data-i="${i}">${t}</button>`).join('')}</div></div>`;
+  $('#stage').append(m);
+  $$('button[data-i]', m).forEach((b) => {
+    b.onclick = () => {
+      const f = buttons[+b.dataset.i!][1];
+      if (f?.() === false) return;
+      m.remove();
+    };
+  });
+  return m;
+}
+export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
+
+export const syncCur = (root: ParentNode = document) => $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));
+export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '영웅 경험치', stamina: '행동력' };
+export const starsHtml = (n: number, max = 3) => `<span class="stars">${iconText('star').repeat(n)}<i>${iconText('star').repeat(Math.max(0, max - n))}</i></span>`;
+
+/** 대화 재생: 탭으로 넘기기 · 스킵 → 끝나면 done */
+export function playTalk(lines: Line[], done: () => void) {
+  if (!lines.length) return done();
+  const el = document.createElement('div');
+  $('#stage').append(el);
+  let i = 0;
+  const finish = () => {
+    el.remove();
+    done();
+  };
+  const show = () => {
+    const [who, text] = lines[i];
+    const hero = SPEAKER[who] === undefined ? heroOf(who) : null;
+    const name = hero ? hero.name : SPEAKER[who];
+    el.className = 'talk';
+    el.innerHTML = `<button class="btn mini skip">${icon('skip')} 스킵</button><div class="box">${hero ? `<div class="pt l" style="background-image:url(${heroPortrait(who)})"></div>` : ''}<div class="tx${who === 'narr' ? ' narr' : ''}">${name ? `<div class="who">${esc(name)}</div>` : ''}<div class="say">${esc(text)}</div></div></div><div class="nxt">${i + 1} / ${lines.length} · 눌러서 다음</div>`;
+    $('.skip', el).onclick = (e) => {
+      e.stopPropagation();
+      finish();
+    };
+  };
+  el.onclick = () => {
+    i++;
+    if (i >= lines.length) finish();
+    else show();
+  };
+  show();
+}
+/** 대사를 한 번만 (본 적 있으면 바로 done) */
+export function talkOnce(key: string, lines: Line[] | undefined, done: () => void) {
+  if (!lines?.length || S.seen[key]) return done();
+  S.seen[key] = true;
+  persist();
+  playTalk(lines, done);
+}

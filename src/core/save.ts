@@ -15,7 +15,3 @@ export function setPref(key: string, v: unknown) {
     /* 무시 */
   }
 }
-/** 세이브 (파일럿: 최고 별 · 클리어 수만) */
-export interface SaveData { version: number; savedAt: number; best: Record<string, number>; clears: number }
-export const readSave = (): SaveData => getPref<SaveData>('save', { version: 1, savedAt: 0, best: {}, clears: 0 });
-export const writeSave = (d: SaveData) => setPref('save', { ...d, savedAt: Date.now() });

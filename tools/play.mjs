@@ -5,7 +5,7 @@ import fs from 'node:fs';
 const [out = 'shots', max = '200'] = process.argv.slice(2);
 fs.mkdirSync(out, { recursive: true });
 const URL = process.env.URL ?? 'http://localhost:5191/';
-const b = await chromium.launch({ channel: 'chrome' });
+const b = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : { channel: 'chrome' });
 const p = await b.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2 });
 const errs = [];
 p.on('pageerror', (e) => errs.push(String(e).slice(0, 300)));
