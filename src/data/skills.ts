@@ -52,7 +52,7 @@ export const sk = (slot: 0 | 1 | 2, name: string, icon: string, elem: string, vf
 export const pas = (name: string, p: PassiveEff): PassiveDef => ({ name, p });
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
-const TO: Record<string, string> = { front: '앞의 적', all: '적 모두', random: '아무 적', back: '맨 뒤 적', lowest: '체력이 가장 낮은 아군', allies: '아군 모두', self: '자신', frontAllies: '앞줄 아군' };
+const TO: Record<string, string> = { front: '앞의 적', all: '적 모두', random: '아무 적', back: '맨 뒤 적', lowest: '체력이 가장 낮은 아군', allies: '아군 모두', self: '자신', frontAllies: '가장 앞 위치 아군' };
 const ST: Record<string, string> = { stun: '기절', silence: '침묵', slow: '느리게', burn: '화상', atkDown: '공격력 감소' };
 const BF: Record<string, string> = { atkUp: '공격력', spdUp: '공격 속도', guard: '받는 피해 감소', critUp: '치명타 확률' };
 /** 스킬 설명 (데이터에서 자동 · 레벨 배수 lvMult) */

@@ -1,10 +1,9 @@
 // 저장 (버전·이전) — 로컬 저장 · 클라우드 저장은 D덩어리 (같은 Supabase · 새 테이블)
-//  v1 = 파일럿 (최고 별 · 클리어 수) → v2 = 1단계 (재화 · 영웅 · 편성 · 스테이지 기록 · 소탕 · 방치)
+//  v1 = 파일럿 (최고 별 · 클리어 수) → v2 = 1단계 A (재화 · 영웅 · 편성 앞2/뒤2 · 스테이지 · 소탕 · 방치)
+//  → v3 = STAR_PLAN_v2 §1 (편성 = 영웅 4명 목록(위치는 직업으로 자동) · 원정대 레벨 · 행동력 · 부스터 · 소탕 없앰 → 반복 전투)
 import { CONFIG } from '../config';
 import { getPref, setPref } from '../core/save';
 
-export type Slot = 'f0' | 'f1' | 'b0' | 'b1';
-export const SLOTS: Slot[] = ['f0', 'f1', 'b0', 'b1'];
 export interface HeroSave {
   lv: number;
   exp: number;
@@ -17,46 +16,48 @@ export interface StageRec {
   bestDps: number;
   mvp: string;
 }
-export interface SweepJob {
-  stage: string;
-  runs: number;
-  startAt: number;
-  /** 이미 받은 판 수 */
-  got: number;
-}
-export interface SaveV2 {
-  version: 2;
+export interface SaveV3 {
+  version: 3;
   createdAt: number;
   savedAt: number;
   /** 마지막으로 본 시각 (방치 보상 계산) */
   lastSeen: number;
+  /** 첫 진입(프롤로그 → 1-1) 끝났나 */
   prologue: boolean;
-  /** 재화: gold · stardust · enh · exp(경험치 물약) 등 키는 T.icon 과 같게 */
+  /** 원정대(계정) */
+  acc: { name: string; lv: number; exp: number };
+  /** 행동력: 값 · 마지막으로 회복을 계산한 시각 */
+  sta: { n: number; at: number };
+  /** 부스터(전리품 2배) 끝나는 시각 */
+  boostUntil: number;
+  /** 재화: gold · stardust · enh … (키는 T.icon 과 같게) */
   cur: Record<string, number>;
   heroes: Record<string, HeroSave>;
-  party: Record<Slot, string | null>;
+  /** 파티 영웅 4명 (화면 자리는 직업 위치로 자동) */
+  party: string[];
   /** 스테이지 기록 키 = stageKey(장, 스테이지, 난이도) */
   stages: Record<string, StageRec>;
   /** 이미 본 대사 (예: '1:intro') */
   seen: Record<string, true>;
   /** 오늘(현실) 판 수 — 금화 체감 (taper) */
   day: { key: string; runs: number };
-  sweep: SweepJob | null;
   /** 파일럿 기록 그대로 */
   pilot: { clears: number; best: number };
 }
-export type Save = SaveV2;
-export const SAVE_VERSION = 2;
+export type Save = SaveV3;
+export const SAVE_VERSION = 3;
+export const PARTY_MAX = 4;
 
 export const dayKey = (t = Date.now()) => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
 export function newSave(now = Date.now()): Save {
   const heroes: Record<string, HeroSave> = {};
   for (const id of CONFIG.start.heroes) heroes[id] = { lv: 1, exp: 0 };
   return {
-    version: 2, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
+    version: 3, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
+    acc: { name: CONFIG.start.name, lv: 1, exp: 0 }, sta: { n: CONFIG.stamina.base, at: now }, boostUntil: 0,
     cur: { gold: CONFIG.start.gold, stardust: CONFIG.start.stardust },
-    heroes, party: { ...(CONFIG.start.party as Record<Slot, string | null>) }, stages: {}, seen: {},
-    day: { key: dayKey(now), runs: 0 }, sweep: null, pilot: { clears: 0, best: 0 },
+    heroes, party: [...CONFIG.start.party], stages: {}, seen: {},
+    day: { key: dayKey(now), runs: 0 }, pilot: { clears: 0, best: 0 },
   };
 }
 /** 옛 저장 → 지금 버전 (없거나 망가지면 새로) */
@@ -67,16 +68,26 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     const s = newSave(now);
     const best = (d.best as Record<string, number> | undefined)?.pilot ?? 0;
     s.pilot = { clears: Number(d.clears) || 0, best };
-    // 파일럿을 깬 사람은 프롤로그를 이미 아는 사람 — 그래도 한 번은 보여 준다
     return s;
   }
-  if (d.version === 2) {
-    // 빠진 칸은 기본값으로 채운다 (같은 버전 안에서 칸이 늘어날 때)
+  if (d.version === 2 || d.version === 3) {
     const base = newSave(now);
     const s = { ...base, ...(d as unknown as Save) };
     s.cur = { ...base.cur, ...s.cur };
-    s.party = { ...base.party, ...s.party };
     s.day ??= base.day;
+    s.acc ??= base.acc;
+    s.sta ??= base.sta;
+    s.boostUntil ??= 0;
+    if (d.version === 2) {
+      // 편성 앞2/뒤2 → 영웅 목록 · 소탕은 반복 전투로 바뀌어 없앰 · 시작 5명(다섯 별)은 모두 있게
+      const old = (d.party ?? {}) as Record<string, string | null>;
+      s.party = ['f0', 'f1', 'b0', 'b1'].map((k) => old[k]).filter((x): x is string => !!x);
+      delete (s as unknown as Record<string, unknown>).sweep;
+      for (const id of CONFIG.start.heroes) s.heroes[id] ??= { lv: 1, exp: 0 };
+      s.version = 3;
+    }
+    if (!Array.isArray(s.party) || !s.party.length) s.party = [...base.party];
+    s.party = s.party.filter((id) => s.heroes[id]).slice(0, PARTY_MAX);
     return s;
   }
   // 미래 버전 (다른 기기에서 새 버전으로 저장) — 덮어쓰지 않게 그대로 둔다
@@ -106,4 +117,4 @@ export function spend(k: string, n: number, s: Save = S): boolean {
   addCur(k, -n, s);
   return true;
 }
-export const partyIds = (s: Save = S) => SLOTS.map((k) => s.party[k]).filter((x): x is string => !!x);
+export const partyIds = (s: Save = S) => s.party.filter((id) => s.heroes[id]);

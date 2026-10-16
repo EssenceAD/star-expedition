@@ -1,5 +1,5 @@
 // 전투 한 장면 찍기: node tools/shot-battle.mjs <장-스테이지-난이도> <초> <out.png> [영웅,영웅,영웅,영웅] [레벨]
-//  (먼저 npm run build) · 편성은 앞1,앞2,뒤1,뒤2 순서 · AUTO ×2
+//  (먼저 npm run build) · 편성 순서는 상관없음(위치는 직업으로 자동) · AUTO ×2
 import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
@@ -21,10 +21,10 @@ await p.waitForFunction(() => window.__ready);
 await p.evaluate(([key, party, lv]) => {
   const S = window.__S();
   const ids = party.split(',');
-  ['f0', 'f1', 'b0', 'b1'].forEach((k, i) => {
-    S.party[k] = ids[i] ?? null;
-    if (ids[i]) S.heroes[ids[i]] = { lv: +lv, exp: 0 };
-  });
+  S.party = ids;
+  for (const id of ids) S.heroes[id] = { lv: +lv, exp: 0 };
+  S.sta.n = 999;
+  S.prologue = true;
   S.seen = { '1:intro': true, '1:preBoss': true, '2:intro': true, '2:preBoss': true, '3:intro': true, '3:preBoss': true };
   const [c, s, d] = key.split('-').map(Number);
   window.__go('battle', { stage: { c, s, d } });

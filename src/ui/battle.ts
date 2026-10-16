@@ -1,18 +1,18 @@
 // 전투 화면: HUD(패널·스킬·패널별 Auto·AUTO·배속·DPS·보스·예고) + 결과(별 3개·보상·MVP·DPS 기록·레벨업·합류)
-//  흐름: (장 처음이면 대사) → 전투 → 승리 기록 → (장 클리어 대사) → 결과 → 다시 / 다음 / 소탕 / 모험
+//  흐름: 행동력 → 파티를 필드에 세우고 (처음이면 대사) → 전투 → 승리 기록 → (장 클리어 대사 → 합류 연출) → 결과 → 다시 / 다음 / 반복 / 모험
 import { CONFIG } from '../config';
 import { render, renderBg, type Art } from '../battle/render';
-import { bossOf, canCast, has, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
+import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
 import { combatSynth } from '../core/audio/combatSfx';
 import { heroOf } from '../data/heroes';
 import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
-import { CHAPTERS } from '../data/story';
-import { canSweep, startSweep } from '../game/idle';
-import { buildStage, isBoss, recordClear, unlocked, type StageId } from '../game/stage';
+import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
+import { stageCost, useStamina } from '../game/account';
+import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
 import { elemColor, icon, iconText } from '../theme/tokens';
-import { $, $$, fmt, go, heroPortrait, portraitUrl, register, talkOnce, toast, CUR_NAME } from './core';
+import { $, $$, esc, fmt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { flag } from '../core/flags';
 import { view } from './view';
@@ -21,6 +21,10 @@ const C = CONFIG.story;
 let b: Battle | null = null;
 let st: StageId = { c: 1, s: 1, d: 0 };
 let shown = false;
+/** 전투 전 대사 중 (파티가 필드에 선 채로 · 진행 멈춤) */
+let talking = false;
+/** 첫 진입 (프롤로그 → 1-1 → 로비) */
+let firstRun = false;
 let dpsOpen = true;
 const hud = () => $('#hud');
 
@@ -99,7 +103,7 @@ function syncHud() {
   }
 }
 
-function start() {
+function setup() {
   const keepAuto = b?.auto ?? getPref('auto', false);
   const keepSpeed = b?.speed ?? 1;
   b = makeBattle(buildStage(st), { w: view.w });
@@ -123,8 +127,8 @@ function showResult() {
   const r = $('#result');
   const mvp = mvpOf(bb);
   if (!win) {
-    r.innerHTML = `<h1 class="lose">${bb.why === 'time' ? '시간 초과' : '패배…'}</h1><p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 소탕·방치 보상으로 경험치 모으기</p>
-      <div class="row"><button class="btn" data-a="form">${icon('formation')} 편성</button><button class="btn hi" data-a="again">다시 하기</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button></div>`;
+    r.innerHTML = `<h1 class="lose">${bb.why === 'time' ? '시간 초과' : '패배…'}</h1><p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 반복 전투·방치 보상으로 경험치 모으기</p>
+      <div class="row"><button class="btn" data-a="form">${icon('formation')} 편성</button><button class="btn hi" data-a="again">다시 하기 ${icon('stamina')}${stageCost(st.d)}</button>${firstRun ? '' : `<button class="btn" data-a="adv">${icon('adventure')} 모험</button>`}</div>`;
     r.hidden = false;
     wire();
     return;
@@ -145,12 +149,34 @@ function showResult() {
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP ${mvp.name} ${shortNum(mvp.dealt)}
       ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><b class="good">레벨 업!</b> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
       <div class="rw">${items.map(([k, n, v]) => `<div><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}</div>
-      <div class="row"><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 하기</button>${canSweep(st) ? `<button class="btn" data-a="sweep">${icon('sweep')} 소탕 ×10</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`;
+      ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}`;
     r.hidden = false;
     wire(next);
   };
-  if (res.first && isBoss(st) && st.d === 0) talkOnce(`${st.c}:clear`, CHAPTERS[st.c - 1].clear, show);
-  else show();
+  const joined = () => (res.joined ? joinShow(res.joined, show) : show());
+  if (firstRun) {
+    S.prologue = true;
+    persist();
+  }
+  if (res.first && isBoss(st) && st.d === 0 && !S.seen[`${st.c}:clear`]) {
+    S.seen[`${st.c}:clear`] = true;
+    persist();
+    playTalk(CHAPTERS[st.c - 1].clear!.filter(([who]) => who !== res.joined), joined);
+  } else joined();
+}
+const REPEAT_N = 10;
+/** 합류 연출 (STAR_PLAN_v2 §1-9): 큰 초상 + 대사 + 「합류!」 */
+function joinShow(id: string, done: () => void) {
+  const h = heroOf(id);
+  const line = CHAPTERS.flatMap((c) => c.clear ?? []).find(([who]) => who === id)?.[1] ?? h.concept;
+  const el = document.createElement('div');
+  el.className = 'join';
+  el.innerHTML = `<div class="pt xl" style="background-image:url(${heroPortrait(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${esc(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
+  $('#stage').append(el);
+  el.onclick = () => {
+    el.remove();
+    done();
+  };
 }
 function wire(next?: StageId) {
   $$('#result [data-a]').forEach((btn) => {
@@ -159,25 +185,50 @@ function wire(next?: StageId) {
       if (a === 'again') begin(st);
       else if (a === 'next' && next) begin(next);
       else if (a === 'adv') go('adventure', { c: st.c, d: st.d, s: st.s }, false);
-      else if (a === 'form') go('formation', { stage: st });
-      else if (a === 'sweep') {
-        if (startSweep(st, 10)) {
-          persist();
-          toast(`소탕 10판을 맡겼어요 (로비에서 받기 · ${(10 * CONFIG.sweep.secPerRun) / 60}분)`);
-        } else toast(S.sweep ? '이미 소탕 중이에요 (로비에서 받기)' : '별 3개 스테이지만 소탕할 수 있어요');
+      else if (a === 'lobby') go('lobby', {}, false);
+      else if (a === 'form') go('prep', { stage: st }, false);
+      else if (a === 'repeat') {
+        const h = repeatBattle(st, REPEAT_N);
+        if (!h) return toast('행동력이 모자라요');
+        persist();
+        toast(repeatText(h));
       }
     };
   });
 }
-/** 대사(있으면) → 전투 시작 */
+export const repeatText = (h: NonNullable<ReturnType<typeof repeatBattle>>) =>
+  `반복 전투 ${h.runs}판: 금화 +${fmt(h.gold)} · 경험치 +${fmt(h.exp)}${h.enh ? ` · 강화석 +${h.enh}` : ''}${h.ups.length ? ` · 레벨 업 ${h.ups.map((id) => heroOf(id).name).join('·')}` : ''}${h.accUp ? ' · 원정대 레벨 업!' : ''}`;
+/** 행동력 쓰고 → 파티를 필드에 세우고 → 대사(있으면) → 전투 시작 */
 function begin(s: StageId) {
+  const cost = firstRun ? 0 : stageCost(s.d);
+  const use = useStamina(cost);
+  if (!use.ok) {
+    modal(`${icon('stamina')} 행동력이 모자라요`, `<p class="dim">이 스테이지는 행동력 ${cost}이 필요해요. 시간이 지나면 차거나, 상단 바 [+]로 채울 수 있어요.</p>`, [['확인', null, true]]);
+    return;
+  }
+  if (use.up) toast('원정대 레벨 업! 행동력이 가득 찼어요');
+  persist();
   st = s;
-  b = null;
   $('#result').hidden = true;
+  b = null;
+  setup();
   const ch = CHAPTERS[s.c - 1];
-  const pre = s.d === 0 && s.s === 1 ? [`${s.c}:intro`, ch.intro] : s.d === 0 && isBoss(s) ? [`${s.c}:preBoss`, ch.preBoss] : null;
-  if (pre) talkOnce(pre[0] as string, pre[1] as never, start);
-  else start();
+  let lines: Line[] = [];
+  if (firstRun) {
+    lines = PROLOGUE;
+    S.seen[`${s.c}:intro`] = true;
+  } else {
+    const key = s.d === 0 && s.s === 1 ? `${s.c}:intro` : s.d === 0 && isBoss(s) ? `${s.c}:preBoss` : '';
+    const ls = key === `${s.c}:intro` ? ch.intro : ch.preBoss;
+    if (key && ls && !S.seen[key]) {
+      S.seen[key] = true;
+      lines = ls;
+    }
+  }
+  persist();
+  if (!lines.length) return;
+  talking = true;
+  playTalk(lines, () => (talking = false));
 }
 
 register('battle', {
@@ -209,6 +260,8 @@ register('battle', {
       }
     };
     view.onResize.push(onResize);
+    firstRun = !!p.first;
+    talking = false;
     begin(p.stage as StageId);
   },
   leave() {
@@ -220,6 +273,10 @@ register('battle', {
   tick(dt) {
     const ctx = view.ctx;
     if (!b) return void renderIdle(ctx, view.art, dt);
+    if (talking) {
+      idleStep(b, dt);
+      return render(ctx, view.art, b, performance.now() / 1000);
+    }
     step(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {

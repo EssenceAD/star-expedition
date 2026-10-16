@@ -7,7 +7,9 @@ import { CHAPTERS } from '../data/story';
 import { T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
 import { addExp, join, statsOf } from './heroes';
-import { addCur, dayKey, partyIds, S, SLOTS, type Save } from './state';
+import { addCur, dayKey, partyIds, S, type Save } from './state';
+import { boostMult, stageCost, useStamina } from './account';
+import { JOBS, ZONES } from '../data/jobs';
 
 const C = CONFIG.story;
 const R = CONFIG.reward;
@@ -86,12 +88,12 @@ export function buildMobs(st: StageId): MobSpec[][] {
     );
 }
 /** 지금 편성으로 영웅 입력 */
+/** 파티를 위치 순서(전방 → 중앙 → 후방)로 · 같은 위치 안에서는 편성 순서 그대로 */
+export const byZone = (ids: string[]) => [...ids].sort((a, b) => ZONES.indexOf(JOBS[heroOf(a).job].zone) - ZONES.indexOf(JOBS[heroOf(b).job].zone));
 export function buildHeroes(s: Save = S): HeroSpec[] {
-  return SLOTS.flatMap((slot) => {
-    const id = s.party[slot];
-    if (!id || !s.heroes[id]) return [];
+  return byZone(partyIds(s)).map((id) => {
     const def = heroOf(id);
-    return [{ def, art: artOf(def, T.battle.tint.length), slot, lv: s.heroes[id].lv, st: statsOf(id, s) }];
+    return { def, art: artOf(def, T.battle.tint.length), zone: JOBS[def.job].zone, lv: s.heroes[id].lv, st: statsOf(id, s) };
   });
 }
 export function buildStage(st: StageId, s: Save = S): BattleSetup {
@@ -127,17 +129,19 @@ export function baseReward(st: StageId, rnd: () => number = Math.random, ids: st
     chest,
   };
 }
-/** 보상 주기 (금화는 오늘 판 수로 줄어듦 · 경험치는 편성 영웅 모두) → 실제 받은 양 · 레벨업한 영웅 */
+/** 보상 주기 (금화는 오늘 판 수로 줄어듦 · 부스터면 전리품(금화·강화석) 2배 · 경험치는 편성 영웅 모두) → 실제 받은 양 · 레벨업한 영웅 */
 export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now()) {
   if (s.day.key !== dayKey(now)) s.day = { key: dayKey(now), runs: 0 };
   s.day.runs++;
-  const gold = Math.round(r.gold * taperAt(s.day.runs));
+  const bm = boostMult(s, now);
+  const gold = Math.round(r.gold * taperAt(s.day.runs) * bm);
+  const enh = r.enh * bm;
   addCur('gold', gold, s);
   addCur('stardust', r.stardust, s);
-  addCur('enh', r.enh, s);
+  addCur('enh', enh, s);
   const ups: string[] = [];
   for (const id of ids) if (addExp(id, r.exp, s)) ups.push(id);
-  return { ...r, gold, ups };
+  return { ...r, gold, enh, ups, boosted: bm > 1 };
 }
 
 export interface ClearInfo {
@@ -177,3 +181,35 @@ export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () =
 }
 /** 이 장을 깨면 합류하는 영웅 */
 export const heroJoining = (c: number) => HEROES.find((h) => h.joinChapter === c)?.id ?? null;
+
+// ───────── 반복 전투 (STAR_PLAN_v2 §1-6: 즉시 끝 · 행동력 n × 비용 · 별 3개 스테이지) ─────────
+export const canRepeat = (st: StageId, s: Save = S) => starsAt(st, s) >= CONFIG.repeat.minStars;
+export interface Haul {
+  runs: number;
+  gold: number;
+  exp: number;
+  enh: number;
+  chests: number;
+  ups: string[];
+  accUp: number;
+}
+/** n판을 바로 끝냄 — 행동력이 모자라면 할 수 있는 만큼(0판이면 null) */
+export function repeatBattle(st: StageId, n: number, s: Save = S, rnd: () => number = Math.random, now = Date.now()): Haul | null {
+  if (!canRepeat(st, s)) return null;
+  const h: Haul = { runs: 0, gold: 0, exp: 0, enh: 0, chests: 0, ups: [], accUp: 0 };
+  const ids = partyIds(s);
+  for (let i = 0; i < n; i++) {
+    const u = useStamina(stageCost(st.d), s, now);
+    if (!u.ok) break;
+    h.accUp += u.up;
+    const g = grant(baseReward(st, rnd, ids), ids, s, now);
+    h.runs++;
+    h.gold += g.gold;
+    h.exp += g.exp;
+    h.enh += g.enh;
+    if (g.chest) h.chests++;
+    for (const id of g.ups) if (!h.ups.includes(id)) h.ups.push(id);
+    s.stages[stageKey(st)].clears++;
+  }
+  return h.runs ? h : null;
+}

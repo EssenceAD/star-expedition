@@ -1,60 +1,11 @@
-// 소탕(자동 반복 · 맡겨 두기)과 방치 보상 — 둘 다 현실 시간으로 쌓인다 (「체크인」 자동 사냥·offline 방식)
-//  소탕: 별 3개 스테이지 N판을 맡기면 CONFIG.sweep.secPerRun 초마다 1판씩 끝남 → 아무 때나 끝난 만큼 받기 (꺼져 있어도 진행)
+// 방치 보상 — 현실 시간으로 쌓인다 (「체크인」 offline 방식) · 소탕은 반복 전투(game/stage.ts repeatBattle)로 바뀜
 //  방치: 가장 높이 깬 스테이지 1판 보상 × 시간당 판 수 × 비율 · fullHours 뒤로는 tailRate · 최대 maxHours
 import { CONFIG } from '../config';
-import { baseReward, bestCleared, grant, parseKey, stageKey, starsAt, type Reward, type StageId } from './stage';
+import { baseReward, bestCleared, grant, type Reward, type StageId } from './stage';
 import { partyIds, S, type Save } from './state';
 
-const W = CONFIG.sweep;
 const O = CONFIG.offline;
-export const canSweep = (st: StageId, s: Save = S) => starsAt(st, s) >= 3;
-export function startSweep(st: StageId, runs: number, s: Save = S, now = Date.now()): boolean {
-  if (s.sweep || !canSweep(st, s) || runs < 1) return false;
-  s.sweep = { stage: stageKey(st), runs: Math.min(W.maxRuns, Math.floor(runs)), startAt: now, got: 0 };
-  return true;
-}
-/** 지금까지 끝난 판 수 */
-export const sweepDone = (s: Save = S, now = Date.now()) => (s.sweep ? Math.min(s.sweep.runs, Math.floor((now - s.sweep.startAt) / 1000 / W.secPerRun)) : 0);
-export const sweepLeftSec = (s: Save = S, now = Date.now()) => (s.sweep ? Math.max(0, s.sweep.runs * W.secPerRun - (now - s.sweep.startAt) / 1000) : 0);
-export interface Haul {
-  runs: number;
-  gold: number;
-  exp: number;
-  enh: number;
-  chests: number;
-  ups: string[];
-}
-const empty = (): Haul => ({ runs: 0, gold: 0, exp: 0, enh: 0, chests: 0, ups: [] });
-/** 끝난 판 받기 (다 끝났으면 소탕 비움) */
-export function collectSweep(s: Save = S, now = Date.now(), rnd: () => number = Math.random): Haul {
-  const h = empty();
-  if (!s.sweep) return h;
-  const done = sweepDone(s, now);
-  const st = parseKey(s.sweep.stage);
-  const ids = partyIds(s);
-  for (let i = s.sweep.got; i < done; i++) {
-    const g = grant(baseReward(st, rnd, ids), ids, s, now);
-    h.runs++;
-    h.gold += g.gold;
-    h.exp += g.exp;
-    h.enh += g.enh;
-    if (g.chest) h.chests++;
-    for (const u of g.ups) if (!h.ups.includes(u)) h.ups.push(u);
-    const rec = s.stages[s.sweep.stage];
-    if (rec) rec.clears++;
-  }
-  s.sweep.got = done;
-  if (done >= s.sweep.runs) s.sweep = null;
-  return h;
-}
-/** 소탕 그만두기 (끝난 판은 받고) */
-export function stopSweep(s: Save = S, now = Date.now(), rnd: () => number = Math.random): Haul {
-  const h = collectSweep(s, now, rnd);
-  s.sweep = null;
-  return h;
-}
 
-// ───────── 방치 ─────────
 export interface Offline {
   seconds: number;
   away: number;

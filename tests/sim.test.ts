@@ -1,12 +1,12 @@
 // 전투: AUTO로 끝까지 · 쿨타임·마나 · 진형 · 상태이상 · 인연 · 숫자 겹침
 import { describe, expect, it } from 'vitest';
-import { canCast, has, makeBattle, placeNum, requestSkill, starsOf, step, shortNum } from '../src/battle/sim';
+import { canCast, has, makeBattle, numMid, placeNum, requestSkill, starsOf, step, shortNum } from '../src/battle/sim';
 import { CONFIG } from '../src/config';
 import { buildStage, recLevel } from '../src/game/stage';
 import { newSave, type Save } from '../src/game/state';
 import { runBattle, seeded } from './helpers';
 
-const save = (lv: number, party?: Save['party'], extra: string[] = []): Save => {
+const save = (lv: number, party?: string[], extra: string[] = []): Save => {
   const s = newSave(0);
   for (const id of [...Object.keys(s.heroes), ...extra]) s.heroes[id] = { lv, exp: 0 };
   if (party) s.party = party;
@@ -45,12 +45,22 @@ describe('전투 한 판', () => {
     expect(w.scd[0]).toBeGreaterThan(0);
     expect(canCast(b, w, 0)).toBe(false);
   });
-  it('진형: 앞줄 2 / 뒷줄 2 자리에 서고, 서로 안 가리게 떨어져 있다', () => {
-    const b = makeBattle(buildStage({ c: 1, s: 1, d: 0 }, save(1)), { rnd: seeded(1) });
-    const pos = b.heroes.map((h) => [h.x, h.y, h.front] as const);
-    expect(pos.filter((p) => p[2]).length).toBe(2);
+  it('위치 3구역: 직업 위치(전방·중앙·후방) 순서로 오른쪽부터 서고, 서로 안 가리게 떨어져 있다', () => {
+    // 편성 순서를 일부러 섞어도 화면 자리는 위치 순서
+    const b = makeBattle(buildStage({ c: 1, s: 1, d: 0 }, save(1, ['walwal', 'gonu', 'ikamolly', 'woongs'])), { rnd: seeded(1) });
+    expect(b.heroes.map((h) => h.hero!.def.id)).toEqual(['woongs', 'gonu', 'walwal', 'ikamolly']);
+    expect(b.heroes.map((h) => h.zone)).toEqual([0, 1, 2, 2]);
+    const pos = b.heroes.map((h) => [h.x, h.y] as const);
     for (let i = 0; i < pos.length; i++) for (let j = i + 1; j < pos.length; j++) expect(Math.hypot(pos[i][0] - pos[j][0], pos[i][1] - pos[j][1])).toBeGreaterThan(40);
-    expect(Math.min(...b.heroes.filter((h) => h.front).map((h) => h.x))).toBeGreaterThan(Math.max(...b.heroes.filter((h) => !h.front).map((h) => h.x)));
+    for (let i = 1; i < pos.length; i++) expect(pos[i][0]).toBeLessThan(pos[i - 1][0]);
+  });
+  it('적은 가장 앞 위치(전방)를 더 자주 노린다', () => {
+    const b = makeBattle(buildStage({ c: 1, s: 9, d: 0 }, save(30)), { rnd: seeded(8) });
+    b.auto = true;
+    for (let t = 0; t < 40 && b.phase !== 'win'; t += 1 / 30) step(b, 1 / 30);
+    const front = b.heroes.filter((h) => h.zone === 0).reduce((a, h) => a + h.taken, 0) / b.heroes.filter((h) => h.zone === 0).length;
+    const back = b.heroes.filter((h) => h.zone === 2).reduce((a, h) => a + h.taken, 0) / b.heroes.filter((h) => h.zone === 2).length;
+    expect(front).toBeGreaterThan(back);
   });
   it('침묵이면 스킬을 못 쓰고, 기절이면 평타도 멈춘다', () => {
     const b = makeBattle(buildStage({ c: 1, s: 1, d: 0 }, save(1)), { rnd: seeded(2) });
@@ -80,7 +90,7 @@ describe('전투 한 판', () => {
     expect(has(h, 'stun')).toBe(false);
   });
   it('인연: 삼총사(웅스·고느끼·왈왈콩)면 공속 보너스 + 대사', () => {
-    const s = save(5, { f0: 'woongs', f1: 'gonu', b0: 'walwal', b1: 'ikamolly' }, ['gonu']);
+    const s = save(5, ['woongs', 'gonu', 'walwal', 'ikamolly']);
     const b = makeBattle(buildStage({ c: 1, s: 1, d: 0 }, s), { rnd: seeded(4) });
     expect(b.setup.bonds.map((x) => x.id)).toContain('port3');
     expect(b.heroes[0].mod.spd).toBeCloseTo(0.15);
@@ -94,7 +104,7 @@ describe('피해 숫자 겹침', () => {
     for (let i = 0; i < CONFIG.combat.nums.rows * 3 - 1; i++) placeNum(b, 600, 200, 12345 + i * 777, i % 4 ? 'hit' : 'crit', i % 3 === 0);
     const ns = b.nums.filter((n) => n.t < CONFIG.combat.nums.life - 0.2);
     let overlaps = 0;
-    for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) if (Math.abs(ns[i].x - ns[j].x) * 2 < ns[i].w + ns[j].w && Math.abs(ns[i].y - ns[j].y) * 2 < ns[i].hgt + ns[j].hgt) overlaps++;
+    for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) if (Math.abs(ns[i].x - ns[j].x) * 2 < ns[i].w + ns[j].w && Math.abs(numMid(ns[i]) - numMid(ns[j])) * 2 < ns[i].hgt + ns[j].hgt) overlaps++;
     expect(overlaps).toBe(0);
   });
   it('실제 전투 1-10 내내: 새 숫자가 나올 때 이미 떠 있는 숫자와 겹치는 비율이 5% 미만', () => {
@@ -110,7 +120,7 @@ describe('피해 숫자 겹침', () => {
         if (before.has(n)) continue;
         total++;
         const rise = (x: typeof n) => x.t * CONFIG.combat.nums.rise;
-        if ([...before].some((o) => o.t < CONFIG.combat.nums.life - 0.2 && Math.abs(o.x - n.x) * 2 < o.w + n.w && Math.abs(o.y - rise(o) - n.y) * 2 < o.hgt + n.hgt)) bad++;
+        if ([...before].some((o) => o.t < CONFIG.combat.nums.life - 0.2 && Math.abs(o.x - n.x) * 2 < o.w + n.w && Math.abs(numMid(o) - rise(o) - numMid(n)) * 2 < o.hgt + n.hgt)) bad++;
       }
     }
     console.log('숫자 겹침', bad, '/', total);

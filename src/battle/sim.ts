@@ -2,7 +2,7 @@
 //  입력은 BattleSetup 하나 (스토리·탑·레이드 공용) · 스킬은 data/skills.ts 효과 조합을 여기 한 곳에서 해석
 //  진형: 앞 2(f0·f1) / 뒤 2(b0·b1) — 적은 앞줄을 더 자주 노린다 · 상태이상: 기절·침묵·둔화·화상·보호막 (+ 공격↑↓·속도↑·피해 감소·도발·회복·치명↑)
 import { CONFIG } from '../config';
-import { JOBS } from '../data/jobs';
+import { JOBS, ZONES } from '../data/jobs';
 import type { BossPattern } from '../data/mobs';
 import type { Eff, SkillDef, StatusKey } from '../data/skills';
 import { durOf, hitTimes, type Act, type AnimSet } from '../sprite/sheet';
@@ -39,8 +39,8 @@ export interface Unit {
   x: number;
   y: number;
   tx: number;
-  /** 앞줄인가 (영웅) */
-  front: boolean;
+  /** 위치 구역 번호 (영웅: 0 전방 · 1 중앙 · 2 후방) */
+  zone: number;
   act: Act;
   at: number;
   busy: number;
@@ -145,7 +145,7 @@ let rand: () => number = Math.random;
 const NO_MODS = (): Mods => ({ atk: 0, crit: 0, spd: 0, heal: 0, mana: 0, dmgCut: 0, skillDmg: 0 });
 function unit(side: Unit['side'], name: string, o: Partial<Unit> & Pick<Unit, 'max' | 'atk' | 'def' | 'rate' | 'x' | 'y' | 'anims' | 'h'>): Unit {
   return {
-    uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, front: false, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
+    uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
     scd: [0, 0, 0], autoOn: false, shield: 0, st: {}, burnAcc: 0, flash: 0, knock: 0, dead: false, deadT: 0, trail: 0, dealt: 0, healed: 0, taken: 0, pending: [], ...o,
   };
 }
@@ -174,9 +174,14 @@ function applyMods(b: Battle) {
 
 export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: number } = {}): Battle {
   rand = o.rnd ?? Math.random;
-  const heroes = setup.heroes.map((h): Unit => {
-    const [x, y] = K.slots[h.slot];
-    return unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, front: h.slot[0] === 'f' });
+  // 자리: 입력 순서(전방 → 중앙 → 후방)대로 places 4자리 · 구역이 바뀔 때마다 조금 더 뒤로
+  let gaps = 0;
+  const heroes = setup.heroes.map((h, i): Unit => {
+    const zone = ZONES.indexOf(h.zone);
+    if (i > 0 && h.zone !== setup.heroes[i - 1].zone) gaps++;
+    const [px, y] = K.places[i % K.places.length];
+    const x = px - gaps * K.zoneGap;
+    return unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone });
   });
   const b: Battle = {
     setup, w: o.w ?? CONFIG.view.wBase, t: 0, phase: 'walk', why: '', wave: -1, walkLeft: K.walkSec * (1 - Math.max(0, ...setup.bonds.map((x) => x.walkCut ?? 0))), scroll: 0, heroes, mobs: [], nums: [], fx: [], parts: [], cut: null, says: [],
@@ -260,22 +265,27 @@ function burst(b: Battle, x: number, y: number, color: string, n: number, sp = 1
   }
 }
 /** 숫자 놓을 머리 위 (큰 보스는 몸 가운데쯤 — 화면 위로 안 나가게) */
-const topOf = (u: Unit) => u.y - (u.mob?.boss ? u.h * 0.6 : u.h);
+const topOf = (u: Unit) => u.y - (u.mob?.boss ? u.h * 0.45 : u.h);
 
 /**
  * 피해 숫자 놓기 (겹침 해결): 대상 머리 위에서 줄(row) × 좌우 칸(col)을 차례로 보고, 이미 떠 있는 숫자와 안 겹치는 첫 자리에 놓는다.
  *  숫자는 모두 같은 속도로 올라가므로 놓는 순간 안 겹치면 끝까지 안 겹친다. 자리가 다 차면 가장 오래된 숫자를 빨리 지운다.
  */
-export function placeNum(b: Battle, x: number, top: number, v: number, kind: Num['kind'], big: boolean) {
+export function placeNum(b: Battle, x0: number, top: number, v: number, kind: Num['kind'], big: boolean) {
   const N = K.nums;
+  // 대상별 가로 흩뿌림 (STAR_PLAN_v2 §1-5): 기준 x를 대상 위 ±scatter 안에서 고른다
+  const x = x0 + (rand() * 2 - 1) * N.scatter;
   const size = kind === 'crit' ? T.font.canvas.numCrit : big ? T.font.canvas.numBig : kind === 'hurt' || kind === 'burn' ? T.font.canvas.num * 0.8 : T.font.canvas.num;
   const text = shortNum(v) + (kind === 'heal' ? '+' : '');
-  const w = text.length * size * 0.62 + 6;
-  const hgt = size * (kind === 'crit' ? 1.5 : 1.05);
+  // 글자는 기준선(y) 위로 그려지고 치명타는 그 위에 「치명타」 글자가 더 붙는다 · 튀어나올 때 1.15배까지 커짐
+  const w = (text.length * size * 0.62 + 6) * 1.15;
+  const hgt = (size + (kind === 'crit' ? T.font.canvas.critLabel + 2 : 0)) * 1.1;
   const rise = (n: Num) => n.t * N.rise;
-  const boxes = (cy: number) => b.nums.filter((n) => n.t < N.life - 0.2 && Math.abs(n.y - rise(n) - cy) * 2 < n.hgt + hgt);
+  const boxes = (cy: number) => b.nums.filter((n) => n.t < N.life - 0.2 && Math.abs(numMid(n) - rise(n) - (cy - hgt / 2)) * 2 < n.hgt + hgt);
   for (let r = 0; r < N.rows; r++) {
     const cy = top - 6 - r * N.rowH;
+    // 위쪽 HUD(보스 체력 바)에 안 닿게
+    if (cy - hgt < N.minY && r > 0) break;
     const row = boxes(cy);
     // 이 줄에서 안 겹치는 x: 대상 위 → 이미 있는 숫자 옆(왼/오른) 중 가까운 곳 · 너무 멀리(spread) 가지 않게
     const xs = [x, ...row.flatMap((n) => [n.x - (n.w + w) / 2 - 2, n.x + (n.w + w) / 2 + 2])].filter((cx) => Math.abs(cx - x) <= N.spread).sort((a, c) => Math.abs(a - x) - Math.abs(c - x));
@@ -289,6 +299,8 @@ export function placeNum(b: Battle, x: number, top: number, v: number, kind: Num
   for (const n of boxes(top - 6)) n.t = Math.max(n.t, N.life - 0.2);
   b.nums.push({ x, y: top - 6, v, kind, t: 0, big, w, hgt });
 }
+/** 숫자 상자의 세로 가운데 (기준선 y에서 위로 hgt) */
+export const numMid = (n: Num) => n.y - n.hgt / 2;
 /** 만·억 단위 (킹스레이드 문법: 큰 숫자를 짧게) */
 export function shortNum(n: number): string {
   if (n >= 1e8) return `${(n / 1e8).toFixed(n >= 1e9 ? 1 : 2).replace(/\.?0+$/, '')}억`;
@@ -363,14 +375,16 @@ function heal(b: Battle, by: Unit, to: Unit, amt: number) {
   placeNum(b, to.x, topOf(to), n, 'heal', false);
 }
 
+/** 가장 앞 구역 / 가장 뒤 구역에 있는 영웅들 */
+const frontLine = (hs: Unit[]) => hs.filter((h) => h.zone === Math.min(...hs.map((x) => x.zone)));
+const backLine = (hs: Unit[]) => hs.filter((h) => h.zone === Math.max(...hs.map((x) => x.zone)));
 const frontMob = (b: Battle) => alive(b.mobs).sort((a, c) => a.x - c.x)[0];
 const backMob = (b: Battle) => alive(b.mobs).sort((a, c) => c.x - a.x)[0];
 function mobTarget(b: Battle): Unit | undefined {
   const hs = alive(b.heroes);
   const t = hs.find((h) => has(h, 'taunt'));
   if (t) return t;
-  const fr = hs.filter((h) => h.front);
-  const pool = fr.length && rand() < K.mobFrontBias ? fr : hs;
+  const pool = rand() < K.mobFrontBias ? frontLine(hs) : hs;
   return pool[Math.floor(rand() * pool.length)];
 }
 
@@ -392,7 +406,7 @@ const allyTargets = (b: Battle, u: Unit, to: string): Unit[] => {
   const hs = alive(b.heroes);
   if (to === 'self') return [u];
   if (to === 'lowest') return hs.sort((a, c) => a.hp / a.max - c.hp / c.max).slice(0, 1);
-  if (to === 'frontAllies') return hs.filter((h) => h.front).length ? hs.filter((h) => h.front) : [u];
+  if (to === 'frontAllies') return frontLine(hs);
   return hs;
 };
 const mobTargets = (b: Battle, to: string): Unit[] => {
@@ -517,7 +531,7 @@ export function autoPick(b: Battle, u: Unit): number {
 // ───────── 보스 패턴 ─────────
 function bossStrike(b: Battle, boss: Unit, P: BossPattern) {
   const hs = alive(b.heroes);
-  const targets = P.to === 'back' ? (hs.filter((h) => !h.front).length ? hs.filter((h) => !h.front) : hs) : P.to === 'front' ? (hs.filter((h) => h.front).length ? hs.filter((h) => h.front) : hs) : hs;
+  const targets = P.to === 'back' ? backLine(hs) : P.to === 'front' ? frontLine(hs) : hs;
   play(boss, 'attack');
   for (const h of targets) {
     damage(b, boss, h, P.mult);
@@ -701,3 +715,8 @@ export function starsOf(b: Battle): number {
 }
 export const mvpOf = (b: Battle) => [...b.heroes].sort((a, c) => c.dealt + c.healed * 0.5 - (a.dealt + a.healed * 0.5))[0];
 export const partyDps = (b: Battle) => b.stats.dealt / Math.max(1, b.stats.time);
+
+/** 전투 전 대사 중: 그림만 숨 쉬게 (진행·시간은 멈춤) */
+export function idleStep(b: Battle, dt: number) {
+  for (const u of b.heroes) u.at += dt;
+}

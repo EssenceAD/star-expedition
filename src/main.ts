@@ -7,7 +7,7 @@ import { MOB_KINDS } from './data/mobs';
 import { loadSave, persist, S } from './game/state';
 import { loadSheets } from './sprite/sheet';
 import { applyTheme, iconText } from './theme/tokens';
-import { $, currentScreen, go } from './ui/core';
+import { $, currentScreen, go, tickChat } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
 import { battleNow } from './ui/battle';
@@ -71,6 +71,7 @@ const REC = q.get('rec') === '1';
 let last = performance.now();
 let scroll = 0;
 function frame(dt: number) {
+  tickChat(dt);
   const s = currentScreen();
   if (s?.canvas) s.tick?.(dt);
   else {
@@ -90,6 +91,7 @@ if (q.get('go')) {
   const [c, st, d] = (q.get('go') === '1' ? '1-10-0' : q.get('go')!).split('-').map(Number);
   S.prologue = true;
   S.seen[`${c}:intro`] = S.seen[`${c}:preBoss`] = true;
+  S.sta.n = Math.max(S.sta.n, 999);
   go('battle', { stage: { c, s: st, d: d || 0 } });
   const b = battleNow();
   if (b) {

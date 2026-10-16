@@ -1,9 +1,10 @@
 // 저장(버전 이전) · 스테이지 열림 · 보상 · 장 클리어 합류 · 소탕 · 방치
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config';
-import { collectSweep, computeOffline, claimOffline, startSweep, sweepDone } from '../src/game/idle';
+import { computeOffline, claimOffline } from '../src/game/idle';
+import { accNeed, boostMult, buyBooster, buyStamina, stamina, staMax, useStamina } from '../src/game/account';
 import { addExp, expNeed } from '../src/game/heroes';
-import { baseReward, nextStage, recordClear, taperAt, unlocked, diffOpen } from '../src/game/stage';
+import { baseReward, nextStage, recordClear, repeatBattle, taperAt, unlocked, diffOpen } from '../src/game/stage';
 import { migrate, newSave, SAVE_VERSION } from '../src/game/state';
 import { seeded } from './helpers';
 
@@ -15,15 +16,26 @@ describe('저장', () => {
     expect(s.version).toBe(SAVE_VERSION);
     expect(s.pilot).toEqual({ clears: 4, best: 3 });
     expect(Object.keys(s.heroes)).toEqual(CONFIG.start.heroes);
+    expect(CONFIG.start.heroes.length).toBe(5);
     expect(s.cur.gold).toBe(CONFIG.start.gold);
   });
-  it('망가진 저장 → 새로 · v2에 빠진 칸은 채움 · 미래 버전은 건드리지 않음', () => {
-    expect(migrate(null).version).toBe(2);
-    expect(migrate('x').version).toBe(2);
-    const part = migrate({ version: 2, cur: { gold: 7 } });
+  it('망가진 저장 → 새로 · 빠진 칸은 채움 · 미래 버전은 건드리지 않음', () => {
+    expect(migrate(null).version).toBe(SAVE_VERSION);
+    expect(migrate('x').version).toBe(SAVE_VERSION);
+    const part = migrate({ version: 3, cur: { gold: 7 } });
     expect(part.cur.gold).toBe(7);
-    expect(part.party.f0).toBe('woongs');
+    expect(part.party).toEqual(CONFIG.start.party);
     expect(migrate({ version: 9, x: 1 })).toEqual({ version: 9, x: 1 });
+  });
+  it('v2(앞2/뒤2 편성 · 소탕) → v3: 편성은 목록으로, 소탕은 없애고, 다섯 별은 모두 있게', () => {
+    const v2 = { version: 2, party: { f0: 'woongs', f1: 'warmnight', b0: 'ikamolly', b1: null }, heroes: { woongs: { lv: 7, exp: 3 }, warmnight: { lv: 2, exp: 0 }, ikamolly: { lv: 1, exp: 0 }, walwal: { lv: 1, exp: 0 } }, sweep: { stage: '1-1-0' }, cur: { gold: 9 }, stages: {}, seen: {} };
+    const s = migrate(v2, 5);
+    expect(s.version).toBe(3);
+    expect(s.party).toEqual(['woongs', 'warmnight', 'ikamolly']);
+    expect(s.heroes.woongs.lv).toBe(7);
+    expect(s.heroes.gonu).toBeTruthy();
+    expect((s as unknown as Record<string, unknown>).sweep).toBeUndefined();
+    expect(s.acc.lv).toBe(1);
   });
 });
 
@@ -65,21 +77,43 @@ describe('스테이지', () => {
   });
 });
 
-describe('소탕 · 방치', () => {
-  it('별 3개만 · 시간이 지나야 판이 끝남 · 받으면 보상과 기록', () => {
+describe('행동력 · 반복 전투 · 부스터 · 방치', () => {
+  it('행동력: 시간으로 차고 최대에서 멈춤 · 쓰면 원정대 경험치 · 레벨업이면 가득', () => {
     const s = newSave(0);
-    expect(startSweep({ c: 1, s: 1, d: 0 }, 5, s, 0)).toBe(false);
+    s.sta = { n: 0, at: 0 };
+    expect(stamina(s, CONFIG.stamina.regenSec * 3 * 1000)).toBe(3);
+    expect(stamina(s, 1e12)).toBe(staMax(s));
+    s.sta = { n: 100, at: 0 };
+    const r = useStamina(accNeed(1), s, 1);
+    expect(r.ok).toBe(true);
+    expect(r.up).toBe(1);
+    expect(s.acc.lv).toBe(2);
+    expect(s.sta.n).toBeGreaterThanOrEqual(staMax(s));
+    s.sta = { n: 2, at: 1e12 };
+    expect(useStamina(6, s, 1e12).ok).toBe(false);
+    s.cur.stardust = CONFIG.stamina.buyDust;
+    expect(buyStamina(s, 1e12)).toBe(true);
+    expect(s.sta.n).toBe(2 + CONFIG.stamina.buyN);
+  });
+  it('반복 전투: 별 3개만 · 바로 끝 · 행동력 n × 비용 · 모자라면 되는 만큼', () => {
+    const s = newSave(0);
+    expect(repeatBattle({ c: 1, s: 1, d: 0 }, 3, s, seeded(1), 1)).toBeNull();
     clear(s, 1, 1);
-    const gold0 = s.cur.gold;
-    expect(startSweep({ c: 1, s: 1, d: 0 }, 5, s, 0)).toBe(true);
-    expect(startSweep({ c: 1, s: 1, d: 0 }, 5, s, 0)).toBe(false);
-    expect(sweepDone(s, (CONFIG.sweep.secPerRun * 2 + 1) * 1000)).toBe(2);
-    const h = collectSweep(s, (CONFIG.sweep.secPerRun * 2 + 1) * 1000, seeded(3));
-    expect(h.runs).toBe(2);
-    expect(s.cur.gold).toBeGreaterThan(gold0);
-    const h2 = collectSweep(s, CONFIG.sweep.secPerRun * 10 * 1000, seeded(3));
-    expect(h2.runs).toBe(3);
-    expect(s.sweep).toBeNull();
+    s.sta = { n: CONFIG.stamina.cost[0] * 3 + 1, at: 1e12 };
+    s.acc.exp = -1e9; // 레벨업으로 가득 차는 일 없게
+    const gold = s.cur.gold;
+    const h = repeatBattle({ c: 1, s: 1, d: 0 }, 5, s, seeded(1), 1e12)!;
+    expect(h.runs).toBe(3);
+    expect(s.cur.gold).toBeGreaterThan(gold);
+    expect(s.sta.n).toBe(1);
+    expect(s.stages['1-1-0'].clears).toBe(4);
+  });
+  it('부스터: 금화로 1시간 · 전리품 2배', () => {
+    const s = newSave(0);
+    expect(boostMult(s, 0)).toBe(1);
+    expect(buyBooster(s, 0)).toBe(true);
+    expect(boostMult(s, 1000)).toBe(CONFIG.booster.mult);
+    expect(boostMult(s, CONFIG.booster.sec * 1000 + 1)).toBe(1);
   });
   it('방치: 깬 스테이지 없으면 없음 · 최대 시간까지만 · 받으면 금화·경험치', () => {
     const s = newSave(0);

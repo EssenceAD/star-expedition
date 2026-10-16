@@ -33,15 +33,11 @@ await p.goto(URL);
 await p.waitForFunction(() => window.__ready, null, { timeout: 15000 });
 await p.waitForTimeout(300);
 await shot('title');
+// 첫 진입: 원정 출발 → 1-1 필드에서 프롤로그 → 전투 → 승리 → 원정대 여관
 await click('[data-go]');
-await p.waitForSelector('.talk');
-await shot('prologue');
-await skipTalk();
-await p.waitForSelector('[data-screen="lobby"]');
-await shot('lobby');
 async function playStage(label) {
   await p.waitForSelector('[data-screen="battle"]');
-  await p.waitForTimeout(200);
+  await p.waitForTimeout(300);
   if (await p.locator('.talk').count()) {
     await shot(`${label}_talk`);
     await skipTalk();
@@ -53,36 +49,48 @@ async function playStage(label) {
   });
   await p.waitForTimeout(2500);
   await shot(`${label}_battle`);
-  await p.waitForFunction(() => !document.querySelector('#result').hidden || document.querySelector('.talk'), null, { timeout: 120000 });
+  await p.waitForFunction(() => !document.querySelector('#result').hidden || document.querySelector('.talk') || document.querySelector('.join'), null, { timeout: 120000 });
   if (await p.locator('.talk').count()) {
     await shot(`${label}_clear_talk`);
     await skipTalk();
-    await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 5000 });
   }
+  if (await p.locator('.join').count()) {
+    await shot(`${label}_join`);
+    await click('.join');
+  }
+  await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 5000 });
   await shot(`${label}_result`);
 }
+await playStage('1-1');
+await click('#result [data-a="lobby"]');
+await p.waitForSelector('[data-screen="lobby"]');
+await p.waitForTimeout(400);
+if (await p.locator('.modal').count()) await click('.modal .btn.hi');
+await shot('lobby');
 await click('[data-go="adventure"]');
 await p.waitForSelector('[data-screen="adventure"]');
 await shot('adventure');
+await click('[data-prep]');
+await p.waitForSelector('[data-screen="prep"]');
+await shot('prep');
 await click('[data-start]');
-await playStage('1-1');
-for (let i = 2; i <= Number(process.env.STAGES ?? 3); i++) {
+await playStage('1-2');
+for (let i = 3; i <= Number(process.env.STAGES ?? 3); i++) {
   await click('#result [data-a="next"]');
   await playStage(`1-${i}`);
 }
-await click('#result [data-a="adv"]');
-await p.waitForSelector('[data-screen="adventure"]');
-await click('[data-form]');
-await p.waitForSelector('[data-screen="formation"]');
-await click('[data-slot="f1"]');
-await click('[data-h="woongs"]');
-await shot('formation');
-await click('[data-back]');
-await click('[data-back]');
+await click('#result [data-a="lobby"]');
 await p.waitForSelector('[data-screen="lobby"]');
+await click('[data-go="prep"]');
+await p.waitForSelector('[data-screen="prep"]');
+await click('[data-tab="back"]');
+await click('[data-h="warmnight"]');
+await shot('formation_back_tab');
+await click('[data-back]');
 await click('[data-go="heroes"]');
 await p.waitForSelector('[data-screen="heroes"]');
-await shot('heroes');
+await click('[data-tab="none"]');
+await shot('heroes_unowned');
 await click('[data-h="hwang"]');
 await shot('hero_hwang');
 await br.close();

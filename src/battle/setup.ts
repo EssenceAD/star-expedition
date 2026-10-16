@@ -3,12 +3,13 @@ import type { BondDef } from '../data/bonds';
 import type { HeroArt, HeroDef } from '../data/heroes';
 import type { BossPattern, MobKind } from '../data/mobs';
 import type { Stats } from '../game/heroes';
-import type { Slot } from '../game/state';
+import type { Zone } from '../data/jobs';
 
 export interface HeroSpec {
   def: HeroDef;
   art: HeroArt;
-  slot: Slot;
+  /** 위치 3구역 (직업으로 정해짐) */
+  zone: Zone;
   lv: number;
   st: Stats;
 }

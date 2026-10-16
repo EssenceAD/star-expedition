@@ -26,7 +26,7 @@ export const CONFIG = {
     /** 적이 걸어 들어오는 속도 · 들어오는 거리 */
     mobEnter: 320,
     mobEnterFrom: 380,
-    /** 적 대상 고르기: 앞줄을 노릴 확률 */
+    /** 적 대상 고르기: 가장 앞 위치(전방 → 중앙 → 후방)에 있는 영웅을 노릴 확률 */
     mobFrontBias: 0.7,
     /** 보스는 넉백·기절을 이 비율만 */
     bossKnock: 0.15,
@@ -36,13 +36,15 @@ export const CONFIG = {
     guardCut: 0.3,
     /** 사제 AUTO: 체력 이 비율 아래인 아군이 있으면 회복 */
     autoHealAt: 0.65,
-    /** 진형 (화면 왼쪽 기준 x · 발 y) — 앞 2 / 뒤 2, 대각선으로 엇갈려 서로 안 가림 */
-    slots: { f0: [372, 238], f1: [416, 282], b0: [222, 238], b1: [266, 282] } as Record<string, [number, number]>,
+    /** 위치 3구역 (킹스레이드 문법: 직업마다 고정) — 파티를 전방 → 중앙 → 후방 순으로 세워 이 4자리에 (화면 왼쪽 기준 x · 발 y) · 대각선으로 엇갈려 안 가림 */
+    places: [[430, 282], [380, 238], [300, 282], [250, 238]] as [number, number][],
+    /** 같은 구역이 비면 생기는 틈 (구역이 바뀔 때마다 이만큼 더 뒤로) */
+    zoneGap: 18,
     /** 적 자리 (화면 오른쪽 끝에서 뺀 x · 발 y) */
     mobSlots: [[292, 238], [238, 282], [184, 238], [130, 282]] as [number, number][],
     bossSlot: [180, 266] as [number, number],
-    /** 피해 숫자: 한 대상 위 줄 수 · 줄 높이 · 좌우로 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) */
-    nums: { rows: 6, rowH: 22, spread: 90, life: 1.15, rise: 30 },
+    /** 피해 숫자: 대상 위 가로로 흩뿌리는 폭(±) · 줄 수 · 줄 높이 · 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) · 이보다 위(보스 바)에는 안 놓음 */
+    nums: { scatter: 34, rows: 6, rowH: 22, spread: 90, life: 1.15, rise: 30, minY: 70 },
   },
   /** 영웅 성장 (1단계 A: 레벨만 · 각성·스킬 레벨·초월은 B) */
   hero: {
@@ -55,16 +57,16 @@ export const CONFIG = {
   },
   /** 직업 기본 능력치 (레벨 1) */
   jobs: {
-    knight: { hp: 18000, atk: 820, def: 1500, rate: 1.15, ranged: false, row: 'f' },
-    warrior: { hp: 15000, atk: 1050, def: 1100, rate: 1.0, ranged: false, row: 'f' },
-    fighter: { hp: 14000, atk: 1000, def: 1000, rate: 0.75, ranged: false, row: 'f' },
-    assassin: { hp: 10500, atk: 1150, def: 700, rate: 0.8, ranged: false, row: 'f' },
-    archer: { hp: 10000, atk: 1080, def: 650, rate: 1.15, ranged: true, row: 'b' },
-    engineer: { hp: 10750, atk: 1000, def: 750, rate: 1.25, ranged: true, row: 'b' },
-    mage: { hp: 9000, atk: 1200, def: 550, rate: 1.4, ranged: true, row: 'b' },
-    priest: { hp: 10000, atk: 760, def: 700, rate: 1.5, ranged: true, row: 'b' },
-    druid: { hp: 13000, atk: 900, def: 900, rate: 1.2, ranged: false, row: 'f' },
-  } as Record<string, { hp: number; atk: number; def: number; rate: number; ranged: boolean; row: 'f' | 'b' }>,
+    knight: { hp: 18000, atk: 820, def: 1500, rate: 1.15, ranged: false },
+    warrior: { hp: 15000, atk: 1050, def: 1100, rate: 1.0, ranged: false },
+    fighter: { hp: 14000, atk: 1000, def: 1000, rate: 0.75, ranged: false },
+    assassin: { hp: 10500, atk: 1150, def: 700, rate: 0.8, ranged: false },
+    archer: { hp: 10000, atk: 1080, def: 650, rate: 1.15, ranged: true },
+    engineer: { hp: 10750, atk: 1000, def: 750, rate: 1.25, ranged: true },
+    mage: { hp: 9000, atk: 1200, def: 550, rate: 1.4, ranged: true },
+    priest: { hp: 10000, atk: 760, def: 700, rate: 1.5, ranged: true },
+    druid: { hp: 13000, atk: 900, def: 900, rate: 1.2, ranged: false },
+  } as Record<string, { hp: number; atk: number; def: number; rate: number; ranged: boolean }>,
   /** 스토리 · 스테이지 (ROADMAP §3) */
   story: {
     chapters: 10,
@@ -103,12 +105,20 @@ export const CONFIG = {
     /** 오늘 판 수 구간별 금화 비율 (「체크인」 goldsink.taper 방식 · 재료는 줄지 않음) */
     taper: [[120, 1], [300, 0.5], [Infinity, 0.25]] as [number, number][],
   },
-  /** 소탕(자동 반복 · 맡겨 두기): 별 3개 스테이지 · 한 판 걸리는 현실 초 · 한 번에 최대 판 수 */
-  sweep: { secPerRun: 30, maxRuns: 50, choices: [1, 5, 10, 30, 50] },
+  /** 행동력 (KR 문법): 최대 = base + perLv × (원정대 레벨 − 1) · regenSec초마다 1 · 원정대 레벨업 때 가득 · 최대를 넘겨 쌓일 수 있음(보상·구매) */
+  stamina: { base: 60, perLv: 2, regenSec: 300, cost: [6, 8, 10] as number[], buyDust: 50, buyN: 60 },
+  /** 원정대(계정) 레벨: 쓴 행동력 1 = 경험치 1 · 다음 레벨 = round(base × lv^pow) */
+  account: { exp: { base: 30, pow: 1.35 }, max: 99 },
+  /** 반복 전투: 별 3개 스테이지 · 즉시 끝남 · 행동력 n × 비용 */
+  repeat: { choices: [1, 3, 5, 10, 20] as number[], minStars: 3 },
+  /** 부스터: 전리품 2배 · 1시간 · 금화로 (게임 재화만) */
+  booster: { mult: 2, sec: 3600, gold: 3000 },
   /** 방치 보상 (「체크인」 offline 방식): 최고 스테이지 1판 보상 × 시간당 판 수 · fullHours 뒤로는 tailRate · 최대 maxHours */
   offline: { runsPerHour: 20, rate: 0.25, fullHours: 3, tailRate: 0.15, maxHours: 8, minSeconds: 60 },
-  /** 처음 시작 */
-  start: { gold: 5000, stardust: 100, heroes: ['woongs', 'ikamolly', 'walwal', 'warmnight'], party: { f0: 'woongs', f1: 'warmnight', b0: 'ikamolly', b1: 'walwal' } as Record<string, string | null> },
+  /** 처음 시작: 다섯 별 전원 · 파티 4 (전방 → 후방 순서는 자동) */
+  start: { gold: 5000, stardust: 100, heroes: ['woongs', 'gonu', 'ikamolly', 'walwal', 'warmnight'], party: ['woongs', 'gonu', 'ikamolly', 'walwal'], name: '원정대장' },
+  /** 월드 채팅 한 줄 티커: 몇 초마다 한 줄 */
+  chat: { everySec: [6, 14] as number[] },
   /** 전투력 = (공격 × atkW + 체력 × hpW + 방어 × defW) 합 */
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */
