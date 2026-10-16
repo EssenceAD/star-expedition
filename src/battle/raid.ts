@@ -133,7 +133,7 @@ export function raidOnHit(b: Battle, by: Unit, boss: Unit, dmg: number, skill: b
       if (r.warnKey === p.pattern) ((r.warnLane = null), (r.queue = []), (b.pat.text = ''));
     }
   }
-  addGroggy(b, (skill ? RA.groggy.skill : RA.groggy.hit) + (stun ? RA.groggy.stun : 0));
+  addGroggy(b, ((skill ? RA.groggy.skill : RA.groggy.hit) + (stun ? RA.groggy.stun : 0)) * (by.hero?.def.groggy ?? 1));
   // 페이즈 전환
   const ratio = 1 - Math.min(1, (boss.max - boss.hp) / r.base);
   if (r.phase < RA.phases.length && ratio <= RA.phases[r.phase] && boss.hp > 0) {

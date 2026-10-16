@@ -21,7 +21,7 @@ export interface Guild {
   /** 멤버 이름 (실멤버 길드는 단톡방 창립 멤버 · AI 길드는 AI 이름) */
   members: string[];
 }
-const FOUNDERS = HEROES.filter((h) => h.origin === 'founder').map((h) => h.name);
+const FOUNDERS = HEROES.filter((h) => h.origin === 'founder' || h.origin === 'member').map((h) => h.name);
 export const GUILDS: Guild[] = [
   { id: 'real', name: '별의 원정대', real: true, desc: '단톡방 창립 멤버 길드 (실멤버 · 서버 연결 뒤 진짜 기록)', lv: 1, members: FOUNDERS },
   { id: 'ai1', name: '새벽등불 상단', real: false, desc: '매일 출석하는 성실파 AI 길드', lv: 7, members: CHAT_NAMES.slice(0, 6) },

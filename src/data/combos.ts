@@ -19,5 +19,9 @@ export const COMBOS: Combo[] = [
   { pair: ['leon', 'ceres'], name: '왕국 기사단 돌격', line: '기사단, 앞으로!' },
   { pair: ['vael', 'nyx'], name: '그림자 이중주', line: '…이번엔 같은 편이다.' },
   { pair: ['warmnight', 'ikamolly'], name: '등불과 바람', line: '길을 밝힐게, 바람을 실어 줘.' },
+  // 멤버 영웅 관계 (HEROES_ADD_4)
+  { pair: ['jaehi', 'warmnight'], name: '막역한 친구의 합', line: '밤아, 지금이다아~! …진짜로!' },
+  { pair: ['mochi', 'kkangto'], name: '멍멍 대폭발', line: '딸기·망고·모찌, 깡토끼 누나랑 간다!' },
+  { pair: ['sermi', 'shinya'], name: '사제 합동기 「별의 궤적」', line: '지금. 네 화살이 정답이야.' },
 ];
 export const comboOf = (a: string, b: string): Combo => COMBOS.find((c) => c.pair.includes(a) && c.pair.includes(b) && a !== b) ?? { pair: [a, b], name: '협공', line: '지금이야, 같이!' };

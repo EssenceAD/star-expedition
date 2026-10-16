@@ -26,6 +26,23 @@ export const BONDS: BondDef[] = [
   { id: 'mentorP', name: '대나무 숲 사제지간', members: ['panda', 'yeonhwa'], need: 2, eff: { s: 'crit', v: 0.08 }, lines: [['yeonhwa', '사부님, 오늘은 제가 먼저!'], ['panda', '허허, 호리병은 내가 들고 있으마.']] },
   { id: 'exCult', name: '교단을 떠난 셋', members: ['vael', 'nyx', 'veronica'], need: 2, eff: { s: 'atk', v: 0.1 }, lines: [['nyx', '옛 동료끼리 또 만나네.'], ['vael', '…이번엔 같은 편이다.'], ['veronica', '용서는 싸움이 끝난 뒤에.']] },
   { id: 'royal', name: '왕국 기사단', members: ['leon', 'ceres', 'elysia'], need: 2, eff: { s: 'dmgCut', v: 0.1 }, lines: [['leon', '기사단, 대열을 갖춰라!'], ['ceres', '네, 넷! 전하!'], ['elysia', '흥, 명령 안 하셔도 압니다.']] },
+  // 멤버 영웅 관계 (docs/HEROES_ADD_4.md · 형철 제공)
+  { id: 'realFriends', name: '막역한 사이', members: ['jaehi', 'warmnight'], need: 2, eff: { s: 'dmgCut', v: 0.1 }, lines: [['jaehi', '밤아~ 오늘은 아빠가 앞에 선다아~?'], ['warmnight', '또 시작이네. 넘어지지나 마.'], ['jaehi', '…그래도 등은 네가 봐 줘.']] },
+  { id: 'dogLovers', name: '멍멍 동맹', members: ['mochi', 'kkangto'], need: 2, eff: { s: 'heal', v: 0.12 }, lines: [['kkangto', '모찌야~ 이리 와! 아이 이뻐라!'], ['mochi', '깡토끼 님 오면 애들이 꼬리를 못 멈춰ㅋㅋ'], ['kkangto', '좋아, 기분 최고다. 다 날려 버린다!']] },
+  { id: 'starMentor', name: '별의 사제', members: ['sermi', 'shinya'], need: 2, eff: { s: 'crit', v: 0.08 }, lines: [['shinya', '세르님, 저 적… 약점이 어디예요? 그리고 각도는요? 그리고…'], ['sermi', '하나씩. 왼쪽 무릎. 각도는 네가 이미 알아.']] },
+  { id: 'guildMates', name: '길드 선후배', members: ['ichae', 'kleine'], need: 2, eff: { s: 'mana', v: 0.15 }, lines: [['kleine', '이치애, 오늘도 앞을 부탁해요.'], ['ichae', '네, 마스터. 끝까지 버틸게요.']] },
+];
+/** 세르미뉴가 파티에 있으면 다른 영웅 하나가 「세르님」께 묻는 대사 (모두의 리스펙) */
+export const SER_ASK: [string, string][] = [
+  ['woongs', '세르님! 이 보스 패턴 뭐예요? 알려 주이소!'],
+  ['gonu', '세르님, 오늘 공략 순서 한 번만 짚어 주세요~'],
+  ['yuwol', '세르님, 이 각 맞죠? …맞다고 해 주세요.'],
+  ['haeung', '세르님, 앞은 제가 막을게요. 타이밍만 불러 주세요!'],
+  ['ikamolly', '세르님, 바람 방향 계산도 되세요?'],
+  ['jaehi', '세르님~ 아빠는 어디 서 있으면 돼용?'],
+  ['mochi', '세르님, 우리 애들 동선도 계산해 주실 수 있어요?ㅋㅋ'],
+  ['ichae', '세르님, 제가 얼마나 버티면 될까요?'],
+  ['kleine', '세르님 의견도 들어 볼게요. 어떻게 보세요?'],
 ];
 /** 파티(영웅 id 목록)에서 켜진 인연 */
 export const activeBonds = (ids: string[]) => BONDS.filter((b) => b.members.filter((m) => ids.includes(m)).length >= b.need);

@@ -11,12 +11,13 @@ import { T } from '../src/theme/tokens';
 import { existsSync } from 'node:fs';
 
 describe('데이터', () => {
-  it('영웅 32명 = 창립 13 + 전설 14 + 새 5 · id 겹침 없음', () => {
-    expect(HEROES.length).toBe(32);
+  it('영웅 36명 = 창립 13 + 전설 14 + 새 5 + 멤버 4 · id 겹침 없음', () => {
+    expect(HEROES.length).toBe(36);
+    expect(HEROES.filter((h) => h.origin === 'member').map((h) => h.name)).toEqual(['세르미뉴', '이치애', '딸기망고모찌', '재희아빠']);
     expect(HEROES.filter((h) => h.origin === 'founder').length).toBe(13);
     expect(HEROES.filter((h) => h.origin === 'legend').length).toBe(14);
     expect(HEROES.filter((h) => h.origin === 'new').length).toBe(5);
-    expect(new Set(HEROES.map((h) => h.id)).size).toBe(32);
+    expect(new Set(HEROES.map((h) => h.id)).size).toBe(36);
   });
   it('직업 9종이 모두 쓰이고, 능력치가 config에 있다', () => {
     expect(JOB_IDS.length).toBe(9);
@@ -58,5 +59,25 @@ describe('데이터', () => {
       for (const l of [...c.intro!, ...c.preBoss!, ...c.clear!]) expect(SPEAKER[l[0]] !== undefined || !!heroOf(l[0]), l[0]).toBe(true);
     }
     for (const l of PROLOGUE) expect(SPEAKER[l[0]] !== undefined || !!heroOf(l[0])).toBe(true);
+  });
+});
+
+describe('멤버 영웅 4명 (HEROES_ADD_4)', () => {
+  it('관계: 인연 · 협공 컷인 자리 · 세르님 리스펙 대사 · 대사 3종 · 외형', async () => {
+    const { BONDS, SER_ASK } = await import('../src/data/bonds');
+    const { comboOf } = await import('../src/data/combos');
+    for (const [a, b] of [['jaehi', 'warmnight'], ['mochi', 'kkangto'], ['sermi', 'shinya']]) {
+      expect(BONDS.some((x) => x.members.includes(a) && x.members.includes(b)), `${a}+${b}`).toBe(true);
+      expect(comboOf(a, b).name).not.toBe('협공');
+    }
+    expect(BONDS.some((x) => x.members.includes('ichae') && x.members.includes('kleine'))).toBe(true);
+    expect(SER_ASK.length).toBeGreaterThanOrEqual(5);
+    expect(SER_ASK.every(([id, t]) => HEROES.some((h) => h.id === id) && t.includes('세르님'))).toBe(true);
+    for (const h of HEROES.filter((x) => x.origin === 'member')) {
+      expect(h.voice?.length).toBe(3);
+      expect(h.look?.length).toBeGreaterThan(10);
+    }
+    // 머리색이 다른 영웅과 안 겹치게 적어 둔 외형 (그림 주문서)
+    expect(new Set(HEROES.filter((x) => x.origin === 'member').map((h) => h.look!.split(' · ')[1])).size).toBe(4);
   });
 });

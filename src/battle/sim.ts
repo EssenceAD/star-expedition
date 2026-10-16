@@ -2,6 +2,7 @@
 //  입력은 BattleSetup 하나 (스토리·탑·레이드 공용) · 스킬은 data/skills.ts 효과 조합을 여기 한 곳에서 해석
 //  진형: 앞 2(f0·f1) / 뒤 2(b0·b1) — 적은 앞줄을 더 자주 노린다 · 상태이상: 기절·침묵·둔화·화상·보호막 (+ 공격↑↓·속도↑·피해 감소·도발·회복·치명↑)
 import { CONFIG } from '../config';
+import { SER_ASK } from '../data/bonds';
 import { JOBS, ZONES } from '../data/jobs';
 import type { BossPattern } from '../data/mobs';
 import type { Eff, SkillDef, StatusKey } from '../data/skills';
@@ -239,6 +240,14 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
       if (u) b.says.push({ uid: u.uid, text, t: -at, dur: 2.2 });
       at += 1.1;
     }
+  // 세르미뉴가 있으면 누군가 「세르님」께 묻고 짧게 답함
+  const ser = heroes.find((h) => h.hero?.def.id === 'sermi');
+  const asks = SER_ASK.filter(([id]) => heroes.some((h) => h.hero?.def.id === id));
+  if (ser && asks.length) {
+    const [id, text] = asks[Math.floor(rand() * asks.length)];
+    b.says.push({ uid: heroes.find((h) => h.hero!.def.id === id)!.uid, text, t: -at, dur: 2.2 });
+    b.says.push({ uid: ser.uid, text: ser.hero!.def.voice![0], t: -(at + 1.2), dur: 2.2 });
+  }
   return b;
 }
 /** 창 크기가 바뀌면 적 자리를 오른쪽 끝에 맞춰 옮긴다 */
