@@ -96,11 +96,11 @@ export const CONFIG = {
     gold: { base: 300, grow: 1.06 },
     exp: { base: 40, grow: 1.065 },
     /** 첫 클리어 별가루 · 보스 스테이지 · 별 3개 처음 */
-    firstDust: 30,
-    firstDustBoss: 150,
-    threeStarDust: 20,
+    firstDust: 20,
+    firstDustBoss: 100,
+    threeStarDust: 12,
     /** 판마다 별가루 (확률 · 개수 × (난이도+1)) — 경제 시뮬로 맞춤 (docs/ECONOMY.md) */
-    dust: { chance: 0.12, n: 10 },
+    dust: { chance: 0.08, n: 10 },
     /** 강화석 (판마다 · 확률) */
     enh: { n: 1, chance: 0.5 },
     /** 난이도 보상 배수 */
@@ -240,21 +240,21 @@ export const CONFIG = {
     /** 레이드(협동 8인 = 내 4 + AI 4): 하루 3 · 드래곤 강함 · 보상 티어 재료 · 장비(영웅 이상) */
     raid: { tries: 3, add: 12, hp: 320, atk: 2.4, tierMat: 6, gearGrade: 3, limit: 150 },
     /** 월드 보스 (공용 체력 · 1단계는 로컬 + AI 기여): 하루 3 · 한 판 60초 · 체력 = base × grow^주 · AI 기여(시간당) · 보상(내 피해 순위 칸) */
-    world: { tries: 3, sec: 60, partBase: 6, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [300, 150, 80, 40] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
+    world: { tries: 3, sec: 60, partBase: 6, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [200, 100, 50, 25] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
     /** 결투장 3리그: 하루 5판 · 승점 · 리그 단계 · 영광의 리그 열리는 시간(KST) · 최후의 리그 해금 점수 · 리그 코인 */
     arena: { tries: 5, win: 25, lose: -12, start: 1000, tiers: [[0, '동'], [1100, '은'], [1250, '금'], [1450, '별빛'], [1700, '전설']] as [number, string][], gloryHours: [[12, 14], [19, 23]] as number[][], lastUnlock: 1250, coin: { win: 30, lose: 10 } },
     /** 영웅 외전: 영웅마다 3막 (마지막 = 보스) · 강함 = 영웅 레벨 기준 · 클리어 보상: 전용 보물 해금 · 그 영웅 전용 무기 조각 · 별가루 */
     side: { acts: 3, add: 0, shards: 10, dust: 100 },
     /** 이정표 보상 별가루 (단계마다) */
-    milestoneDust: 100,
+    milestoneDust: 60,
   },
   /**
    * D덩어리 소셜·운영 (STAR_PLAN_v2 §4)
    */
   social: {
     /** 출석: 7일 돌림 보상 (별가루·금화·행동력) · 이벤트 출석(오픈 기념): 기간 · 날마다 별가루 */
-    attend: [{ gold: 10000 }, { stardust: 50 }, { exp: 5 }, { enh: 30 }, { stardust: 100 }, { optTicket: 1 }, { stardust: 300 }] as Record<string, number>[],
-    event: { name: '오픈 기념 출석', start: '2026-10-17', days: 14, dust: 100 },
+    attend: [{ gold: 10000 }, { stardust: 30 }, { exp: 5 }, { enh: 30 }, { stardust: 60 }, { optTicket: 1 }, { stardust: 150 }] as Record<string, number>[],
+    event: { name: '오픈 기념 출석', start: '2026-10-17', days: 14, dust: 50 },
     /** 길드: 출석 코인 · 기여(금화 → 기여 점수·코인) · 길드 레이드(주간 · 하루 2 · 90초 · 준 피해 = 기여) */
     guild: { attendCoin: 20, donate: [[10000, 10, 10], [50000, 60, 50], [200000, 250, 200]] as number[][], raidTries: 2, raidSec: 90, raidHp: 2e9, raidAdd: 15, raidCoinPer: 2e6, members: 30 },
     /** 친구: 하루 선물 보내기·받기 (행동력) · 최대 친구 수 */
@@ -315,10 +315,12 @@ export const CONFIG = {
   },
   /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
   econ: {
+    /** 주간 획득 상한 (B 보강 §4 · 독주 방지 · 월요일 0시 KST에 비움) — 넘친 만큼은 안 들어오고 사냥은 계속 (금화·경험치·장비) · 우편 보상은 상한 밖 */
+    cap: { stardust: 3600, awakenStone: 20, transStone: 4 } as Record<string, number>,
     light: { staUse: 0.5, buys: 0, sessions: 2 },
     normal: { staUse: 1, buys: 0, sessions: 4 },
     heavy: { staUse: 1, buys: 3, sessions: 8 },
-  } as Record<string, { staUse: number; buys: number; sessions: number }>,
+  } as unknown as Record<string, { staUse: number; buys: number; sessions: number }> & { cap: Record<string, number> },
   /** 전투력 = (공격 × atkW + 체력 × hpW + 방어 × defW) 합 */
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */

@@ -117,7 +117,7 @@ register('guild', {
       $$('[data-don]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '기여했어요', poor: '금화가 모자라요', done: '기여는 하루 한 번', none: '' }[donate(+b.dataset.don!)])));
       const lv = root.querySelector<HTMLElement>('[data-leave]');
       if (lv) lv.onclick = () => modal('길드 나가기', '<p class="dim">기여 점수는 남아요.</p>', [['그만두기', null], ['나가기', () => (leaveGuild(), after(draw, '길드를 나왔어요')), true]]);
-      $$('[data-buy]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '샀어요', poor: '길드 코인이 모자라요', none: '' }[buyGuild(b.dataset.buy!)])));
+      $$('[data-buy]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '샀어요', poor: '길드 코인이 모자라요', none: '', cap: '이번 주 획득 상한이에요 (월요일에 다시 차요)' }[buyGuild(b.dataset.buy!)])));
       const gr = root.querySelector<HTMLElement>('[data-graid]');
       if (gr) gr.onclick = () => go('prep', { run: { mode: 'graid', arg: 0 } });
       wireChat(root, 'guild', draw);

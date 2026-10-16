@@ -225,8 +225,22 @@ export function persist(now = Date.now()) {
 export const setSave = (s: Save) => (S = s);
 
 export const cur = (k: string, s: Save = S) => s.cur[k] ?? 0;
-export function addCur(k: string, n: number, s: Save = S) {
+/** 재화 더하기 · 별가루·영웅 재료는 주간 획득 상한 (CONFIG.econ.cap · free = 우편 보상처럼 상한 밖) */
+export function addCur(k: string, n: number, s: Save = S, free = false) {
+  const cap = CONFIG.econ.cap[k];
+  // 주가 바뀌는 건 track()/rollTrack이 (그 시각으로) 비움 — 여기서는 지금 주 칸에 셈
+  if (n > 0 && cap && !free && s.track) {
+    const got = s.track.w[`earn:${k}`] ?? 0;
+    n = Math.min(n, Math.max(0, cap - got));
+    s.track.w[`earn:${k}`] = got + n;
+  }
   s.cur[k] = Math.max(0, Math.round((s.cur[k] ?? 0) + n));
+}
+/** 이번 주 더 얻을 수 있는 양 (상한 없는 재화는 Infinity) */
+export function capLeft(k: string, s: Save = S) {
+  const cap = CONFIG.econ.cap[k];
+  if (!cap || !s.track) return Infinity;
+  return Math.max(0, cap - (s.track.w[`earn:${k}`] ?? 0));
 }
 export function spend(k: string, n: number, s: Save = S): boolean {
   if (cur(k, s) < n) return false;

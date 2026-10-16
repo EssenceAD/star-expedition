@@ -10,7 +10,7 @@ import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards
 import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../game/heroes';
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
-import { GEAR_SLOTS, partyIds, persist, S, type Gear, type GearSlot, type Rune } from '../game/state';
+import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
 import { $, $$, comingSoon, CUR_NAME, esc, fmt, go, heroPortrait, modal, register, syncBar, toast } from './core';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
@@ -282,7 +282,8 @@ register('shop', {
         body = `<div class="cards">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone));
-        body = `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+        rollTrack(S);
+        body = `<div class="xs dim">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
       } else if (cat === 'summon') {
         const sm = CONFIG.gear.summon;
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>
@@ -301,8 +302,8 @@ register('shop', {
         draw();
       };
       $$('[data-pack]', root).forEach((b) => (b.onclick = () => after(buyPack(b.dataset.pack!), { ok: '꾸러미를 받았어요', poor: '별가루가 모자라요', done: '이미 샀어요' })));
-      $$('[data-item]', root).forEach((b) => (b.onclick = () => after(buyItem(b.dataset.item!), { ok: '샀어요', poor: '재화가 모자라요' })));
-      $$('[data-coin]', root).forEach((b) => (b.onclick = () => after(buyCoin(b.dataset.coin!), { ok: '샀어요', poor: '코인이 모자라요' })));
+      $$('[data-item]', root).forEach((b) => (b.onclick = () => after(buyItem(b.dataset.item!), { ok: '샀어요', poor: '재화가 모자라요', cap: '이번 주 획득 상한이에요 (월요일에 다시 차요)' })));
+      $$('[data-coin]', root).forEach((b) => (b.onclick = () => after(buyCoin(b.dataset.coin!), { ok: '샀어요', poor: '코인이 모자라요', cap: '이번 주 획득 상한이에요 (월요일에 다시 차요)' })));
       $$('[data-hero]', root).forEach(
         (b) =>
           (b.onclick = () => {

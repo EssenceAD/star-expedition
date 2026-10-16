@@ -134,3 +134,28 @@ describe('행동력 · 반복 전투 · 부스터 · 방치', () => {
     expect(s.cur.gold).toBe(g + b.reward.gold);
   });
 });
+
+describe('주간 획득 상한 (B 보강 §4)', () => {
+  it('별가루·영웅 재료는 한 주에 상한까지만 · 우편 보상은 상한 밖 · 다음 주에 다시', async () => {
+    const { addCur, capLeft, newSave, rollTrack } = await import('../src/game/state');
+    const { CONFIG } = await import('../src/config');
+    const { buyItem } = await import('../src/game/shop');
+    const t0 = Date.UTC(2026, 9, 19, 3);
+    const s = newSave(t0);
+    rollTrack(s, t0);
+    const cap = CONFIG.econ.cap.stardust;
+    const d0 = s.cur.stardust;
+    addCur('stardust', cap + 500, s);
+    expect(s.cur.stardust - d0).toBe(cap);
+    expect(capLeft('stardust', s)).toBe(0);
+    addCur('stardust', 100, s, true);
+    expect(s.cur.stardust - d0).toBe(cap + 100);
+    addCur('gold', 1e7, s);
+    expect(s.cur.gold).toBeGreaterThanOrEqual(1e7);
+    // 상한에 걸리는 물건은 안 팖 (재화만 날리지 않게)
+    s.track.w['earn:transStone'] = CONFIG.econ.cap.transStone;
+    expect(buyItem('trans', s)).toBe('cap');
+    rollTrack(s, t0 + 7 * 86400e3);
+    expect(capLeft('stardust', s)).toBe(cap);
+  });
+});

@@ -4,7 +4,7 @@ import { CONFIG } from '../config';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONES, type Zone } from '../data/jobs';
 import { join, owned } from './heroes';
-import { addCur, S, spend, track, type Save } from './state';
+import { addCur, capLeft, S, spend, track, type Save } from './state';
 
 const SH = CONFIG.shop;
 export const heroPrice = (id: string) => SH.hero[heroOf(id).origin];
@@ -27,9 +27,12 @@ export function buyHero(id: string, s: Save = S): 'owned' | 'poor' | 'ok' {
   return 'ok';
 }
 const give = (g: Record<string, number>, s: Save) => Object.entries(g).forEach(([k, v]) => addCur(k, v, s));
-export function buyItem(id: string, s: Save = S): 'poor' | 'ok' | 'none' {
+/** 주간 상한에 걸려 다 못 받는 물건이면 안 팖 (재화만 날리지 않게) */
+export const overCap = (g: Record<string, number>, s: Save = S) => Object.entries(g).some(([k, v]) => capLeft(k, s) < v);
+export function buyItem(id: string, s: Save = S): 'poor' | 'ok' | 'none' | 'cap' {
   const it = SH.items.find((x) => x.id === id);
   if (!it) return 'none';
+  if (overCap(it.give, s)) return 'cap';
   const ok = it.gold ? spend('gold', it.gold, s) : spend('stardust', it.dust ?? 0, s);
   if (!ok) return 'poor';
   give(it.give, s);
@@ -45,9 +48,10 @@ export function buyPack(id: string, s: Save = S): 'poor' | 'ok' | 'done' | 'none
   return 'ok';
 }
 /** 특수 재화 상점 (결투장·탑 코인) */
-export function buyCoin(id: string, s: Save = S): 'poor' | 'ok' | 'none' {
+export function buyCoin(id: string, s: Save = S): 'poor' | 'ok' | 'none' | 'cap' {
   const it = SH.coins.find((x) => x.id === id);
   if (!it) return 'none';
+  if (overCap(it.give, s)) return 'cap';
   if (!spend(it.coin, it.price, s)) return 'poor';
   give(it.give, s);
   return 'ok';

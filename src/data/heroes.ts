@@ -165,7 +165,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'ceres', name: '세레스', gender: 'f', job: 'knight', title: '왕실 기사', concept: '땋은 왕관 머리의 수줍은 모범생', origin: 'legend', elem: 'holy', joinChapter: 4,
+    id: 'ceres', name: '세레스', gender: 'f', job: 'knight', title: '왕실 기사', concept: '땋은 왕관 머리의 수줍은 모범생', origin: 'legend', elem: 'holy',
     passive: pas('왕실 방패', { k: 'stat', s: 'hp', v: 0.2 }),
     skills: [
       sk(0, '예법의 일격', 'pierce', 'holy', 'slash', { k: 'dmg', to: 'front', m: 2.2, st: { s: 'stun', dur: 1 } }),
@@ -183,7 +183,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'grom', name: '그롬', gender: 'm', job: 'warrior', title: '대전사', concept: '근육 대머리 수염. 확실한 마초', origin: 'legend', elem: 'earth', joinChapter: 3, stat: { hp: 1.15 },
+    id: 'grom', name: '그롬', gender: 'm', job: 'warrior', title: '대전사', concept: '근육 대머리 수염. 확실한 마초', origin: 'legend', elem: 'earth', stat: { hp: 1.15 },
     passive: pas('대전사의 함성', { k: 'stat', s: 'atk', v: 0.18 }),
     skills: [
       sk(0, '도끼 휘두르기', 'slash', 'earth', 'slash', { k: 'dmg', to: 'all', m: 1.3 }),
@@ -210,7 +210,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'jin', name: '진', gender: 'm', job: 'warrior', title: '떠돌이 검객', concept: '흑발 상투 동양 검객 미남', origin: 'legend', elem: 'steel', joinChapter: 7,
+    id: 'jin', name: '진', gender: 'm', job: 'warrior', title: '떠돌이 검객', concept: '흑발 상투 동양 검객 미남', origin: 'legend', elem: 'steel',
     passive: pas('발도', { k: 'stat', s: 'spd', v: 0.15 }),
     skills: [
       sk(0, '일섬', 'slash', 'steel', 'slash', { k: 'dmg', to: 'front', m: 2.9 }),
@@ -237,7 +237,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'sylas', name: '사일러스', gender: 'm', job: 'archer', title: '숲의 사수', concept: '금발 장발 엘프 궁수 미남', origin: 'legend', elem: 'nature', joinChapter: 9,
+    id: 'sylas', name: '사일러스', gender: 'm', job: 'archer', title: '숲의 사수', concept: '금발 장발 엘프 궁수 미남', origin: 'legend', elem: 'nature',
     passive: pas('바람 화살', { k: 'stat', s: 'atk', v: 0.12 }),
     skills: [
       sk(0, '연사', 'arrow', 'nature', 'bolt', { k: 'dmg', to: 'front', m: 1, n: 3 }),
@@ -246,7 +246,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'vivian', name: '비비안', gender: 'f', job: 'engineer', title: '해적 선장', concept: '갈색 웨이브 안대 선장. 총·대포', origin: 'legend', elem: 'fire', joinChapter: 6,
+    id: 'vivian', name: '비비안', gender: 'f', job: 'engineer', title: '해적 선장', concept: '갈색 웨이브 안대 선장. 총·대포', origin: 'legend', elem: 'fire',
     passive: pas('선장의 배짱', { k: 'stat', s: 'crit', v: 0.1 }),
     skills: [
       sk(0, '권총 난사', 'cannon', 'fire', 'bolt', { k: 'dmg', to: 'random', m: 0.8, n: 4 }),
@@ -255,7 +255,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'scarlet', name: '스칼렛', gender: 'f', job: 'mage', title: '홍염의 마녀', concept: '붉은 머리의 요염한 마녀', origin: 'legend', elem: 'fire', joinChapter: 8,
+    id: 'scarlet', name: '스칼렛', gender: 'f', job: 'mage', title: '홍염의 마녀', concept: '붉은 머리의 요염한 마녀', origin: 'legend', elem: 'fire',
     passive: pas('홍염', { k: 'stat', s: 'atk', v: 0.12 }),
     skills: [
       sk(0, '불꽃 키스', 'fire', 'fire', 'burst', { k: 'dmg', to: 'front', m: 2, st: { s: 'burn', dur: 6, v: 0.3 } }),
@@ -273,7 +273,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'aria', name: '아리아', gender: 'f', job: 'priest', title: '성녀', concept: '금발 화관의 온화한 성녀', origin: 'legend', elem: 'holy', joinChapter: 2,
+    id: 'aria', name: '아리아', gender: 'f', job: 'priest', title: '성녀', concept: '금발 화관의 온화한 성녀', origin: 'legend', elem: 'holy',
     passive: pas('성녀의 기도', { k: 'stat', s: 'heal', v: 0.25 }),
     skills: [
       sk(0, '치유의 빛', 'heal', 'holy', 'pillar', { k: 'heal', to: 'lowest', m: 4.5 }),
