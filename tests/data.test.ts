@@ -81,3 +81,18 @@ describe('멤버 영웅 4명 (HEROES_ADD_4)', () => {
     expect(new Set(HEROES.filter((x) => x.origin === 'member').map((h) => h.look!.split(' · ')[1])).size).toBe(4);
   });
 });
+
+describe('외전 대사 초안 (멤버 4명)', () => {
+  it('4명 모두 3막 + 끝 대사 · 말하는 사람은 영웅 id 또는 SPEAKER', async () => {
+    const { SIDE } = await import('../src/data/side');
+    const { SPEAKER } = await import('../src/data/story');
+    for (const id of ['sermi', 'ichae', 'mochi', 'jaehi']) {
+      const st = SIDE[id];
+      expect(st.acts.length).toBe(3);
+      for (const [who, text] of [...st.acts.flat(), ...st.clear]) {
+        expect(who in SPEAKER || HEROES.some((h) => h.id === who), `${id} ${who}`).toBe(true);
+        expect(text).not.toMatch(/박[힙혔힌]/);
+      }
+    }
+  });
+});

@@ -251,6 +251,17 @@ await click('[data-back]');
 await click('[data-go="settings"]');
 await p.waitForTimeout(300);
 await shot('settings');
+// 결투장 직접 고르기: 영광의 리그 밴픽 · 최후의 리그 파티 2·3 편성
+await p.evaluate(() => window.__go('prep', { run: { mode: 'arena', arg: 'glory', sub: 0 } }));
+await p.waitForSelector('[data-ban]');
+await click('[data-ban]');
+await click('[data-swap]');
+await shot('glory_banpick');
+await p.evaluate(() => window.__go('prep', { run: { mode: 'arena', arg: 'last', sub: 0 } }));
+await click('[data-lastform]');
+await click('.lfr [data-h]');
+await shot('last_form');
+await click('.modal .btn.hi');
 await br.close();
 srv.close();
 console.log(errors.length ? `오류 ${errors.length}개:\n${errors.join('\n')}` : '오류 없음', `· 사진 ${n}장 → ${out}`);

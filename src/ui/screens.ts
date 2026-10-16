@@ -10,7 +10,7 @@ import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/account';
 import { freeSummonLeft } from '../game/gear';
-import { buildRun, lockOf, MILESTONES, milesReady, triesText, type Run } from '../game/content';
+import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
 import { attendPopup, dailyText, missionBadge } from './screensD';
 import { eventLeft } from '../game/missions';
@@ -191,6 +191,56 @@ register('adventure', {
 });
 
 // ───────── 전투 준비 = 편성 (킹스레이드 0-4: 왼쪽 카드 격자 + 위치 탭 · 오른쪽 파티 4 + 부스터 + 행동력 + [반복 전투][전투 시작]) ─────────
+/** 영광의 리그 밴픽 패널: 상대 영웅 하나 막기 · 상대가 막는 내 영웅 · 대신 들어갈 영웅 */
+function gloryHtml(run: Run, ban: string, swap: string) {
+  const opp = arenaOpps()[run.sub ?? 0];
+  const strong = [...opp.party].sort((a, b) => b.st.atk - a.st.atk)[0].def.id;
+  const myBan = gloryBanOf();
+  const bench = HEROES.filter((h) => owned(h.id) && !partyIds().includes(h.id)).sort((a, b) => heroPower(b.id) - heroPower(a.id)).slice(0, 8);
+  return `<div class="col banpick"><b class="sm">밴픽 — 상대 영웅 1명 막기</b>
+    <div class="row">${opp.party.map((h) => `<button class="pcard${(ban || strong) === h.def.id ? ' ban' : ''}" data-ban="${h.def.id}" title="${esc(h.def.name)}"><div class="pt" style="background-image:url(${heroPortrait(h.def.id)})"></div><b class="xs">${esc(h.def.name)}</b>${(ban || strong) === h.def.id ? `<em class="xs bad">${icon('lock')} 금지</em>` : ''}</button>`).join('')}</div>
+    <span class="xs dim">${ban ? '직접 골랐어요' : '안 고르면 가장 센 영웅을 막아요'} · 상대는 내 <b class="bad">${esc(heroOf(myBan).name)}</b>을(를) 막아요</span>
+    <b class="sm">대신 들어갈 영웅 ${swap ? `· ${esc(heroOf(swap).name)}` : '(안 고르면 3명으로)'}</b>
+    <div class="row wrap">${bench.map((h) => `<button class="pt s${swap === h.id ? ' on' : ''}" data-swap="${h.id}" title="${esc(h.name)}" style="background-image:url(${heroPortrait(h.id)})"></button>`).join('') || '<span class="xs mute">파티 밖 영웅이 없어요</span>'}</div></div>`;
+}
+/** 최후의 리그 파티 2·3 요약 */
+function lastHtml() {
+  const ps = lastParties();
+  return `<div class="col"><b class="sm">최후의 리그 파티 3개 ${validLast(S.arena.parties) ? '(직접 편성)' : '(자동)'}</b>${ps.map((p, i) => `<div class="row"><span class="xs dim">파티 ${i + 1}</span>${p.map((id) => `<div class="pt s" title="${esc(heroOf(id).name)}" style="background-image:url(${heroPortrait(id)})"></div>`).join('')}</div>`).join('')}<button class="btn" data-lastform>${icon('formation')} 파티 2·3 편성</button></div>`;
+}
+/** 최후의 리그 파티 2·3 직접 편성 창 (파티 1 = 지금 편성) */
+function lastForm(done: () => void) {
+  let ps = validLast(S.arena.parties) ? S.arena.parties.map((p) => [...p]) : autoLast().map((p) => [...p]);
+  let at = 0;
+  const m = modal(`${icon('formation')} 최후의 리그 · 파티 2·3`, '<div data-lf></div>', [
+    ['자동 채우기', () => ((ps = autoLast().map((p) => [...p])), draw(), false)],
+    ['저장', () => {
+      S.arena.parties = ps;
+      persist();
+      done();
+    }, true],
+  ]);
+  const draw = () => {
+    const bench = HEROES.filter((h) => owned(h.id) && !partyIds().includes(h.id)).sort((a, b) => heroPower(b.id) - heroPower(a.id));
+    $('[data-lf]', m).innerHTML = `<div class="row">${ps.map((p, i) => `<button class="panel col lfp${i === at ? ' on' : ''}" data-at="${i}"><b class="sm">파티 ${i + 2}</b><div class="row">${[0, 1, 2, 3].map((k) => (p[k] ? `<div class="pt s" data-rm="${p[k]}" title="${esc(heroOf(p[k]).name)}" style="background-image:url(${heroPortrait(p[k])})"></div>` : '<div class="pt s empty"></div>')).join('')}</div></button>`).join('')}</div>
+      <span class="xs mute">파티 1은 지금 편성 파티 · 파티를 고르고 아래 영웅을 눌러 넣어요 (넣은 영웅을 다시 누르면 빠짐) · 4명까지</span>
+      <div class="roster scroll lfr">${bench.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ps.flat().includes(h.id) ? 'in' : '')).join('') || '<span class="mute">파티 밖 영웅이 없어요</span>'}</div>`;
+    $$('[data-at]', m).forEach((b) => (b.onclick = () => ((at = +b.dataset.at!), draw())));
+    $$('.lfr [data-h]', m).forEach(
+      (b) =>
+        (b.onclick = () => {
+          const id = b.dataset.h!;
+          const where = ps.findIndex((p) => p.includes(id));
+          if (where >= 0) ps[where] = ps[where].filter((x) => x !== id);
+          else if (ps[at].length >= 4) return toast('한 파티는 4명까지');
+          else ps[at].push(id);
+          draw();
+        }),
+    );
+  };
+  draw();
+}
+
 register('prep', {
   title: (p) => (p.run ? `${icon('battle')} 전투 준비 · ${runTitle(p.run as Run)}` : p.stage ? `${icon('battle')} 전투 준비 · ${stageName(p.stage as StageId)}` : `${icon('formation')} 편성`),
   back: (p) => (p.run ? go('portal', { tab: (p.run as Run).mode }, false) : p.stage ? go('adventure', { ...(p.stage as StageId) }, false) : go('lobby', {}, false)),
@@ -199,6 +249,9 @@ register('prep', {
     const run = p.run as Run | undefined;
     let tab = 'all';
     let rep = 10;
+    // 영광의 리그 밴픽 (직접 고르기)
+    let ban = '';
+    let swap = '';
     const draw = () => {
       const ids = partyIds();
       const bonds = activeBonds(ids);
@@ -227,6 +280,8 @@ register('prep', {
               ${run.mode === 'raid' ? `<span class="xs dim">AI 동료: ${(buildRun(run).allies ?? []).map((h) => h.def.name).join(' · ')}</span>` : ''}
               <button class="btn hi big" data-runstart ${lockOf(run) || !ids.length ? 'disabled' : ''}>전투 시작</button>
               ${lockOf(run) ? `<span class="xs bad">${esc(lockOf(run)!)}</span>` : ''}
+              ${run.mode === 'arena' && run.arg === 'glory' ? gloryHtml(run, ban, swap) : ''}
+              ${run.mode === 'arena' && run.arg === 'last' ? lastHtml() : ''}
             </div>` : ''}
             ${st ? `<div class="panel col">
               <div class="row"><span class="grow sm">${icon('booster')} 부스터 (전리품 ${CONFIG.booster.mult}배 1시간)</span><button class="btn mini${bl ? ' on' : ''}" data-boost>${bl ? fmtTime(bl) : `${icon('gold')}${fmt(CONFIG.booster.gold)}`}</button></div>
@@ -268,7 +323,11 @@ register('prep', {
           }),
       );
       const rs = root.querySelector<HTMLElement>('[data-runstart]');
-      if (rs && run) rs.onclick = () => go('battle', { run });
+      if (rs && run) rs.onclick = () => go('battle', { run: run.arg === 'glory' ? { ...run, ban: ban || undefined, swap: swap || undefined } : run });
+      $$('[data-ban]', root).forEach((b) => (b.onclick = () => ((ban = b.dataset.ban!), draw())));
+      $$('[data-swap]', root).forEach((b) => (b.onclick = () => ((swap = swap === b.dataset.swap ? '' : b.dataset.swap!), draw())));
+      const lf = root.querySelector<HTMLElement>('[data-lastform]');
+      if (lf) lf.onclick = () => lastForm(draw);
       if (!st) return;
       $<HTMLSelectElement>('[data-n]', root).onchange = (e) => (rep = +(e.target as HTMLSelectElement).value);
       $('[data-boost]', root).onclick = () => {
