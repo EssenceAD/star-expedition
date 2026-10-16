@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>별의 원정대 (가제)</title>
+  <script type="module" crossorigin src="./assets/main-DQkssXMA.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/mobs-xUweUsi_.js">
+  <link rel="modulepreload" crossorigin href="./assets/engine-DVxz_anM.js">
+  <link rel="stylesheet" crossorigin href="./assets/main-_X0QzOOL.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="hud" hidden>
+    <div id="tl">
+      <button id="bAuto" aria-pressed="false"><i></i>AUTO</button>
+      <button id="bSpeed">×1</button>
+    </div>
+    <div id="stg"></div>
+    <button id="bQuit" class="btn mini">포기</button>
+    <div id="boss" hidden>
+      <div class="bp"></div>
+      <div class="bi">
+        <div class="bn"><b id="bName">보스</b><span id="bPct">100%</span></div>
+        <div class="bh"><i id="bHp"></i><em id="bHpN"></em></div>
+        <div class="bs"><span>누적 피해 <b id="bDmg">0</b></span><span>남은 시간 <b id="bTime">3:00</b></span></div>
+      </div>
+    </div>
+    <div id="wave">WAVE 1</div>
+    <div id="warn" hidden></div>
+    <div id="dps" class="open"><button id="bDps">DPS</button><div id="dpsL"></div></div>
+    <div id="bar"></div>
+    <div id="result" hidden></div>
+  </div>
+  <div id="ui"></div>
+</div>
+<div id="rotate"></div>
+</body>
+</html>
