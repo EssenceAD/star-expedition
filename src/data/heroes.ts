@@ -401,7 +401,7 @@ const SHEETS: Record<string, AnimSet> = {
   gonu: basic('gonu'),
 };
 /** 컷인 일러스트가 있는 영웅 (public/art/cutin/<id>.png) — 없으면 초상화 확대 */
-export const CUTIN_ART = new Set(['woongs']);
+export const CUTIN_ART = new Set(['woongs', 'jaehi']);
 /** 화면 키 (논리 px) */
 const HEIGHT: Record<string, number> = { woongs: 108, ikamolly: 104, walwal: 100, warmnight: 104, gonu: 100 };
 export interface HeroArt {
@@ -413,10 +413,12 @@ export interface HeroArt {
   portrait: string;
 }
 const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+/** 멤버 영웅 초상화가 그려진 것 (public/art/portraits/member_<id>.png · ChatGPT로 뽑음) — 없는 멤버는 직업 기본 초상화 */
+const MEMBER_ART = new Set(['sermi', 'ichae', 'mochi', 'jaehi']);
 export function artOf(h: HeroDef, tints: number): HeroArt {
   const own = SHEETS[h.id];
   const base = own ? h.id : JOBS[h.job].sheet;
-  const portrait = h.fiveStar ? `star_${h.id}` : h.origin === 'legend' ? `legend_${h.id}` : `mc_${JOBS[h.job].mc}_${h.gender}`;
+  const portrait = h.fiveStar ? `star_${h.id}` : h.origin === 'legend' ? `legend_${h.id}` : MEMBER_ART.has(h.id) ? `member_${h.id}` : `mc_${JOBS[h.job].mc}_${h.gender}`;
   return { anims: SHEETS[base], h: HEIGHT[base], tint: own ? -1 : hash(h.id) % tints, placeholder: !own, portrait };
 }
 /** 모든 시트 폴더 이름 (불러오기용) */

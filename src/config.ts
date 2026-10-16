@@ -194,7 +194,7 @@ export const CONFIG = {
     /** 제작: 부위 고르기 · 등급 확정(희귀) · 강화석 · 금화 */
     craft: { grade: 2, stones: 30, gold: 20000 },
     /** 아이템 그림 (B 보강 §2: 부위·등급별 · public/art/<dir>/<부위>_<등급>.png · ChatGPT로 뽑음) — have=false면 기호 */
-    art: { have: false as boolean, dir: 'items' },
+    art: { have: true as boolean, dir: 'items' },
     /** 가방 칸 · 확장(별가루) */
     bag: { start: 54, max: 112, step: 10, dust: 100 },
   },
@@ -284,9 +284,9 @@ export const CONFIG = {
     rankShow: 5,
     /** 부위: 이름 · 체력 비율 · 그림 안 자리(보스 그림 기준 비율: 가운데에서 x · 발에서 위로 y · 폭 · 높이) · 부수면 사라지는 패턴 */
     parts: [
-      { key: 'arm', name: '팔', hp: 0.16, box: [-0.36, 0.62, 0.3, 0.26], pattern: 'laneSlam' },
-      { key: 'head', name: '머리', hp: 0.12, box: [0.02, 0.9, 0.26, 0.2], pattern: 'beam' },
-      { key: 'core', name: '코어', hp: 0.2, box: [0.0, 0.55, 0.24, 0.22], pattern: 'nova' },
+      { key: 'arm', name: '팔', hp: 0.16, box: [-0.37, 0.99, 0.25, 0.47], pattern: 'laneSlam' },
+      { key: 'head', name: '머리', hp: 0.12, box: [-0.09, 0.89, 0.18, 0.15], pattern: 'beam' },
+      { key: 'core', name: '코어', hp: 0.2, box: [-0.01, 0.69, 0.17, 0.19], pattern: 'nova' },
     ] as { key: string; name: string; hp: number; box: number[]; pattern: string }[],
     /** 패턴: 몇 초마다 · 경고 시간 · 배수 · 줄('one' = 내 파티가 있는 줄 하나 · 'both' = 두 줄 차례로) · 문구 */
     patterns: {
@@ -311,7 +311,7 @@ export const CONFIG = {
     /** 다층 배경: 겹 수 · 겹마다 흐르는 속도 · 크기 */
     parallax: [[0.03, 1.25], [0.08, 1.1], [0.18, 1.0]] as number[][],
     /** 보스 그림 (형철 지시: ChatGPT로 부서지기 전·후 두 장) — have=false면 안 불러옴(404 방지) · 그동안 골렘 시트 + 코드로 부서진 모양 */
-    art: { have: false as boolean, intact: 'raidboss/intact.png', broken: 'raidboss/broken.png' },
+    art: { have: true as boolean, intact: 'raidboss/intact.png', broken: 'raidboss/broken.png' },
   },
   /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
   econ: {
