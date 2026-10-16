@@ -3,7 +3,8 @@
 > 이 클라우드 세션에는 Claude in Chrome(ChatGPT 연결)이 없어서 **아직 한 장도 안 뽑음**. 형철 PC 세션에서 이 순서대로 뽑으면 됨.
 > 뽑는 방법·자르기 도구는 `docs/PROGRESS.md` §2 그대로 (같은 묶음은 같은 대화 · 마젠타 배경 · 칸 격자 · 다운로드 전 새로고침).
 > **스타일 보드(A/B/C) 승인 뒤**에 뽑는 게 순서 — 테두리·배경색이 시안에 따라 달라짐. 아래 프롬프트의 `{STYLE}` 자리에 고른 시안 한 줄을 넣는다.
-> - A 별빛 금박: `night-sky navy and starlight gold trim, parchment accents, constellation-line ornaments`
+> - **D 밝은 원정 (기본)**: `bright daytime fantasy, cream and ivory parchment panels with gold trim, sky-blue and orange accents, navy only for thin outlines, constellation-line ornaments`
+> - A 별빛 금박 (심연의 탑·레이드·밤 이벤트): `night-sky navy and starlight gold trim, parchment accents, constellation-line ornaments`
 > - B 양피지 원정 지도: `warm aged parchment and sepia gold, compass-star and crescent ornaments, hand-drawn map feel`
 > - C 심연 은하: `deep violet cosmos, silver-blue trim with small gold highlights, orbit-arc ornaments, glassy panels`
 

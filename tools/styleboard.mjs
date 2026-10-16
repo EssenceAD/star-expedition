@@ -33,7 +33,18 @@ const V = {
     font: { title: ['Black Han Sans', 400], body: ['IBM Plex Sans KR', 400], bodyB: ['IBM Plex Sans KR', 700], num: ['Oxanium', 800] },
     motif: 'orbit',
   },
+  D: {
+    name: '밝은 원정',
+    concept: '형철 10/17 요청 — A의 장식·아이콘·폰트·등급 색 그대로, 패널은 크림·아이보리 양피지 + 금 테두리(B 정보 패널 색이 메인), 강조는 하늘색 주 버튼·주황 특수 버튼, 화면 바탕은 밝은 일러스트. 남색은 글자와 얇은 테두리에만. 어두운 톤은 심연의 탑·레이드·밤 이벤트에서만 예외.',
+    c: { bg: '#f6eedb', bg2: '#fffaf0', panel: '#fbf3e0', edge: '#c9a14a', edge2: '#2b3a6b', parch: '#ead8b0', parchInk: '#1d2a58', text: '#1d2a58', dim: '#5b6488', btn: '#4fb3ff', btn2: '#2a7fd0', btnInk: '#06203a', special: '#ff9a3c', alert: '#e8414f', good: '#2f9a4a', glow: 'rgba(232,197,106,0.65)' },
+    grade: ['#c8c8d8', '#7ee08a', '#58b8ff', '#c79bff', '#ffb347', '#ff6a52'],
+    font: { title: ['Gowun Batang', 700], body: ['Noto Sans KR', 400], bodyB: ['Noto Sans KR', 900], num: ['Cinzel', 900] },
+    motif: 'constellation',
+    light: true,
+  },
 };
+/** 어두운 예외 화면(심연의 탑 · 레이드 · 밤 이벤트)은 A 팔레트 */
+const DARK = V.A.c;
 const GRADE = ['일반', '고급', '희귀', '영웅', '전설', '고대'];
 const JOBS = [['knight', '기사'], ['warrior', '전사'], ['fighter', '격투가'], ['assassin', '암살자'], ['archer', '궁수'], ['engineer', '기계공학자'], ['mage', '마법사'], ['priest', '사제'], ['druid', '드루이드']];
 const ART = '../../public/art';
@@ -74,6 +85,78 @@ function corner(v) {
   return `<svg width="46" height="46" viewBox="0 0 46 46"><path d="M3 30 Q3 3 30 3" fill="none" stroke="${e}" stroke-width="2"/><path d="M9 34 Q9 9 34 9" fill="none" stroke="${e}" stroke-width="1" opacity=".6"/><circle cx="30" cy="3" r="2.5" fill="${v.c.special}"/><circle cx="12" cy="12" r="1.8" fill="${e}"/><circle cx="9" cy="34" r="1.4" fill="${e}"/></svg>`;
 }
 const corners = (v) => ['', 'scale(-1,1)', 'scale(1,-1)', 'scale(-1,-1)'].map((t, i) => `<i class="cn c${i}" style="transform:${t}">${corner(v)}</i>`).join('');
+
+// ───────── 밝은 시안(D): 문서 바탕도 밝게 · 실제 화면 4개를 밝은 배경 위에 ─────────
+const LIGHT_CSS = `
+body{background:radial-gradient(1200px 700px at 75% -10%,#fffdf6,var(--bg) 65%)}
+h1{color:#b88a2e;text-shadow:0 2px 0 #fff,0 0 18px var(--glow);-webkit-text-stroke:0}
+h2{color:#9a7428}h2::after{background:linear-gradient(90deg,var(--edge),transparent)}
+.panel{background:linear-gradient(170deg,var(--bg2),var(--panel) 55%,var(--parch));border:2px solid var(--edge);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 0 0 1px rgba(43,58,107,.18),0 6px 16px rgba(80,60,20,.18)}
+.panel.parch{background:linear-gradient(170deg,var(--parch),#dcc591)}
+.sw i{border-color:rgba(43,58,107,.25)}
+.btn{box-shadow:0 3px 0 rgba(20,40,80,.35)}.btn.ghost{color:var(--text);border-color:var(--edge2);background:var(--bg2)}
+.fontbox .t{color:#9a7428}.fontbox .n{background:linear-gradient(#e8c56a,#b88a2e 55%,#7a5a1c);-webkit-background-clip:text;background-clip:text}
+.ring{background:radial-gradient(circle at 40% 35%,#fffdf6,var(--parch));border-color:var(--edge);box-shadow:0 0 0 2px var(--edge2),0 3px 8px rgba(80,60,20,.25)}
+.crest{background:linear-gradient(var(--edge),#8a6a2c)}.crest>div{background:var(--bg2)}
+.sk{background:radial-gradient(circle at 50% 40%,#fff4dc,var(--parch) 70%)}
+.gf{background:var(--bg2)}
+.cur{background:rgba(255,250,240,.9);border-color:var(--edge);color:var(--text)}
+.topbar{background:linear-gradient(var(--bg2),var(--panel));border-bottom-color:var(--edge)}.topbar h3{color:var(--text)}
+.tab{background:var(--panel);color:var(--dim);border-color:var(--edge)}.tab.on{background:linear-gradient(#f3d98a,var(--edge));color:var(--text)}
+.card{background:var(--bg2);border-color:var(--edge)}
+.emb{background:linear-gradient(#fff2c4,#e8c56a 45%,#9a7428);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 3px 0 #2b3a6b) drop-shadow(0 0 14px var(--glow))}
+.emb.lose{background:linear-gradient(#9aa3c4,#5b6488);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 3px 0 #1d2a58)}
+.hud .hc{background:linear-gradient(170deg,var(--bg2),var(--parch));border-color:var(--edge)}
+.hud .dps{background:rgba(255,250,240,.88);border-color:var(--edge);color:var(--text)}
+.hud .boss{background:rgba(255,250,240,.88);border:1.5px solid var(--edge);border-radius:8px;padding:4px 8px}.hud .boss b{color:var(--text)}
+.load{background:linear-gradient(170deg,#fffdf6,var(--parch));border-color:var(--edge)}.load .t{color:#9a7428}.stars{opacity:0}
+.tok{background:rgba(255,250,240,.8);border-color:var(--edge);color:var(--dim)}
+.scr{position:relative;width:844px;height:390px;overflow:hidden;border-radius:10px;border:2px solid var(--edge);background:url(${ART}/bg.jpg) center/cover;box-shadow:0 8px 20px rgba(80,60,20,.25);transform-origin:0 0}
+.scrw{width:752px;height:348px;overflow:hidden}.scrw .scr{transform:scale(.891)}
+.scr .tb{position:absolute;left:0;right:0;top:0;height:40px;display:flex;align-items:center;gap:8px;padding:0 10px;background:linear-gradient(rgba(255,250,240,.96),rgba(251,243,224,.92));border-bottom:2px solid var(--edge);box-shadow:0 1px 0 rgba(43,58,107,.3)}
+.scr .tb h3{flex:1;font-size:17px;color:var(--text)}
+.scr .glass{background:linear-gradient(170deg,rgba(255,250,240,.95),rgba(234,216,176,.93));border:2px solid var(--edge);border-radius:8px;box-shadow:0 0 0 1px rgba(43,58,107,.25),0 4px 10px rgba(80,60,20,.2)}
+.scr .lbl{position:absolute;left:10px;bottom:8px;font-size:12px;font-weight:700;color:var(--text);background:rgba(255,250,240,.9);border:1px solid var(--edge);border-radius:12px;padding:2px 10px}
+.dark{background:${DARK.bg};color:${DARK.text}}
+`;
+function screens(v, portraits) {
+  const c = v.c;
+  const P = (id) => `${ART}/portraits/${id}.png`;
+  const heroes = [['star_woongs', '웅스', '전사', 4], ['star_ikamolly', '이카몰리', '마법사', 3], ['star_gonu', '고느끼', '암살자', 2], ['star_walwal', '왈왈콩선생', '사제', 3], ['star_warmnight', '따뜻한밤', '궁수', 4], ['legend_luna', '루나', '암살자', 2], ['legend_aria', '아리아', '사제', 4], ['legend_grom', '그롬', '전사', 1], ['legend_ceres', '세레스', '기사', 2], ['legend_scarlet', '스칼렛', '마법사', 3]];
+  const cur = `<span class="cur">${svg('stamina', c.btn2, undefined, 16)}48/60</span><span class="cur">${svg('gold', '#d9a520', undefined, 16)}65,955</span><span class="cur">${svg('dust', c.edge, undefined, 16)}4,850</span>`;
+  const tb = (t) => `<div class="tb"><span class="btn ghost" style="padding:2px 10px;font-size:13px">◀</span><h3>${t}</h3>${cur}</div>`;
+  const lobby = `<div class="scr">${tb('원정대 여관')}
+    <div class="col" style="position:absolute;left:12px;top:50px;gap:4px">${[['hero', '영웅'], ['bag', '가방'], ['shop', '상점'], ['guild', '길드']].map(([k, n]) => `<div class="ic" style="gap:2px;font-size:11px;color:var(--text)"><div class="ring" style="width:48px;height:48px">${svg(k, '#9a7428', undefined, 24)}</div><span style="background:rgba(255,250,240,.9);border:1px solid var(--edge);border-radius:8px;padding:0 6px">${n}</span></div>`).join('')}</div>
+    <div class="glass" style="position:absolute;left:50%;top:52px;transform:translateX(-50%);padding:4px 18px;font-family:var(--ft);font-size:20px;color:var(--text)">별의 원정대 · 원정대장 Lv.14</div>
+    <div class="row" style="position:absolute;left:150px;bottom:16px;gap:2px;align-items:flex-end">${portraits.slice(0, 5).map((p, i) => `<div style="width:92px;height:${120 - (i % 2) * 14}px;background:url(${P(p)}) center bottom/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35))"></div>`).join('')}</div>
+    <div class="glass col" style="position:absolute;right:12px;top:52px;width:200px;padding:8px;gap:4px;font-size:12px"><b style="font-size:13px">진행 중</b><span>일일 미션 4/7</span><div class="bar"><i style="width:57%"></i></div><span>오픈 기념 출석 6일째</span></div>
+    <div class="col" style="position:absolute;right:12px;bottom:14px;gap:8px;align-items:flex-end"><span class="btn" style="font-size:22px;padding:12px 34px">모험 ▶</span><span class="btn sp" style="font-size:15px">레이드 · 결투장</span></div>
+    <span class="lbl">로비</span></div>`;
+  const list = `<div class="scr">${tb('영웅 (14 / 36)')}
+    <div class="glass" style="position:absolute;left:10px;right:10px;top:50px;bottom:10px;padding:8px">
+      <div class="tabs"><span class="tab on">전체</span><span class="tab">전방</span><span class="tab">중앙</span><span class="tab">후방</span><span class="tab">미보유</span></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px">${heroes.slice(0, 14).map(([p, n, j, g], i) => `<div class="card" style="border-color:${v.grade[g]};box-shadow:0 0 ${g * 2}px ${v.grade[g]};position:relative;padding-bottom:3px"><div class="pt" style="height:78px;background-image:url(${P(p)})"></div><b style="font-size:12px;margin:2px 0 0">${n}</b><span style="font-size:10px;color:var(--dim)">${j} · Lv.${30 - i}</span></div>`).join('')}</div>
+    </div><span class="lbl">영웅 목록</span></div>`;
+  const shop = `<div class="scr">${tb('상점')}
+    <div class="col" style="position:absolute;left:10px;top:52px;width:110px;gap:4px">${['스페셜', '재화·소모품', '영웅', '코스튬', '장비 소환', '특수 재화'].map((t, i) => `<span class="tab${i === 2 ? ' on' : ''}" style="border-radius:8px;border-bottom:2px solid var(--edge);font-size:12px">${t}</span>`).join('')}</div>
+    <div class="glass" style="position:absolute;left:130px;right:10px;top:50px;bottom:10px;padding:8px">
+      <div style="font-size:11px;color:var(--dim)">이번 주 별가루 획득 2,140 / 3,600</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px">${heroes.slice(5, 9).map(([p, n, j]) => `<div class="card" style="padding:4px 4px 8px"><div class="pt" style="height:150px;background-image:url(${P(p)});border-radius:6px"></div><b>${n}</b><span style="font-size:11px;color:var(--dim)">${j}</span><div style="margin-top:6px"><span class="btn" style="padding:4px 14px;font-size:13px">${svg('dust', c.btnInk, undefined, 13)} 4,000</span></div></div>`).join('')}</div>
+    </div><span class="lbl">상점 · 영웅</span></div>`;
+  const battle = `<div class="scr">
+    <div class="glass" style="position:absolute;left:50%;top:6px;transform:translateX(-50%);width:400px;padding:4px 10px"><b style="font-family:var(--ft);font-size:15px">숲 동굴 골렘</b><div class="bar" style="height:10px;margin-top:3px"><i style="width:64%;background:linear-gradient(90deg,var(--al),var(--sp))"></i></div></div>
+    <span class="btn" style="position:absolute;left:8px;top:8px;padding:4px 12px;font-size:13px">AUTO</span>
+    <div class="glass" style="position:absolute;left:8px;top:48px;width:130px;padding:6px;font-size:11px"><b>피해 순위</b>${[['웅스', 90], ['이카몰리', 74], ['고느끼', 58]].map(([n, p]) => `<div>${n}<div class="bar" style="height:4px"><i style="width:${p}%"></i></div></div>`).join('')}</div>
+    <div style="position:absolute;right:120px;bottom:110px;width:150px;height:170px;background:url(${ART}/boss/r0c0.png) center bottom/contain no-repeat;image-rendering:pixelated;transform:scaleX(-1)"></div>
+    ${portraits.slice(0, 4).map((p, i) => `<div class="glass" style="position:absolute;bottom:6px;left:${6 + i * 209}px;width:202px;height:76px"><div style="position:absolute;left:-4px;bottom:4px;width:84px;height:100px;background:url(${P(p)}) center bottom/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))"></div><b style="position:absolute;left:82px;top:5px;font-size:13px">${heroes[i][1]}</b><div class="bar" style="position:absolute;left:82px;right:8px;top:25px;height:5px"><i style="width:${80 - i * 9}%;background:linear-gradient(90deg,#3c3,#8e5)"></i></div><div class="row" style="position:absolute;left:82px;top:36px;gap:4px">${['warrior', 'mage', 'priest'].map((k) => `<span class="sk" style="width:30px;height:30px;border-width:1.5px">${svg(k, c.edge2, undefined, 16)}</span>`).join('')}</div></div>`).join('')}
+    <span class="lbl" style="bottom:90px">전투 HUD</span></div>`;
+  const dark = `<div class="scr dark" style="background:radial-gradient(circle at 70% 30%,${DARK.bg2},${DARK.bg});border-color:${DARK.edge}">
+    <div class="tb" style="background:linear-gradient(${DARK.bg2},${DARK.bg});border-bottom-color:${DARK.edge2}"><h3 style="color:${DARK.edge}">심연의 탑 · 37층</h3></div>
+    <div style="position:absolute;inset:60px 30px 30px;border:2px solid ${DARK.edge2};border-radius:8px;background:linear-gradient(160deg,${DARK.panel},${DARK.bg2});display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:${DARK.text}"><b style="font-family:var(--ft);font-size:30px;color:${DARK.edge}">어두운 예외</b><span>심연의 탑 · 레이드 · 밤 이벤트만 A 팔레트(남색 + 별빛 금)</span><span class="btn">도전</span></div></div>`;
+  return `<h2>실제 화면 (844×390 · 밝은 배경 위 · 그림은 지금 있는 것)</h2>
+  <div class="row scrrow" style="gap:20px"><div class="scrw">${lobby}</div><div class="scrw">${list}</div><div class="scrw">${shop}</div><div class="scrw">${battle}</div></div>
+  <h2>어두운 톤 예외 (심연의 탑 · 레이드 · 밤 이벤트)</h2><div class="row" style="gap:20px;align-items:center"><div class="scrw">${dark}</div><div class="col" style="max-width:600px;font-size:15px;line-height:1.7"><b>규칙</b><span>· 기본 화면은 모두 D(밝은 원정)</span><span>· 「심연」이 붙은 콘텐츠(심연의 탑·레이드 보스 전장)와 밤 이벤트만 A 팔레트로 바꿈 — 같은 문양·아이콘·폰트라 한 세트로 보임</span><span>· 남색은 D에서 글자색(#1d2a58)과 얇은 테두리(#2b3a6b)에만</span></div></div>`;
+}
 
 // ───────── 보드 HTML ─────────
 function board(key) {
@@ -125,7 +208,7 @@ h2{font-size:22px;color:var(--edge);margin:26px 0 10px;display:flex;align-items:
 .load .pt{position:absolute;right:10px;bottom:0;width:240px;height:280px;background:center bottom/contain no-repeat;image-rendering:pixelated}
 .load .t{position:absolute;left:22px;top:24px;font-family:var(--ft);font-size:30px;color:var(--edge)}.load .tip{position:absolute;left:22px;bottom:40px;right:260px;font-size:14px;color:var(--dim)}.load .bar{position:absolute;left:22px;right:22px;bottom:16px}
 .stars{position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 60% 20%,#fff,transparent),radial-gradient(1.2px 1.2px at 40% 70%,#fff,transparent),radial-gradient(1px 1px at 80% 60%,#fff,transparent),radial-gradient(1.4px 1.4px at 10% 80%,#fff,transparent);opacity:.7}
-</style></head><body>
+${v.light ? LIGHT_CSS : ''}</style></head><body>
 <div class="row" style="justify-content:space-between;align-items:flex-end"><div><h1>별의 원정대 · 스타일 보드 시안 ${key}</h1><div style="font-family:var(--ft);font-size:26px;margin-top:6px">「${v.name}」</div><div class="sub">${v.concept}</div></div>
 <div class="col" style="align-items:flex-end"><div class="lic">2단계 시안 · 게임에는 아직 안 들어감 (형철 승인 뒤 tokens.ts로) · 그림은 기존 초상화를 자리로 씀</div></div></div>
 
@@ -168,6 +251,7 @@ ${portraits.slice(0, 4).map((p, i) => `<div class="hc" style="left:${8 + i * 188
 <div class="load"><div class="stars"></div><div class="pt" style="background-image:url(${ART}/portraits/star_warmnight.png)"></div><div class="t">지도 끝의 등불</div><div style="position:absolute;left:22px;top:68px;font-size:14px;color:var(--dim)">따뜻한밤 · 「체크인」 다섯 별</div><div class="tip">팁: 보스가 팔을 들면 빨간 줄을 피해 「줄 바꾸기」! 직접 피하면 그로기가 더 깎여요.</div><div class="bar"><i style="width:62%"></i></div></div>
 </div>
 
+${v.light ? screens(v, portraits) : ''}
 <h2>토큰 초안 (승인되면 src/theme/tokens.ts 로)</h2><div class="tok">${JSON.stringify(tokens, null, 2)}</div>
 </body></html>`;
 }
@@ -209,6 +293,8 @@ for (const k of keys) {
   await p.evaluate(() => document.fonts.ready);
   await p.waitForTimeout(300);
   await p.screenshot({ path: `${OUT}/board_${k}.png`, fullPage: true });
+  // 밝은 시안: 실제 화면 4개만 따로 한 장
+  if (V[k].light) await p.locator('.scrrow').screenshot({ path: `${OUT}/board_${k}_screens.png` });
 }
 await br.close();
 console.log(`스타일 보드 ${keys.join(' · ')} → ${OUT}/board_*.html · .png`);
