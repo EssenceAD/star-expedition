@@ -25,6 +25,12 @@ export interface Unit {
   side: 'hero' | 'mob';
   hero?: HeroSpec;
   mob?: MobSpec;
+  /** 결투장 상대 영웅 (mob 쪽이지만 영웅처럼 스킬을 씀) */
+  pvp?: HeroSpec;
+  /** 레이드 AI 아군 (늘 자동 · 패널 없음) */
+  ai: boolean;
+  /** 그림 좌우 뒤집기 (오른쪽에 선 영웅) */
+  flip: boolean;
   anims: AnimSet;
   name: string;
   /** 화면 키 (논리 px) */
@@ -146,24 +152,29 @@ let rand: () => number = Math.random;
 const NO_MODS = (): Mods => ({ atk: 0, crit: 0, spd: 0, heal: 0, mana: 0, dmgCut: 0, skillDmg: 0, bossDmg: 0 });
 function unit(side: Unit['side'], name: string, o: Partial<Unit> & Pick<Unit, 'max' | 'atk' | 'def' | 'rate' | 'x' | 'y' | 'anims' | 'h'>): Unit {
   return {
-    uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
+    uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, ai: false, flip: false, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
     scd: [0, 0, 0], autoOn: false, shield: 0, st: {}, burnAcc: 0, flash: 0, knock: 0, dead: false, deadT: 0, trail: 0, dealt: 0, healed: 0, taken: 0, pending: [], ...o,
   };
 }
 
+/** 영웅 하나의 장비·초월 비율 + 자기 패시브(stat · 팀 아님) */
+function specMods(u: Unit) {
+  const sp = specOf(u)!;
+  const st = sp.st;
+  u.mod.spd += st.spd ?? 0;
+  u.mod.heal += st.heal ?? 0;
+  u.mod.mana += st.mana ?? 0;
+  u.mod.dmgCut += st.dmgCut ?? 0;
+  u.mod.skillDmg += st.skillDmg ?? 0;
+  u.mod.bossDmg += st.bossDmg ?? 0;
+}
+/** 영웅 정보 (우리 편 영웅이든 결투장 상대든) */
+export const specOf = (u: Unit) => u.hero ?? u.pvp;
 /** 패시브 · 인연 → 능력치 보정 (전투 시작 때 한 번) */
 function applyMods(b: Battle) {
   const solo = b.setup.bonds.length === 0;
   // 장비·초월 등에서 온 비율 (crit는 Unit.crit에 이미 들어 있음)
-  for (const u of b.heroes) {
-    const st = u.hero!.st;
-    u.mod.spd += st.spd;
-    u.mod.heal += st.heal;
-    u.mod.mana += st.mana;
-    u.mod.dmgCut += st.dmgCut;
-    u.mod.skillDmg += st.skillDmg;
-    u.mod.bossDmg += st.bossDmg;
-  }
+  for (const u of b.heroes) specMods(u);
   for (const u of b.heroes) {
     const p = u.hero!.def.passive.p;
     const targets = p.k === 'stat' && p.team ? b.heroes : [u];
@@ -185,14 +196,16 @@ function applyMods(b: Battle) {
 
 export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: number } = {}): Battle {
   rand = o.rnd ?? Math.random;
-  // 자리: 입력 순서(전방 → 중앙 → 후방)대로 places 4자리 · 구역이 바뀔 때마다 조금 더 뒤로
+  // 자리: 입력 순서(전방 → 중앙 → 후방)대로 places 4자리 · 구역이 바뀔 때마다 조금 더 뒤로 · 레이드 8인이면 places8 (내 파티 앞 · AI 뒤)
   let gaps = 0;
-  const heroes = setup.heroes.map((h, i): Unit => {
+  const all = [...setup.heroes, ...(setup.allies ?? [])];
+  const places = setup.allies?.length ? K.places8 : K.places;
+  const heroes = all.map((h, i): Unit => {
     const zone = ZONES.indexOf(h.zone);
-    if (i > 0 && h.zone !== setup.heroes[i - 1].zone) gaps++;
-    const [px, y] = K.places[i % K.places.length];
+    if (i > 0 && h.zone !== all[i - 1].zone && !setup.allies?.length) gaps++;
+    const [px, y] = places[i % places.length];
     const x = px - gaps * K.zoneGap;
-    return unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone });
+    return unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone, ai: i >= setup.heroes.length });
   });
   const b: Battle = {
     setup, w: o.w ?? CONFIG.view.wBase, t: 0, phase: 'walk', why: '', wave: -1, walkLeft: K.walkSec * (1 - Math.max(0, ...setup.bonds.map((x) => x.walkCut ?? 0))), scroll: 0, heroes, mobs: [], nums: [], fx: [], parts: [], cut: null, says: [],
@@ -233,7 +246,11 @@ function spawnWave(b: Battle) {
   b.mobs = specs.map((m, i) => {
     const [ox, y] = m.boss ? K.bossSlot : K.mobSlots[i % K.mobSlots.length];
     const x = b.w - ox;
-    const u = unit('mob', m.name, { mob: m, anims: m.kind.anims, h: m.kind.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, x: x + K.mobEnterFrom, y });
+    const hs = m.hero;
+    const u = hs
+      ? unit('mob', m.name, { mob: m, pvp: hs, anims: hs.art.anims, h: hs.art.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, crit: hs.st.crit, critDmg: hs.st.critDmg, x: x + K.mobEnterFrom, y, zone: ZONES.indexOf(hs.zone), flip: true })
+      : unit('mob', m.name, { mob: m, anims: m.kind.anims, h: m.kind.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, x: x + K.mobEnterFrom, y });
+    if (hs) specMods(u);
     u.tx = x;
     return u;
   });
@@ -251,19 +268,19 @@ function play(u: Unit, a: Act) {
 // ───────── 피해 · 회복 ─────────
 const effAtk = (u: Unit) => {
   let m = 1 + u.mod.atk + sv(u, 'atkUp') - sv(u, 'atkDown');
-  const p = u.hero?.def.passive.p;
+  const p = specOf(u)?.def.passive.p;
   if (p?.k === 'lowHp' && p.s === 'atk' && u.hp <= u.max * p.at) m += p.v;
   return u.atk * Math.max(0.1, m);
 };
 const effSpd = (u: Unit) => {
   let m = 1 + u.mod.spd + sv(u, 'spdUp');
-  const p = u.hero?.def.passive.p;
+  const p = specOf(u)?.def.passive.p;
   if (p?.k === 'lowHp' && p.s === 'spd' && u.hp <= u.max * p.at) m += p.v;
   return m * (has(u, 'slow') ? K.slowRate : 1);
 };
 function dmgCut(b: Battle, u: Unit) {
   let c = u.mod.dmgCut + sv(u, 'guard');
-  const p = u.hero?.def.passive.p;
+  const p = specOf(u)?.def.passive.p;
   if (p?.k === 'lowHp' && p.s === 'dmgCut' && u.hp <= u.max * p.at) c += p.v;
   if (u.side === 'hero' && u.hp < u.max * 0.5) for (const h of alive(b.heroes)) if (h.hero!.def.passive.p.k === 'teamLowGuard') c += (h.hero!.def.passive.p as { v: number }).v;
   return Math.min(0.75, c);
@@ -351,6 +368,7 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
     by.mana = Math.min(K.mana.max, by.mana + (o.skill ? K.mana.skillHit : K.mana.hit) * (1 + by.mod.mana));
     burst(b, to.x, to.y - to.h * 0.5, crit ? T.battle.burstCrit : T.battle.white, crit ? 10 : 5);
   } else {
+    if (by.pvp) by.mana = Math.min(K.mana.max, by.mana + (o.skill ? K.mana.skillHit : K.mana.hit));
     b.stats.taken += dmg;
     to.mana = Math.min(K.mana.max, to.mana + K.mana.hurt * (1 + to.mod.mana));
     if (to.busy <= 0 || to.act === 'idle') play(to, 'hurt');
@@ -400,9 +418,12 @@ function mobTarget(b: Battle): Unit | undefined {
 }
 
 // ───────── 스킬 ─────────
+const foesOf = (b: Battle, u: Unit) => (u.side === 'hero' ? b.mobs : b.heroes);
+const friendsOf = (b: Battle, u: Unit) => (u.side === 'hero' ? b.heroes : b.mobs);
 export function canCast(b: Battle, u: Unit, i: number) {
-  const s = u.hero!.def.skills[i];
-  return b.phase === 'fight' && !u.dead && !has(u, 'stun') && !has(u, 'silence') && u.mana >= s.cost && u.scd[i] <= 0 && alive(b.mobs).some((m) => m.x <= m.tx + 40);
+  const s = specOf(u)!.def.skills[i];
+  const ready = u.side === 'hero' ? alive(b.mobs).some((m) => m.x <= m.tx + 40) : u.x <= u.tx + 1 && alive(b.heroes).length > 0;
+  return b.phase === 'fight' && !u.dead && !has(u, 'stun') && !has(u, 'silence') && u.mana >= s.cost && u.scd[i] <= 0 && ready;
 }
 export function requestSkill(b: Battle, u: Unit, i: number): boolean {
   if (!canCast(b, u, i)) return false;
@@ -414,19 +435,21 @@ export function requestSkill(b: Battle, u: Unit, i: number): boolean {
   return true;
 }
 const allyTargets = (b: Battle, u: Unit, to: string): Unit[] => {
-  const hs = alive(b.heroes);
+  const hs = alive(friendsOf(b, u));
   if (to === 'self') return [u];
   if (to === 'lowest') return hs.sort((a, c) => a.hp / a.max - c.hp / c.max).slice(0, 1);
   if (to === 'frontAllies') return frontLine(hs);
   return hs;
 };
-const mobTargets = (b: Battle, to: string): Unit[] => {
-  const ms = alive(b.mobs);
+const foeTargets = (b: Battle, u: Unit, to: string): Unit[] => {
+  const ms = alive(foesOf(b, u));
   if (!ms.length) return [];
   if (to === 'all') return ms;
-  if (to === 'back') return [backMob(b)];
   if (to === 'random') return [ms[Math.floor(rand() * ms.length)]];
-  return [frontMob(b)];
+  if (u.side === 'hero') return [to === 'back' ? backMob(b) : frontMob(b)];
+  // 결투장 상대 영웅이 우리 편을 노림: 앞 = 가장 앞 위치(오른쪽) · 뒤 = 가장 뒤 위치
+  const line = to === 'back' ? backLine(ms) : frontLine(ms);
+  return [line.sort((a, c) => (to === 'back' ? a.x - c.x : c.x - a.x))[0]];
 };
 function hitFx(b: Battle, u: Unit, s: SkillDef, m: Unit, k: number) {
   const color = elemColor(s.elem);
@@ -467,14 +490,14 @@ function allyFx(b: Battle, s: SkillDef, t: Unit, e: Eff) {
   b.fx.push({ kind, x: t.x, y: kind === 'ring' ? t.y : kind === 'pillar' ? t.y : t.y - t.h * 0.5, color, t: 0, dur: 0.85, r: kind === 'ring' ? 110 : kind === 'pillar' ? 24 : 50 });
 }
 function cast(b: Battle, u: Unit, i: number, manual = false) {
-  const h = u.hero!;
+  const h = specOf(u)!;
   const s = h.def.skills[i];
   u.mana -= s.cost;
   u.scd[i] = s.cd;
   const p = h.def.passive.p;
   if (p.k === 'onCast') u.mana = Math.min(K.mana.max, u.mana + p.mana);
   b.stats.skills++;
-  if (b.cutIns === 'all' || (b.cutIns === 'big' && (manual || i === 2))) b.cut = { u, skill: s, t: 0 };
+  if (u.side === 'hero' && !u.ai && (b.cutIns === 'all' || (b.cutIns === 'big' && (manual || i === 2)))) b.cut = { u, skill: s, t: 0 };
   b.sounds.push(JOBS[h.def.job].sfx);
   play(u, s.act);
   u.trail = durOf(u.anims, s.act);
@@ -490,7 +513,7 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
         u.pending.push({
           at: at0 + at,
           fn: () => {
-            for (const m of mobTargets(b, e.to)) {
+            for (const m of foeTargets(b, u, e.to)) {
               hitFx(b, u, s, m, k);
               damage(b, u, m, e.m * lvM, { crit: e.crit, skill: true, st: e.st });
             }
@@ -526,11 +549,11 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
 const healish = (s: SkillDef) => s.eff.some((e) => e.k === 'heal' || e.k === 'regen');
 /** AUTO: 고를 만한 스킬 — 회복 스킬은 다친 아군이 있을 때만, 나머지는 큰 것부터 */
 export function autoPick(b: Battle, u: Unit): number {
-  const hs = alive(b.heroes);
+  const hs = alive(friendsOf(b, u));
   const hurt = hs.filter((x) => x.hp < x.max * K.autoHealAt).length;
   for (const i of [2, 1, 0]) {
     if (!canCast(b, u, i)) continue;
-    const s = u.hero!.def.skills[i];
+    const s = specOf(u)!.def.skills[i];
     if (healish(s)) {
       const all = s.eff.some((e) => (e.k === 'heal' || e.k === 'regen') && e.to === 'allies');
       if (all ? hurt >= 2 : hurt >= 1) return i;
@@ -588,7 +611,7 @@ export function step(b: Battle, dtReal: number) {
   b.t += dt;
   if (b.phase === 'fight' || b.phase === 'walk') b.stats.time += dt;
   if ((b.phase === 'fight' || b.phase === 'walk') && b.stats.time >= b.setup.limit) {
-    b.phase = 'lose';
+    b.phase = b.setup.timeUp === 'win' ? 'win' : 'lose';
     b.why = 'time';
     return;
   }
@@ -646,7 +669,7 @@ export function step(b: Battle, dtReal: number) {
       b.queue = b.queue.filter((x) => x !== q);
       if (canCast(b, h, q.i)) cast(b, h, q.i, true);
     }
-    if ((b.auto || h.autoOn) && h.busy <= 0 && !b.cut) {
+    if ((b.auto || h.autoOn || h.ai) && h.busy <= 0 && !b.cut) {
       const i = autoPick(b, h);
       if (i >= 0) cast(b, h, i);
     }
@@ -673,6 +696,15 @@ export function step(b: Battle, dtReal: number) {
           damage(b, h, t, 1);
         },
       });
+  }
+  // 결투장 상대 영웅: 마나가 차고 스킬을 씀 (우리 AUTO와 같은 판단)
+  for (const m of alive(b.mobs)) {
+    if (!m.pvp || !arrived(m)) continue;
+    m.mana = Math.min(K.mana.max, m.mana + K.mana.regen * (1 + m.mod.mana) * dt);
+    if (m.busy <= 0 && !b.cut) {
+      const i = autoPick(b, m);
+      if (i >= 0) cast(b, m, i);
+    }
   }
   const boss = alive(b.mobs).find((m) => m.mob?.boss);
   for (const m of b.mobs) {

@@ -8,6 +8,7 @@ import { CONFIG } from '../src/config';
 import { staMax, stageCost } from '../src/game/account';
 import { claimOffline, computeOffline } from '../src/game/idle';
 import { bulk, summon } from '../src/game/gear';
+import { claimMiles, finishRun, towerP } from '../src/game/content';
 import { awaken } from '../src/game/growth';
 import { levelCap } from '../src/game/heroes';
 import { buyItem } from '../src/game/shop';
@@ -39,6 +40,12 @@ function simulate(kind: string, days: number): Row[] {
         if (o) claimOffline(o, s, now);
         summon(1, 0, s, rnd, now);
         bulk('salvage', 1, s);
+        // C덩어리 콘텐츠 (하루 한 번 정리): 탑은 추천 레벨이 되는 층까지 · 월드 보스 3판(상위 30% 가정) · 결투장 5판(반 이김) · 이정표 받기
+        const avgLv = partyIds(s).reduce((a, id) => a + s.heroes[id].lv, 0) / partyIds(s).length;
+        for (let f = s.tower.best + 1; 1 + towerP(f) * CONFIG.story.recLv <= avgLv && f < s.tower.best + 30; f++) finishRun({ mode: 'tower', arg: f }, { win: true, dealt: 1, heroes: [] }, s, rnd, now);
+        if (P.sessions >= 4) for (let w = 0; w < CONFIG.content.world.tries; w++) s.cur.stardust += CONFIG.content.world.rewardDust[2];
+        for (let a = 0; a < CONFIG.content.arena.tries; a++) finishRun({ mode: 'arena', arg: 'victory', sub: 1 }, { win: a % 2 === 0, dealt: 1, heroes: [] }, s, rnd, now);
+        claimMiles(s);
         // 레벨 상한이면 각성 (각성석은 금화로)
         for (const id of partyIds(s))
           for (let g = 0; g < 10 && s.heroes[id].lv >= levelCap(id, s) && s.heroes[id].awaken < 5; g++) if (awaken(id, s) === 'poor' && buyItem('awaken', s) !== 'ok') break;
@@ -67,14 +74,14 @@ function simulate(kind: string, days: number): Row[] {
 }
 const KINDS: [string, string][] = [['light', '라이트 (하루 2번 · 행동력 절반)'], ['normal', '보통 (하루 4번 · 행동력 다 씀)'], ['heavy', '헤비 (하루 8번 · 별가루로 행동력 3번 삼)']];
 function doc() {
-  const out = ['# 경제 시뮬 표 (자동 생성 · tests/economy.test.ts)', '', '가정: 추천 레벨이면 별 3개로 깸 · 장비 효과는 안 넣음(보수적) · 레벨 상한이면 각성(각성석은 금화) · 하루 무료 장비 소환 · 매일 희귀 이하 분해 · 방치 보상 매일 · **아직 없는 별가루 출처(미션·업적·이정표·리그·레이드)는 안 넣음** · 별가루는 영웅 사는 데 안 씀(쌓이는 양)', `영웅 값: 창립 멤버 별가루 ${CONFIG.shop.hero.founder} · 전설/새 영웅 ${CONFIG.shop.hero.legend}`, ''];
+  const out = ['# 경제 시뮬 표 (자동 생성 · tests/economy.test.ts)', '', '가정: 추천 레벨이면 별 3개로 깸 · 장비 효과는 안 넣음(보수적) · 레벨 상한이면 각성(각성석은 금화) · 하루 무료 장비 소환 · 매일 희귀 이하 분해 · 방치 보상 매일 · C 콘텐츠: 탑(추천 레벨 층까지) · 결투장 5판(반 승) · 월드 보스 3판(보통·헤비, 상위 30%) · 이정표 · **아직 없는 별가루 출처(미션·업적·출석 = D덩어리)는 안 넣음** · 별가루는 영웅 사는 데 안 씀(쌓이는 양)', `영웅 값: 창립 멤버 별가루 ${CONFIG.shop.hero.founder} · 전설/새 영웅 ${CONFIG.shop.hero.legend}`, ''];
   for (const [k, name] of KINDS) {
     const rows = simulate(k, 30);
     out.push(`## ${name}`, '', '| 날 | 원정대 Lv | 파티 평균 Lv | 다음 스테이지 | 별가루 보유 | 금화 보유 | 장비 수 | 살 수 있는 영웅(창립) |', '|---|---|---|---|---|---|---|---|');
     for (const r of rows.filter((x) => [1, 7, 30].includes(x.day))) out.push(`| ${r.day}일 | ${r.acc} | ${r.lv} | ${r.stage} | ${r.dust.toLocaleString('ko-KR')} | ${r.gold.toLocaleString('ko-KR')} | ${r.gear} | ${r.heroes}명 |`);
     out.push('');
   }
-  out.push('## 읽는 법', `- 별가루 출처(지금): 스토리 첫 클리어 ${CONFIG.reward.firstDust}(보스 ${CONFIG.reward.firstDustBoss}) · 별 3개 처음 ${CONFIG.reward.threeStarDust} · 판마다 ${CONFIG.reward.dust.chance * 100}% 확률로 ${CONFIG.reward.dust.n}×(난이도+1)`, '- C·D덩어리(미션·업적·이정표·리그·레이드)가 들어오면 별가루가 더 늘어남 → 그때 이 표를 다시 만들어 「일주일에 영웅 1~2명」에 맞춤', '- 헤비는 별가루로 행동력을 사서 보유량이 줄지만 진도가 가장 빠름', '');
+  out.push('## 읽는 법', `- 별가루 출처(지금): 스토리 첫 클리어 ${CONFIG.reward.firstDust}(보스 ${CONFIG.reward.firstDustBoss}) · 별 3개 처음 ${CONFIG.reward.threeStarDust} · 판마다 ${CONFIG.reward.dust.chance * 100}% 확률로 ${CONFIG.reward.dust.n}×(난이도+1) · 탑 처음 깬 층 · 월드 보스 · 이정표 ${CONFIG.content.milestoneDust} · 레이드 승리 30`, '- D덩어리(미션·업적·출석)가 들어오면 더 늘어남 → 그때 다시 만들어 「일주일에 영웅 1~2명」에 맞춤', '- 헤비는 별가루로 행동력을 사서 보유량이 줄지만 진도가 가장 빠름', '');
   return out.join('\n');
 }
 describe('경제 시뮬', () => {

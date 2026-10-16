@@ -26,6 +26,8 @@ export interface MobSpec {
   patterns?: BossPattern[];
   /** 보스 초상화 */
   portrait?: string;
+  /** 결투장: 상대 영웅 (영웅 그림을 뒤집어 그리고 스킬도 씀) */
+  hero?: HeroSpec;
 }
 export interface BattleSetup {
   heroes: HeroSpec[];
@@ -36,4 +38,8 @@ export interface BattleSetup {
   /** 배경 색 바꾸기 번호 (T.battle.region) */
   region: number;
   title: string;
+  /** 레이드 8인: 같이 싸우는 AI·길드원 파티 (늘 자동 · 아래 패널엔 없음) */
+  allies?: HeroSpec[];
+  /** 시간이 다 되면: 'lose'(기본) · 'win'(월드 보스처럼 준 피해로 끝) */
+  timeUp?: 'lose' | 'win';
 }

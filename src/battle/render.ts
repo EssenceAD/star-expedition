@@ -29,12 +29,16 @@ function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) 
   ctx.ellipse(x, y + 2, w, w * 0.25, 0, 0, Math.PI * 2);
   ctx.fill();
 }
-const filterOf = (u: Unit) => (u.hero ? (u.hero.art.tint >= 0 ? B.tint[u.hero.art.tint] : 'none') : B.mobTint[u.mob!.tint] ?? 'none');
+const filterOf = (u: Unit) => {
+  const sp = u.hero ?? u.pvp;
+  return sp ? (sp.art.tint >= 0 ? B.tint[sp.art.tint] : 'none') : (B.mobTint[u.mob!.tint] ?? 'none');
+};
 
 /** 유닛 하나 (도트 프레임 · 앞으로 내딛기 · 잔상 · 피격 번쩍 · 상태 표시) */
 function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number) {
-  const face = 1;
+  const face = u.flip ? -1 : 1;
   const H = u.h;
+  const sp = u.hero ?? u.pvp;
   const { def, as } = animOf(u.anims, u.act);
   const ref = u.anims.idle!.frames[0];
   if (!art.sheet.img[ref]) return;
@@ -60,7 +64,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
       ox.clearRect(0, 0, off.width, off.height);
       drawFrame(ox, art.sheet, def.frames[pf], 180, 300, k, face);
       ox.globalCompositeOperation = 'source-atop';
-      ox.fillStyle = u.hero ? elemColor(u.hero.def.elem) : B.white;
+      ox.fillStyle = sp ? elemColor(sp.def.elem) : B.white;
       ox.fillRect(0, 0, off.width, off.height);
       ox.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 0.18 * (4 - j) * alpha;
@@ -93,7 +97,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   ctx.globalAlpha = 1;
   if (u.dead) return;
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
-  if (u.hero?.art.placeholder) tag(ctx, u.hero.def.name, x, y + 12);
+  if (sp && (sp.art.placeholder || u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
   // 보호막 · 기절 · 침묵 · 화상
   if (u.shield > 0) {
     ctx.strokeStyle = B.shield;
