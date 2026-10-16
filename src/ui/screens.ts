@@ -20,7 +20,7 @@ import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, re
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
+import { $, $$, comingSoon, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
@@ -39,7 +39,7 @@ const zoneTabs = (on: string, withUnowned = false) =>
 register('title', {
   enter(root) {
     root.id = 'title';
-    root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>별의 원정대</b><i>(가제) · 1단계 시스템 시험판</i></div>
+    root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>${fxt('별의 원정대')}</b><i>(가제) · 1단계 시스템 시험판</i></div>
       <button class="btn hi big" data-go>원정 출발</button>
       <p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
       <div class="row"><button class="btn mini" data-reset>처음부터</button></div>

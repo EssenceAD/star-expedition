@@ -1,6 +1,7 @@
 // 화면 흐름 클릭 시험: 타이틀 → 프롤로그(스킵) → 로비 → 모험 → 1-1 출발 → (대사 스킵) → 전투(AUTO ×2) → 결과 → 다음 → … → 편성 → 영웅 상세
 //  node tools/e2e.mjs [out폴더]  (먼저 npm run build · dist/ 를 직접 띄움) · CHROME=<크롬 실행 파일> 로 브라우저 지정
 import { chromium } from 'playwright-core';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
@@ -19,6 +20,21 @@ const exe = process.env.CHROME ?? (existsSync('/opt/pw-browsers/chromium-1194/ch
 const br = await chromium.launch(exe ? { executablePath: exe } : { channel: 'chrome' });
 const p = await br.newPage({ viewport: { width: Number(process.env.W ?? 900), height: Number(process.env.H ?? 412) } });
 const errors = [];
+// 웹폰트(Google Fonts): 브라우저는 프록시를 못 거치니 curl로 받아 넘김 (TLS 검사는 curl이 그대로 함)
+const fontCache = new Map();
+await p.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/, async (route) => {
+  const url = route.request().url();
+  if (!fontCache.has(url)) {
+    try {
+      fontCache.set(url, execFileSync('curl', ['-sS', '-A', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36', url], { maxBuffer: 1 << 26 }));
+    } catch {
+      fontCache.set(url, null);
+    }
+  }
+  const body = fontCache.get(url);
+  if (!body) return route.abort();
+  await route.fulfill({ status: 200, body, headers: { 'content-type': url.includes('googleapis') ? 'text/css' : 'font/woff2', 'access-control-allow-origin': '*' } });
+});
 p.on('pageerror', (e) => errors.push(String(e)));
 p.on('console', (m) => m.type() === 'error' && !m.text().startsWith('Failed to load resource') && errors.push(m.text()));
 p.on('response', (r) => r.status() >= 400 && !r.url().endsWith('/favicon.ico') && errors.push(`${r.status()} ${r.url()}`));

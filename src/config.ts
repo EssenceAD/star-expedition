@@ -324,6 +324,8 @@ export const CONFIG = {
   /** 전투력 = (공격 × atkW + 체력 × hpW + 방어 × defW) 합 */
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */
-  ui: { speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
+  ui: {
+    /** 어두운 톤 예외 (스타일 D 규칙 · 형철 10/17): 이 콘텐츠 전투만 남색 팔레트 */
+    darkModes: ['tower', 'raid', 'world', 'graid'] as string[], speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;

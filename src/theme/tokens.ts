@@ -62,6 +62,11 @@ export const T = {
     logoEdge: '#6a3a10',
     logoShadow: '#2a1650',
     logoSub: '#ffe9a8',
+    white: '#ffffff',
+    gold0: '#fffbe6',
+    gold1: '#ffe08a',
+    gold3: '#e8a93a',
+    gold4: '#b8741a',
     lose0: '#9aa3c4',
     lose1: '#5b6488',
     tagBg: 'rgba(255,250,240,0.9)',
@@ -125,6 +130,11 @@ export const T = {
     lose0: '#d8d8ff',
     lose1: '#8a8ac8',
     tagBg: 'rgba(15,12,34,0.85)',
+    white: '#ffffff',
+    gold0: '#fffbe6',
+    gold1: '#ffe08a',
+    gold3: '#e8a93a',
+    gold4: '#b8741a',
     special: '#ff9a3c',
     special2: '#e07a1c',
   },
@@ -133,10 +143,12 @@ export const T = {
   /** 속성 색 (스킬 이펙트 · 영웅 상징색 · 데이터는 키로만 부른다) */
   elem: { fire: '#ff6b3d', ice: '#8fe3ff', holy: '#fff3a8', light: '#ffd36b', nature: '#9dffb0', wind: '#8fd0ff', shadow: '#c79bff', steel: '#ffffff', ember: '#ffa040', pink: '#ff8ac8', earth: '#ff7a3d', gold: '#ffe08a', wave: '#5fa8ff', blood: '#ff4a6a', beast: '#c8a060' },
   font: {
-    /** 스타일 D 폰트 = 시안 C (형철 10/17): 본문 IBM Plex Sans KR · 제목 Black Han Sans · 숫자 Oxanium (모두 OFL · index.html에서 Google Fonts) */
+    /** 글씨 T3 「묵직 전투」 (형철 10/17 확정 · docs/style/type_board.png): 본문 IBM Plex Sans KR · 제목 Gasoek One · 메뉴 Do Hyeon · 영웅 이름 Black Han Sans · 숫자 Luckiest Guy (모두 OFL · index.html에서 Google Fonts) */
     base: '"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif',
-    title: '"Black Han Sans", "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif',
-    num: '"Oxanium", "IBM Plex Sans KR", system-ui, sans-serif',
+    title: '"Gasoek One", "Black Han Sans", "IBM Plex Sans KR", system-ui, sans-serif',
+    menu: '"Do Hyeon", "IBM Plex Sans KR", system-ui, sans-serif',
+    hero: '"Black Han Sans", "IBM Plex Sans KR", system-ui, sans-serif',
+    num: '"Luckiest Guy", "Black Han Sans", "IBM Plex Sans KR", system-ui, sans-serif',
     size: { xxs: '8px', xs: '9px', sm: '10px', md: '11px', base: '12px', lg: '13px', xl: '15px', xxl: '18px', h2: '24px', h1: '40px', logo: '54px' },
     weight: { normal: '500', bold: '700', black: '700' },
     /** 캔버스 글자 크기 (px 숫자) */
@@ -144,7 +156,7 @@ export const T = {
   },
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
   radius: { sm: '3px', md: '8px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
-  border: { thin: '1px', base: '2px', thick: '3px' },
+  border: { thin: '1px', base: '2px', thick: '3px', stroke: '4px' },
   shadow: {
     glow: '0 0 10px rgba(242,200,106,0.55)',
     glowHi: '0 0 14px rgba(255,210,100,0.7)',
@@ -164,8 +176,15 @@ export const T = {
     enh4: '0 0 18px rgba(255,190,80,0.95), inset 0 0 10px rgba(255,190,80,0.5)',
     enh5: '0 0 24px rgba(255,90,70,1), 0 0 8px rgba(255,230,140,0.9), inset 0 0 12px rgba(255,120,80,0.55)',
     enhNum: '0 0 3px #000000, 0 2px 0 #5a2a00',
+    outline: '-2px -2px 0 #1d2a58, 2px -2px 0 #1d2a58, -2px 2px 0 #1d2a58, 2px 2px 0 #1d2a58, 0 -2px 0 #1d2a58, -2px 0 0 #1d2a58, 2px 0 0 #1d2a58, 0 4px 0 #1d2a58, 0 5px 6px rgba(20,15,0,0.35)',
+    outlineSm: '-1px -1px 0 #1d2a58, 1px -1px 0 #1d2a58, -1px 1px 0 #1d2a58, 1px 1px 0 #1d2a58, 0 2px 0 #1d2a58',
+    outlineIvory: '-1px -1px 0 #fffaf0, 1px -1px 0 #fffaf0, -1px 1px 0 #fffaf0, 1px 1px 0 #fffaf0, 0 2px 0 rgba(255,250,240,0.9)',
+    fxDrop: '0 4px 0 #1d2a58, 0 6px 10px rgba(20,15,0,0.35)',
+    /** 바탕 그림 위 작은 글씨 받침 (밝은 화면 = 아이보리 테두리) */
+    textBack: '0 1px 1px #000000',
     enhBurst: '0 0 30px rgba(255,210,100,0.95), 0 4px 0 #6a3a00',
   },
+  /** 글씨 외곽선 (T3 꾸밈: 굵은 남색 선 + 아래 그림자) — shadow 안에 넣어 두고 밝은/어두운 같이 씀 */
   /** 밝은 화면에서 바꾸는 그림자 (어두운 예외에서는 위 shadow 그대로) */
   shadowLight: {
     drop: '0 2px 0 rgba(60,45,20,0.25)',
@@ -177,6 +196,7 @@ export const T = {
     inset: 'inset 0 0 0 1px rgba(255,255,255,0.7), 0 0 0 1px rgba(43,58,107,0.15)',
     glow: '0 0 10px rgba(201,161,74,0.6)',
     glowHi: '0 0 14px rgba(79,179,255,0.6)',
+    textBack: '-1px -1px 0 #fffaf0, 1px -1px 0 #fffaf0, -1px 1px 0 #fffaf0, 1px 1px 0 #fffaf0, 0 0 4px #fffaf0',
   } as Record<string, string>,
   /** 전투 캔버스 */
   battle: {
@@ -260,7 +280,9 @@ export const iconText = (key: string) => T.icon[key] ?? '·';
 export const gradeColor = (g: keyof typeof T.grade) => T.grade[g];
 export const elemColor = (e: string) => (T.elem as Record<string, string>)[e] ?? T.color.text;
 /** 캔버스 글꼴 문자열 */
-export const canvasFont = (px: number, weight: keyof typeof T.font.weight = 'black', num = true) => `${T.font.weight[weight]} ${px}px ${num ? T.font.num : T.font.base}`;
+export const canvasFont = (px: number, weight: keyof typeof T.font.weight = 'black', num = true) => (num ? canvasFace(px, 'num') : `${T.font.weight[weight]} ${px}px ${T.font.base}`);
+/** 캔버스 꾸밈 글씨 (제목·메뉴·영웅 이름·숫자 — 굵기 하나짜리 글씨라 굵기 안 줌) */
+export const canvasFace = (px: number, face: 'title' | 'menu' | 'hero' | 'num') => `${px}px ${T.font[face]}`;
 
 /** :root 에 CSS 변수로 쓰기 — 화면의 모든 색·크기는 여기서 */
 export type Mode = 'light' | 'dark';
@@ -276,6 +298,8 @@ export function applyTheme(m: Mode = 'light', root: HTMLElement = document.docum
   set('--f-base', T.font.base);
   set('--f-num', T.font.num);
   set('--f-title', T.font.title);
+  set('--f-menu', T.font.menu);
+  set('--f-hero', T.font.hero);
   for (const [k, v] of Object.entries(T.font.size)) set(`--fs-${k}`, v);
   for (const [k, v] of Object.entries(T.font.weight)) set(`--fw-${k}`, v);
   for (const [k, v] of Object.entries(T.space)) set(`--s-${k}`, v);

@@ -319,3 +319,31 @@ input.tab { color: var(--c-text); }
 .lfp .pt.s.empty { border-style: dashed; background: var(--c-panelDeep); }
 .lfr { max-height: 150px; margin-top: var(--s-sm); }
 .row.wrap { flex-wrap: wrap; }
+
+/* ───────── 2단계 글씨 T3 「묵직 전투」 꾸밈 (형철 10/17 확정) ─────────
+   제목 = Gasoek One (금 채움 + 굵은 남색 선) · 메뉴·버튼·탭 = Do Hyeon · 영웅 이름 = Black Han Sans · 숫자 = Luckiest Guy */
+.top h2, .modal h3 { font-family: var(--f-hero); font-weight: normal; color: var(--c-gold1); text-shadow: var(--sh-outlineSm); letter-spacing: 1px; }
+.btn, .tab { font-family: var(--f-menu); font-weight: normal; }
+.btn { font-size: var(--fs-lg); }
+.btn.mini { font-size: var(--fs-md); }
+.btn.big { font-size: var(--fs-h2); }
+.btn.hi { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.tab { font-size: var(--fs-base); }
+.logo b, #result h1, .join b, .enhfx .num { font-family: var(--f-title); font-weight: normal; background: none; -webkit-text-stroke: 0; color: inherit; filter: none; text-shadow: none; }
+.enhfx .num { font-family: var(--f-num); }
+/* 꾸밈 글씨 fxt(): 뒤 겹(굵은 남색 선 + 아래 그림자) 위에 앞 겹(금 그라데이션) */
+.fxt { position: relative; display: inline-block; line-height: 1.1; white-space: nowrap; }
+.fxt::before { content: attr(data-t); position: absolute; left: 0; top: 0; -webkit-text-stroke: var(--b-stroke) var(--c-ink); color: var(--c-ink); text-shadow: var(--sh-fxDrop); }
+.fxt > span { position: relative; background: linear-gradient(var(--c-gold0), var(--c-gold1) 42%, var(--c-gold3) 60%, var(--c-gold4)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fxt.lose > span { background: linear-gradient(var(--c-lose0), var(--c-lose1)); -webkit-background-clip: text; background-clip: text; }
+.enhfx .num, .enhbig, .gi .e, .kv b, .cur, .rw div b, .hcard .lv { font-family: var(--f-num); font-weight: normal; letter-spacing: 1px; }
+.enhfx .num { font-family: var(--f-num); }
+.enhbig, .gi .e { color: var(--c-gold1); text-shadow: var(--sh-outlineSm); }
+.hcard .nm, .hc .nm, .fslot .nm, .shopc b, .pcard b, .talk .who, .gname { font-family: var(--f-hero); font-weight: normal; letter-spacing: 1px; }
+.hc .nm { font-size: var(--fs-lg); }
+.talk .who { color: var(--c-gold1); text-shadow: var(--sh-outlineSm); font-size: var(--fs-xl); }
+#wave, #stg, .bn b, #warn { font-family: var(--f-hero); font-weight: normal; letter-spacing: 1px; }
+#wave, #stg, .bn b { color: var(--c-gold1); text-shadow: var(--sh-outlineSm); }
+.logo { text-shadow: none; }
+.logo small, .logo i { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.dim, .mute, .why { text-shadow: var(--sh-textBack); }

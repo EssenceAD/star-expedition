@@ -188,6 +188,8 @@ export function modal(title: string, html: string, buttons: [string, (() => void
   });
   return m;
 }
+/** 꾸밈 글씨 (T3): 뒤 겹 = 굵은 남색 선 + 그림자 · 앞 겹 = 금 그라데이션 — 큰 제목·승리·합류·강화 숫자 */
+export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t="${esc(text)}"><span>${esc(text)}</span></span>`;
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 
 export const syncCur = (root: ParentNode = document) => $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));

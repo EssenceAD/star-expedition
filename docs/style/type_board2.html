@@ -1,0 +1,91 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>글씨 시안 보드</title><link rel="stylesheet" href="fonts/fonts_type_board2.css"><style>
+*{box-sizing:border-box}body{margin:0;width:1600px;padding:26px;background:radial-gradient(1200px 700px at 75% -10%,#fffdf6,#f6eedb 65%);color:#1d2a58;font-family:'IBM Plex Sans KR',sans-serif}
+h1{margin:0;font-family:'Gasoek One';font-size:40px;color:#a8822e}p.lead{margin:6px 0 14px;font-size:15px;color:#3b4672;max-width:1300px;line-height:1.6}
+.set{border:2px solid #c9a14a;border-radius:12px;background:linear-gradient(170deg,#fffaf0,#fbf3e0 60%,#ead8b0);padding:14px 16px;margin-bottom:18px;box-shadow:0 0 0 1px rgba(43,58,107,.15),0 6px 16px rgba(80,60,20,.15)}
+.head{display:flex;gap:14px;align-items:baseline;margin-bottom:10px}.head b{font-size:22px}.head span{font-size:14px;color:#3b4672}.head em{margin-left:auto;font-style:normal;font-size:12px;color:#6b7396}
+.grid{display:grid;grid-template-columns:330px 300px 430px 1fr;grid-template-areas:'logo menus heroes nums' 'curs wins heroes nums';gap:12px}.logo{grid-area:logo}.menus{grid-area:menus}.heroes{grid-area:heroes}.nums{grid-area:nums}.curs{grid-area:curs}.wins{grid-area:wins}
+.cell{border:1.5px solid rgba(201,161,74,.7);border-radius:10px;background:rgba(255,250,240,.7);padding:10px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+/* 외곽선 글자 */
+.fx{position:relative;display:inline-block;line-height:1.05;white-space:nowrap}
+.fx::before{content:attr(data-t);position:absolute;left:0;top:0;-webkit-text-stroke:var(--sw,6px) var(--sc,#1d2a58);color:var(--sc,#1d2a58);text-shadow:0 var(--sd,4px) 0 var(--sc,#1d2a58),0 6px 10px rgba(30,20,0,.35)}
+.fx>span{position:relative;background:var(--fill);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ttl{font-family:var(--ft);font-size:58px;--fill:linear-gradient(#fffbe6,#ffe08a 42%,#e8a93a 60%,#b8741a);--sw:9px;--sd:5px}
+.num{font-family:var(--fn)}.small{font-size:18px;letter-spacing:4px;--fill:linear-gradient(#fff,#d8e9ff);--sw:5px;--sd:2px}
+.logo{flex-direction:column;background:linear-gradient(rgba(255,255,255,.2),rgba(255,255,255,.2)),url(../../public/art/bg.jpg) center/cover}
+.menus{flex-direction:column;align-items:stretch;gap:7px}
+.mb{height:44px;border-radius:12px 4px 12px 4px;border:2px solid #c9a14a;background:linear-gradient(#fffaf0,#f1e2bd);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.8),0 3px 0 rgba(60,45,20,.25)}
+.mb.hi{background:linear-gradient(#8fd2ff,#4fb3ff 50%,#2a7fd0);border-color:#e8f6ff}.mb.sp{background:linear-gradient(#ffc27a,#ff9a3c 50%,#e07a1c);border-color:#fff0d8}
+.menu{font-family:var(--fm);font-size:24px;--fill:linear-gradient(#fff,#fff3d0);--sw:6px;--sd:3px}
+.mb:not(.hi):not(.sp) .menu{--fill:linear-gradient(#2b3a6b,#1d2a58);--sc:#fffaf0;--sw:5px;--sd:0px}
+.heroes{gap:14px}.hp{width:126px;display:flex;flex-direction:column;align-items:center}
+.hp .pt{width:110px;height:110px;border-radius:10px;border:3px solid #c9a14a;background:center 20%/cover;image-rendering:pixelated;box-shadow:0 0 10px rgba(255,180,71,.6)}
+.rib{margin-top:-14px;padding:4px 14px 6px;background:linear-gradient(#2b3a6b,#1d2a58);border:2px solid #c9a14a;clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%,8% 50%);min-width:120px;text-align:center}
+.hero{font-family:var(--fh);font-size:22px;--fill:linear-gradient(#fffbe6,#ffd36b 60%,#e0a030);--sc:#0d1530;--sw:4px;--sd:2px}
+.hp small{margin-top:4px;font-size:12px;color:#3b4672}
+.nums{flex-direction:column;gap:2px;min-height:220px}
+.dmg{font-family:var(--fn);font-size:40px;--fill:linear-gradient(#fff,#ffe9b0);--sw:7px;--sd:3px;--sc:#3a1a00}
+.crit-l{font-family:var(--fm);font-size:20px;--fill:linear-gradient(#fff3c4,#ffb400);--sc:#5a0010;--sw:5px;--sd:2px}
+.crit{font-family:var(--fn);font-size:58px;--fill:linear-gradient(#fffbe6,#ffd23f 40%,#ff7a1c 75%,#e8414f);--sc:#3a0000;--sw:9px;--sd:5px}
+.heal{font-family:var(--fn);font-size:32px;--fill:linear-gradient(#eaffef,#6fe08a);--sc:#0d3a1a;--sw:6px;--sd:3px}
+.curs{flex-direction:column;align-items:flex-start}.cur{padding:4px 14px;border-radius:20px;background:rgba(255,250,240,.95);border:1.5px solid #c9a14a}
+.cn{font-family:var(--fn);font-size:24px;--fill:linear-gradient(#2b3a6b,#1d2a58);--sc:#fffaf0;--sw:4px;--sd:0px}
+.pw{font-size:13px;font-weight:700}.pwn{font-family:var(--fn);font-size:28px;--fill:linear-gradient(#fffbe6,#ffd36b 50%,#c98a1e);--sw:6px;--sd:3px}
+.wins{gap:22px}.enh{font-family:var(--fn);font-size:64px;--fill:linear-gradient(#fffbe6,#ffd36b 45%,#c98a1e);--sw:9px;--sd:5px}
+.vic{font-family:var(--ft);font-size:56px;--fill:linear-gradient(#fffbe6,#ffe08a 42%,#e8a93a 60%,#b8741a);--sw:9px;--sd:5px}
+.vicE{font-family:var(--fn);font-size:44px;letter-spacing:3px;--fill:linear-gradient(#fff,#bfe6ff 50%,#2a7fd0);--sw:8px;--sd:4px}
+.foot{font-size:13px;color:#3b4672;line-height:1.7}
+.ttl{font-weight:var(--wt)}.menu{font-weight:var(--wm)}.hero{font-weight:var(--wh)}.dmg,.crit,.heal,.cn,.pwn,.enh,.vicE,.num{font-weight:var(--wn)}.vic{font-weight:var(--wt)}
+/* 우아한 꾸밈: 얇은 갈색-남색 선 + 금빛 번짐 + 별 장식 */
+.elegant .fx::before{-webkit-text-stroke:calc(var(--sw,6px) * .55) var(--sc,#3a2a14);color:var(--sc,#3a2a14);text-shadow:0 calc(var(--sd,4px) * .6) 0 var(--sc,#3a2a14),0 0 14px rgba(255,200,90,.55),0 4px 8px rgba(30,20,0,.3)}
+.elegant .ttl{letter-spacing:2px}.elegant .ttl::after{content:'';display:block;height:14px;margin:2px auto 0;width:80%;background:radial-gradient(circle,#ffe9a0 0 3px,transparent 4px) center/14px 14px no-repeat,linear-gradient(90deg,transparent,#c9a14a 20%,#fff2c4 50%,#c9a14a 80%,transparent) center/100% 2px no-repeat}
+.elegant .rib{background:linear-gradient(#3a2a14,#1d1408);border-color:#e8c56a}
+.elegant .mb:not(.hi):not(.sp) .menu{--fill:linear-gradient(#5a3a10,#2b1c08);--sc:#fff6dc}
+.refs{display:flex;gap:12px;margin:0 0 16px}.refs img{height:200px;border-radius:10px;border:2px solid #c9a14a;box-shadow:0 4px 12px rgba(80,60,20,.2)}
+.heroes{gap:8px}.heroes .hp{width:98px}.heroes .hp .pt{width:96px;height:110px}.heroes .rib{min-width:96px;padding:4px 6px 6px}
+</style></head><body>
+<h1>글씨 시안 2 — 보내 준 그림에 맞춰서</h1>
+<div class="refs"><img src="ref/sample_items.webp"><img src="ref/sample_heroes.webp"></div><p class="lead">그림이 섬세한 금 세공·보석·반짝임이라, 굵고 각진 T3보다 <b>장식 명조(세리프) + 얇은 금박 테두리 + 금빛 번짐 + 별 장식</b>이 결이 맞아요. 전투 숫자는 손맛 때문에 만화풍을 그대로 두는 T7도 같이 넣었어요. 영웅 칸은 보내 준 그림을 그대로 잘라 썼어요.</p>
+<p class="lead" style="display:none">글씨체만 바꾸면 여전히 밋밋해서, <b>금 그라데이션 채움 + 굵은 남색 외곽선 + 아래 그림자 + 이름 리본</b>까지 같이 넣은 모양이에요. 전투 숫자는 캔버스에서 같은 방식(외곽선 → 채움)으로 그릴 수 있어요. 본문 글씨는 읽기 편하게 IBM Plex Sans KR 그대로예요. 모두 Google Fonts의 무료(OFL) 글씨예요.</p>
+<section class="set elegant" style="--ft:'Hahmlet';--fm:'Gowun Batang';--fh:'Hahmlet';--fn:'Cinzel Decorative';--wt:900;--wm:700;--wh:800;--wn:900">
+  <div class="head"><b>T5 「금박 서사」</b><span>장식 명조 제목·이름 + 고전 대문자 숫자 — 금 세공 아이템과 같은 결 (에픽 판타지 가챠 RPG 느낌)</span><em>제목 Hahmlet · 메뉴 Gowun Batang · 이름 Hahmlet · 숫자 Cinzel Decorative</em></div>
+  <div class="grid">
+    <div class="cell logo"><span class="fx ttl" data-t="별의 원정대"><span>별의 원정대</span></span><div class="sub"><span class="fx num small" data-t="STAR EXPEDITION"><span>STAR EXPEDITION</span></span></div></div>
+    <div class="cell menus"><div class="mb hi"><span class="fx menu" data-t="모험"><span>모험</span></span></div><div class="mb"><span class="fx menu" data-t="영웅"><span>영웅</span></span></div><div class="mb"><span class="fx menu" data-t="상점"><span>상점</span></span></div><div class="mb"><span class="fx menu" data-t="결투장"><span>결투장</span></span></div><div class="mb sp"><span class="fx menu" data-t="레이드"><span>레이드</span></span></div></div>
+    <div class="cell heroes"><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 0% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="웅스"><span>웅스</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 33.33% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="고느끼"><span>고느끼</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 66.66% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="왈왈콩선생"><span>왈왈콩선생</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 99.99% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="이카몰리"><span>이카몰리</span></span></div></div></div>
+    <div class="cell nums" style="background:url(../../public/art/bg.jpg) center/cover"><span class="fx dmg" data-t="12,480"><span>12,480</span></span><span class="fx crit-l" data-t="치명타!"><span>치명타!</span></span><span class="fx crit" data-t="48,920"><span>48,920</span></span><span class="fx heal" data-t="+3,210"><span>+3,210</span></span></div>
+    <div class="cell curs"><span class="cur"><span class="fx cn" data-t="65,955"><span>65,955</span></span></span><span class="cur"><span class="fx cn" data-t="4,850"><span>4,850</span></span></span><span class="cur"><span class="fx cn" data-t="Lv.30"><span>Lv.30</span></span></span><span class="pw">전투력 <span class="fx pwn" data-t="431,096"><span>431,096</span></span></span></div>
+    <div class="cell wins"><span class="fx enh" data-t="+10"><span>+10</span></span><span class="fx vic" data-t="승리!"><span>승리!</span></span><span class="fx vicE" data-t="VICTORY"><span>VICTORY</span></span></div>
+  </div></section>
+<section class="set elegant" style="--ft:'Nanum Myeongjo';--fm:'Gothic A1';--fh:'Nanum Myeongjo';--fn:'Cinzel';--wt:800;--wm:800;--wh:800;--wn:900">
+  <div class="head"><b>T6 「왕실 문장」</b><span>굵은 나눔명조 + 단정한 고딕 메뉴 + 로마 숫자풍 — 깔끔하고 고급스러운 쪽</span><em>제목 Nanum Myeongjo · 메뉴 Gothic A1 · 이름 Nanum Myeongjo · 숫자 Cinzel</em></div>
+  <div class="grid">
+    <div class="cell logo"><span class="fx ttl" data-t="별의 원정대"><span>별의 원정대</span></span><div class="sub"><span class="fx num small" data-t="STAR EXPEDITION"><span>STAR EXPEDITION</span></span></div></div>
+    <div class="cell menus"><div class="mb hi"><span class="fx menu" data-t="모험"><span>모험</span></span></div><div class="mb"><span class="fx menu" data-t="영웅"><span>영웅</span></span></div><div class="mb"><span class="fx menu" data-t="상점"><span>상점</span></span></div><div class="mb"><span class="fx menu" data-t="결투장"><span>결투장</span></span></div><div class="mb sp"><span class="fx menu" data-t="레이드"><span>레이드</span></span></div></div>
+    <div class="cell heroes"><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 0% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="웅스"><span>웅스</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 33.33% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="고느끼"><span>고느끼</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 66.66% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="왈왈콩선생"><span>왈왈콩선생</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 99.99% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="이카몰리"><span>이카몰리</span></span></div></div></div>
+    <div class="cell nums" style="background:url(../../public/art/bg.jpg) center/cover"><span class="fx dmg" data-t="12,480"><span>12,480</span></span><span class="fx crit-l" data-t="치명타!"><span>치명타!</span></span><span class="fx crit" data-t="48,920"><span>48,920</span></span><span class="fx heal" data-t="+3,210"><span>+3,210</span></span></div>
+    <div class="cell curs"><span class="cur"><span class="fx cn" data-t="65,955"><span>65,955</span></span></span><span class="cur"><span class="fx cn" data-t="4,850"><span>4,850</span></span></span><span class="cur"><span class="fx cn" data-t="Lv.30"><span>Lv.30</span></span></span><span class="pw">전투력 <span class="fx pwn" data-t="431,096"><span>431,096</span></span></span></div>
+    <div class="cell wins"><span class="fx enh" data-t="+10"><span>+10</span></span><span class="fx vic" data-t="승리!"><span>승리!</span></span><span class="fx vicE" data-t="VICTORY"><span>VICTORY</span></span></div>
+  </div></section>
+<section class="set elegant" style="--ft:'Hahmlet';--fm:'Gowun Batang';--fh:'Hahmlet';--fn:'Luckiest Guy';--wt:900;--wm:700;--wh:800;--wn:400">
+  <div class="head"><b>T7 「금박 서사 + 타격 숫자」</b><span>T5의 우아한 화면 글씨 + 전투 숫자만 T3의 만화풍(Luckiest Guy) — 화면은 고급, 전투는 손맛</span><em>제목 Hahmlet · 메뉴 Gowun Batang · 이름 Hahmlet · 숫자 Luckiest Guy</em></div>
+  <div class="grid">
+    <div class="cell logo"><span class="fx ttl" data-t="별의 원정대"><span>별의 원정대</span></span><div class="sub"><span class="fx num small" data-t="STAR EXPEDITION"><span>STAR EXPEDITION</span></span></div></div>
+    <div class="cell menus"><div class="mb hi"><span class="fx menu" data-t="모험"><span>모험</span></span></div><div class="mb"><span class="fx menu" data-t="영웅"><span>영웅</span></span></div><div class="mb"><span class="fx menu" data-t="상점"><span>상점</span></span></div><div class="mb"><span class="fx menu" data-t="결투장"><span>결투장</span></span></div><div class="mb sp"><span class="fx menu" data-t="레이드"><span>레이드</span></span></div></div>
+    <div class="cell heroes"><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 0% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="웅스"><span>웅스</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 33.33% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="고느끼"><span>고느끼</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 66.66% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="왈왈콩선생"><span>왈왈콩선생</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 99.99% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="이카몰리"><span>이카몰리</span></span></div></div></div>
+    <div class="cell nums" style="background:url(../../public/art/bg.jpg) center/cover"><span class="fx dmg" data-t="12,480"><span>12,480</span></span><span class="fx crit-l" data-t="치명타!"><span>치명타!</span></span><span class="fx crit" data-t="48,920"><span>48,920</span></span><span class="fx heal" data-t="+3,210"><span>+3,210</span></span></div>
+    <div class="cell curs"><span class="cur"><span class="fx cn" data-t="65,955"><span>65,955</span></span></span><span class="cur"><span class="fx cn" data-t="4,850"><span>4,850</span></span></span><span class="cur"><span class="fx cn" data-t="Lv.30"><span>Lv.30</span></span></span><span class="pw">전투력 <span class="fx pwn" data-t="431,096"><span>431,096</span></span></span></div>
+    <div class="cell wins"><span class="fx enh" data-t="+10"><span>+10</span></span><span class="fx vic" data-t="승리!"><span>승리!</span></span><span class="fx vicE" data-t="VICTORY"><span>VICTORY</span></span></div>
+  </div></section>
+<section class="set" style="--ft:'Gasoek One';--fm:'Do Hyeon';--fh:'Black Han Sans';--fn:'Luckiest Guy';--wt:400;--wm:400;--wh:400;--wn:400">
+  <div class="head"><b>T3 「묵직 전투 (지난번 확정 · 비교용)」</b><span>굵고 각진 글씨 — 일러스트의 섬세한 금 장식과는 결이 조금 다름</span><em>제목 Gasoek One · 메뉴 Do Hyeon · 이름 Black Han Sans · 숫자 Luckiest Guy</em></div>
+  <div class="grid">
+    <div class="cell logo"><span class="fx ttl" data-t="별의 원정대"><span>별의 원정대</span></span><div class="sub"><span class="fx num small" data-t="STAR EXPEDITION"><span>STAR EXPEDITION</span></span></div></div>
+    <div class="cell menus"><div class="mb hi"><span class="fx menu" data-t="모험"><span>모험</span></span></div><div class="mb"><span class="fx menu" data-t="영웅"><span>영웅</span></span></div><div class="mb"><span class="fx menu" data-t="상점"><span>상점</span></span></div><div class="mb"><span class="fx menu" data-t="결투장"><span>결투장</span></span></div><div class="mb sp"><span class="fx menu" data-t="레이드"><span>레이드</span></span></div></div>
+    <div class="cell heroes"><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 0% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="웅스"><span>웅스</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 33.33% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="고느끼"><span>고느끼</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 66.66% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="왈왈콩선생"><span>왈왈콩선생</span></span></div></div><div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) 99.99% 0/400% auto;image-rendering:auto"></div><div class="rib"><span class="fx hero" data-t="이카몰리"><span>이카몰리</span></span></div></div></div>
+    <div class="cell nums" style="background:url(../../public/art/bg.jpg) center/cover"><span class="fx dmg" data-t="12,480"><span>12,480</span></span><span class="fx crit-l" data-t="치명타!"><span>치명타!</span></span><span class="fx crit" data-t="48,920"><span>48,920</span></span><span class="fx heal" data-t="+3,210"><span>+3,210</span></span></div>
+    <div class="cell curs"><span class="cur"><span class="fx cn" data-t="65,955"><span>65,955</span></span></span><span class="cur"><span class="fx cn" data-t="4,850"><span>4,850</span></span></span><span class="cur"><span class="fx cn" data-t="Lv.30"><span>Lv.30</span></span></span><span class="pw">전투력 <span class="fx pwn" data-t="431,096"><span>431,096</span></span></span></div>
+    <div class="cell wins"><span class="fx enh" data-t="+10"><span>+10</span></span><span class="fx vic" data-t="승리!"><span>승리!</span></span><span class="fx vicE" data-t="VICTORY"><span>VICTORY</span></span></div>
+  </div></section>
+<div class="foot"><b>이 보드에 못 넣은 후보 (이 세션은 네트워크가 막혀 못 받음 · 형철 PC에서 확인 가능)</b><br>
+· 넥슨 「메이플스토리체」 · 「마비노기 클래식체」 · 「카트라이더체」, 네오플 「던파 연단된 칼날체」 · 「던파 비트비트체」 — 게임 회사가 무료로 푸는 게임용 글씨 (배포처 약관 확인 후 사용) · 고르시면 같은 꾸밈으로 다시 보드를 만들어요.</div>
+</body></html>

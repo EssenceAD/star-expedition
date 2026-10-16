@@ -3,7 +3,7 @@
 //  색·글꼴은 전부 theme/tokens 에서
 import { CONFIG } from '../config';
 import { animOf, drawFrame, frameAt, heightOf, type Sheet } from '../sprite/sheet';
-import { canvasFont, elemColor, iconText, T } from '../theme/tokens';
+import { canvasFace, canvasFont, elemColor, iconText, T } from '../theme/tokens';
 import { has, shortNum, type Battle, type Unit } from './sim';
 
 export const LH = CONFIG.view.h;
@@ -309,8 +309,10 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle) {
     const text = shortNum(n.v) + (n.kind === 'heal' ? '+' : '');
     ctx.globalAlpha = Math.min(1, (N.life - n.t) * 4);
     ctx.font = canvasFont(Math.round(size));
-    ctx.lineWidth = crit ? 7 : 4;
+    ctx.lineWidth = crit ? 9 : 6;
     ctx.strokeStyle = n.kind === 'heal' ? B.numHealStroke : crit ? B.numCritStroke : B.numStroke;
+    // T3 꾸밈: 아래로 한 번 더 그은 선(그림자) → 외곽선 → 채움
+    ctx.strokeText(text, n.x, y + (crit ? 4 : 3));
     ctx.strokeText(text, n.x, y);
     if (crit) {
       const g = ctx.createLinearGradient(0, y - size, 0, y);
@@ -321,8 +323,8 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle) {
     } else ctx.fillStyle = n.kind === 'heal' ? B.numHeal : n.kind === 'hurt' ? B.numMob : n.kind === 'burn' ? B.burn : B.numText;
     ctx.fillText(text, n.x, y);
     if (crit) {
-      ctx.font = canvasFont(F.critLabel, 'black', false);
-      ctx.lineWidth = 4;
+      ctx.font = canvasFace(F.critLabel + 2, 'menu');
+      ctx.lineWidth = 5;
       ctx.strokeText('치명타', n.x, y - size + 1);
       ctx.fillStyle = B.numCritLabel;
       ctx.fillText('치명타', n.x, y - size + 1);
@@ -397,17 +399,17 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.fillStyle = B.cutBar;
   ctx.fillRect(-bw / 2, -bh / 2 - 3, bw * ein, 3);
   ctx.fillRect(-bw / 2, bh / 2, bw * ein, 3);
-  ctx.font = canvasFont(F.cutName);
+  ctx.font = canvasFace(F.cutName, 'title');
   ctx.textAlign = 'right';
-  ctx.lineWidth = 8;
+  ctx.lineWidth = 10;
   ctx.lineJoin = 'round';
   ctx.strokeStyle = B.cutStroke;
   const tx = W * 0.42 + (1 - ein) * 160;
   ctx.strokeText(c.skill.name, tx, 22);
   ctx.fillStyle = B.white;
   ctx.fillText(c.skill.name, tx, 22);
-  ctx.font = canvasFont(F.cutHero, 'bold', false);
-  ctx.lineWidth = 5;
+  ctx.font = canvasFace(F.cutHero + 3, 'hero');
+  ctx.lineWidth = 6;
   ctx.strokeText(c.u.name, tx, -14);
   ctx.fillStyle = B.cutName;
   ctx.fillText(c.u.name, tx, -14);

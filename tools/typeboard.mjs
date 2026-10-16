@@ -15,6 +15,14 @@ const SETS = [
   { key: 'T3', name: '묵직 전투 (C 강화판)', note: 'C의 Black Han Sans를 이름에 두고 제목은 더 굵게, 숫자는 만화풍 — 타격감', title: ['Gasoek One', 400], menu: ['Do Hyeon', 400], hero: ['Black Han Sans', 400], num: ['Luckiest Guy', 400] },
   { key: 'T4', name: '붓으로 쓴 전설', note: '먹 글씨 제목 + 명조 이름 + 중세 숫자 — 동양 판타지·서사 느낌', title: ['East Sea Dokdo', 400], menu: ['Song Myung', 400], hero: ['Song Myung', 400], num: ['MedievalSharp', 400] },
 ];
+// 2번 보드 (형철 10/17: 보내 준 그림 — 반짝이는 애니풍 일러스트 · 금 세공·보석 아이템 — 에 어울리는 글씨): 우아한 판타지 세리프 + 금박 꾸밈 · T3는 비교용
+const SETS2 = [
+  { key: 'T5', name: '금박 서사', note: '장식 명조 제목·이름 + 고전 대문자 숫자 — 금 세공 아이템과 같은 결 (에픽 판타지 가챠 RPG 느낌)', title: ['Hahmlet', 900], menu: ['Gowun Batang', 700], hero: ['Hahmlet', 800], num: ['Cinzel Decorative', 900], elegant: true },
+  { key: 'T6', name: '왕실 문장', note: '굵은 나눔명조 + 단정한 고딕 메뉴 + 로마 숫자풍 — 깔끔하고 고급스러운 쪽', title: ['Nanum Myeongjo', 800], menu: ['Gothic A1', 800], hero: ['Nanum Myeongjo', 800], num: ['Cinzel', 900], elegant: true },
+  { key: 'T7', name: '금박 서사 + 타격 숫자', note: 'T5의 우아한 화면 글씨 + 전투 숫자만 T3의 만화풍(Luckiest Guy) — 화면은 고급, 전투는 손맛', title: ['Hahmlet', 900], menu: ['Gowun Batang', 700], hero: ['Hahmlet', 800], num: ['Luckiest Guy', 400], elegant: true, battleOnly: true },
+  { key: 'T3', name: '묵직 전투 (지난번 확정 · 비교용)', note: '굵고 각진 글씨 — 일러스트의 섬세한 금 장식과는 결이 조금 다름', title: ['Gasoek One', 400], menu: ['Do Hyeon', 400], hero: ['Black Han Sans', 400], num: ['Luckiest Guy', 400] },
+];
+const TWO = process.env.BOARD === '2';
 const BODY = ['IBM Plex Sans KR', 500];
 const C = { bg: '#f6eedb', ivory: '#fffaf0', parch: '#ead8b0', gold: '#c9a14a', gold2: '#a8822e', navy: '#1d2a58', navy2: '#2b3a6b', sky: '#4fb3ff', sky2: '#2a7fd0', orange: '#ff9a3c', red: '#e8414f', green: '#2f9a4a' };
 const HEROES = [['star_woongs', '웅스', '첫 번째 칼날', '전사'], ['star_ikamolly', '이카몰리', '바람의 마법사', '마법사'], ['legend_luna', '루나', '은늑대', '암살자']];
@@ -24,12 +32,16 @@ const fx = (t, cls) => `<span class="fx ${cls}" data-t="${t}"><span>${t}</span><
 
 function set(s) {
   const f = (x) => `'${x[0]}'`;
-  return `<section class="set" style="--ft:${f(s.title)};--fm:${f(s.menu)};--fh:${f(s.hero)};--fn:${f(s.num)}">
+  // 2번 보드: 영웅 칸은 형철이 보낸 일러스트(4명 가로 한 장)를 잘라 씀
+  const heroCell = TWO
+    ? `<div class="cell heroes">${['웅스', '고느끼', '왈왈콩선생', '이카몰리'].map((n, i) => `<div class="hp"><div class="pt" style="background:url(ref/sample_heroes.webp) ${i * 33.33}% 0/400% auto;image-rendering:auto"></div><div class="rib">${fx(n, 'hero')}</div></div>`).join('')}</div>`
+    : '';
+  return `<section class="set${s.elegant ? ' elegant' : ''}" style="--ft:${f(s.title)};--fm:${f(s.menu)};--fh:${f(s.hero)};--fn:${f(s.num)};--wt:${s.title[1]};--wm:${s.menu[1]};--wh:${s.hero[1]};--wn:${s.num[1]}">
   <div class="head"><b>${s.key} 「${s.name}」</b><span>${s.note}</span><em>제목 ${s.title[0]} · 메뉴 ${s.menu[0]} · 이름 ${s.hero[0]} · 숫자 ${s.num[0]}</em></div>
   <div class="grid">
     <div class="cell logo">${fx('별의 원정대', 'ttl')}<div class="sub">${fx('STAR EXPEDITION', 'num small')}</div></div>
     <div class="cell menus">${MENUS.map((m, i) => `<div class="mb${i === 0 ? ' hi' : i === 4 ? ' sp' : ''}">${fx(m, 'menu')}</div>`).join('')}</div>
-    <div class="cell heroes">${HEROES.map(([p, n, t, j]) => `<div class="hp"><div class="pt" style="background-image:url(${ART}/portraits/${p}.png)"></div><div class="rib">${fx(n, 'hero')}</div><small>${t} · ${j}</small></div>`).join('')}</div>
+    ${heroCell || `<div class="cell heroes">${HEROES.map(([p, n, t, j]) => `<div class="hp"><div class="pt" style="background-image:url(${ART}/portraits/${p}.png)"></div><div class="rib">${fx(n, 'hero')}</div><small>${t} · ${j}</small></div>`).join('')}</div>`}
     <div class="cell nums" style="background:url(${ART}/bg.jpg) center/cover">${fx('12,480', 'dmg')}${fx('치명타!', 'crit-l')}${fx('48,920', 'crit')}${fx('+3,210', 'heal')}</div>
     <div class="cell curs"><span class="cur">${fx('65,955', 'cn')}</span><span class="cur">${fx('4,850', 'cn')}</span><span class="cur">${fx('Lv.30', 'cn')}</span><span class="pw">전투력 ${fx('431,096', 'pwn')}</span></div>
     <div class="cell wins">${fx('+10', 'enh')}${fx('승리!', 'vic')}${fx('VICTORY', 'vicE')}</div>
@@ -71,10 +83,19 @@ h1{margin:0;font-family:'Gasoek One';font-size:40px;color:${C.gold2}}p.lead{marg
 .vic{font-family:var(--ft);font-size:56px;--fill:linear-gradient(#fffbe6,#ffe08a 42%,#e8a93a 60%,#b8741a);--sw:9px;--sd:5px}
 .vicE{font-family:var(--fn);font-size:44px;letter-spacing:3px;--fill:linear-gradient(#fff,#bfe6ff 50%,${C.sky2});--sw:8px;--sd:4px}
 .foot{font-size:13px;color:#3b4672;line-height:1.7}
+.ttl{font-weight:var(--wt)}.menu{font-weight:var(--wm)}.hero{font-weight:var(--wh)}.dmg,.crit,.heal,.cn,.pwn,.enh,.vicE,.num{font-weight:var(--wn)}.vic{font-weight:var(--wt)}
+/* 우아한 꾸밈: 얇은 갈색-남색 선 + 금빛 번짐 + 별 장식 */
+.elegant .fx::before{-webkit-text-stroke:calc(var(--sw,6px) * .55) var(--sc,#3a2a14);color:var(--sc,#3a2a14);text-shadow:0 calc(var(--sd,4px) * .6) 0 var(--sc,#3a2a14),0 0 14px rgba(255,200,90,.55),0 4px 8px rgba(30,20,0,.3)}
+.elegant .ttl{letter-spacing:2px}.elegant .ttl::after{content:'';display:block;height:14px;margin:2px auto 0;width:80%;background:radial-gradient(circle,#ffe9a0 0 3px,transparent 4px) center/14px 14px no-repeat,linear-gradient(90deg,transparent,#c9a14a 20%,#fff2c4 50%,#c9a14a 80%,transparent) center/100% 2px no-repeat}
+.elegant .rib{background:linear-gradient(#3a2a14,#1d1408);border-color:#e8c56a}
+.elegant .mb:not(.hi):not(.sp) .menu{--fill:linear-gradient(#5a3a10,#2b1c08);--sc:#fff6dc}
+.refs{display:flex;gap:12px;margin:0 0 16px}.refs img{height:200px;border-radius:10px;border:2px solid #c9a14a;box-shadow:0 4px 12px rgba(80,60,20,.2)}
+.heroes{gap:8px}.heroes .hp{width:98px}.heroes .hp .pt{width:96px;height:110px}.heroes .rib{min-width:96px;padding:4px 6px 6px}
 </style></head><body>
-<h1>글씨 시안 — 스타일 D 위에서</h1>
-<p class="lead">글씨체만 바꾸면 여전히 밋밋해서, <b>금 그라데이션 채움 + 굵은 남색 외곽선 + 아래 그림자 + 이름 리본</b>까지 같이 넣은 모양이에요. 전투 숫자는 캔버스에서 같은 방식(외곽선 → 채움)으로 그릴 수 있어요. 본문 글씨는 읽기 편하게 IBM Plex Sans KR 그대로예요. 모두 Google Fonts의 무료(OFL) 글씨예요.</p>
-${SETS.map(set).join('\n')}
+<h1>${TWO ? '글씨 시안 2 — 보내 준 그림에 맞춰서' : '글씨 시안 — 스타일 D 위에서'}</h1>
+${TWO ? `<div class="refs"><img src="ref/sample_items.webp"><img src="ref/sample_heroes.webp"></div><p class="lead">그림이 섬세한 금 세공·보석·반짝임이라, 굵고 각진 T3보다 <b>장식 명조(세리프) + 얇은 금박 테두리 + 금빛 번짐 + 별 장식</b>이 결이 맞아요. 전투 숫자는 손맛 때문에 만화풍을 그대로 두는 T7도 같이 넣었어요. 영웅 칸은 보내 준 그림을 그대로 잘라 썼어요.</p>` : ''}
+<p class="lead"${TWO ? ' style="display:none"' : ''}>글씨체만 바꾸면 여전히 밋밋해서, <b>금 그라데이션 채움 + 굵은 남색 외곽선 + 아래 그림자 + 이름 리본</b>까지 같이 넣은 모양이에요. 전투 숫자는 캔버스에서 같은 방식(외곽선 → 채움)으로 그릴 수 있어요. 본문 글씨는 읽기 편하게 IBM Plex Sans KR 그대로예요. 모두 Google Fonts의 무료(OFL) 글씨예요.</p>
+${(TWO ? SETS2 : SETS).map(set).join('\n')}
 <div class="foot"><b>이 보드에 못 넣은 후보 (이 세션은 네트워크가 막혀 못 받음 · 형철 PC에서 확인 가능)</b><br>
 · 넥슨 「메이플스토리체」 · 「마비노기 클래식체」 · 「카트라이더체」, 네오플 「던파 연단된 칼날체」 · 「던파 비트비트체」 — 게임 회사가 무료로 푸는 게임용 글씨 (배포처 약관 확인 후 사용) · 고르시면 같은 꾸밈으로 다시 보드를 만들어요.</div>
 </body></html>`;
@@ -83,28 +104,29 @@ ${SETS.map(set).join('\n')}
 const chars = [...new Set(html.replace(/<style>[\s\S]*?<\/style>/, '').replace(/<[^>]+>/g, ' ').replace(/data-t="([^"]*)"/g, '$1').replace(/\s+/g, ''))].join('') + '0123456789+-.,:%!?·ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36';
 const fams = new Map();
-for (const s of SETS) for (const k of ['title', 'menu', 'hero', 'num']) fams.set(`${s[k][0]}|${s[k][1]}`, s[k]);
+for (const s of TWO ? SETS2 : SETS) for (const k of ['title', 'menu', 'hero', 'num']) fams.set(`${s[k][0]}|${s[k][1]}`, s[k]);
 fams.set(`${BODY[0]}|${BODY[1]}`, BODY);
 fams.set('Gasoek One|400', ['Gasoek One', 400]);
 let css = '';
 for (const [fam, w] of fams.values()) {
-  const id = `${fam.replace(/ /g, '')}-${w}-type`;
+  const id = `${fam.replace(/ /g, '')}-${w}-${TWO ? 'type2' : 'type'}`;
   const got = execFileSync('curl', ['-sS', '-A', UA, `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fam)}:wght@${w}&text=${encodeURIComponent(chars)}`]).toString();
   const src = got.match(/url\((https:[^)]+)\)/)?.[1];
   if (!src) throw new Error(`글꼴 못 받음: ${fam}`);
   execFileSync('curl', ['-sS', '-o', `${OUT}/fonts/${id}.woff2`, src]);
   css += `@font-face{font-family:'${fam}';font-weight:${w};src:url(${id}.woff2) format('woff2')}\n`;
 }
-writeFileSync(`${OUT}/fonts/fonts_type.css`, `/* 글씨 시안 — Google Fonts · SIL Open Font License 1.1 · 보드에 쓰인 글자만 */\n${css}`);
-writeFileSync(`${OUT}/type_board.html`, html);
+const NAME = TWO ? 'type_board2' : 'type_board';
+writeFileSync(`${OUT}/fonts/fonts_${NAME}.css`, `/* 글씨 시안 — Google Fonts · SIL Open Font License 1.1 · 보드에 쓰인 글자만 */\n${css}`);
+writeFileSync(`${OUT}/${NAME}.html`, html.replace('fonts/fonts_type.css', `fonts/fonts_${NAME}.css`));
 
 const { chromium } = await import('playwright-core');
 const exe = process.env.CHROME ?? (existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome') ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' : undefined);
 const br = await chromium.launch(exe ? { executablePath: exe } : { channel: 'chrome' });
 const p = await br.newPage({ viewport: { width: 1600, height: 900 } });
-await p.goto(`file://${process.cwd()}/${OUT}/type_board.html`);
+await p.goto(`file://${process.cwd()}/${OUT}/${NAME}.html`);
 await p.evaluate(() => document.fonts.ready);
 await p.waitForTimeout(400);
-await p.screenshot({ path: `${OUT}/type_board.png`, fullPage: true });
+await p.screenshot({ path: `${OUT}/${NAME}.png`, fullPage: true });
 await br.close();
-console.log(`글씨 시안 → ${OUT}/type_board.html · .png`);
+console.log(`글씨 시안 → ${OUT}/${NAME}.html · .png`);

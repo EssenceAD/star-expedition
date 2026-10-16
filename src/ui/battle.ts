@@ -14,8 +14,8 @@ import { stageCost, useStamina } from '../game/account';
 import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
-import { elemColor, icon, iconText } from '../theme/tokens';
-import { $, $$, esc, fmt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
+import { applyTheme, elemColor, icon, iconText } from '../theme/tokens';
+import { $, $$, esc, fmt, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
@@ -180,7 +180,7 @@ function showRunResult() {
     series[win ? 'wins' : 'losses']++;
     if (series.wins < 2 && series.losses < 2) {
       const leg = (r.leg ?? 0) + 1;
-      $('#result').innerHTML = `<h1 class="${win ? '' : 'lose'}">${win ? '이번 판 승리' : '이번 판 패배'}</h1><p class="why">최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}</p><div class="row"><button class="btn hi" data-a="leg">다음 판 ${icon('next')}</button></div>`;
+      $('#result').innerHTML = `<h1>${fxt(win ? '이번 판 승리' : '이번 판 패배', win ? '' : 'lose')}</h1><p class="why">최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}</p><div class="row"><button class="btn hi" data-a="leg">다음 판 ${icon('next')}</button></div>`;
       $('#result').hidden = false;
       $('#result [data-a="leg"]').onclick = () => {
         run = { ...r, leg };
@@ -201,7 +201,7 @@ function showRunResult() {
   const left = triesText(r);
   const rs = raidSummary(bb);
   const raidLines = rs ? `<br>${rs.phase}페이즈까지 · 회피 직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}<br>부위 파괴 1등: ${rs.parts.map((p) => `${esc(p.name)} ${p.broken ? esc(p.top) : '못 부숨'}`).join(' · ')}` : '';
-  $('#result').innerHTML = `<h1 class="${win || scoreRun ? '' : 'lose'}">${head}</h1>
+  $('#result').innerHTML = `<h1>${fxt(head, win || scoreRun ? '' : 'lose')}</h1>
     <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${raidLines}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
     <div class="rw">${o.items.map(([k, v]) => `<div><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
     <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div>`;
@@ -251,7 +251,7 @@ function showResult() {
   const r = $('#result');
   const mvp = mvpOf(bb);
   if (!win) {
-    r.innerHTML = `<h1 class="lose">${bb.why === 'time' ? '시간 초과' : '패배…'}</h1><p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 반복 전투·방치 보상으로 경험치 모으기</p>
+    r.innerHTML = `<h1>${fxt(bb.why === 'time' ? '시간 초과' : '패배…', 'lose')}</h1><p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 반복 전투·방치 보상으로 경험치 모으기</p>
       <div class="row"><button class="btn" data-a="form">${icon('formation')} 편성</button><button class="btn hi" data-a="again">다시 하기 ${icon('stamina')}${stageCost(st.d)}</button>${firstRun ? '' : `<button class="btn" data-a="adv">${icon('adventure')} 모험</button>`}</div>`;
     r.hidden = false;
     wire();
@@ -268,7 +268,7 @@ function showResult() {
   const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
   const hasNext = st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
   const show = () => {
-    r.innerHTML = `<h1>승리!</h1><div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
+    r.innerHTML = `<h1>${fxt('승리!')}</h1><div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
       <p class="why">클리어 ${iconText('check')} · 아무도 안 쓰러짐 ${allUp ? iconText('check') : iconText('cross')} · ${bb.setup.starTime}초 안 ${bb.stats.time <= bb.setup.starTime ? iconText('check') : iconText('cross')}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP ${mvp.name} ${shortNum(mvp.dealt)}
       ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><b class="good">레벨 업!</b> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
@@ -295,7 +295,7 @@ function joinShow(id: string, done: () => void) {
   const line = CHAPTERS.flatMap((c) => c.clear ?? []).find(([who]) => who === id)?.[1] ?? h.concept;
   const el = document.createElement('div');
   el.className = 'join';
-  el.innerHTML = `<div class="pt xl" style="background-image:url(${heroPortrait(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${esc(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
+  el.innerHTML = `<div class="pt xl" style="background-image:url(${heroPortrait(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${fxt(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
   $('#stage').append(el);
   el.onclick = () => {
     el.remove();
@@ -360,6 +360,7 @@ register('battle', {
   canvas: true,
   enter(_root, p) {
     hud().hidden = false;
+    applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'light');
     $('#bAuto').onclick = () => {
       if (!b) return;
       b.auto = !b.auto;
@@ -390,6 +391,7 @@ register('battle', {
     else begin(p.stage as StageId);
   },
   leave() {
+    applyTheme('light');
     hud().hidden = true;
     hud().classList.remove('raid');
     $('#cv').onpointerdown = null;
