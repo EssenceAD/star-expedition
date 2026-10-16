@@ -84,7 +84,9 @@ export function fullStats(id: string, s: Save = S): { st: Stats; raw: RawCaps } 
 export const statsOf = (id: string, s: Save = S) => fullStats(id, s).st;
 export const powerOf = (st: Stats) => Math.round((st.atk * CONFIG.power.atkW + st.hp * CONFIG.power.hpW + st.def * CONFIG.power.defW) * (1 + st.crit * (st.critDmg - 1) + st.spd + st.skillDmg * 0.5) * (1 + st.skillLv.reduce((a, b) => a + b - 1, 0) * 0.02));
 export const heroPower = (id: string, s: Save = S) => powerOf(statsOf(id, s));
-export const levelCap = (id: string, s: Save = S) => H.levelCap[Math.min(H.levelCap.length - 1, s.heroes[id]?.awaken ?? 0)];
+export const levelCap = (id: string, s: Save = S) => H.levelCap[Math.min(H.levelCap.length - 1, s.heroes[id]?.awaken ?? 0)] + H.transLv * (s.heroes[id]?.trans.length ?? 0);
+/** 만렙 (각성 5 + 초월 5) */
+export const levelMax = () => H.levelCap[H.levelCap.length - 1] + H.transLv * CONFIG.growth.transcend.stones.length;
 export const expNeed = (lv: number) => Math.round(H.exp.base * Math.pow(lv, H.exp.pow));
 /** 경험치 더하기 → 오른 레벨 수 */
 export function addExp(id: string, n: number, s: Save = S): number {

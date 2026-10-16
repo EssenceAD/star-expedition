@@ -62,7 +62,9 @@ for (const h of HEROES) {
     })
     .catch(() => {});
 }
-view.art = { sheet, bg, cutin };
+const RB = CONFIG.raidArena.art;
+const raidBoss = RB.have ? { intact: await img(`${B}art/${RB.intact}`).catch(() => null), broken: await img(`${B}art/${RB.broken}`).catch(() => null) } : undefined;
+view.art = { sheet, bg, cutin, raidBoss };
 
 loadSave();
 addEventListener('pagehide', () => persist());

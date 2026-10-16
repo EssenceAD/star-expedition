@@ -90,6 +90,14 @@ export const T = {
     starOn: '0 0 18px #ffcf4a, 0 2px 0 #8a4a10',
     starOff: '0 2px 0 #000000',
     inset: 'inset 0 0 0 1px rgba(255,243,196,0.08)',
+    /** 강화 구간 빛 (+10 · +20 · +30 · +40 · +50 — 한 단계씩 화려하게) */
+    enh1: '0 0 6px rgba(120,200,255,0.55)',
+    enh2: '0 0 10px rgba(120,220,255,0.8), inset 0 0 6px rgba(120,220,255,0.35)',
+    enh3: '0 0 14px rgba(200,140,255,0.9), inset 0 0 8px rgba(200,140,255,0.45)',
+    enh4: '0 0 18px rgba(255,190,80,0.95), inset 0 0 10px rgba(255,190,80,0.5)',
+    enh5: '0 0 24px rgba(255,90,70,1), 0 0 8px rgba(255,230,140,0.9), inset 0 0 12px rgba(255,120,80,0.55)',
+    enhNum: '0 0 3px #000000, 0 2px 0 #5a2a00',
+    enhBurst: '0 0 30px rgba(255,210,100,0.95), 0 4px 0 #6a3a00',
   },
   /** 전투 캔버스 */
   battle: {
@@ -131,6 +139,18 @@ export const T = {
     bossBeam: '#ffb000',
     sky: ['#8fd0ff', '#d9f2ff'],
     placeholderTag: 'rgba(15,12,34,0.85)',
+    /** 보스 전장: 줄 바닥 · 줄 경고(알파는 코드) · 부서진 자리 · 금 · 집중 부위 테두리 · 다운 · 페이즈마다 배경 색 */
+    laneBand: 'rgba(255,255,255,0.12)',
+    laneEdge: 'rgba(255,243,196,0.45)',
+    laneWarn: 'rgba(255,40,30,',
+    crack: '#1a0f08',
+    crackGlow: '#ff9a3c',
+    focusRing: '#ffe36b',
+    downVeil: 'rgba(30,30,60,0.35)',
+    noteBg: 'rgba(15,12,34,0.8)',
+    phaseTint: ['none', 'saturate(1.3) hue-rotate(-20deg) brightness(0.85)', 'hue-rotate(-50deg) saturate(1.6) brightness(0.6)'],
+    duoA: '#ffb347',
+    duoB: '#58b8ff',
     tagText: '#fff3c4',
     /** 자리표시자 영웅 색 바꾸기 (canvas filter) */
     tint: ['hue-rotate(40deg)', 'hue-rotate(110deg)', 'hue-rotate(180deg)', 'hue-rotate(250deg)', 'hue-rotate(310deg)', 'saturate(0.4) brightness(1.15)'],
@@ -147,7 +167,7 @@ export const T = {
     weapon: '🗡', armor: '🛡', acc: '💍', shield: '🛡', guard: '✦', taunt: '📯', regen: '❀', stun: '💫', silence: '🤐', slow: '❄', burn: '🔥', atkUp: '⬆', atkDown: '⬇', spdUp: '⏫', fury: '🔥', critUp: '🎯',
     knight: '🛡', warrior: '⚔', fighter: '👊', assassin: '🗡', archer: '🏹', engineer: '🔧', mage: '🔮', priest: '✚', druid: '🌿',
     /** 스킬 아이콘 (스킬 데이터의 icon 키) */
-    sk_slash: '🌀', sk_smash: '⛰', sk_pierce: '⚔', sk_fire: '🔥', sk_frost: '❄', sk_meteor: '☄', sk_heal: '✚', sk_sanct: '❀', sk_barrier: '✧', sk_taunt: '📯', sk_shield: '🛡', sk_arrow: '🏹', sk_rain: '☄', sk_lamp: '🏮', sk_fist: '👊', sk_dagger: '🗡', sk_song: '🎵', sk_dark: '🌑', sk_drone: '🛸', sk_trap: '🪤', sk_gear: '⚙', sk_claw: '🐾', sk_leaf: '🌿', sk_beast: '🐻', sk_star: '⭐', sk_crown: '👑', sk_eye: '👁', sk_gold: '🪙', sk_bottle: '🍶', sk_belly: '🫃', sk_note: '📓', sk_bolt: '⚡', sk_hammer: '🔨', sk_rabbit: '🐰', sk_wind: '🌪', sk_water: '💧', sk_needle: '💉', sk_bed: '🛏', sk_lion: '🦁', sk_dragon: '🐉', sk_wolf: '🐺', sk_cannon: '💣', sk_flower: '🌸', sk_moon: '🌙', sk_book: '📖', sk_whisper: '💭', sk_contract: '📜', sk_gem: '💎', sk_lute: '🎸', sk_veil: '🕯',
+    sk_slash: '🌀', sk_smash: '⛰', sk_pierce: '⚔', sk_fire: '🔥', sk_frost: '❄', sk_meteor: '☄', sk_heal: '✚', sk_sanct: '❀', sk_barrier: '✧', sk_taunt: '📯', sk_shield: '🛡', sk_arrow: '🏹', sk_rain: '☄', sk_lamp: '🏮', sk_fist: '👊', sk_dagger: '🗡', sk_song: '🎵', sk_dark: '🌑', sk_drone: '🛸', sk_trap: '🪤', sk_gear: '⚙', sk_claw: '🐾', sk_leaf: '🌿', sk_beast: '🐻', sk_star: '⭐', sk_crown: '👑', sk_eye: '👁', sk_gold: '🪙', sk_bottle: '🍶', sk_belly: '🫃', sk_note: '📓', sk_bolt: '⚡', sk_hammer: '🔨', sk_dog: '🐶', sk_paw: '🐾', sk_snack: '🍪', sk_rabbit: '🐰', sk_wind: '🌪', sk_water: '💧', sk_needle: '💉', sk_bed: '🛏', sk_lion: '🦁', sk_dragon: '🐉', sk_wolf: '🐺', sk_cannon: '💣', sk_flower: '🌸', sk_moon: '🌙', sk_book: '📖', sk_whisper: '💭', sk_contract: '📜', sk_gem: '💎', sk_lute: '🎸', sk_veil: '🕯',
   } as Record<string, string>,
 } as const;
 

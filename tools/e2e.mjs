@@ -116,8 +116,28 @@ await click('[data-go="bag"]');
 await p.waitForSelector('[data-screen="bag"]');
 await shot('bag');
 await click('[data-gear]');
-await click('.gp [data-a="enh"]');
 await shot('gear_panel');
+// 강화 연출: 아이템 크게 → 망치 → 큰 +N · 능력 전→후 (구간 돌파 연출도 한 번: +9 → +10)
+await p.evaluate(() => {
+  const S = window.__S();
+  S.cur.enh = 99999;
+  S.cur.gold = 9e9;
+});
+await click('.gp [data-a="enh"]');
+await p.waitForTimeout(1600);
+await shot('enhance_fx');
+await click('.enhfx');
+await p.evaluate(() => {
+  const g = Object.values(window.__S().items).find((x) => x.kind === 'gear' && x.enh > 0);
+  g.enh = 9;
+  g.pity = 1;
+});
+await click('.gp [data-a="close"]');
+await click('[data-gear]');
+await click('.gp [data-a="enh"]');
+await p.waitForTimeout(1600);
+await shot('enhance_break');
+await click('.enhfx');
 await click('.gp [data-a="close"]');
 await click('[data-back]');
 await click('[data-go="heroes"]');
@@ -156,6 +176,16 @@ async function content(tab, label, sel = '[data-run]') {
   });
   await p.waitForTimeout(3000);
   await shot(`${label}_battle`);
+  if (label === 'raid' || label === 'world') {
+    // 보스 전장: 빨간 경고 → 줄 바꾸기 · 페이즈 · 그로기 다운
+    await p.waitForFunction(() => window.__b()?.raid?.warnLane != null, null, { timeout: 30000 });
+    await shot(`${label}_warn`);
+    await click('#bDodge');
+    await p.waitForTimeout(250);
+    await shot(`${label}_dodge`);
+    await p.waitForFunction(() => window.__b()?.raid?.phase >= 1 || window.__b()?.phase !== 'fight', null, { timeout: 90000 });
+    await shot(`${label}_phase`);
+  }
   await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 150000 });
   if (await p.locator('#result [data-a="leg"]').count()) return shot(`${label}_leg`);
   await shot(`${label}_result`);

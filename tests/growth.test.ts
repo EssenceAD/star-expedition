@@ -1,7 +1,7 @@
 // B덩어리: 장비(강화·별·티어·옵션·룬·전수·판매/분해·소환·제작·장착) · 영웅 성장(각성·별·스킬·초월·물약·전용 무기) · 상점 · 소프트캡
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config';
-import { autoEquip, bulk, craft, enhance, equip, expandBag, freeSummonLeft, fuseRunes, gearPower, makeGear, makeRune, socket, starUp, summon, tierUp, transfer, transferPreview, rerollRoll, rerollKeep, unequipAll } from '../src/game/gear';
+import { autoEquip, bulk, craft, enhance, enhEff, equip, expandBag, freeSummonLeft, fuseRunes, gearPower, makeGear, makeRune, socket, starUp, summon, tierUp, transfer, transferPreview, rerollRoll, rerollKeep, unequipAll } from '../src/game/gear';
 import { assignShards, awaken, exUp, heroStarUp, skillUp, transcend, usePotion } from '../src/game/growth';
 import { fullStats, heroPower, levelCap, statsOf } from '../src/game/heroes';
 import { buyHero, buyItem, buyPack } from '../src/game/shop';
@@ -16,21 +16,28 @@ const rich = (): Save => {
 const put = (s: Save, g: Gear) => ((s.items[g.uid] = g), g);
 
 describe('장비', () => {
-  it('강화: +10까지 · 파괴 없음 · 실패하면 다음 확률이 오름 · 재료가 없으면 못 함', () => {
+  it('강화: 긴 사다리 +max까지 · 파괴 없음 · 구간 바닥 아래로는 안 떨어짐 · 실패하면 다음 확률이 오름 · 재료가 없으면 못 함', () => {
     const s = rich();
+    s.cur.enh = 1e9;
+    s.cur.gold = 1e13;
+    const E = CONFIG.gear.enhance;
     const g = put(s, makeGear('weapon', 2, 0, s, seeded(1)));
     const rnd = seeded(2);
     let fails = 0;
-    for (let i = 0; i < 400 && g.enh < 10; i++) {
+    let floor = 0;
+    for (let i = 0; i < 20000 && g.enh < E.max; i++) {
       const before = g.pity;
       const r = enhance(g, s, rnd);
       if (r === 'fail' || r === 'drop') {
         fails++;
         expect(g.pity).toBeGreaterThan(before);
       }
-      expect(g.enh).toBeGreaterThanOrEqual(0);
+      floor = Math.max(floor, Math.floor(g.enh / E.band) * E.band);
+      expect(g.enh).toBeGreaterThanOrEqual(floor);
     }
-    expect(g.enh).toBe(10);
+    expect(g.enh).toBe(E.max);
+    // 소프트캡: 위 구간일수록 한 단계가 주는 능력이 적음
+    expect(enhEff(E.band) - enhEff(0)).toBeGreaterThan(enhEff(E.max) - enhEff(E.max - E.band));
     expect(fails).toBeGreaterThan(0);
     expect(enhance(g, s, rnd)).toBe('max');
     s.cur.enh = 0;

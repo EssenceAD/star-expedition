@@ -1,4 +1,4 @@
-// 영웅 32명 (STAR_EXPEDITION_SPEC §3) — 창립 13 · 「체크인」 전설 14 · 새 영웅 5
+// 영웅 36명 (STAR_EXPEDITION_SPEC §3 + HEROES_ADD_4) — 창립 13 · 「체크인」 전설 14 · 새 영웅 5 · 멤버 4
 //  그림: 개척자 5명은 자기 도트 시트 · 나머지는 직업별 자리표시자 시트 + 색 바꾸기(T.battle.tint) + 이름표 (ROADMAP §0)
 //  초상화: 개척자 star_<id> · 전설 legend_<key> · 그 외 「체크인」 mc_<직업>_<m|f> (그림 없는 영웅)
 //  능력치 숫자는 CONFIG.jobs × stat(영웅별 배수)
@@ -6,7 +6,7 @@ import type { AnimSet } from '../sprite/sheet';
 import { JOBS, type JobId } from './jobs';
 import { pas, sk, type PassiveDef, type SkillDef } from './skills';
 
-export type Origin = 'founder' | 'legend' | 'new';
+export type Origin = 'founder' | 'legend' | 'new' | 'member';
 export interface HeroDef {
   id: string;
   name: string;
@@ -27,6 +27,12 @@ export interface HeroDef {
   exWeapon?: string;
   /** 「체크인」 개척자 (다섯 별) */
   fiveStar?: boolean;
+  /** 보스 전장 그로기 깎는 배수 (없으면 1 · 세르미뉴 「공략 담당」) */
+  groggy?: number;
+  /** 대사 3종: 기본 · 웃음 · 진지 */
+  voice?: [string, string, string];
+  /** 외형 (그림 주문서 · 실루엣·머리색이 다른 영웅과 안 겹치게) */
+  look?: string;
 }
 
 export const HEROES: HeroDef[] = [
@@ -159,7 +165,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'ceres', name: '세레스', gender: 'f', job: 'knight', title: '왕실 기사', concept: '땋은 왕관 머리의 수줍은 모범생', origin: 'legend', elem: 'holy', joinChapter: 4,
+    id: 'ceres', name: '세레스', gender: 'f', job: 'knight', title: '왕실 기사', concept: '땋은 왕관 머리의 수줍은 모범생', origin: 'legend', elem: 'holy',
     passive: pas('왕실 방패', { k: 'stat', s: 'hp', v: 0.2 }),
     skills: [
       sk(0, '예법의 일격', 'pierce', 'holy', 'slash', { k: 'dmg', to: 'front', m: 2.2, st: { s: 'stun', dur: 1 } }),
@@ -177,7 +183,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'grom', name: '그롬', gender: 'm', job: 'warrior', title: '대전사', concept: '근육 대머리 수염. 확실한 마초', origin: 'legend', elem: 'earth', joinChapter: 3, stat: { hp: 1.15 },
+    id: 'grom', name: '그롬', gender: 'm', job: 'warrior', title: '대전사', concept: '근육 대머리 수염. 확실한 마초', origin: 'legend', elem: 'earth', stat: { hp: 1.15 },
     passive: pas('대전사의 함성', { k: 'stat', s: 'atk', v: 0.18 }),
     skills: [
       sk(0, '도끼 휘두르기', 'slash', 'earth', 'slash', { k: 'dmg', to: 'all', m: 1.3 }),
@@ -204,7 +210,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'jin', name: '진', gender: 'm', job: 'warrior', title: '떠돌이 검객', concept: '흑발 상투 동양 검객 미남', origin: 'legend', elem: 'steel', joinChapter: 7,
+    id: 'jin', name: '진', gender: 'm', job: 'warrior', title: '떠돌이 검객', concept: '흑발 상투 동양 검객 미남', origin: 'legend', elem: 'steel',
     passive: pas('발도', { k: 'stat', s: 'spd', v: 0.15 }),
     skills: [
       sk(0, '일섬', 'slash', 'steel', 'slash', { k: 'dmg', to: 'front', m: 2.9 }),
@@ -231,7 +237,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'sylas', name: '사일러스', gender: 'm', job: 'archer', title: '숲의 사수', concept: '금발 장발 엘프 궁수 미남', origin: 'legend', elem: 'nature', joinChapter: 9,
+    id: 'sylas', name: '사일러스', gender: 'm', job: 'archer', title: '숲의 사수', concept: '금발 장발 엘프 궁수 미남', origin: 'legend', elem: 'nature',
     passive: pas('바람 화살', { k: 'stat', s: 'atk', v: 0.12 }),
     skills: [
       sk(0, '연사', 'arrow', 'nature', 'bolt', { k: 'dmg', to: 'front', m: 1, n: 3 }),
@@ -240,7 +246,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'vivian', name: '비비안', gender: 'f', job: 'engineer', title: '해적 선장', concept: '갈색 웨이브 안대 선장. 총·대포', origin: 'legend', elem: 'fire', joinChapter: 6,
+    id: 'vivian', name: '비비안', gender: 'f', job: 'engineer', title: '해적 선장', concept: '갈색 웨이브 안대 선장. 총·대포', origin: 'legend', elem: 'fire',
     passive: pas('선장의 배짱', { k: 'stat', s: 'crit', v: 0.1 }),
     skills: [
       sk(0, '권총 난사', 'cannon', 'fire', 'bolt', { k: 'dmg', to: 'random', m: 0.8, n: 4 }),
@@ -249,7 +255,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'scarlet', name: '스칼렛', gender: 'f', job: 'mage', title: '홍염의 마녀', concept: '붉은 머리의 요염한 마녀', origin: 'legend', elem: 'fire', joinChapter: 8,
+    id: 'scarlet', name: '스칼렛', gender: 'f', job: 'mage', title: '홍염의 마녀', concept: '붉은 머리의 요염한 마녀', origin: 'legend', elem: 'fire',
     passive: pas('홍염', { k: 'stat', s: 'atk', v: 0.12 }),
     skills: [
       sk(0, '불꽃 키스', 'fire', 'fire', 'burst', { k: 'dmg', to: 'front', m: 2, st: { s: 'burn', dur: 6, v: 0.3 } }),
@@ -267,7 +273,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'aria', name: '아리아', gender: 'f', job: 'priest', title: '성녀', concept: '금발 화관의 온화한 성녀', origin: 'legend', elem: 'holy', joinChapter: 2,
+    id: 'aria', name: '아리아', gender: 'f', job: 'priest', title: '성녀', concept: '금발 화관의 온화한 성녀', origin: 'legend', elem: 'holy',
     passive: pas('성녀의 기도', { k: 'stat', s: 'heal', v: 0.25 }),
     skills: [
       sk(0, '치유의 빛', 'heal', 'holy', 'pillar', { k: 'heal', to: 'lowest', m: 4.5 }),
@@ -319,6 +325,51 @@ export const HEROES: HeroDef[] = [
       sk(0, '별의 파편', 'gem', 'light', 'bolt', { k: 'dmg', to: 'front', m: 3.2 }),
       sk(1, '꺼진 별', 'moon', 'shadow', 'burst', { k: 'dmg', to: 'all', m: 1.8, st: { s: 'silence', dur: 3 } }),
       sk(2, '다시 빛나라', 'star', 'light', 'meteor', { k: 'dmg', to: 'all', m: 3.2, n: 2 }),
+    ],
+  },
+  // ───────── 멤버 영웅 4명 (docs/HEROES_ADD_4.md · 다른 영웅과 같은 급 · 진열은 역할별로 섞임) ─────────
+  {
+    id: 'sermi', name: '세르미뉴', gender: 'm', job: 'mage', title: '별을 읽는 자', concept: '신중하고 진중한 계산형 마법사. 말수는 적지만 한마디가 정확하고, 모두가 「세르님」께 물어봄', origin: 'member', elem: 'light', groggy: 1.6,
+    look: '시크한 미소년 · 은회색 앞머리가 눈을 살짝 가림 · 남색 롱코트(별자리 무늬 안감) · 손 위에 떠 있는 작은 천구의',
+    voice: ['계산은 끝났어. 3초 뒤에 쓰러진다.', '…칭찬은 고마워. 다음 수도 보고 있어.', '…괜찮아, 예상한 범위야.'],
+    passive: pas('예지', { k: 'stat', s: 'mana', v: 0.12, team: true }),
+    skills: [
+      sk(0, '별표식', 'star', 'light', 'bolt', { k: 'dmg', to: 'front', m: 0.8, n: 3 }),
+      sk(1, '궤도 계산', 'eye', 'light', 'ring', { k: 'dmg', to: 'all', m: 0.9, st: { s: 'slow', dur: 6 } }, { k: 'mana', to: 'allies', v: 12 }),
+      sk(2, '별의 정답', 'meteor', 'light', 'meteor', { k: 'dmg', to: 'front', m: 3.2, crit: true }, { k: 'dmg', to: 'random', m: 0.9, n: 4 }),
+    ],
+  },
+  {
+    id: 'ichae', name: '이치애', gender: 'f', job: 'fighter', title: '꺾이지 않는 꽃', concept: '의리 있고 인내심 강한 격투가. 동료가 맞으면 대신 맞으러 감. 원정대(길드)에서 만난 동료', origin: 'member', elem: 'holy', stat: { hp: 1.12, def: 1.05 },
+    look: '청순한 인상 · 긴 흑발을 낮게 하나로 묶음 · 흰색·연분홍 무도복(넓은 소매) · 붕대 감은 주먹 · 머리끈의 작은 꽃',
+    voice: ['괜찮아요, 제가 버틸게요.', '헤헤, 다들 무사해서 다행이에요.', '여기까지 같이 왔잖아요. 끝까지 가요.'],
+    passive: pas('인내', { k: 'lowHp', s: 'atk', v: 0.45, at: 0.5 }),
+    skills: [
+      sk(0, '받아치기', 'fist', 'holy', 'burst', { k: 'buff', to: 'self', s: 'guard', v: 0.35, dur: 4 }, { k: 'dmg', to: 'front', m: 1.6 }),
+      sk(1, '의리', 'shield', 'holy', 'shield', { k: 'taunt', dur: 5 }, { k: 'shield', to: 'lowest', m: 2.2 }),
+      sk(2, '만개', 'flower', 'holy', 'burst', { k: 'dmg', to: 'front', m: 0.8, n: 3 }, { k: 'dmg', to: 'front', m: 4.2, st: { s: 'stun', dur: 1.5 } }),
+    ],
+  },
+  {
+    id: 'mochi', name: '딸기망고모찌', gender: 'm', job: 'druid', title: '세 친구의 주인', concept: '유머러스하고 쾌활한 분위기 메이커. 정령견 딸기·망고·모찌 자랑이 끝이 없음', origin: 'member', elem: 'nature',
+    look: '밝은 표정의 청년 · 짧은 갈색 머리 · 개 발자국 배지 · 초록 망토와 큰 간식 가방 · 정령견 셋: 딸기(레드 토이푸들·분홍 리본) · 망고(웰시코기·노란 털) · 모찌(비숑 프리제·하얀 솜뭉치)',
+    voice: ['딸기 물어! 망고 막아! 모찌는… 일단 귀여워!', '우리 애들 오늘 컨디션 최고야ㅋㅋ', '애들아, 뒤로. 여긴 내가 볼게.'],
+    passive: pas('세 친구', { k: 'teamLowGuard', v: 0.1 }),
+    skills: [
+      sk(0, '딸기 출동', 'dog', 'pink', 'slash', { k: 'dmg', to: 'front', m: 1.9 }),
+      sk(1, '망고 지켜 · 모찌 핥기', 'paw', 'nature', 'shield', { k: 'shield', to: 'allies', m: 1.4 }, { k: 'heal', to: 'lowest', m: 2.2 }),
+      sk(2, '다 같이 산책!', 'dog', 'nature', 'smash', { k: 'dmg', to: 'all', m: 1.5, n: 2 }, { k: 'regen', to: 'allies', m: 0.25, dur: 5 }),
+    ],
+  },
+  {
+    id: 'jaehi', name: '재희아빠', gender: 'm', job: 'warrior', title: '세상에서 제일 바쁜 아빠', concept: '귀엽고 다소 산만하지만 속은 진국. 재희 얘기를 자주 하고 동료를 가족처럼 챙김', origin: 'member', elem: 'earth', stat: { hp: 1.08 },
+    look: '둥글둥글 순한 인상 · 부스스한 머리 · 큼직한 갑옷 가슴에 아이가 그린 듯한 삐뚤빼뚤 별 패치 · 허리에 작은 인형 고리 · 큰 양손 망치',
+    voice: ['앗 잠깐만용~ 이거 먼저 하구!', '우리 팀 다치면 아빠 화난다아~?', '…괜찮아. 내가 지킬게.'],
+    passive: pas('아빠 왔다!', { k: 'teamLowGuard', v: 0.12 }),
+    skills: [
+      sk(0, '정신없는 휘두르기', 'hammer', 'earth', 'smash', { k: 'dmg', to: 'random', m: 0.9, n: 3 }),
+      sk(1, '아빠 왔다! · 간식 타임', 'snack', 'gold', 'shield', { k: 'taunt', dur: 4 }, { k: 'shield', to: 'lowest', m: 2.5 }, { k: 'heal', to: 'allies', m: 0.6 }),
+      sk(2, '재희야 아빠 간다', 'hammer', 'earth', 'smash', { k: 'dmg', to: 'front', m: 5.8, crit: true }, { k: 'buff', to: 'allies', s: 'guard', v: 0.2, dur: 5 }),
     ],
   },
 ];

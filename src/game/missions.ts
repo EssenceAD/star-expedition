@@ -24,16 +24,16 @@ export const DAILY: Mission[] = [
   { id: 'd_summon', name: '장비 소환 1번 (무료 포함)', ev: 'summon', goal: 1, give: { stardust: 20 }, go: ['shop', { cat: 'summon' }] },
 ];
 export const WEEKLY: Mission[] = [
-  { id: 'w_stage', name: '스테이지 60판', ev: 'stage', goal: 60, give: { stardust: 200 }, go: ADV },
-  { id: 'w_arena', name: '결투장 15판', ev: 'play:arena', goal: 15, give: { stardust: 150, arenaCoin: 100 }, go: P('arena') },
+  { id: 'w_stage', name: '스테이지 60판', ev: 'stage', goal: 60, give: { stardust: 100 }, go: ADV },
+  { id: 'w_arena', name: '결투장 15판', ev: 'play:arena', goal: 15, give: { stardust: 80, arenaCoin: 100 }, go: P('arena') },
   { id: 'w_tower', name: '도전의 탑 5판', ev: 'play:tower', goal: 5, give: { towerCoin: 50 }, go: P('tower') },
-  { id: 'w_world', name: '월드 보스 7판', ev: 'play:world', goal: 7, give: { stardust: 150 }, go: P('world') },
+  { id: 'w_world', name: '월드 보스 7판', ev: 'play:world', goal: 7, give: { stardust: 80 }, go: P('world') },
   { id: 'w_dungeon', name: '상급 던전 10판', ev: 'play:dungeon', goal: 10, give: { optTicket: 2 }, go: P('dungeon') },
   { id: 'w_guild', name: '길드 출석 5일', ev: 'guildAttend', goal: 5, give: { guildCoin: 100 }, go: ['guild', {}] },
 ];
 /** 레이드 미션 (하루) */
 export const RAIDM: Mission[] = [
-  { id: 'r_raid', name: '레이드 3판', ev: 'play:raid', goal: 3, give: { tierMat: 3, stardust: 30 }, go: P('raid') },
+  { id: 'r_raid', name: '레이드 3판', ev: 'play:raid', goal: 3, give: { tierMat: 3, stardust: 20 }, go: P('raid') },
   { id: 'r_graid', name: '길드 레이드 2판', ev: 'play:graid', goal: 2, give: { guildCoin: 40 }, go: ['guild', { tab: 'raid' }] },
 ];
 /** 업적 (모두 센 것) */

@@ -4,6 +4,8 @@ import { CONFIG } from '../config';
 import { activeBonds, BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
+import { heroStock } from '../game/shop';
+import { heroShopCard } from './screensB';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/account';
@@ -296,11 +298,14 @@ register('heroes', {
   enter(root) {
     let tab = 'all';
     const draw = () => {
-      const list = HEROES.filter((h) => (tab === 'none' ? !owned(h.id) : (tab === 'all' || zoneOf(h.id) === tab) && owned(h.id)));
-      root.innerHTML = `<div class="body"><div class="col grow">${zoneTabs(tab, true)}<div class="roster grow scroll">${list
+      const list = HEROES.filter((h) => (tab === 'all' || zoneOf(h.id) === tab) && owned(h.id));
+      // 미보유: 상점과 같은 카드 · 같은 섞인 순서 (B 보강 §3)
+      const unowned = `<div class="cards hcards grow scroll">${heroStock().map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+      root.innerHTML = `<div class="body"><div class="col grow">${zoneTabs(tab, true)}${tab === 'none' ? unowned : `<div class="roster grow scroll">${list
         .map((h) => card(h.id, owned(h.id) ? `<span class="xs gold">${fmt(heroPower(h.id))}</span>` : `<span class="xs mute">${h.joinChapter ? `${h.joinChapter}장 클리어` : '영웅 상점 (B)'}</span>`))
-        .join('') || '<span class="mute">없어요</span>'}</div></div></div>`;
+        .join('') || '<span class="mute">없어요</span>'}</div>`}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
+      $$('[data-hero]', root).forEach((b) => (b.onclick = (e) => (e.stopPropagation(), go('shop', { cat: 'hero' }))));
       $$('[data-h]', root).forEach((b) => (b.onclick = () => go('hero', { id: b.dataset.h })));
     };
     draw();

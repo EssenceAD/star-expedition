@@ -50,8 +50,9 @@ export const CONFIG = {
   },
   /** 영웅 성장 (1단계 A: 레벨만 · 각성·스킬 레벨·초월은 B) */
   hero: {
-    /** 레벨 상한 (각성 단계별) */
+    /** 레벨 상한 (각성 단계별) · 초월 한 단계마다 +transLv → 초월 5까지 해야 만렙 (B 보강 §1: 레벨 상한 → 각성 → 초월 1~5) */
     levelCap: [30, 40, 50, 60, 70, 80],
+    transLv: 4,
     /** 레벨 1 → n 능력치 배수 = grow^(n−1) — 적 강함(story.grow)을 추천 레벨로 따라가되 조금 모자라게 (나머지는 장비·각성이 B덩어리에서 채움) */
     grow: 1.108,
     /** 레벨업 경험치: round(base × lv^pow) */
@@ -95,11 +96,11 @@ export const CONFIG = {
     gold: { base: 300, grow: 1.06 },
     exp: { base: 40, grow: 1.065 },
     /** 첫 클리어 별가루 · 보스 스테이지 · 별 3개 처음 */
-    firstDust: 30,
-    firstDustBoss: 150,
-    threeStarDust: 20,
+    firstDust: 20,
+    firstDustBoss: 100,
+    threeStarDust: 12,
     /** 판마다 별가루 (확률 · 개수 × (난이도+1)) — 경제 시뮬로 맞춤 (docs/ECONOMY.md) */
-    dust: { chance: 0.12, n: 10 },
+    dust: { chance: 0.08, n: 10 },
     /** 강화석 (판마다 · 확률) */
     enh: { n: 1, chance: 0.5 },
     /** 난이도 보상 배수 */
@@ -155,8 +156,11 @@ export const CONFIG = {
     starStat: 0.15,
     tierStat: 0.25,
     enhStat: 0.08,
-    /** 강화 +1~+10 성공률 · 실패마다 다음 확률 +pity · +dropFrom 부터 실패하면 dropChance로 −1 (파괴 없음) · 대성공(+2) great 확률 (목표 greatMax까지) */
-    enhance: { rates: [1, 0.95, 0.9, 0.85, 0.8, 0.6, 0.45, 0.32, 0.22, 0.15], pity: 0.03, dropFrom: 7, dropChance: 0.3, great: 0.03, greatMax: 9, stones: 2, gold: 400 },
+    /** 긴 강화 사다리 (B 보강 §1 · 킹스레이드식): 최대 +max · band 단계마다 구간(외형·빛이 한 단계 화려해짐 · 구간 바닥 아래로는 안 떨어짐)
+     *  성공률 = end + (start − end) × (1 − n/max)^curve · 실패마다 다음 확률 +pity · +dropFrom 부터 실패하면 dropChance로 −1 (파괴 없음)
+     *  대성공(+2) great 확률 (구간 경계는 못 넘음) · 소프트캡: 구간마다 강화 효율 bandEff (위로 갈수록 덜 오름)
+     *  비용: 강화석 = stones × (n+1) · 금화 = gold × (n+1)^goldPow × (등급+1) */
+    enhance: { max: 50, band: 10, start: 1, end: 0.08, curve: 1.6, pity: 0.03, dropFrom: 15, dropChance: 0.3, great: 0.03, stones: 2, gold: 300, goldPow: 1.6, bandEff: [1, 0.8, 0.6, 0.45, 0.35] as number[] },
     /** 별 올리기: 같은 부위·같은 등급 장비를 먹임 · 성공률(→2 … →5) · 실패할 때마다 다음 확률 + (기본 확률 × pityMult, 상한 1) · 금화 */
     starUp: { rates: [1, 0.5, 0.16, 0.03], pityMult: 0.5, gold: [2000, 8000, 30000, 100000] },
     /** 티어: 5성 뒤 · 티어 재료(레이드) · 금화 · 최대 */
@@ -189,6 +193,8 @@ export const CONFIG = {
     summon: { one: 150, ten: 1500, freePerDay: 1, weights: [0, 50, 35, 12, 3] as number[] },
     /** 제작: 부위 고르기 · 등급 확정(희귀) · 강화석 · 금화 */
     craft: { grade: 2, stones: 30, gold: 20000 },
+    /** 아이템 그림 (B 보강 §2: 부위·등급별 · public/art/<dir>/<부위>_<등급>.png · ChatGPT로 뽑음) — have=false면 기호 */
+    art: { have: false as boolean, dir: 'items' },
     /** 가방 칸 · 확장(별가루) */
     bag: { start: 54, max: 112, step: 10, dust: 100 },
   },
@@ -199,7 +205,7 @@ export const CONFIG = {
   treasure: { slots: 1, atkPct: 0.08 },
   /** 상점 (현금 결제 없음): 영웅 값(별가루) · 재화·소모품 금화 값 · 꾸러미 */
   shop: {
-    hero: { founder: 3000, legend: 4000, new: 4000 },
+    hero: { founder: 3000, legend: 4000, new: 4000, member: 4000 },
     items: [
       { id: 'potion', name: '경험치 물약 ×5', give: { exp: 5 }, gold: 5000 },
       { id: 'enh', name: '강화석 ×20', give: { enh: 20 }, gold: 8000 },
@@ -232,23 +238,23 @@ export const CONFIG = {
     /** 요일 던전 (KST 요일 0=일): 보상 종류 · 하루 3 · 단계 1~5 (강함 = 단계 × step) */
     day: { tries: 3, levels: 5, step: 12, kinds: ['all', 'exp', 'gold', 'enh', 'exp', 'gold', 'enh'] as string[], exp: 6, gold: 20000, enh: 30 },
     /** 레이드(협동 8인 = 내 4 + AI 4): 하루 3 · 드래곤 강함 · 보상 티어 재료 · 장비(영웅 이상) */
-    raid: { tries: 3, add: 12, hp: 160, atk: 2.4, tierMat: 6, gearGrade: 3, limit: 150 },
+    raid: { tries: 3, add: 12, hp: 320, atk: 2.4, tierMat: 6, gearGrade: 3, limit: 150 },
     /** 월드 보스 (공용 체력 · 1단계는 로컬 + AI 기여): 하루 3 · 한 판 60초 · 체력 = base × grow^주 · AI 기여(시간당) · 보상(내 피해 순위 칸) */
-    world: { tries: 3, sec: 60, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [300, 150, 80, 40] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
+    world: { tries: 3, sec: 60, partBase: 6, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [200, 100, 50, 25] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
     /** 결투장 3리그: 하루 5판 · 승점 · 리그 단계 · 영광의 리그 열리는 시간(KST) · 최후의 리그 해금 점수 · 리그 코인 */
     arena: { tries: 5, win: 25, lose: -12, start: 1000, tiers: [[0, '동'], [1100, '은'], [1250, '금'], [1450, '별빛'], [1700, '전설']] as [number, string][], gloryHours: [[12, 14], [19, 23]] as number[][], lastUnlock: 1250, coin: { win: 30, lose: 10 } },
     /** 영웅 외전: 영웅마다 3막 (마지막 = 보스) · 강함 = 영웅 레벨 기준 · 클리어 보상: 전용 보물 해금 · 그 영웅 전용 무기 조각 · 별가루 */
     side: { acts: 3, add: 0, shards: 10, dust: 100 },
     /** 이정표 보상 별가루 (단계마다) */
-    milestoneDust: 100,
+    milestoneDust: 60,
   },
   /**
    * D덩어리 소셜·운영 (STAR_PLAN_v2 §4)
    */
   social: {
     /** 출석: 7일 돌림 보상 (별가루·금화·행동력) · 이벤트 출석(오픈 기념): 기간 · 날마다 별가루 */
-    attend: [{ gold: 10000 }, { stardust: 50 }, { exp: 5 }, { enh: 30 }, { stardust: 100 }, { optTicket: 1 }, { stardust: 300 }] as Record<string, number>[],
-    event: { name: '오픈 기념 출석', start: '2026-10-17', days: 14, dust: 100 },
+    attend: [{ gold: 10000 }, { stardust: 30 }, { exp: 5 }, { enh: 30 }, { stardust: 60 }, { optTicket: 1 }, { stardust: 150 }] as Record<string, number>[],
+    event: { name: '오픈 기념 출석', start: '2026-10-17', days: 14, dust: 50 },
     /** 길드: 출석 코인 · 기여(금화 → 기여 점수·코인) · 길드 레이드(주간 · 하루 2 · 90초 · 준 피해 = 기여) */
     guild: { attendCoin: 20, donate: [[10000, 10, 10], [50000, 60, 50], [200000, 250, 200]] as number[][], raidTries: 2, raidSec: 90, raidHp: 2e9, raidAdd: 15, raidCoinPer: 2e6, members: 30 },
     /** 친구: 하루 선물 보내기·받기 (행동력) · 최대 친구 수 */
@@ -260,12 +266,61 @@ export const CONFIG = {
     /** 월드 채팅: 보관 줄 수 · 내 글 길이 */
     chat: { keep: 60, max: 60 },
   },
+  /**
+   * 보스 전장 (레이드 8인 · 월드 보스 · 길드 레이드 — 스토리와 다른 화면) · 형철 10/17 지시 ①~⑥
+   *  보스는 오른쪽 절반을 채우는 거대 크기 · 부위 3개(체력 = 보스 최대 체력 × hp) · 바닥 위/아래 2줄 · 줄 단위 경고 → 탭 한 번으로 줄 바꿔 피하기
+   *  그로기 게이지 → 다운 + 협공 컷인 · 체력 70%·30% 페이즈 전환 · 다층 배경 · 큰 공격 흔들림 · 필살기 줌인
+   */
+  raidArena: {
+    /** 보스: 화면 키(논리 px) · 가운데 x (너비 비율) · 발 y */
+    bossH: 400, bossX: 0.75, bossY: 330,
+    /** 두 줄 발 y · 파티 A(내 파티) x · 파티 B(AI·뒤쪽) x — 줄은 처음에 A 위 / B 아래 */
+    lanes: [218, 280] as number[],
+    aX: [372, 330, 288, 246] as number[],
+    bX: [196, 154, 112, 70] as number[],
+    /** 줄 바꿀 때 걸리는 시간(초) */
+    laneMove: 0.25,
+    /** 피해 순위에 보이는 수 (8명 다 보이면 아래 줄 영웅을 가림) */
+    rankShow: 5,
+    /** 부위: 이름 · 체력 비율 · 그림 안 자리(보스 그림 기준 비율: 가운데에서 x · 발에서 위로 y · 폭 · 높이) · 부수면 사라지는 패턴 */
+    parts: [
+      { key: 'arm', name: '팔', hp: 0.16, box: [-0.36, 0.62, 0.3, 0.26], pattern: 'laneSlam' },
+      { key: 'head', name: '머리', hp: 0.12, box: [0.02, 0.9, 0.26, 0.2], pattern: 'beam' },
+      { key: 'core', name: '코어', hp: 0.2, box: [0.0, 0.55, 0.24, 0.22], pattern: 'nova' },
+    ] as { key: string; name: string; hp: number; box: number[]; pattern: string }[],
+    /** 패턴: 몇 초마다 · 경고 시간 · 배수 · 줄('one' = 내 파티가 있는 줄 하나 · 'both' = 두 줄 차례로) · 문구 */
+    patterns: {
+      laneSlam: { every: 7, warn: 1.8, mult: 2.6, lanes: 'one', text: '팔을 높이 듭니다 — 줄 내려찍기' },
+      beam: { every: 10, warn: 2.0, mult: 3.2, lanes: 'one', text: '머리에 빛이 모입니다 — 줄 광선' },
+      nova: { every: 14, warn: 2.4, mult: 1.8, lanes: 'both', text: '코어가 맥동합니다 — 두 줄 차례로 폭발' },
+      rage: { every: 8, warn: 1.5, mult: 3.0, lanes: 'one', text: '분노한 일격 — 피하세요!' },
+    } as Record<string, { every: number; warn: number; mult: number; lanes: 'one' | 'both'; text: string }>,
+    /** 페이즈: 체력 이 비율 아래로 → 다음 페이즈 (패턴 순서 · 빨라짐 배수) */
+    phases: [0.7, 0.3] as number[],
+    phasePatterns: [['laneSlam', 'beam'], ['laneSlam', 'nova', 'beam'], ['rage', 'nova', 'laneSlam', 'beam']] as string[][],
+    phaseSpeed: [1, 1.2, 1.45] as number[],
+    phaseSec: 1.8,
+    /** 그로기: 최대 · 평타 한 번 · 스킬 한 번 · 기절 효과 · 직접 피하기 · 다운 시간 · 다운 중 받는 피해 배수 · 다운 뒤 최대 늘어남 */
+    groggy: { max: 600, hit: 1, skill: 8, stun: 30, dodge: 50, dur: 6, dmgMult: 1.5, grow: 1.3 },
+    /** 피하기: AUTO일 때 내 파티 자동 피하기 확률 · AI 파티 · 직접 피하면 공격력 보너스 */
+    autoDodge: 0.7,
+    aiDodge: 0.6,
+    dodgeBonus: { atk: 0.2, dur: 5 },
+    /** 카메라: 필살기 줌 · 페이즈 전환 클로즈업 */
+    zoom: { ult: 1.15, ultSec: 0.55, phase: 1.4 },
+    /** 다층 배경: 겹 수 · 겹마다 흐르는 속도 · 크기 */
+    parallax: [[0.03, 1.25], [0.08, 1.1], [0.18, 1.0]] as number[][],
+    /** 보스 그림 (형철 지시: ChatGPT로 부서지기 전·후 두 장) — have=false면 안 불러옴(404 방지) · 그동안 골렘 시트 + 코드로 부서진 모양 */
+    art: { have: false as boolean, intact: 'raidboss/intact.png', broken: 'raidboss/broken.png' },
+  },
   /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
   econ: {
+    /** 주간 획득 상한 (B 보강 §4 · 독주 방지 · 월요일 0시 KST에 비움) — 넘친 만큼은 안 들어오고 사냥은 계속 (금화·경험치·장비) · 우편 보상은 상한 밖 */
+    cap: { stardust: 3600, awakenStone: 20, transStone: 4 } as Record<string, number>,
     light: { staUse: 0.5, buys: 0, sessions: 2 },
     normal: { staUse: 1, buys: 0, sessions: 4 },
     heavy: { staUse: 1, buys: 3, sessions: 8 },
-  } as Record<string, { staUse: number; buys: number; sessions: number }>,
+  } as unknown as Record<string, { staUse: number; buys: number; sessions: number }> & { cap: Record<string, number> },
   /** 전투력 = (공격 × atkW + 체력 × hpW + 방어 × defW) 합 */
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */

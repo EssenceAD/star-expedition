@@ -5,7 +5,7 @@ import { CHAT_LINES, CHAT_NAMES } from '../data/chat';
 import { HEROES } from '../data/heroes';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { worldBoard } from './content';
-import { addCur, dayKey, S, spend, track, weekOf, type ChatLine, type Mail, type Save } from './state';
+import { addCur, capLeft, dayKey, S, spend, track, weekOf, type ChatLine, type Mail, type Save } from './state';
 
 const SO = CONFIG.social;
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -21,7 +21,7 @@ export interface Guild {
   /** 멤버 이름 (실멤버 길드는 단톡방 창립 멤버 · AI 길드는 AI 이름) */
   members: string[];
 }
-const FOUNDERS = HEROES.filter((h) => h.origin === 'founder').map((h) => h.name);
+const FOUNDERS = HEROES.filter((h) => h.origin === 'founder' || h.origin === 'member').map((h) => h.name);
 export const GUILDS: Guild[] = [
   { id: 'real', name: '별의 원정대', real: true, desc: '단톡방 창립 멤버 길드 (실멤버 · 서버 연결 뒤 진짜 기록)', lv: 1, members: FOUNDERS },
   { id: 'ai1', name: '새벽등불 상단', real: false, desc: '매일 출석하는 성실파 AI 길드', lv: 7, members: CHAT_NAMES.slice(0, 6) },
@@ -86,9 +86,10 @@ export const GUILD_SHOP = [
   { id: 'g_dust', name: '별가루 ×100', price: 150, give: { stardust: 100 } },
   { id: 'g_awaken', name: '각성석 ×5', price: 100, give: { awakenStone: 5 } },
 ];
-export function buyGuild(id: string, s: Save = S): 'ok' | 'poor' | 'none' {
+export function buyGuild(id: string, s: Save = S): 'ok' | 'poor' | 'none' | 'cap' {
   const it = GUILD_SHOP.find((x) => x.id === id);
   if (!it) return 'none';
+  if (Object.entries(it.give).some(([k, v]) => capLeft(k, s) < v)) return 'cap';
   if (!spend('guildCoin', it.price, s)) return 'poor';
   for (const [k, v] of Object.entries(it.give)) addCur(k, v, s);
   return 'ok';
@@ -160,7 +161,7 @@ export function claimMail(id: number, s: Save = S): boolean {
   const m = s.mail.list.find((x) => x.id === id);
   if (!m || m.got) return false;
   m.got = true;
-  for (const [k, v] of Object.entries(m.give)) addCur(k, v, s);
+  for (const [k, v] of Object.entries(m.give)) addCur(k, v, s, true);
   return true;
 }
 export const mailUnread = (s: Save = S) => s.mail.list.filter((m) => !m.got).length;

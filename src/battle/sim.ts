@@ -2,12 +2,14 @@
 //  입력은 BattleSetup 하나 (스토리·탑·레이드 공용) · 스킬은 data/skills.ts 효과 조합을 여기 한 곳에서 해석
 //  진형: 앞 2(f0·f1) / 뒤 2(b0·b1) — 적은 앞줄을 더 자주 노린다 · 상태이상: 기절·침묵·둔화·화상·보호막 (+ 공격↑↓·속도↑·피해 감소·도발·회복·치명↑)
 import { CONFIG } from '../config';
+import { SER_ASK } from '../data/bonds';
 import { JOBS, ZONES } from '../data/jobs';
 import type { BossPattern } from '../data/mobs';
 import type { Eff, SkillDef, StatusKey } from '../data/skills';
 import { durOf, hitTimes, type Act, type AnimSet } from '../sprite/sheet';
 import { elemColor, T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from './setup';
+import { raidInit, raidOnHit, raidStep, raidUltZoom, type RaidState } from './raid';
 
 const K = CONFIG.combat;
 export interface Mods {
@@ -31,6 +33,8 @@ export interface Unit {
   ai: boolean;
   /** 그림 좌우 뒤집기 (오른쪽에 선 영웅) */
   flip: boolean;
+  /** 보스 전장: 서 있는 줄 (0 위 · 1 아래) */
+  lane: number;
   anims: AnimSet;
   name: string;
   /** 화면 키 (논리 px) */
@@ -145,14 +149,18 @@ export interface Battle {
   stats: { dealt: number; taken: number; healed: number; skills: number; time: number; bossDealt: number };
   queue: { u: Unit; i: number }[];
   sounds: string[];
+  /** 보스 전장 상태 (레이드·월드 보스·길드 레이드) */
+  raid?: RaidState;
 }
 
 let uidN = 1;
 let rand: () => number = Math.random;
+/** 보스 전장(raid.ts)도 같은 난수 */
+export const rnd = () => rand();
 const NO_MODS = (): Mods => ({ atk: 0, crit: 0, spd: 0, heal: 0, mana: 0, dmgCut: 0, skillDmg: 0, bossDmg: 0 });
 function unit(side: Unit['side'], name: string, o: Partial<Unit> & Pick<Unit, 'max' | 'atk' | 'def' | 'rate' | 'x' | 'y' | 'anims' | 'h'>): Unit {
   return {
-    uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, ai: false, flip: false, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
+    uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, ai: false, flip: false, lane: 0, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
     scd: [0, 0, 0], autoOn: false, shield: 0, st: {}, burnAcc: 0, flash: 0, knock: 0, dead: false, deadT: 0, trail: 0, dealt: 0, healed: 0, taken: 0, pending: [], ...o,
   };
 }
@@ -205,12 +213,24 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
     if (i > 0 && h.zone !== all[i - 1].zone && !setup.allies?.length) gaps++;
     const [px, y] = places[i % places.length];
     const x = px - gaps * K.zoneGap;
-    return unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone, ai: i >= setup.heroes.length });
+    const u = unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone, ai: i >= setup.heroes.length });
+    if (setup.arena) {
+      // 보스 전장: 파티 A(내 4) 위 줄 · 파티 B(AI 4) 아래 줄 — AI가 없으면 내 파티를 2명씩 나눔
+      const A = CONFIG.raidArena;
+      const mine = i < setup.heroes.length;
+      const k = mine ? i : i - setup.heroes.length;
+      u.lane = setup.allies?.length ? (mine ? 0 : 1) : k < 2 ? 0 : 1;
+      u.x = setup.allies?.length ? (mine ? A.aX[k] : A.bX[k]) : A.aX[k % 2] - (k < 2 ? 0 : 20);
+      u.y = A.lanes[u.lane];
+      u.tx = u.x;
+    }
+    return u;
   });
   const b: Battle = {
     setup, w: o.w ?? CONFIG.view.wBase, t: 0, phase: 'walk', why: '', wave: -1, walkLeft: K.walkSec * (1 - Math.max(0, ...setup.bonds.map((x) => x.walkCut ?? 0))), scroll: 0, heroes, mobs: [], nums: [], fx: [], parts: [], cut: null, says: [],
     stop: 0, shake: 0, flash: 0, auto: false, speed: 1, cutIns: 'big', pat: { i: 0, left: 0, warn: 0, text: '' }, stats: { dealt: 0, taken: 0, healed: 0, skills: 0, time: 0, bossDealt: 0 }, queue: [], sounds: [],
   };
+  if (setup.arena) b.walkLeft = 0.5;
   applyMods(b);
   // 인연 대사: 시작하자마자 차례로 말풍선
   let at = 0.2;
@@ -220,6 +240,14 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
       if (u) b.says.push({ uid: u.uid, text, t: -at, dur: 2.2 });
       at += 1.1;
     }
+  // 세르미뉴가 있으면 누군가 「세르님」께 묻고 짧게 답함
+  const ser = heroes.find((h) => h.hero?.def.id === 'sermi');
+  const asks = SER_ASK.filter(([id]) => heroes.some((h) => h.hero?.def.id === id));
+  if (ser && asks.length) {
+    const [id, text] = asks[Math.floor(rand() * asks.length)];
+    b.says.push({ uid: heroes.find((h) => h.hero!.def.id === id)!.uid, text, t: -at, dur: 2.2 });
+    b.says.push({ uid: ser.uid, text: ser.hero!.def.voice![0], t: -(at + 1.2), dur: 2.2 });
+  }
   return b;
 }
 /** 창 크기가 바뀌면 적 자리를 오른쪽 끝에 맞춰 옮긴다 */
@@ -230,12 +258,13 @@ export function relayout(b: Battle, w: number) {
     m.x += d;
     m.tx += d;
   }
+  if (b.raid) for (const m of b.mobs) if (m.mob?.boss) ((m.tx = Math.round(w * CONFIG.raidArena.bossX)), (m.x = m.tx));
 }
 export const alive = (us: Unit[]) => us.filter((u) => !u.dead);
 export const bossOf = (b: Battle) => b.mobs.find((m) => m.mob?.boss);
 export const has = (u: Unit, s: StatusKey) => (u.st[s]?.t ?? 0) > 0;
 const sv = (u: Unit, s: StatusKey) => (has(u, s) ? u.st[s]!.v : 0);
-function addSt(u: Unit, s: StatusKey, dur: number, v = 0) {
+export function addSt(u: Unit, s: StatusKey, dur: number, v = 0) {
   const cur = u.st[s];
   u.st[s] = { t: Math.max(cur?.t ?? 0, dur), v: Math.max(cur && cur.t > 0 ? cur.v : 0, v) };
 }
@@ -252,12 +281,22 @@ function spawnWave(b: Battle) {
       : unit('mob', m.name, { mob: m, anims: m.kind.anims, h: m.kind.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, x: x + K.mobEnterFrom, y });
     if (hs) specMods(u);
     u.tx = x;
+    if (b.setup.arena && m.boss) {
+      // 거대 보스: 오른쪽 절반
+      const A = CONFIG.raidArena;
+      u.h = A.bossH;
+      u.tx = Math.round(b.w * A.bossX);
+      u.x = u.tx + 200;
+      u.y = A.bossY;
+    }
     return u;
   });
+  if (b.setup.arena) raidInit(b);
   const p = b.mobs.find((m) => m.mob?.patterns)?.mob?.patterns;
   b.pat = { i: 0, left: p?.[0].every ?? 0, warn: 0, text: '' };
 }
 
+export const playAct = (u: Unit, a: Act) => play(u, a);
 function play(u: Unit, a: Act) {
   u.act = a;
   u.at = 0;
@@ -344,6 +383,7 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
   let dmg = atk * mult * (crit ? by.critDmg : 1) * (0.92 + rand() * 0.16) * (o.skill ? 1 + by.mod.skillDmg : 1) * (to.mob?.boss ? 1 + by.mod.bossDmg : 1);
   dmg *= 1 - Math.min(K.defMax, to.def / (to.def + K.defK * by.atk));
   dmg *= 1 - dmgCut(b, to);
+  if (b.raid && to.mob?.boss && b.raid.downT > 0) dmg *= CONFIG.raidArena.groggy.dmgMult;
   dmg = Math.max(1, Math.round(dmg));
   let left = dmg;
   if (to.shield > 0) {
@@ -377,6 +417,7 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
   b.stop = Math.max(b.stop, crit ? K.hitstop.crit : K.hitstop.hit);
   if (crit) b.shake = Math.max(b.shake, K.shake.crit);
   b.sounds.push(crit ? 'crit' : 'hit');
+  if (b.raid && to.mob?.boss && by.side === 'hero') raidOnHit(b, by, to, dmg, !!o.skill, o.st?.s === 'stun');
   if (to.hp <= 0) kill(b, to);
   return dmg;
 }
@@ -500,6 +541,7 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
   if (u.side === 'hero' && !u.ai && (b.cutIns === 'all' || (b.cutIns === 'big' && (manual || i === 2)))) b.cut = { u, skill: s, t: 0 };
   b.sounds.push(JOBS[h.def.job].sfx);
   play(u, s.act);
+  if (i === 2 && u.side === 'hero') raidUltZoom(b, u);
   u.trail = durOf(u.anims, s.act);
   const times = hitTimes(u.anims, s.act);
   const at0 = u.at;
@@ -589,6 +631,8 @@ export function step(b: Battle, dtReal: number) {
     if (b.cut.t >= K.cutInSec) b.cut = null;
     else dt *= K.cutInSlow;
   }
+  // 협공 컷인 · 페이즈 전환 중에는 느리게
+  if (b.raid && ((b.raid.duo && b.raid.duo.t < 1.1) || b.raid.phaseT > 0)) dt *= CONFIG.combat.cutInSlow;
   b.shake = Math.max(0, b.shake - dtReal * 30);
   b.flash = Math.max(0, b.flash - dtReal * 3);
   for (const n of b.nums) n.t += dtReal;
@@ -718,9 +762,11 @@ export function step(b: Battle, dtReal: number) {
     play(m, 'attack');
     for (const at of hitTimes(m.anims, 'attack').slice(0, 1)) m.pending.push({ at: m.at + at, fn: () => damage(b, m, t, 1) });
   }
+  // 보스 전장: 줄 경고·부위·그로기·페이즈 (raid.ts)
+  if (b.raid) raidStep(b, dt, dtReal);
   // 보스 패턴 (경고 한 줄 → 쾅) · 침묵·기절이면 이번 패턴은 불발
   const pats = boss?.mob?.patterns;
-  if (boss && pats?.length && arrived(boss)) {
+  if (!b.raid && boss && pats?.length && arrived(boss)) {
     const P = pats[b.pat.i % pats.length];
     if (b.pat.warn > 0) {
       b.pat.warn -= dt;

@@ -130,13 +130,14 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
       const p = top(s) + CC.raid.add;
       const mobs = mobsAt(p, 'B', 8, { hp: CC.raid.hp / CONFIG.story.boss.hp, atk: CC.raid.atk / CONFIG.story.boss.atk, boss: RAID_BOSS, patterns: [PATTERNS.beam, PATTERNS.roar, PATTERNS.slam, PATTERNS.focus] });
       const allies = aiParty(hashStr(dayKey(now)) + 7, myLv(s), 2, partyIds(s));
-      return base(s, `${MODE_NAME.raid} · ${RAID_BOSS}`, mobs, 7, { allies, limit: CC.raid.limit });
+      return base(s, `${MODE_NAME.raid} · ${RAID_BOSS}`, mobs, 7, { allies, limit: CC.raid.limit, arena: true });
     }
     case 'world': {
       const wk = weekKey(now);
       const cm = CHAPTER_MOBS[hashStr(wk) % CHAPTER_MOBS.length];
       const mobs = mobsAt(top(s) + CC.world.add, 'B', 5, { hp: 1000, boss: `월드 보스 · ${cm.boss}`, patterns: cm.patterns.map((k) => PATTERNS[k]) });
-      return base(s, `${MODE_NAME.world} · ${CC.world.sec}초 동안 피해 주기`, mobs, 9, { limit: CC.world.sec, timeUp: 'win' });
+      mobs[0][0].partBase = mobs[0][0].hp / 1000 * CC.world.partBase;
+      return base(s, `${MODE_NAME.world} · ${CC.world.sec}초 동안 피해 주기`, mobs, 9, { limit: CC.world.sec, timeUp: 'win', arena: true });
     }
     case 'arena': {
       const opp = arenaOpps(s, now)[r.sub ?? 0];
@@ -162,7 +163,8 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
     case 'graid': {
       const gb = guildBoss(s, now);
       const mobs = mobsAt(top(s) + CONFIG.social.guild.raidAdd, 'B', 6, { hp: 1000, boss: gb.name, patterns: [PATTERNS.slam, PATTERNS.focus, PATTERNS.quake] });
-      return base(s, `${MODE_NAME.graid} · ${CONFIG.social.guild.raidSec}초 동안 피해 주기`, mobs, 6, { limit: CONFIG.social.guild.raidSec, timeUp: 'win' });
+      mobs[0][0].partBase = mobs[0][0].hp / 1000 * CC.world.partBase;
+      return base(s, `${MODE_NAME.graid} · ${CONFIG.social.guild.raidSec}초 동안 피해 주기`, mobs, 6, { limit: CONFIG.social.guild.raidSec, timeUp: 'win', arena: true });
     }
     case 'side': {
       const id = String(r.arg);

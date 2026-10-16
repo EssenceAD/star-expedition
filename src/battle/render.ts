@@ -16,6 +16,8 @@ export interface Art {
   bg: HTMLImageElement | null;
   /** 컷인 일러스트 (영웅 id → 그림) · 없으면 초상화 확대 */
   cutin: Record<string, HTMLImageElement | HTMLCanvasElement>;
+  /** 보스 전장 보스 그림 (부서지기 전 · 후) — 없으면 골렘 시트 */
+  raidBoss?: { intact: HTMLImageElement | null; broken: HTMLImageElement | null };
 }
 
 const off = document.createElement('canvas');
@@ -417,6 +419,7 @@ export function renderBg(ctx: CanvasRenderingContext2D, art: Art, scroll: number
   background(ctx, art, scroll, W, region);
 }
 export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: number) {
+  if (b.raid) return renderRaid(ctx, art, b, now);
   const W = b.w;
   ctx.save();
   if (b.shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * b.shake * 2), Math.round((Math.random() - 0.5) * b.shake * 2));
@@ -441,4 +444,247 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
     ctx.fillRect(0, 0, W, LH);
   }
   drawCut(ctx, art, b, W);
+}
+
+// ───────── 보스 전장 (레이드 · 월드 보스 · 길드 레이드) ─────────
+const RA = CONFIG.raidArena;
+const bossCv = document.createElement('canvas');
+bossCv.width = 760;
+bossCv.height = 640;
+const bx = bossCv.getContext('2d')!;
+/** 다층 배경 (멀수록 느리게 · 페이즈마다 색) */
+function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) {
+  const r = b.raid!;
+  const tint = `${B.region[b.setup.region] ?? 'none'} ${B.phaseTint[Math.min(r.phase, B.phaseTint.length - 1)]}`.replace(/none ?/g, '').trim() || 'none';
+  if (art.bg) {
+    const im = art.bg;
+    RA.parallax.forEach(([sp, sc], i) => {
+      const h = (LH + 160) * sc;
+      const w = (im.width / im.height) * h;
+      const o = -(((b.t * 30 * sp) % w) + w) % w;
+      ctx.globalAlpha = i === 0 ? 1 : 0.55;
+      ctx.filter = `${tint === 'none' ? '' : tint} brightness(${0.7 + i * 0.15})`.trim();
+      for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), LH - h + (i === 0 ? 40 : 90 + i * 20), Math.ceil(w) + 1, h);
+    });
+    ctx.globalAlpha = 1;
+    ctx.filter = 'none';
+  } else background(ctx, art, b.t * 10, W, b.setup.region);
+  // 두 줄 바닥 + 경고 줄
+  const half = Math.abs(RA.lanes[1] - RA.lanes[0]) / 2;
+  RA.lanes.forEach((y, i) => {
+    const warn = r.warnLane === i;
+    ctx.fillStyle = warn ? `${B.laneWarn}${0.22 + 0.25 * Math.abs(Math.sin(b.t * 14))})` : B.laneBand;
+    ctx.fillRect(0, y - half + 4, W * RA.bossX - 60, half * 2 - 8);
+    ctx.fillStyle = B.laneEdge;
+    ctx.fillRect(0, y + half - 5, W * RA.bossX - 60, 1);
+    if (warn) {
+      ctx.font = canvasFont(F.cutHero, 'black', false);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = B.numCritLabel;
+      ctx.fillText(`${iconText('warn')} ${i === 0 ? '위' : '아래'} 줄`, 10, y - half + 22);
+    }
+  });
+}
+/** 거대 보스 + 부서진 부위 (그림 두 장이 있으면 부서진 그림을 부위 자리만 · 없으면 골렘 시트에 코드로 금·구멍) */
+function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battle, now: number) {
+  const r = b.raid!;
+  const H = u.h;
+  const { def } = animOf(u.anims, u.act);
+  const fi = frameAt(def, u.at);
+  const ref = u.anims.idle!.frames[0];
+  const k = H / heightOf(art.sheet, ref);
+  const cx = bossCv.width / 2;
+  const fy = bossCv.height - 20;
+  bx.setTransform(1, 0, 0, 1, 0, 0);
+  bx.clearRect(0, 0, bossCv.width, bossCv.height);
+  const ri = art.raidBoss;
+  const box = (p: { box: number[] }) => {
+    const [px, up, w, h] = p.box;
+    return [cx + px * H * 0.9, fy - up * H, w * H * 0.9, h * H] as const;
+  };
+  if (ri?.intact) {
+    const w = (ri.intact.width / ri.intact.height) * H;
+    bx.drawImage(ri.intact, cx - w / 2, fy - H, w, H);
+    if (ri.broken)
+      for (const p of r.parts.filter((x) => x.broken)) {
+        const [x, y, w2, h2] = box(p);
+        bx.save();
+        bx.beginPath();
+        bx.rect(x, y, w2, h2);
+        bx.clip();
+        bx.clearRect(x, y, w2, h2);
+        bx.drawImage(ri.broken, cx - w / 2, fy - H, w, H);
+        bx.restore();
+      }
+  } else {
+    bx.filter = filterOf(u);
+    drawFrame(bx, art.sheet, def.frames[fi], cx, fy, k, 1);
+    bx.filter = 'none';
+    // 부서진 부위: 들쭉날쭉한 구멍 + 금 + 안쪽 불빛
+    for (const p of r.parts.filter((x) => x.broken)) {
+      const [x, y, w, h] = box(p);
+      bx.save();
+      bx.globalCompositeOperation = 'destination-out';
+      bx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        const rr = 0.32 + ((i * 37) % 7) / 30;
+        bx.lineTo(x + w / 2 + Math.cos(a) * w * rr, y + h / 2 + Math.sin(a) * h * rr);
+      }
+      bx.closePath();
+      bx.fill();
+      bx.restore();
+      bx.strokeStyle = B.crackGlow;
+      bx.lineWidth = 3;
+      bx.globalCompositeOperation = 'source-atop';
+      for (let i = 0; i < 6; i++) {
+        bx.beginPath();
+        bx.moveTo(x + w / 2, y + h / 2);
+        bx.lineTo(x + w / 2 + Math.cos(i * 1.1) * w * 0.9, y + h / 2 + Math.sin(i * 1.1) * h * 0.9);
+        bx.stroke();
+      }
+      bx.globalCompositeOperation = 'source-over';
+    }
+  }
+  if (u.flash > 0.05) {
+    bx.globalCompositeOperation = 'source-atop';
+    bx.fillStyle = `${B.hitFlash}${0.6 * u.flash})`;
+    bx.fillRect(0, 0, bossCv.width, bossCv.height);
+    bx.globalCompositeOperation = 'source-over';
+  }
+  if (r.downT > 0) {
+    bx.globalCompositeOperation = 'source-atop';
+    bx.fillStyle = B.downVeil;
+    bx.fillRect(0, 0, bossCv.width, bossCv.height);
+    bx.globalCompositeOperation = 'source-over';
+  }
+  shadow(ctx, u.x, u.y, 170);
+  const tilt = r.downT > 0 ? 0.08 : 0;
+  ctx.save();
+  ctx.translate(u.x + u.knock, u.y);
+  ctx.rotate(tilt);
+  ctx.globalAlpha = u.dead ? Math.max(0, 1 - u.deadT) : 1;
+  ctx.drawImage(bossCv, -cx, -fy);
+  ctx.restore();
+  // 집중 공격 부위 테두리
+  const fp = r.focus >= 0 ? r.parts[r.focus] : r.parts.find((p) => !p.broken);
+  if (fp && !u.dead) {
+    const [x, y, w, h] = box(fp);
+    ctx.strokeStyle = B.focusRing;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(u.x - cx + x, u.y - fy + y, w, h);
+    ctx.setLineDash([]);
+  }
+  if (r.downT > 0) {
+    ctx.font = canvasFont(F.stun + 6, 'black', false);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = B.stun;
+    ctx.fillText(`${iconText('stun')} 다운 ${Math.ceil(r.downT)}`, u.x + Math.sin(now * 6) * 8, u.y - H - 6);
+  }
+}
+/** 부위 화면 자리 (HUD 탭·시험용) */
+export function partRect(b: Battle, i: number): [number, number, number, number] | null {
+  const boss = b.mobs.find((m) => m.mob?.boss);
+  if (!boss || !b.raid) return null;
+  const [px, up, w, h] = b.raid.parts[i].box;
+  return [boss.x + px * boss.h * 0.9, boss.y - up * boss.h, w * boss.h * 0.9, h * boss.h];
+}
+/** 협공 컷인: 두 영웅이 양쪽에서 맞붙음 + 조합 이름 */
+function drawDuo(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) {
+  const d = b.raid?.duo;
+  if (!d) return;
+  const u = d.t / 1.4;
+  const ein = Math.min(1, u / 0.2);
+  const eout = Math.max(0, (u - 0.8) / 0.2);
+  ctx.save();
+  ctx.globalAlpha = 1 - eout;
+  ctx.fillStyle = B.cutVeil;
+  ctx.fillRect(0, 0, W, LH);
+  const side = (unit: Unit, left: boolean, color: string) => {
+    ctx.save();
+    ctx.translate(left ? W * 0.27 : W * 0.73, LH * 0.45);
+    ctx.rotate(left ? -0.12 : 0.12);
+    const bw = W * 0.62;
+    const bh = 170;
+    const off = (1 - ein) * W * (left ? -0.6 : 0.6);
+    const g = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
+    g.addColorStop(0, B.cutEdge);
+    g.addColorStop(0.5, color);
+    g.addColorStop(1, B.cutEdge);
+    ctx.fillStyle = g;
+    ctx.fillRect(-bw / 2 + off, -bh / 2, bw, bh);
+    const im = art.cutin[unit.hero!.def.id];
+    if (im) {
+      const ih = bh * 1.5;
+      const iw = (im.width / im.height) * ih;
+      ctx.drawImage(im, -iw / 2 + off, -ih * 0.42, iw, ih);
+    }
+    ctx.font = canvasFont(F.cutHero, 'bold', false);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = B.cutName;
+    ctx.fillText(unit.name, off, bh / 2 - 8);
+    ctx.restore();
+  };
+  side(d.a, true, B.duoA);
+  side(d.b, false, B.duoB);
+  ctx.font = canvasFont(F.cutName);
+  ctx.textAlign = 'center';
+  ctx.lineWidth = 8;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = B.cutStroke;
+  ctx.strokeText(d.name, W / 2, LH * 0.82);
+  ctx.fillStyle = B.white;
+  ctx.fillText(d.name, W / 2, LH * 0.82);
+  ctx.font = canvasFont(F.cutHero, 'bold', false);
+  ctx.lineWidth = 5;
+  ctx.strokeText(`「${d.line}」`, W / 2, LH * 0.82 + 24);
+  ctx.fillStyle = B.cutName;
+  ctx.fillText(`「${d.line}」`, W / 2, LH * 0.82 + 24);
+  ctx.restore();
+}
+function drawNote(ctx: CanvasRenderingContext2D, b: Battle, W: number) {
+  const n = b.raid?.note;
+  if (!n) return;
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, n.t * 6, (2.6 - n.t) * 3);
+  ctx.font = canvasFont(F.cutHero + 3, 'black', false);
+  ctx.textAlign = 'center';
+  const w = ctx.measureText(n.text).width + 30;
+  ctx.fillStyle = B.noteBg;
+  ctx.fillRect(W / 2 - w / 2, 92, w, 30);
+  ctx.fillStyle = B.numCritLabel;
+  ctx.fillText(n.text, W / 2, 113);
+  ctx.restore();
+}
+/** 보스 전장 그리기 */
+function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: number) {
+  const W = b.w;
+  const r = b.raid!;
+  ctx.save();
+  if (b.shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * b.shake * 2.5), Math.round((Math.random() - 0.5) * b.shake * 2.5));
+  // 카메라 줌 (필살기 · 페이즈 클로즈업)
+  if (r.zoom) {
+    const p = Math.sin(Math.min(1, r.zoom.t / r.zoom.dur) * Math.PI);
+    const k = 1 + (r.zoom.k - 1) * p;
+    ctx.translate(r.zoom.x, r.zoom.y);
+    ctx.scale(k, k);
+    ctx.translate(-r.zoom.x, -r.zoom.y);
+  }
+  raidBackground(ctx, art, b, W);
+  const boss = b.mobs.find((m) => m.mob?.boss);
+  if (boss) drawRaidBoss(ctx, art, boss, b, now);
+  const units = [...b.heroes, ...b.mobs.filter((m) => !m.mob?.boss)].sort((a, c) => a.y - c.y);
+  for (const u of units) drawUnit(ctx, art, u, now);
+  drawFx(ctx, b);
+  drawSays(ctx, b);
+  drawNums(ctx, b);
+  ctx.restore();
+  if (b.flash > 0) {
+    ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;
+    ctx.fillRect(0, 0, W, LH);
+  }
+  drawNote(ctx, b, W);
+  drawCut(ctx, art, b, W);
+  drawDuo(ctx, art, b, W);
 }
