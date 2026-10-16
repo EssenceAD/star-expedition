@@ -50,8 +50,9 @@ export const CONFIG = {
   },
   /** 영웅 성장 (1단계 A: 레벨만 · 각성·스킬 레벨·초월은 B) */
   hero: {
-    /** 레벨 상한 (각성 단계별) */
+    /** 레벨 상한 (각성 단계별) · 초월 한 단계마다 +transLv → 초월 5까지 해야 만렙 (B 보강 §1: 레벨 상한 → 각성 → 초월 1~5) */
     levelCap: [30, 40, 50, 60, 70, 80],
+    transLv: 4,
     /** 레벨 1 → n 능력치 배수 = grow^(n−1) — 적 강함(story.grow)을 추천 레벨로 따라가되 조금 모자라게 (나머지는 장비·각성이 B덩어리에서 채움) */
     grow: 1.108,
     /** 레벨업 경험치: round(base × lv^pow) */
@@ -155,8 +156,11 @@ export const CONFIG = {
     starStat: 0.15,
     tierStat: 0.25,
     enhStat: 0.08,
-    /** 강화 +1~+10 성공률 · 실패마다 다음 확률 +pity · +dropFrom 부터 실패하면 dropChance로 −1 (파괴 없음) · 대성공(+2) great 확률 (목표 greatMax까지) */
-    enhance: { rates: [1, 0.95, 0.9, 0.85, 0.8, 0.6, 0.45, 0.32, 0.22, 0.15], pity: 0.03, dropFrom: 7, dropChance: 0.3, great: 0.03, greatMax: 9, stones: 2, gold: 400 },
+    /** 긴 강화 사다리 (B 보강 §1 · 킹스레이드식): 최대 +max · band 단계마다 구간(외형·빛이 한 단계 화려해짐 · 구간 바닥 아래로는 안 떨어짐)
+     *  성공률 = end + (start − end) × (1 − n/max)^curve · 실패마다 다음 확률 +pity · +dropFrom 부터 실패하면 dropChance로 −1 (파괴 없음)
+     *  대성공(+2) great 확률 (구간 경계는 못 넘음) · 소프트캡: 구간마다 강화 효율 bandEff (위로 갈수록 덜 오름)
+     *  비용: 강화석 = stones × (n+1) · 금화 = gold × (n+1)^goldPow × (등급+1) */
+    enhance: { max: 50, band: 10, start: 1, end: 0.08, curve: 1.6, pity: 0.03, dropFrom: 15, dropChance: 0.3, great: 0.03, stones: 2, gold: 300, goldPow: 1.6, bandEff: [1, 0.8, 0.6, 0.45, 0.35] as number[] },
     /** 별 올리기: 같은 부위·같은 등급 장비를 먹임 · 성공률(→2 … →5) · 실패할 때마다 다음 확률 + (기본 확률 × pityMult, 상한 1) · 금화 */
     starUp: { rates: [1, 0.5, 0.16, 0.03], pityMult: 0.5, gold: [2000, 8000, 30000, 100000] },
     /** 티어: 5성 뒤 · 티어 재료(레이드) · 금화 · 최대 */
@@ -189,6 +193,8 @@ export const CONFIG = {
     summon: { one: 150, ten: 1500, freePerDay: 1, weights: [0, 50, 35, 12, 3] as number[] },
     /** 제작: 부위 고르기 · 등급 확정(희귀) · 강화석 · 금화 */
     craft: { grade: 2, stones: 30, gold: 20000 },
+    /** 아이템 그림 (B 보강 §2: 부위·등급별 · public/art/<dir>/<부위>_<등급>.png · ChatGPT로 뽑음) — have=false면 기호 */
+    art: { have: false as boolean, dir: 'items' },
     /** 가방 칸 · 확장(별가루) */
     bag: { start: 54, max: 112, step: 10, dust: 100 },
   },

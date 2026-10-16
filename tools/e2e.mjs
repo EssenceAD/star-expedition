@@ -116,8 +116,28 @@ await click('[data-go="bag"]');
 await p.waitForSelector('[data-screen="bag"]');
 await shot('bag');
 await click('[data-gear]');
-await click('.gp [data-a="enh"]');
 await shot('gear_panel');
+// 강화 연출: 아이템 크게 → 망치 → 큰 +N · 능력 전→후 (구간 돌파 연출도 한 번: +9 → +10)
+await p.evaluate(() => {
+  const S = window.__S();
+  S.cur.enh = 99999;
+  S.cur.gold = 9e9;
+});
+await click('.gp [data-a="enh"]');
+await p.waitForTimeout(1600);
+await shot('enhance_fx');
+await click('.enhfx');
+await p.evaluate(() => {
+  const g = Object.values(window.__S().items).find((x) => x.kind === 'gear' && x.enh > 0);
+  g.enh = 9;
+  g.pity = 1;
+});
+await click('.gp [data-a="close"]');
+await click('[data-gear]');
+await click('.gp [data-a="enh"]');
+await p.waitForTimeout(1600);
+await shot('enhance_break');
+await click('.enhfx');
 await click('.gp [data-a="close"]');
 await click('[data-back]');
 await click('[data-go="heroes"]');

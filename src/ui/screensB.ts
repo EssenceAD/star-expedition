@@ -3,11 +3,11 @@
 import { CONFIG } from '../config';
 import { BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
-import { JOBS, ZONE_NAME } from '../data/jobs';
+import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { descPassive, descSkill } from '../data/skills';
 import { autoEquip, bagUsed, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
-import { expNeed, fullStats, heroPower, levelCap, owned } from '../game/heroes';
+import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../game/heroes';
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { GEAR_SLOTS, partyIds, persist, S, type Gear, type GearSlot, type Rune } from '../game/state';
@@ -117,10 +117,15 @@ function tabHtml(tab: string, id: string): string {
     const cap = levelCap(id);
     const ac = hs.awaken < GR.awaken.stones.length ? awakenCost(hs.awaken) : null;
     const sc = hs.star < 5 ? heroStarCost(hs.star) : null;
-    return `<div class="kv"><span>레벨</span><b>${hs.lv} / ${cap} <span class="xs dim">(${fmt(hs.exp)} / ${fmt(expNeed(hs.lv))})</span></b></div>
+    // 성장 길 (B 보강 §1): 레벨 상한 → 각성 1~5 → 초월 1~5 → 만렙
+    const HC = CONFIG.hero;
+    const steps = [`Lv.${HC.levelCap[0]}`, ...HC.levelCap.slice(1).map((_, i) => `각성${i + 1}`), ...GR.transcend.stones.map((_, i) => `초월${i + 1}`)];
+    const at = hs.awaken + hs.trans.length;
+    const road = `<div class="road">${steps.map((t, i) => `<span class="${i <= at ? 'on' : ''}${i === at ? ' cur' : ''}">${t}</span>`).join('')}<b>만렙 ${levelMax()}</b></div>`;
+    return `${road}<div class="kv"><span>레벨</span><b>${hs.lv} / ${cap} <span class="xs dim">(${fmt(hs.exp)} / ${fmt(expNeed(hs.lv))})</span></b></div>
       <div class="xbar"><i style="width:${Math.min(100, (hs.exp / expNeed(hs.lv)) * 100)}%"></i></div>
       <div class="row"><span class="grow md">${icon('exp')} 경험치 물약 ${S.cur.exp ?? 0}개 <span class="xs dim">(1개 = ${fmt(GR.potionExp)})</span></span><button class="btn mini" data-pot="1">1개</button><button class="btn mini" data-pot="10">10개</button></div>
-      <div class="row"><span class="grow md">각성 ${hs.awaken}/5 <span class="xs dim">레벨 상한 ${cap}${ac ? ` ${iconText('next')} ${CONFIG.hero.levelCap[hs.awaken + 1]} · 레벨 ${cap} 필요 · ${cost([['awakenStone', ac.stones], ['gold', ac.gold]])}` : ''}</span></span><button class="btn mini hi" data-g="awaken" ${ac ? '' : 'disabled'}>각성</button></div>
+      <div class="row"><span class="grow md">각성 ${hs.awaken}/5 <span class="xs dim">레벨 상한 ${cap}${ac ? ` ${iconText('next')} ${cap + CONFIG.hero.levelCap[hs.awaken + 1] - CONFIG.hero.levelCap[hs.awaken]} · 레벨 ${cap} 필요 · ${cost([['awakenStone', ac.stones], ['gold', ac.gold]])}` : ''}</span></span><button class="btn mini hi" data-g="awaken" ${ac ? '' : 'disabled'}>각성</button></div>
       <div class="row"><span class="grow md">별 ${hs.star}/5 <span class="xs dim">별마다 능력 +${pct(GR.star.stat)}${sc ? ` · ${cost([['stardust', sc.dust], ['gold', sc.gold]])}` : ''}</span></span><button class="btn mini" data-g="star" ${sc ? '' : 'disabled'}>별 올리기</button></div>`;
   }
   if (tab === 'skill')
@@ -254,11 +259,19 @@ register('bag', {
   },
 });
 
+/** 영웅 카드 (상점 · 영웅 목록 「미보유」 같은 카드): 큰 그림 · 직업·위치 배지 · 한 줄 소개 · 가격 — 멤버·오리지널 구분 없음 */
+export function heroShopCard(id: string) {
+  const h = heroOf(id);
+  const j = JOBS[h.job];
+  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${j.name}</span></div><b>${esc(h.name)}</b><span class="xs dim one">${esc(h.title)} — ${esc(h.concept.split('.')[0])}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div>`;
+}
+
 // ───────── 상점 (왼쪽 세로 카테고리) ─────────
 register('shop', {
   title: `${icon('shop')} 상점`,
   enter(root, p) {
     let cat = (p.cat as string) ?? 'special';
+    let zone = 'all';
     const draw = () => {
       const cats = [['special', '스페셜'], ['goods', '재화·소모품'], ['hero', '영웅'], ['costume', '코스튬'], ['summon', '장비 소환'], ['coin', '특수 재화']];
       let body = '';
@@ -268,8 +281,8 @@ register('shop', {
       else if (cat === 'goods')
         body = `<div class="cards">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
       else if (cat === 'hero') {
-        const stock = heroStock();
-        body = `<div class="cards">${stock.map((h) => `<div class="panel col shopc hero"><div class="pt l" style="background-image:url(${heroPortrait(h.id)})"></div>${h.origin !== 'founder' ? '<em class="badge">NEW HERO</em>' : ''}<b>${h.name}</b><span class="xs dim">${h.title} · ${JOBS[h.job].name}</span><button class="btn hi" data-hero="${h.id}">${icon('stardust')}${fmt(heroPrice(h.id))}</button></div>`).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+        const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone));
+        body = `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
       } else if (cat === 'summon') {
         const sm = CONFIG.gear.summon;
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>
@@ -280,6 +293,7 @@ register('shop', {
         body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${n}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
+      $$('[data-zone]', root).forEach((b) => (b.onclick = () => ((zone = b.dataset.zone!), draw())));
       const after = (r: string, m: Record<string, string>) => {
         persist();
         syncBar();

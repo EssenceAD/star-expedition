@@ -90,6 +90,14 @@ export const T = {
     starOn: '0 0 18px #ffcf4a, 0 2px 0 #8a4a10',
     starOff: '0 2px 0 #000000',
     inset: 'inset 0 0 0 1px rgba(255,243,196,0.08)',
+    /** 강화 구간 빛 (+10 · +20 · +30 · +40 · +50 — 한 단계씩 화려하게) */
+    enh1: '0 0 6px rgba(120,200,255,0.55)',
+    enh2: '0 0 10px rgba(120,220,255,0.8), inset 0 0 6px rgba(120,220,255,0.35)',
+    enh3: '0 0 14px rgba(200,140,255,0.9), inset 0 0 8px rgba(200,140,255,0.45)',
+    enh4: '0 0 18px rgba(255,190,80,0.95), inset 0 0 10px rgba(255,190,80,0.5)',
+    enh5: '0 0 24px rgba(255,90,70,1), 0 0 8px rgba(255,230,140,0.9), inset 0 0 12px rgba(255,120,80,0.55)',
+    enhNum: '0 0 3px #000000, 0 2px 0 #5a2a00',
+    enhBurst: '0 0 30px rgba(255,210,100,0.95), 0 4px 0 #6a3a00',
   },
   /** 전투 캔버스 */
   battle: {

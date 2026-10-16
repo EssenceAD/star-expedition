@@ -56,7 +56,7 @@ export function dropGear(ilv: number, diff: number, s: Save = S, rnd: () => numb
 // ───────── 능력 ─────────
 /** 장비 기본 능력 (공격·체력·방어 정수) */
 export function gearBase(g: Gear): Record<string, number> {
-  const m = G.grades[g.grade].mult * Math.pow(G.grow, g.ilv) * (1 + G.starStat * (g.star - 1)) * (1 + G.tierStat * (g.tier - 1)) * (1 + G.enhStat * g.enh);
+  const m = G.grades[g.grade].mult * Math.pow(G.grow, g.ilv) * (1 + G.starStat * (g.star - 1)) * (1 + G.tierStat * (g.tier - 1)) * (1 + G.enhStat * enhEff(g.enh));
   return Object.fromEntries(Object.entries(G.base[g.part]).map(([k, v]) => [k, Math.round(v * m)]));
 }
 export const runeValue = (r: Rune) => R.value[r.grade] ?? 0;
@@ -78,25 +78,37 @@ export const gearPower = (g: Gear) => {
 export const optText = (o: { k: string; v: number }) => `${G.opts[o.k]?.name ?? o.k} +${(o.v * 100).toFixed(1)}%`;
 export const gearName = (g: Gear) => `${gradeName(g.grade)} ${PART_NAME[g.part]}`;
 
-// ───────── 강화 (+0~+10 · 「체크인」 확률 · 파괴 없음) ─────────
-export const enhCost = (g: Gear) => ({ stones: G.enhance.stones * (g.enh + 1), gold: G.enhance.gold * (g.enh + 1) * (g.enh + 1) * (g.grade + 1) });
-export const enhRate = (g: Gear) => Math.min(1, (G.enhance.rates[g.enh] ?? 0) + g.pity);
+// ───────── 강화 (긴 사다리 +0~+max · 구간마다 외형 · 파괴 없음 · B 보강 §1) ─────────
+const E = G.enhance;
+/** 구간 (0 = +0~+9 · 1 = +10~+19 …) — 테두리 빛·연출 단계 */
+export const enhBand = (n: number) => Math.min(E.bandEff.length, Math.floor(n / E.band));
+/** 소프트캡: 강화 n이 실제로 주는 단계 (구간마다 bandEff) */
+export function enhEff(n: number) {
+  let v = 0;
+  for (let i = 0; i < n; i++) v += E.bandEff[Math.min(E.bandEff.length - 1, Math.floor(i / E.band))];
+  return v;
+}
+export const enhCost = (g: Gear) => ({ stones: E.stones * (g.enh + 1), gold: Math.round(E.gold * Math.pow(g.enh + 1, E.goldPow) * (g.grade + 1)) });
+export const enhBase = (n: number) => (n >= E.max ? 0 : E.end + (E.start - E.end) * Math.pow(1 - n / E.max, E.curve));
+export const enhRate = (g: Gear) => Math.min(1, enhBase(g.enh) + g.pity);
 export type EnhResult = 'max' | 'poor' | 'great' | 'ok' | 'fail' | 'drop';
 export function enhance(g: Gear, s: Save = S, rnd: () => number = Math.random): EnhResult {
-  if (g.enh >= G.enhance.rates.length) return 'max';
+  if (g.enh >= E.max) return 'max';
   const c = enhCost(g);
   if ((s.cur.enh ?? 0) < c.stones || (s.cur.gold ?? 0) < c.gold) return 'poor';
   addCur('enh', -c.stones, s);
   addCur('gold', -c.gold, s);
   track('enh', 1, s);
   if (rnd() < enhRate(g)) {
-    const great = g.enh + 2 <= G.enhance.greatMax && rnd() < G.enhance.great;
+    // 대성공(+2)은 구간 경계를 못 넘음 (경계 돌파는 따로 연출)
+    const great = enhBand(g.enh + 2) === enhBand(g.enh) && g.enh + 2 <= E.max && rnd() < E.great;
     g.enh += great ? 2 : 1;
     g.pity = 0;
     return great ? 'great' : 'ok';
   }
-  g.pity += G.enhance.pity;
-  if (g.enh + 1 >= G.enhance.dropFrom && rnd() < G.enhance.dropChance) {
+  g.pity += E.pity;
+  // 실패 −1: +dropFrom부터 · 구간 바닥(+10·+20…) 아래로는 안 떨어짐
+  if (g.enh + 1 >= E.dropFrom && g.enh % E.band !== 0 && rnd() < E.dropChance) {
     g.enh--;
     return 'drop';
   }

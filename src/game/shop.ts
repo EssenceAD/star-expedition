@@ -2,13 +2,23 @@
 //  영웅 상점 = 미보유 영웅을 별가루로 확정 구매 (킹스레이드 6,000 루비 구조) · 재화·소모품 · 꾸러미(한 번) · 장비 소환은 game/gear.ts summon
 import { CONFIG } from '../config';
 import { HEROES, heroOf } from '../data/heroes';
+import { JOBS, ZONES, type Zone } from '../data/jobs';
 import { join, owned } from './heroes';
 import { addCur, S, spend, track, type Save } from './state';
 
 const SH = CONFIG.shop;
 export const heroPrice = (id: string) => SH.hero[heroOf(id).origin];
-/** 영웅 상점 진열: 아직 없는 영웅 (장 클리어로 합류하는 전설도 미리 살 수 있음) */
-export const heroStock = (s: Save = S) => HEROES.filter((h) => !owned(h.id, s));
+/** 이름으로 정하는 고정 섞기 값 (멤버·오리지널이 몰리지 않게) */
+const mixKey = (id: string) => [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % 9973;
+/** 영웅 상점 진열 (B 보강 §3): 아직 없는 영웅 · 전방→중앙→후방 차례로 한 명씩 돌려 역할이 골고루 섞이게 · zone을 주면 그 위치만
+ *  (장 클리어로 합류하는 영웅도 미리 살 수 있음) */
+export function heroStock(s: Save = S, zone?: Zone) {
+  const left = HEROES.filter((h) => !owned(h.id, s) && (!zone || JOBS[h.job].zone === zone));
+  const by = ZONES.map((z) => left.filter((h) => JOBS[h.job].zone === z).sort((a, b) => mixKey(a.id) - mixKey(b.id)));
+  const out: typeof left = [];
+  for (let i = 0; out.length < left.length; i++) for (const g of by) if (g[i]) out.push(g[i]);
+  return out;
+}
 export function buyHero(id: string, s: Save = S): 'owned' | 'poor' | 'ok' {
   if (owned(id, s)) return 'owned';
   if (!spend('stardust', heroPrice(id), s)) return 'poor';

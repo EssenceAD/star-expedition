@@ -61,6 +61,8 @@ export const currentScreen = () => current?.s ?? null;
 export function go(id: ScreenId, params: Record<string, unknown> = {}, push = true) {
   const s = screens[id];
   if (!s) throw new Error(`화면 없음: ${id}`);
+  // 화면이 바뀌면 앞 화면 알림은 지움 (B 보강 §5)
+  for (const o of $$('.toast')) o.remove();
   if (current) {
     current.s.leave?.();
     current.root.remove();
