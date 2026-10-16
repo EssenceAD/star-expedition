@@ -1,0 +1,179 @@
+// 스토리 스테이지: 열림 조건 · 전투 입력 만들기 · 보상 · 클리어 기록 (ROADMAP §3 · §2 결과)
+import { CONFIG } from '../config';
+import { activeBonds } from '../data/bonds';
+import { artOf, heroOf, HEROES } from '../data/heroes';
+import { CHAPTER_MOBS, MOB_KINDS, PATTERNS, type MobKind } from '../data/mobs';
+import { CHAPTERS } from '../data/story';
+import { T } from '../theme/tokens';
+import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
+import { addExp, join, statsOf } from './heroes';
+import { addCur, dayKey, partyIds, S, SLOTS, type Save } from './state';
+
+const C = CONFIG.story;
+const R = CONFIG.reward;
+export interface StageId {
+  c: number;
+  s: number;
+  d: number;
+}
+export const stageKey = ({ c, s, d }: StageId) => `${c}-${s}-${d}`;
+export const parseKey = (k: string): StageId => {
+  const [c, s, d] = k.split('-').map(Number);
+  return { c, s, d };
+};
+export const isBoss = (st: StageId) => st.s === C.stages;
+/** 강함 지수 */
+export const powIdx = ({ c, s, d }: StageId) => (c - 1) * C.stages + (s - 1) + C.diffAdd[d];
+export const recLevel = (st: StageId) => Math.max(1, Math.round(1 + powIdx(st) * C.recLv));
+export const stageName = (st: StageId) => `${st.c}-${st.s}${st.d ? ` ${C.diffName[st.d]}` : ''}`;
+
+export const cleared = (st: StageId, s: Save = S) => (s.stages[stageKey(st)]?.clears ?? 0) > 0;
+export const starsAt = (st: StageId, s: Save = S) => s.stages[stageKey(st)]?.stars ?? 0;
+/** 난이도가 열렸나: 보통은 늘 · 어려움/지옥은 그 장 아래 난이도 마지막 스테이지 클리어 */
+export const diffOpen = (c: number, d: number, s: Save = S) => d === 0 || cleared({ c, s: C.stages, d: d - 1 }, s);
+export function unlocked(st: StageId, s: Save = S): boolean {
+  if (!diffOpen(st.c, st.d, s)) return false;
+  if (st.s > 1) return cleared({ ...st, s: st.s - 1 }, s);
+  if (st.c === 1) return true;
+  return cleared({ c: st.c - 1, s: C.stages, d: st.d }, s);
+}
+/** 다음에 할 스테이지 (보통 기준) */
+export function nextStage(s: Save = S): StageId {
+  for (let c = 1; c <= C.chapters; c++) for (let n = 1; n <= C.stages; n++) if (!cleared({ c, s: n, d: 0 }, s)) return { c, s: n, d: 0 };
+  return { c: C.chapters, s: C.stages, d: 0 };
+}
+/** 가장 높이 깬 스테이지 (방치 보상 기준) */
+export function bestCleared(s: Save = S): StageId | null {
+  let best: StageId | null = null;
+  for (const k of Object.keys(s.stages)) {
+    if (!s.stages[k].clears) continue;
+    const st = parseKey(k);
+    if (!best || powIdx(st) > powIdx(best)) best = st;
+  }
+  return best;
+}
+
+// ───────── 웨이브 ─────────
+const KIND: Record<string, MobKind['id']> = { s: 'slime', g: 'goblin', w: 'wolf', B: 'golem' };
+/** 자리표시자 장(4~10)은 3장 웨이브를 그대로 (수치만 다름) */
+function waveText(st: StageId): string {
+  const ch = CHAPTERS[st.c - 1];
+  const src = ch.waves ?? CHAPTERS[C.realChapters - 1].waves!;
+  return src[st.s - 1];
+}
+export function buildMobs(st: StageId): MobSpec[][] {
+  const p = powIdx(st);
+  const g = Math.pow(C.grow, p);
+  const cm = CHAPTER_MOBS[st.c - 1];
+  return waveText(st)
+    .split('|')
+    .map((w) =>
+      [...w].map((ch): MobSpec => {
+        const kind = MOB_KINDS[KIND[ch]];
+        const boss = kind.id === 'golem';
+        const bm = boss ? C.boss : { hp: 1, atk: 1, def: 1 };
+        return {
+          kind, boss, name: boss ? cm.boss : cm.names[kind.id as 'slime'],
+          hp: Math.round(C.mob.hp * kind.hp * bm.hp * g),
+          atk: Math.round(C.mob.atk * kind.atk * bm.atk * g),
+          def: Math.round(C.mob.def * kind.def * bm.def * g),
+          rate: kind.rate,
+          tint: (st.c - 1) % T.battle.mobTint.length,
+          patterns: boss ? cm.patterns.map((k) => PATTERNS[k]) : undefined,
+          portrait: boss ? 'boss_golem' : undefined,
+        };
+      }),
+    );
+}
+/** 지금 편성으로 영웅 입력 */
+export function buildHeroes(s: Save = S): HeroSpec[] {
+  return SLOTS.flatMap((slot) => {
+    const id = s.party[slot];
+    if (!id || !s.heroes[id]) return [];
+    const def = heroOf(id);
+    return [{ def, art: artOf(def, T.battle.tint.length), slot, lv: s.heroes[id].lv, st: statsOf(id, s) }];
+  });
+}
+export function buildStage(st: StageId, s: Save = S): BattleSetup {
+  return {
+    heroes: buildHeroes(s), waves: buildMobs(st), limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime,
+    bonds: activeBonds(partyIds(s)), region: (st.c - 1) % T.battle.region.length, title: `${CHAPTERS[st.c - 1].name} ${stageName(st)}`,
+  };
+}
+
+// ───────── 보상 ─────────
+export interface Reward {
+  gold: number;
+  exp: number;
+  stardust: number;
+  enh: number;
+  chest: boolean;
+}
+/** 오늘 n번째 판의 금화 비율 (taper) */
+export function taperAt(n: number): number {
+  for (const [upto, r] of R.taper) if (n <= upto) return r;
+  return R.taper[R.taper.length - 1][1];
+}
+/** 한 판 보상 (첫 클리어·별 3개 보너스는 따로 firstBonus) */
+export function baseReward(st: StageId, rnd: () => number = Math.random, ids: string[] = partyIds()): Reward {
+  const p = powIdx(st);
+  const dm = R.diffMult[st.d];
+  const chest = ids.includes('warmnight') && rnd() < R.chest.chance;
+  return {
+    gold: Math.round(R.gold.base * Math.pow(R.gold.grow, p) * dm * (chest ? R.chest.gold : 1) * (isBoss(st) ? 2 : 1)),
+    exp: Math.round(R.exp.base * Math.pow(R.exp.grow, p) * dm * (isBoss(st) ? 2 : 1)),
+    stardust: 0,
+    enh: rnd() < R.enh.chance ? R.enh.n * (st.d + 1) : 0,
+    chest,
+  };
+}
+/** 보상 주기 (금화는 오늘 판 수로 줄어듦 · 경험치는 편성 영웅 모두) → 실제 받은 양 · 레벨업한 영웅 */
+export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now()) {
+  if (s.day.key !== dayKey(now)) s.day = { key: dayKey(now), runs: 0 };
+  s.day.runs++;
+  const gold = Math.round(r.gold * taperAt(s.day.runs));
+  addCur('gold', gold, s);
+  addCur('stardust', r.stardust, s);
+  addCur('enh', r.enh, s);
+  const ups: string[] = [];
+  for (const id of ids) if (addExp(id, r.exp, s)) ups.push(id);
+  return { ...r, gold, ups };
+}
+
+export interface ClearInfo {
+  stars: number;
+  time: number;
+  dps: number;
+  mvp: string;
+}
+/** 승리 기록 + 첫 클리어 보너스 + 장 클리어 합류 → 이번에 받은 것 */
+export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () => number = Math.random, now = Date.now()) {
+  const k = stageKey(st);
+  const old = s.stages[k];
+  const first = !old?.clears;
+  const firstThree = info.stars >= 3 && (old?.stars ?? 0) < 3;
+  const rec = old ?? { stars: 0, clears: 0, bestTime: 0, bestDps: 0, mvp: '' };
+  rec.clears++;
+  rec.stars = Math.max(rec.stars, info.stars);
+  if (!rec.bestTime || info.time < rec.bestTime) rec.bestTime = Math.round(info.time);
+  const newBest = info.dps > rec.bestDps;
+  if (newBest) {
+    rec.bestDps = Math.round(info.dps);
+    rec.mvp = info.mvp;
+  }
+  s.stages[k] = rec;
+  const ids = partyIds(s);
+  const r = baseReward(st, rnd, ids);
+  if (first) r.stardust += isBoss(st) ? R.firstDustBoss : R.firstDust;
+  if (firstThree) r.stardust += R.threeStarDust;
+  const got = grant(r, ids, s, now);
+  // 장 클리어(보통 x-10 처음) → 지역 전설 합류
+  let joined: string | null = null;
+  if (first && isBoss(st) && st.d === 0) {
+    const h = heroJoining(st.c);
+    if (h && join(h, s)) joined = h;
+  }
+  return { got, first, firstThree, newBest, joined };
+}
+/** 이 장을 깨면 합류하는 영웅 */
+export const heroJoining = (c: number) => HEROES.find((h) => h.joinChapter === c)?.id ?? null;

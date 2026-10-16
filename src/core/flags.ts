@@ -2,9 +2,7 @@
 // FASTSHIP: 원격 끄기 스위치 — public/flags.json을 부팅 때 한 번 읽는다 (실패하면 기본값 = 켬).
 //  새 기능마다 플래그 하나. 문제가 생기면 json 한 줄 바꿔 배포(T0)로 끈다.
 export const FLAG_DEFAULTS = {
-  /** 파일럿: 부품 인형(뼈대) 그림 — 끄면 도트 프레임 그림 */
-  rigArt: true,
-  /** 스킬 컷인 (초상화가 0.5초 가로지름) */
+  /** 스킬 컷인 (3번 스킬·손으로 누른 스킬 · 일러스트/초상화가 0.6초 가로지름) */
   cutIn: true,
 };
 export type FlagKey = keyof typeof FLAG_DEFAULTS;

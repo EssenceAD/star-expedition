@@ -1,0 +1,97 @@
+// 스토리 10장 (ROADMAP §3 · SPEC §1) — 1~3장은 실제 대사·웨이브, 4~10장은 몬스터 수치만 있는 자리표시자
+//  대사: [말하는 사람, 글] · 말하는 사람 = 영웅 id 또는 'narr'(해설) · 'cult'(교단원) · 'boss'(그 장 보스)
+export type Line = [string, string];
+export interface ChapterDef {
+  n: number;
+  /** 「체크인」 사냥 지역 */
+  region: string;
+  name: string;
+  /** 1~10 스테이지 웨이브 (s 슬라임 · g 고블린 · w 늑대 · B 보스 · | 웨이브 구분) — 없으면 자동 */
+  waves?: string[];
+  /** 대사: 장 시작(1-1 전) · 보스 전(x-10 전) · 장 클리어 */
+  intro?: Line[];
+  preBoss?: Line[];
+  clear?: Line[];
+  /** 장 클리어로 되찾는 별 이름 */
+  star: string;
+}
+
+export const PROLOGUE: Line[] = [
+  ['narr', '먼 옛날, 「다섯 별」이 「별을 삼킨 것」을 심연 바닥에 봉인했다.'],
+  ['narr', '그리고 지금 — 밤하늘의 별이 하나씩 꺼지고 있다. 대륙 곳곳에 심연 균열이 열렸다.'],
+  ['narr', '왕국 기사단은 흩어졌고, 균열을 숭배하는 「꺼진 별의 교단」이 세를 키운다.'],
+  ['narr', '대륙 변두리의 작은 여관. 모험가들이 하나둘 모여든다.'],
+  ['woongs', '별이 또 하나 꺼졌다꼬? …가만히 있을 수는 없제.'],
+  ['ikamolly', '바람이 이상해요. 숲 쪽에서 별 냄새가 나요.'],
+  ['walwal', '다들 다치지만 말고. 다치믄 내한테 온나.'],
+  ['warmnight', '지도는 내가 들게. 원정대장, 출발 신호를 줘.'],
+  ['narr', '선택받은 영웅 한 명이 아니라 — 모인 우리가 별을 되찾는 이야기. 「별의 원정대」, 출발.'],
+];
+
+export const CHAPTERS: ChapterDef[] = [
+  {
+    n: 1, region: 'forest', name: '숲 동굴', star: '첫째 별 「이끼등」',
+    waves: ['ss|sss', 'sss|gs', 'gs|sgs', 'ssg|gg', 'gsg|sgs|gg', 'ww|gs', 'wsg|gw', 'gwg|wsw', 'wgw|gwg|ww', 'gsg|B'],
+    intro: [
+      ['warmnight', '숲 동굴 입구야. 균열 빛이 여기까지 새어 나와.'],
+      ['woongs', '슬라임들이 왜 이렇게 성이 났노?'],
+      ['ikamolly', '균열 기운에 취한 것 같아요. 조심해요!'],
+    ],
+    preBoss: [
+      ['boss', '……쿠웅.'],
+      ['warmnight', '저 골렘, 눈이 호박색으로 빛나. 별빛을 삼킨 거야.'],
+      ['walwal', '내려찍기 예고가 보이믄 버텨라. 내가 바로 치료한다.'],
+    ],
+    clear: [
+      ['narr', '골렘의 호박눈이 깨지며 작은 별빛이 하늘로 올라갔다. 첫째 별이 다시 켜졌다.'],
+      ['luna', '킁킁… 여기서 별 냄새가 제일 많이 나! 나도 같이 갈래!'],
+      ['narr', '은늑대 루나가 원정대에 합류했다!'],
+    ],
+  },
+  {
+    n: 2, region: 'swamp', name: '버섯 늪', star: '둘째 별 「포자등」',
+    waves: ['ss|gs', 'sgs|gg', 'gg|sgs', 'ww|sgs', 'gwg|ss|gg', 'wsw|gg', 'gwg|wgw', 'wgw|gsg|ww', 'gwgw|wgw', 'wgw|B'],
+    intro: [
+      ['ikamolly', '늪 안개에 포자가 섞여 있어요. 숨 조심!'],
+      ['cult', '……별은 꺼져야 한다. 원정대 따위가 막을 수 없어.'],
+      ['woongs', '교단 놈들이 여기까지 와 있었나!'],
+    ],
+    preBoss: [
+      ['cult', '곰팡이왕이시여, 저 별빛 도둑들을 삼키소서!'],
+      ['walwal', '포효 들리믄 스킬이 잠깐 막힌다. 그 전에 써라!'],
+    ],
+    clear: [
+      ['narr', '늪 위로 둘째 별이 떠올랐다. 안개가 걷히고 개구리 울음이 돌아왔다.'],
+      ['aria', '…따뜻한 빛이네요. 다친 분들이 많아요. 제가 함께 갈게요.'],
+      ['narr', '성녀 아리아가 원정대에 합류했다!'],
+    ],
+  },
+  {
+    n: 3, region: 'mine', name: '폐광', star: '셋째 별 「광부등」',
+    waves: ['gg|wg', 'gwg|gg', 'wgw|ww', 'gggg|wgw', 'wgw|gwg|ww', 'wwg|gww', 'gwgw|wgwg', 'wgwg|gwgw|ww', 'wwww|gwgw|wgw', 'wgwg|B'],
+    intro: [
+      ['warmnight', '폐광은 길이 갈라져. 지도 끝까지 가 본 사람은 없대.'],
+      ['woongs', '광석이 녹슬어서 붉게 빛나네. 강화 재료로 딱인데!'],
+      ['ikamolly', '웅스, 지금은 별이 먼저예요!'],
+    ],
+    preBoss: [
+      ['boss', '…녹…슨…심장…'],
+      ['walwal', '지진 오면 앞줄이 묶인다. 앞줄은 체력 잘 챙기라.'],
+    ],
+    clear: [
+      ['narr', '녹슨 심장이 멈추자 갱도 천장 틈으로 셋째 별이 보였다.'],
+      ['grom', '하하! 이 골렘을 쓰러뜨린 게 너희냐! 대전사 그롬, 술 한 잔 값으로 도와주지!'],
+      ['narr', '대전사 그롬이 원정대에 합류했다!'],
+      ['narr', '— 1단계 스토리는 여기까지. 4장부터는 몬스터만 있는 자리표시자예요.'],
+    ],
+  },
+  { n: 4, region: 'ice', name: '얼음 협곡', star: '넷째 별' },
+  { n: 5, region: 'abyss', name: '별의 심연', star: '다섯째 별' },
+  { n: 6, region: 'coast', name: '가라앉은 등대 해안', star: '여섯째 별' },
+  { n: 7, region: 'dune', name: '모래시계 유적', star: '일곱째 별' },
+  { n: 8, region: 'ember', name: '잿불 화산', star: '여덟째 별' },
+  { n: 9, region: 'sky', name: '구름 정원', star: '아홉째 별' },
+  { n: 10, region: 'deep', name: '심연의 바닥', star: '마지막 별' },
+];
+/** 대사의 말하는 사람 이름 (영웅이 아닌 경우) */
+export const SPEAKER: Record<string, string> = { narr: '', cult: '교단원', boss: '' };

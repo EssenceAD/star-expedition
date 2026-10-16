@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<meta name="theme-color" content="#14102a" />
-<title>별의 원정대 (가제) · 파일럿</title>
+<title>별의 원정대 (가제)</title>
 <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
 <div id="stage">
   <canvas id="cv"></canvas>
-  <div id="hud">
+  <div id="hud" hidden>
     <div id="tl">
-      <button id="bAuto" aria-pressed="false"><i>⟳</i>AUTO</button>
+      <button id="bAuto" aria-pressed="false"><i></i>AUTO</button>
       <button id="bSpeed">×1</button>
     </div>
+    <div id="stg"></div>
+    <button id="bQuit" class="btn mini">포기</button>
     <div id="boss" hidden>
       <div class="bp"></div>
       <div class="bi">
@@ -25,17 +26,13 @@
     </div>
     <div id="wave">WAVE 1</div>
     <div id="warn" hidden></div>
-    <div id="dps" class="open"><button id="bDps">DPS ◂</button><div id="dpsL"></div></div>
+    <div id="dps" class="open"><button id="bDps">DPS</button><div id="dpsL"></div></div>
     <div id="bar"></div>
+    <div id="result" hidden></div>
   </div>
-  <div id="title">
-    <div class="logo"><small>용사님 체크인 외전</small><b>별의 원정대</b><i>(가제) · 파일럿</i></div>
-    <button id="bStart">원정 출발</button>
-    <p class="tip">가로 화면 · 스킬 버튼 · 패널별 Auto · 전체 AUTO</p>
-  </div>
-  <div id="result" hidden></div>
+  <div id="ui"></div>
 </div>
-<div id="rotate">📱↻ 가로로 돌려 주세요</div>
+<div id="rotate"></div>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
