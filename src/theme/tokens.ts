@@ -131,6 +131,18 @@ export const T = {
     bossBeam: '#ffb000',
     sky: ['#8fd0ff', '#d9f2ff'],
     placeholderTag: 'rgba(15,12,34,0.85)',
+    /** 보스 전장: 줄 바닥 · 줄 경고(알파는 코드) · 부서진 자리 · 금 · 집중 부위 테두리 · 다운 · 페이즈마다 배경 색 */
+    laneBand: 'rgba(255,255,255,0.12)',
+    laneEdge: 'rgba(255,243,196,0.45)',
+    laneWarn: 'rgba(255,40,30,',
+    crack: '#1a0f08',
+    crackGlow: '#ff9a3c',
+    focusRing: '#ffe36b',
+    downVeil: 'rgba(30,30,60,0.35)',
+    noteBg: 'rgba(15,12,34,0.8)',
+    phaseTint: ['none', 'saturate(1.3) hue-rotate(-20deg) brightness(0.85)', 'hue-rotate(-50deg) saturate(1.6) brightness(0.6)'],
+    duoA: '#ffb347',
+    duoB: '#58b8ff',
     tagText: '#fff3c4',
     /** 자리표시자 영웅 색 바꾸기 (canvas filter) */
     tint: ['hue-rotate(40deg)', 'hue-rotate(110deg)', 'hue-rotate(180deg)', 'hue-rotate(250deg)', 'hue-rotate(310deg)', 'saturate(0.4) brightness(1.15)'],

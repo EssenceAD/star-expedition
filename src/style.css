@@ -184,7 +184,7 @@ button { font-family: inherit; cursor: pointer; }
 input.tab { color: var(--c-text); }
 
 /* ───────── 전투 HUD ───────── */
-#hud { position: absolute; inset: 0; pointer-events: none; }
+#hud { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 #hud button { pointer-events: auto; }
 #tl { position: absolute; left: var(--s-md); top: var(--s-md); display: flex; gap: var(--s-sm); }
 #tl button { height: 30px; padding: 0 var(--s-md); border-radius: var(--r-cutSm); border: var(--b-base) solid var(--c-gold2); background: linear-gradient(var(--c-panel2), var(--c-panel)); color: var(--c-text); font-weight: var(--fw-black); font-size: var(--fs-base); letter-spacing: 1px; box-shadow: var(--sh-drop); }
@@ -203,6 +203,19 @@ input.tab { color: var(--c-text); }
 .bh em { position: absolute; right: var(--s-sm); top: -2px; font-style: normal; font-size: var(--fs-sm); font-weight: var(--fw-bold); text-shadow: var(--sh-textSm); }
 .bs { display: flex; justify-content: space-between; font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--c-textSoft); margin-top: var(--s-xxs); text-shadow: var(--sh-textSm); }
 .bs b { color: var(--c-text); }
+#raidHud { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); width: 420px; pointer-events: auto; }
+#rParts { display: flex; gap: var(--s-sm); }
+#rParts button { flex: 1; padding: var(--s-xxs) var(--s-sm); border: var(--b-thin) solid var(--c-gold2); border-radius: var(--r-cutSm); background: var(--c-glass); color: var(--c-text); font-size: var(--fs-xs); font-weight: var(--fw-black); text-align: left; }
+#rParts button[aria-pressed="true"] { border-color: var(--c-gold); box-shadow: var(--sh-glowHi); }
+#rParts button.broken { opacity: 0.5; text-decoration: line-through; }
+#rParts .bh { height: 6px; margin-top: var(--s-xxs); }
+#raidHud .gg { display: flex; align-items: center; gap: var(--s-sm); margin-top: var(--s-xs); font-size: var(--fs-xs); font-weight: var(--fw-black); color: var(--c-star); text-shadow: var(--sh-textSm); }
+#raidHud .gg .bh { flex: 1; height: 7px; }
+#raidHud .gg .bh i { background: linear-gradient(90deg, var(--c-mp2), var(--c-mp)); }
+#raidHud .gg em { font-style: normal; color: var(--c-warn); min-width: 40px; }
+#bDodge { position: absolute; right: var(--s-md); bottom: 100px; width: 104px; height: 52px; border-radius: var(--r-cut); border: var(--b-base) solid var(--c-gold); background: linear-gradient(var(--c-btnHi2), var(--c-btnHi)); color: var(--c-btnText); font-size: var(--fs-lg); font-weight: var(--fw-black); box-shadow: var(--sh-glowHi); }
+#bDodge.hot { border-color: var(--c-warn); animation: blink 0.35s ease-in-out infinite alternate; }
+#hud.raid #warn { top: 116px; }
 #wave { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); padding: var(--s-xs) var(--s-xl); font-weight: var(--fw-black); font-size: var(--fs-lg); letter-spacing: 2px; background: linear-gradient(90deg, transparent, var(--c-glass) 20%, var(--c-glass) 80%, transparent); color: var(--c-star); text-shadow: var(--sh-text); }
 #warn { position: absolute; left: 0; right: 0; top: 66px; text-align: center; font-weight: var(--fw-black); font-size: var(--fs-xl); color: var(--c-warn); text-shadow: var(--sh-warn); animation: blink 0.5s ease-in-out infinite alternate; }
 @keyframes blink { from { opacity: 0.55; } to { opacity: 1; } }

@@ -3,6 +3,7 @@
 import { CONFIG } from '../config';
 import { render, renderBg, type Art } from '../battle/render';
 import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
+import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
 import { heroOf } from '../data/heroes';
 import { JOBS } from '../data/jobs';
@@ -98,16 +99,54 @@ function syncHud() {
     $('#bDmg').textContent = shortNum(bb.stats.bossDealt);
     $('#bTime').textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
   }
+  // 보스 전장은 보스가 나올 때 생김 → 그때 HUD를 바꿈
+  if (!!bb.raid !== hud().classList.contains('raid')) (buildRaid(), dpsLabel());
+  syncRaid(bb);
   const w = $('#warn');
-  w.hidden = !bb.pat.text;
+  w.hidden = !bb.pat.text || bb.phase === 'win' || bb.phase === 'lose';
   const wt = `${iconText('warn')} ${bb.pat.text}`;
   if (bb.pat.text && w.textContent !== wt) w.textContent = wt;
   if (dpsOpen) {
-    const sorted = [...bb.heroes].sort((a, c) => c.dealt - a.dealt);
+    const sorted = [...bb.heroes].sort((a, c) => c.dealt - a.dealt).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
     const top = Math.max(1, sorted[0].dealt);
     const t = Math.max(1, bb.stats.time);
     $('#dpsL').innerHTML = sorted.map((u) => `<div class="dr"><div class="t"><span>${u.name}</span><b>${shortNum(u.dealt)}</b></div><div class="g"><i style="width:${(u.dealt / top) * 100}%;background:${elemColor(u.hero!.def.elem)}"></i></div><div class="t"><small>초당 ${shortNum(u.dealt / t)}</small></div></div>`).join('');
   }
+}
+
+/** 보스 전장 HUD: 부위 체력(누르면 집중) · 그로기 · 줄 바꾸기 */
+function buildRaid() {
+  const r = b!.raid;
+  hud().classList.toggle('raid', !!r);
+  $('#raidHud').hidden = !r;
+  $('#bDodge').hidden = !r;
+  if (!r) return;
+  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false"><span>${esc(p.name)}</span><div class="bh"><i></i></div></button>`).join('');
+  $$<HTMLButtonElement>('#rParts button').forEach((btn) => (btn.onclick = () => {
+    const rr = b?.raid;
+    if (!rr) return;
+    const i = +btn.dataset.p!;
+    rr.focus = rr.focus === i || rr.parts[i].broken ? -1 : i;
+  }));
+  $('#bDodge').onclick = () => b && raidDodge(b);
+}
+function dpsLabel() {
+  $('#dps').classList.toggle('open', dpsOpen);
+  $('#bDps').innerHTML = `${b?.raid ? '피해 순위' : 'DPS'} ${icon(dpsOpen ? 'fold' : 'open')}`;
+}
+function syncRaid(bb: Battle) {
+  const r = bb.raid;
+  if (!r) return;
+  const auto = r.focus >= 0 ? r.focus : r.parts.findIndex((p) => !p.broken);
+  $$<HTMLButtonElement>('#rParts button').forEach((btn) => {
+    const p = r.parts[+btn.dataset.p!];
+    btn.classList.toggle('broken', p.broken);
+    btn.setAttribute('aria-pressed', String(+btn.dataset.p! === auto && !p.broken));
+    $('i', btn).style.width = `${(p.hp / p.max) * 100}%`;
+  });
+  $('#rGg').style.width = `${r.downT > 0 ? 100 : (r.groggy / r.gMax) * 100}%`;
+  $('#rDown').textContent = r.downT > 0 ? `다운 ${Math.ceil(r.downT)}초` : '';
+  $('#bDodge').classList.toggle('hot', r.warnLane != null);
 }
 
 function setup() {
@@ -122,6 +161,8 @@ function setup() {
   $('#bSpeed').textContent = `×${b.speed}`;
   $('#stg').textContent = b.setup.title;
   buildBar();
+  buildRaid();
+  dpsLabel();
   $('#result').hidden = true;
   shown = false;
   const boss = b.setup.waves.flat().find((m) => m.boss);
@@ -157,8 +198,10 @@ function showRunResult() {
   const head = scoreRun ? '결과' : win ? '승리!' : bb.why === 'time' ? '시간 초과' : '패배…';
   const nextFloor = r.mode === 'tower' && win ? { ...r, arg: +r.arg + 1 } : r.mode === 'side' && win && (r.sub ?? 0) < CONFIG.content.side.acts ? { ...r, sub: (r.sub ?? 1) + 1 } : null;
   const left = triesText(r);
+  const rs = raidSummary(bb);
+  const raidLines = rs ? `<br>${rs.phase}페이즈까지 · 회피 직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}<br>부위 파괴 1등: ${rs.parts.map((p) => `${esc(p.name)} ${p.broken ? esc(p.top) : '못 부숨'}`).join(' · ')}` : '';
   $('#result').innerHTML = `<h1 class="${win || scoreRun ? '' : 'lose'}">${head}</h1>
-    <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
+    <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${raidLines}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
     <div class="rw">${o.items.map(([k, v]) => `<div><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
     <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div>`;
   $('#result').hidden = false;
@@ -326,10 +369,9 @@ register('battle', {
     };
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
-      $('#dps').classList.toggle('open', dpsOpen);
-      $('#bDps').innerHTML = `DPS ${icon(dpsOpen ? 'fold' : 'open')}`;
+      dpsLabel();
     };
-    $('#bDps').innerHTML = `DPS ${icon(dpsOpen ? 'fold' : 'open')}`;
+    $('#cv').onpointerdown = () => b?.raid && b.phase === 'fight' && raidDodge(b);
     $('#bQuit').onclick = () => {
       if (b && (b.phase === 'fight' || b.phase === 'walk')) {
         b.phase = 'lose';
@@ -344,6 +386,8 @@ register('battle', {
   },
   leave() {
     hud().hidden = true;
+    hud().classList.remove('raid');
+    $('#cv').onpointerdown = null;
     $('#result').hidden = true;
     b = null;
     view.onResize = view.onResize.filter((f) => f !== onResize);

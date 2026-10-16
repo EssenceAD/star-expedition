@@ -232,9 +232,9 @@ export const CONFIG = {
     /** 요일 던전 (KST 요일 0=일): 보상 종류 · 하루 3 · 단계 1~5 (강함 = 단계 × step) */
     day: { tries: 3, levels: 5, step: 12, kinds: ['all', 'exp', 'gold', 'enh', 'exp', 'gold', 'enh'] as string[], exp: 6, gold: 20000, enh: 30 },
     /** 레이드(협동 8인 = 내 4 + AI 4): 하루 3 · 드래곤 강함 · 보상 티어 재료 · 장비(영웅 이상) */
-    raid: { tries: 3, add: 12, hp: 160, atk: 2.4, tierMat: 6, gearGrade: 3, limit: 150 },
+    raid: { tries: 3, add: 12, hp: 320, atk: 2.4, tierMat: 6, gearGrade: 3, limit: 150 },
     /** 월드 보스 (공용 체력 · 1단계는 로컬 + AI 기여): 하루 3 · 한 판 60초 · 체력 = base × grow^주 · AI 기여(시간당) · 보상(내 피해 순위 칸) */
-    world: { tries: 3, sec: 60, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [300, 150, 80, 40] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
+    world: { tries: 3, sec: 60, partBase: 6, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [300, 150, 80, 40] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
     /** 결투장 3리그: 하루 5판 · 승점 · 리그 단계 · 영광의 리그 열리는 시간(KST) · 최후의 리그 해금 점수 · 리그 코인 */
     arena: { tries: 5, win: 25, lose: -12, start: 1000, tiers: [[0, '동'], [1100, '은'], [1250, '금'], [1450, '별빛'], [1700, '전설']] as [number, string][], gloryHours: [[12, 14], [19, 23]] as number[][], lastUnlock: 1250, coin: { win: 30, lose: 10 } },
     /** 영웅 외전: 영웅마다 3막 (마지막 = 보스) · 강함 = 영웅 레벨 기준 · 클리어 보상: 전용 보물 해금 · 그 영웅 전용 무기 조각 · 별가루 */
@@ -259,6 +259,53 @@ export const CONFIG = {
     cloud: { pushSec: 60, emailDomain: 'players.legacy-of-adventure.app', guestPrefix: 'g_' },
     /** 월드 채팅: 보관 줄 수 · 내 글 길이 */
     chat: { keep: 60, max: 60 },
+  },
+  /**
+   * 보스 전장 (레이드 8인 · 월드 보스 · 길드 레이드 — 스토리와 다른 화면) · 형철 10/17 지시 ①~⑥
+   *  보스는 오른쪽 절반을 채우는 거대 크기 · 부위 3개(체력 = 보스 최대 체력 × hp) · 바닥 위/아래 2줄 · 줄 단위 경고 → 탭 한 번으로 줄 바꿔 피하기
+   *  그로기 게이지 → 다운 + 협공 컷인 · 체력 70%·30% 페이즈 전환 · 다층 배경 · 큰 공격 흔들림 · 필살기 줌인
+   */
+  raidArena: {
+    /** 보스: 화면 키(논리 px) · 가운데 x (너비 비율) · 발 y */
+    bossH: 400, bossX: 0.75, bossY: 330,
+    /** 두 줄 발 y · 파티 A(내 파티) x · 파티 B(AI·뒤쪽) x — 줄은 처음에 A 위 / B 아래 */
+    lanes: [218, 280] as number[],
+    aX: [372, 330, 288, 246] as number[],
+    bX: [196, 154, 112, 70] as number[],
+    /** 줄 바꿀 때 걸리는 시간(초) */
+    laneMove: 0.25,
+    /** 피해 순위에 보이는 수 (8명 다 보이면 아래 줄 영웅을 가림) */
+    rankShow: 5,
+    /** 부위: 이름 · 체력 비율 · 그림 안 자리(보스 그림 기준 비율: 가운데에서 x · 발에서 위로 y · 폭 · 높이) · 부수면 사라지는 패턴 */
+    parts: [
+      { key: 'arm', name: '팔', hp: 0.16, box: [-0.36, 0.62, 0.3, 0.26], pattern: 'laneSlam' },
+      { key: 'head', name: '머리', hp: 0.12, box: [0.02, 0.9, 0.26, 0.2], pattern: 'beam' },
+      { key: 'core', name: '코어', hp: 0.2, box: [0.0, 0.55, 0.24, 0.22], pattern: 'nova' },
+    ] as { key: string; name: string; hp: number; box: number[]; pattern: string }[],
+    /** 패턴: 몇 초마다 · 경고 시간 · 배수 · 줄('one' = 내 파티가 있는 줄 하나 · 'both' = 두 줄 차례로) · 문구 */
+    patterns: {
+      laneSlam: { every: 7, warn: 1.8, mult: 2.6, lanes: 'one', text: '팔을 높이 듭니다 — 줄 내려찍기' },
+      beam: { every: 10, warn: 2.0, mult: 3.2, lanes: 'one', text: '머리에 빛이 모입니다 — 줄 광선' },
+      nova: { every: 14, warn: 2.4, mult: 1.8, lanes: 'both', text: '코어가 맥동합니다 — 두 줄 차례로 폭발' },
+      rage: { every: 8, warn: 1.5, mult: 3.0, lanes: 'one', text: '분노한 일격 — 피하세요!' },
+    } as Record<string, { every: number; warn: number; mult: number; lanes: 'one' | 'both'; text: string }>,
+    /** 페이즈: 체력 이 비율 아래로 → 다음 페이즈 (패턴 순서 · 빨라짐 배수) */
+    phases: [0.7, 0.3] as number[],
+    phasePatterns: [['laneSlam', 'beam'], ['laneSlam', 'nova', 'beam'], ['rage', 'nova', 'laneSlam', 'beam']] as string[][],
+    phaseSpeed: [1, 1.2, 1.45] as number[],
+    phaseSec: 1.8,
+    /** 그로기: 최대 · 평타 한 번 · 스킬 한 번 · 기절 효과 · 직접 피하기 · 다운 시간 · 다운 중 받는 피해 배수 · 다운 뒤 최대 늘어남 */
+    groggy: { max: 600, hit: 1, skill: 8, stun: 30, dodge: 50, dur: 6, dmgMult: 1.5, grow: 1.3 },
+    /** 피하기: AUTO일 때 내 파티 자동 피하기 확률 · AI 파티 · 직접 피하면 공격력 보너스 */
+    autoDodge: 0.7,
+    aiDodge: 0.6,
+    dodgeBonus: { atk: 0.2, dur: 5 },
+    /** 카메라: 필살기 줌 · 페이즈 전환 클로즈업 */
+    zoom: { ult: 1.15, ultSec: 0.55, phase: 1.4 },
+    /** 다층 배경: 겹 수 · 겹마다 흐르는 속도 · 크기 */
+    parallax: [[0.03, 1.25], [0.08, 1.1], [0.18, 1.0]] as number[][],
+    /** 보스 그림 (형철 지시: ChatGPT로 부서지기 전·후 두 장) — have=false면 안 불러옴(404 방지) · 그동안 골렘 시트 + 코드로 부서진 모양 */
+    art: { have: false as boolean, intact: 'raidboss/intact.png', broken: 'raidboss/broken.png' },
   },
   /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
   econ: {
