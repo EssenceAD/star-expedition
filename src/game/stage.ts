@@ -66,28 +66,29 @@ function waveText(st: StageId): string {
   return src[st.s - 1];
 }
 export function buildMobs(st: StageId): MobSpec[][] {
-  const p = powIdx(st);
+  return mobsAt(powIdx(st), waveText(st), st.c);
+}
+/** 강함 지수 p · 웨이브 글자 · 장(이름·색·보스 패턴) · 배수(정예·레이드) → 적 입력 (스토리·토벌·탑·던전 공용) */
+export function mobsAt(p: number, waves: string, chapter: number, o: { hp?: number; atk?: number; boss?: string; patterns?: MobSpec['patterns'] } = {}): MobSpec[][] {
   const g = Math.pow(C.grow, p);
-  const cm = CHAPTER_MOBS[st.c - 1];
-  return waveText(st)
-    .split('|')
-    .map((w) =>
-      [...w].map((ch): MobSpec => {
-        const kind = MOB_KINDS[KIND[ch]];
-        const boss = kind.id === 'golem';
-        const bm = boss ? C.boss : { hp: 1, atk: 1, def: 1 };
-        return {
-          kind, boss, name: boss ? cm.boss : cm.names[kind.id as 'slime'],
-          hp: Math.round(C.mob.hp * kind.hp * bm.hp * g),
-          atk: Math.round(C.mob.atk * kind.atk * bm.atk * g),
-          def: Math.round(C.mob.def * kind.def * bm.def * g),
-          rate: kind.rate,
-          tint: (st.c - 1) % T.battle.mobTint.length,
-          patterns: boss ? cm.patterns.map((k) => PATTERNS[k]) : undefined,
-          portrait: boss ? 'boss_golem' : undefined,
-        };
-      }),
-    );
+  const cm = CHAPTER_MOBS[(chapter - 1) % CHAPTER_MOBS.length];
+  return waves.split('|').map((w) =>
+    [...w].map((ch): MobSpec => {
+      const kind = MOB_KINDS[KIND[ch]];
+      const boss = kind.id === 'golem';
+      const bm = boss ? C.boss : { hp: 1, atk: 1, def: 1 };
+      return {
+        kind, boss, name: boss ? (o.boss ?? cm.boss) : cm.names[kind.id as 'slime'],
+        hp: Math.round(C.mob.hp * kind.hp * bm.hp * g * (o.hp ?? 1)),
+        atk: Math.round(C.mob.atk * kind.atk * bm.atk * g * (o.atk ?? 1)),
+        def: Math.round(C.mob.def * kind.def * bm.def * g),
+        rate: kind.rate,
+        tint: (chapter - 1) % T.battle.mobTint.length,
+        patterns: boss ? (o.patterns ?? cm.patterns.map((k) => PATTERNS[k])) : undefined,
+        portrait: boss ? 'boss_golem' : undefined,
+      };
+    }),
+  );
 }
 /** 지금 편성으로 영웅 입력 */
 /** 파티를 위치 순서(전방 → 중앙 → 후방)로 · 같은 위치 안에서는 편성 순서 그대로 */

@@ -2,6 +2,7 @@
 //  v1 = 파일럿 (최고 별 · 클리어 수) → v2 = 1단계 A (재화 · 영웅 · 편성 앞2/뒤2 · 스테이지 · 소탕 · 방치)
 //  → v3 = STAR_PLAN_v2 §1 (편성 = 영웅 4명 목록(위치는 직업으로 자동) · 원정대 레벨 · 행동력 · 부스터 · 소탕 없앰 → 반복 전투)
 //  → v4 = §2 B (영웅 각성·별·스킬 레벨·초월·전용 무기·장비 칸 · 가방(장비·룬) · 상점 기록)
+//  → v5 = §3 C (하루 도전 수 · 탑 · 월드 보스 · 결투장 · 영웅 외전·전용 보물 · 이정표)
 import { CONFIG } from '../config';
 import { getPref, setPref } from '../core/save';
 
@@ -60,8 +61,8 @@ export interface StageRec {
   bestDps: number;
   mvp: string;
 }
-export interface SaveV4 {
-  version: 4;
+export interface SaveV5 {
+  version: 5;
   createdAt: number;
   savedAt: number;
   /** 마지막으로 본 시각 (방치 보상 계산) */
@@ -94,9 +95,23 @@ export interface SaveV4 {
   /** 상점: 무료 소환 쓴 날 · 산 꾸러미 · 영웅별 전용 무기 조각 */
   shop: { freeDay: string; packs: string[] };
   exShards: Record<string, number>;
+  /** C덩어리: 오늘 쓴 도전 수 (콘텐츠 키 → 수) */
+  daily: { key: string; n: Record<string, number> };
+  /** 도전의 탑: 최고 층 · 이번 주 최고 층 */
+  tower: { best: number; week: string; weekBest: number };
+  /** 월드 보스: 이번 주 · 내 누적 피해 · 내 최고 한 판 */
+  world: { week: string; my: number; best: number };
+  /** 결투장: 점수 · 최고 · 승패 · 최근 기록 */
+  arena: { score: number; best: number; win: number; lose: number; log: { league: string; opp: string; win: boolean; at: number }[] };
+  /** 영웅 외전: 영웅별 깬 막 수 · 전용 보물 해금 */
+  side: Record<string, number>;
+  treasure: Record<string, boolean>;
+  /** 이정표: 받은 것 · 콘텐츠별 이긴 수 */
+  miles: string[];
+  wins: Record<string, number>;
 }
-export type Save = SaveV4;
-export const SAVE_VERSION = 4;
+export type Save = SaveV5;
+export const SAVE_VERSION = 5;
 export const newHero = (): HeroSave => ({ lv: 1, exp: 0, awaken: 0, star: 1, skill: [1, 1, 1], trans: [], ex: 0, gear: { weapon: null, armor: null, acc1: null, acc2: null } });
 export const PARTY_MAX = 4;
 
@@ -105,12 +120,14 @@ export function newSave(now = Date.now()): Save {
   const heroes: Record<string, HeroSave> = {};
   for (const id of CONFIG.start.heroes) heroes[id] = newHero();
   return {
-    version: 4, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
+    version: 5, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
     acc: { name: CONFIG.start.name, lv: 1, exp: 0 }, sta: { n: CONFIG.stamina.base, at: now }, boostUntil: 0,
     cur: { gold: CONFIG.start.gold, stardust: CONFIG.start.stardust },
     heroes, party: [...CONFIG.start.party], stages: {}, seen: {},
     day: { key: dayKey(now), runs: 0 }, pilot: { clears: 0, best: 0 },
     items: {}, nextUid: 1, bagSize: CONFIG.gear.bag.start, shop: { freeDay: '', packs: [] }, exShards: {},
+    daily: { key: '', n: {} }, tower: { best: 0, week: '', weekBest: 0 }, world: { week: '', my: 0, best: 0 },
+    arena: { score: CONFIG.content.arena.start, best: CONFIG.content.arena.start, win: 0, lose: 0, log: [] }, side: {}, treasure: {}, miles: [], wins: {},
   };
 }
 /** 옛 저장 → 지금 버전 (없거나 망가지면 새로) */
@@ -123,7 +140,7 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.pilot = { clears: Number(d.clears) || 0, best };
     return s;
   }
-  if (d.version === 2 || d.version === 3 || d.version === 4) {
+  if (d.version >= 2 && d.version <= 5) {
     const base = newSave(now);
     const s = { ...base, ...(d as unknown as Save) };
     s.cur = { ...base.cur, ...s.cur };
@@ -145,7 +162,9 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.bagSize ??= base.bagSize;
     s.shop ??= base.shop;
     s.exShards ??= {};
-    s.version = 4;
+    // v4 → v5: 콘텐츠 칸
+    for (const k of ['daily', 'tower', 'world', 'arena', 'side', 'treasure', 'miles', 'wins'] as const) (s as unknown as Record<string, unknown>)[k] ??= structuredClone(base[k]);
+    s.version = 5;
     if (!Array.isArray(s.party) || !s.party.length) s.party = [...base.party];
     s.party = s.party.filter((id) => s.heroes[id]).slice(0, PARTY_MAX);
     return s;

@@ -33,3 +33,11 @@ export function buyPack(id: string, s: Save = S): 'poor' | 'ok' | 'done' | 'none
   s.shop.packs.push(id);
   return 'ok';
 }
+/** 특수 재화 상점 (결투장·탑 코인) */
+export function buyCoin(id: string, s: Save = S): 'poor' | 'ok' | 'none' {
+  const it = SH.coins.find((x) => x.id === id);
+  if (!it) return 'none';
+  if (!spend(it.coin, it.price, s)) return 'poor';
+  give(it.give, s);
+  return 'ok';
+}

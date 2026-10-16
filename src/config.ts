@@ -38,6 +38,8 @@ export const CONFIG = {
     autoHealAt: 0.65,
     /** 위치 3구역 (킹스레이드 문법: 직업마다 고정) — 파티를 전방 → 중앙 → 후방 순으로 세워 이 4자리에 (화면 왼쪽 기준 x · 발 y) · 대각선으로 엇갈려 안 가림 */
     places: [[430, 282], [380, 238], [300, 282], [250, 238]] as [number, number][],
+    /** 레이드 8인 자리 (내 4 + AI 4, 내 파티가 앞) */
+    places8: [[480, 282], [440, 238], [395, 282], [355, 238], [295, 282], [255, 238], [210, 282], [170, 238]] as [number, number][],
     /** 같은 구역이 비면 생기는 틈 (구역이 바뀔 때마다 이만큼 더 뒤로) */
     zoneGap: 18,
     /** 적 자리 (화면 오른쪽 끝에서 뺀 x · 발 y) */
@@ -207,7 +209,38 @@ export const CONFIG = {
       { id: 'trans', name: '초월석 ×1', give: { transStone: 1 }, dust: 300 },
       { id: 'exShard', name: '전용 무기 조각 ×10 (고른 영웅)', give: { exShard: 10 }, dust: 400 },
     ] as { id: string; name: string; give: Record<string, number>; gold?: number; dust?: number }[],
+    /** 특수 재화 상점 (결투장 코인 · 탑 코인 · 길드 코인은 D) */
+    coins: [
+      { id: 'ar_awaken', coin: 'arenaCoin', price: 100, name: '각성석 ×5', give: { awakenStone: 5 } },
+      { id: 'ar_ticket', coin: 'arenaCoin', price: 60, name: '옵션 티켓 ×1', give: { optTicket: 1 } },
+      { id: 'tw_trans', coin: 'towerCoin', price: 80, name: '초월석 ×1', give: { transStone: 1 } },
+      { id: 'tw_shard', coin: 'towerCoin', price: 60, name: '전용 무기 조각 ×5', give: { exShard: 5 } },
+      { id: 'tw_book', coin: 'towerCoin', price: 40, name: '스킬북 ×1', give: { skillBook: 1 } },
+    ] as { id: string; coin: string; price: number; name: string; give: Record<string, number> }[],
     packs: [{ id: 'starter', name: '초보 원정대 꾸러미', give: { gold: 50000, enh: 50, exp: 20, skillBook: 3 }, dust: 500, once: true }] as { id: string; name: string; give: Record<string, number>; dust: number; once: boolean }[],
+  },
+  /**
+   * C덩어리 콘텐츠 (STAR_PLAN_v2 §3) — 하루 도전 수 · 강함(스테이지 강함 지수 p에 더함) · 보상
+   */
+  content: {
+    /** 토벌: 깬 장의 보스 재도전 · 하루 5 · 강함 = 그 장 x-10 + add · 보상: 강화석·장비(확률↑)·전용 무기 조각 */
+    hunt: { tries: 5, add: 6, enh: 15, gearChance: 0.8, gearDiff: 1, shard: { chance: 0.3, n: 2 }, cost: 0 },
+    /** 상급 던전: 장별 장비 던전 · 하루 5 · 정예 3웨이브 · 장비 확정(어려움 가중치) */
+    dungeon: { tries: 5, add: 10, gear: 1, gearDiff: 2, waves: ['ggw', 'wgwg', 'wwww'] as string[] },
+    /** 도전의 탑 (「체크인」 심연: 층마다 ×grow · bossEvery층 보스): 1층 = 강함 bossBase · 처음 깬 층 보상 · 주간 최고 층 */
+    tower: { grow: 1.07, base: 4, bossEvery: 5, dust: [10, 2] as number[], runeEvery: 5, coin: 5, bossCoin: 20 },
+    /** 요일 던전 (KST 요일 0=일): 보상 종류 · 하루 3 · 단계 1~5 (강함 = 단계 × step) */
+    day: { tries: 3, levels: 5, step: 12, kinds: ['all', 'exp', 'gold', 'enh', 'exp', 'gold', 'enh'] as string[], exp: 6, gold: 20000, enh: 30 },
+    /** 레이드(협동 8인 = 내 4 + AI 4): 하루 3 · 드래곤 강함 · 보상 티어 재료 · 장비(영웅 이상) */
+    raid: { tries: 3, add: 12, hp: 160, atk: 2.4, tierMat: 6, gearGrade: 3, limit: 150 },
+    /** 월드 보스 (공용 체력 · 1단계는 로컬 + AI 기여): 하루 3 · 한 판 60초 · 체력 = base × grow^주 · AI 기여(시간당) · 보상(내 피해 순위 칸) */
+    world: { tries: 3, sec: 60, hp: 5e8, grow: 1.6, aiPerHour: 0.004, add: 20, rewardDust: [300, 150, 80, 40] as number[], rankCut: [0.01, 0.1, 0.3, 1] as number[] },
+    /** 결투장 3리그: 하루 5판 · 승점 · 리그 단계 · 영광의 리그 열리는 시간(KST) · 최후의 리그 해금 점수 · 리그 코인 */
+    arena: { tries: 5, win: 25, lose: -12, start: 1000, tiers: [[0, '동'], [1100, '은'], [1250, '금'], [1450, '별빛'], [1700, '전설']] as [number, string][], gloryHours: [[12, 14], [19, 23]] as number[][], lastUnlock: 1250, coin: { win: 30, lose: 10 } },
+    /** 영웅 외전: 영웅마다 3막 (마지막 = 보스) · 강함 = 영웅 레벨 기준 · 클리어 보상: 전용 보물 해금 · 그 영웅 전용 무기 조각 · 별가루 */
+    side: { acts: 3, add: 0, shards: 10, dust: 100 },
+    /** 이정표 보상 별가루 (단계마다) */
+    milestoneDust: 100,
   },
   /** 경제 시뮬 (tests/economy.test.ts → docs/ECONOMY.md): 하루 플레이 행동력 비율 · 하루 별가루로 행동력 사기 횟수 · 하루 접속 수 */
   econ: {

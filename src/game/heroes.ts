@@ -63,6 +63,8 @@ export function fullStats(id: string, s: Save = S): { st: Stats; raw: RawCaps } 
   }
   for (const t of traitsOf(id, s)) addP(t.k === 'atk' ? 'atkPct' : t.k === 'hp' ? 'hpPct' : t.k === 'def' ? 'defPct' : t.k, t.v);
   addP('atkPct', exAtk(h.ex));
+  // 전용 보물 (영웅 외전 클리어로 해금)
+  if (s.treasure?.[id]) addP('atkPct', CONFIG.treasure.atkPct);
   st.hp = Math.round((st.hp * starM + (flat.hp ?? 0)) * (1 + (pct.hpPct ?? 0)));
   st.atk = Math.round((st.atk * starM + (flat.atk ?? 0)) * (1 + (pct.atkPct ?? 0)));
   st.def = Math.round((st.def * starM + (flat.def ?? 0)) * (1 + (pct.defPct ?? 0)));

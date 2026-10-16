@@ -9,6 +9,7 @@ import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
 import { stageCost, useStamina } from '../game/account';
+import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
 import { elemColor, icon, iconText } from '../theme/tokens';
@@ -21,6 +22,10 @@ import { view } from './view';
 const C = CONFIG.story;
 let b: Battle | null = null;
 let st: StageId = { c: 1, s: 1, d: 0 };
+/** 콘텐츠 전투 (없으면 스토리) */
+let run: Run | null = null;
+/** 최후의 리그 3판 기록 */
+let series = { wins: 0, losses: 0 };
 let shown = false;
 /** 전투 전 대사 중 (파티가 필드에 선 채로 · 진행 멈춤) */
 let talking = false;
@@ -38,6 +43,7 @@ const BUFF = (u: Unit): [string, string][] =>
 function buildBar() {
   const bar = $('#bar');
   bar.innerHTML = b!.heroes
+    .filter((u) => !u.ai)
     .map((u, i) => {
       const h = u.hero!.def;
       return `<div class="hc" data-h="${i}"><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div>
@@ -107,7 +113,7 @@ function syncHud() {
 function setup() {
   const keepAuto = b?.auto ?? getPref('auto', false);
   const keepSpeed = b?.speed ?? 1;
-  b = makeBattle(buildStage(st), { w: view.w });
+  b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
   b.auto = keepAuto;
   b.speed = keepSpeed;
   b.cutIns = flag('cutIn') ? 'big' : 'off';
@@ -122,7 +128,75 @@ function setup() {
   if (boss?.portrait) $('#boss .bp').style.backgroundImage = `url(${portraitUrl(boss.portrait)})`;
 }
 
+/** 콘텐츠 결과 (토벌·던전·탑·요일·레이드·월드 보스·결투장·외전) */
+function showRunResult() {
+  const bb = b!;
+  const r = run!;
+  let win = bb.phase === 'win';
+  // 최후의 리그: 3판 중 2판 — 아직 안 끝났으면 다음 판
+  if (r.mode === 'arena' && r.arg === 'last') {
+    series[win ? 'wins' : 'losses']++;
+    if (series.wins < 2 && series.losses < 2) {
+      const leg = (r.leg ?? 0) + 1;
+      $('#result').innerHTML = `<h1 class="${win ? '' : 'lose'}">${win ? '이번 판 승리' : '이번 판 패배'}</h1><p class="why">최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}</p><div class="row"><button class="btn hi" data-a="leg">다음 판 ${icon('next')}</button></div>`;
+      $('#result').hidden = false;
+      $('#result [data-a="leg"]').onclick = () => {
+        run = { ...r, leg };
+        $('#result').hidden = true;
+        b = null;
+        setup();
+      };
+      return;
+    }
+    win = series.wins >= 2;
+  }
+  const o = finishRun(r, { win: win && !(r.mode === 'world'), dealt: r.mode === 'world' ? bb.stats.bossDealt : bb.stats.dealt, heroes: bb.heroes.filter((u) => !u.ai).map((u) => u.hero!.def.id) });
+  persist();
+  const mvp = mvpOf(bb);
+  const head = r.mode === 'world' ? '결과' : win ? '승리!' : bb.why === 'time' ? '시간 초과' : '패배…';
+  const nextFloor = r.mode === 'tower' && win ? { ...r, arg: +r.arg + 1 } : r.mode === 'side' && win && (r.sub ?? 0) < CONFIG.content.side.acts ? { ...r, sub: (r.sub ?? 1) + 1 } : null;
+  const left = triesText(r);
+  $('#result').innerHTML = `<h1 class="${win || r.mode === 'world' ? '' : 'lose'}">${head}</h1>
+    <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
+    <div class="rw">${o.items.map(([k, v]) => `<div><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
+    <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div>`;
+  $('#result').hidden = false;
+  $$('#result [data-a]').forEach(
+    (btn) =>
+      (btn.onclick = () => {
+        const a = btn.dataset.a;
+        if (a === 'lobby') go('lobby', {}, false);
+        else if (a === 'portal') go('portal', {}, false);
+        else if (a === 'again') beginRun(r);
+        else if (a === 'nextrun' && nextFloor) beginRun(nextFloor);
+      }),
+  );
+}
+/** 콘텐츠 전투 시작: 도전 수 쓰고 → 파티를 세우고 → (외전 대사) → 전투 */
+function beginRun(r: Run) {
+  const lock = lockOf(r);
+  if (lock || !useTry(r)) {
+    modal(`${icon('lock')} ${MODE_NAME[r.mode]}`, `<p class="dim">${esc(lock ?? '지금은 못 들어가요')}</p>`, [['확인', null, true]]);
+    return;
+  }
+  persist();
+  run = { ...r, leg: 0 };
+  series = { wins: 0, losses: 0 };
+  $('#result').hidden = true;
+  b = null;
+  setup();
+  if (r.mode === 'side') {
+    const id = String(r.arg);
+    const h = heroOf(id);
+    const act = r.sub ?? 1;
+    const lines: Line[] = act === 1 ? [['narr', `${h.name} 외전 — 「${h.title}」`], [id, `${h.concept.split('.')[0]}… 그 이야기를 들려줄게.`]] : act === CONFIG.content.side.acts ? [[id, '여기가 마지막이야. 같이 끝내자.']] : [[id, '조금만 더 가 보자.']];
+    talking = true;
+    playTalk(lines, () => (talking = false));
+  }
+}
+
 function showResult() {
+  if (run) return showRunResult();
   const bb = b!;
   const win = bb.phase === 'win';
   const r = $('#result');
@@ -201,6 +275,7 @@ export const repeatText = (h: NonNullable<ReturnType<typeof repeatBattle>>) =>
   `반복 전투 ${h.runs}판: 금화 +${fmt(h.gold)} · 경험치 +${fmt(h.exp)}${h.enh ? ` · 강화석 +${h.enh}` : ''}${h.gear ? ` · 장비 ${h.gear}개` : ''}${h.ups.length ? ` · 레벨 업 ${h.ups.map((id) => heroOf(id).name).join('·')}` : ''}${h.accUp ? ' · 원정대 레벨 업!' : ''}`;
 /** 행동력 쓰고 → 파티를 필드에 세우고 → 대사(있으면) → 전투 시작 */
 function begin(s: StageId) {
+  run = null;
   const cost = firstRun ? 0 : stageCost(s.d);
   const use = useStamina(cost);
   if (!use.ok) {
@@ -263,7 +338,8 @@ register('battle', {
     view.onResize.push(onResize);
     firstRun = !!p.first;
     talking = false;
-    begin(p.stage as StageId);
+    if (p.run) beginRun(p.run as Run);
+    else begin(p.stage as StageId);
   },
   leave() {
     hud().hidden = true;

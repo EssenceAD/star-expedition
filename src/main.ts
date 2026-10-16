@@ -11,6 +11,7 @@ import { $, currentScreen, go, tickChat } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
 import './ui/screensB';
+import './ui/screensC';
 import { battleNow } from './ui/battle';
 
 applyTheme();

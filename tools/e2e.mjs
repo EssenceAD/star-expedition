@@ -126,6 +126,48 @@ await click('[data-auto]');
 await shot('hero_info');
 await click('[data-tab="skill"]');
 await shot('hero_skill');
+// C덩어리: 모험 지도 → 콘텐츠(토벌·탑·레이드·월드 보스·결투장·외전·이정표) → 전투 준비 → 전투
+await p.evaluate(() => {
+  const S = window.__S();
+  for (const id of Object.keys(S.heroes)) S.heroes[id].lv = 30;
+  for (let n = 1; n <= 10; n++) S.stages[`1-${n}-0`] = { stars: 3, clears: 1, bestTime: 60, bestDps: 1, mvp: 'woongs' };
+});
+await click('[data-back]');
+await click('[data-back]');
+await p.waitForSelector('[data-screen="lobby"]');
+await click('[data-go="adventure"]');
+await shot('field_map');
+await click('[data-portal="tower"]');
+await p.waitForSelector('[data-screen="portal"]');
+await shot('portal_tower');
+async function content(tab, label, sel = '[data-run]') {
+  await click(`[data-tab="${tab}"]`);
+  await shot(`portal_${label}`);
+  await click(sel);
+  await p.waitForSelector('[data-screen="prep"]');
+  await click('[data-runstart]');
+  await p.waitForSelector('[data-screen="battle"]');
+  await p.waitForTimeout(300);
+  if (await p.locator('.talk').count()) await skipTalk();
+  await p.evaluate(() => {
+    const b = window.__b();
+    b.auto = true;
+    b.speed = 2;
+  });
+  await p.waitForTimeout(3000);
+  await shot(`${label}_battle`);
+  await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 150000 });
+  if (await p.locator('#result [data-a="leg"]').count()) return shot(`${label}_leg`);
+  await shot(`${label}_result`);
+  await click('#result [data-a="portal"]');
+  await p.waitForSelector('[data-screen="portal"]');
+}
+await content('raid', 'raid');
+await content('arena', 'arena');
+await content('world', 'world');
+await content('side', 'side');
+await click('[data-tab="miles"]');
+await shot('portal_miles');
 await br.close();
 srv.close();
 console.log(errors.length ? `오류 ${errors.length}개:\n${errors.join('\n')}` : '오류 없음', `· 사진 ${n}장 → ${out}`);

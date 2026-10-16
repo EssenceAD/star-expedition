@@ -8,6 +8,8 @@ import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/account';
 import { freeSummonLeft } from '../game/gear';
+import { buildRun, lockOf, MILESTONES, milesReady, triesText, type Run } from '../game/content';
+import { runTitle } from './screensC';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
 import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
@@ -74,22 +76,24 @@ register('lobby', {
         <b class="sm">${icon('mission')} 진행 중</b>
         <button class="btn qrow" data-next>${icon('adventure')} 다음: ${stageName(ns)} ${CHAPTERS[ns.c - 1].name}</button>
         <button class="btn qrow" data-soon="일일 임무|D">${icon('mission')} 일일 임무 0/5</button>
+        <button class="btn qrow" data-portal="miles">${icon('star')} 이정표 ${S.miles.length}/${MILESTONES.length}${milesReady().length ? ` <em class="badge">${milesReady().length}</em>` : ''}</button>
         <span class="sm b">${icon('star')} 이벤트</span>
         <button class="btn qrow" data-soon="이벤트|D">오픈 기념 (준비 중)</button>
         <div class="bondl">${activeBonds(partyIds()).map((x) => `<span class="chip on">${x.name}</span>`).join('')}</div>
       </div>
       <div class="bigs">
-        <button class="round" data-soon="월드 보스|C">${icon('world')}<span>월드 보스</span></button>
-        <button class="round" data-soon="레이드|C">${icon('raid')}<span>레이드</span></button>
+        <button class="round" data-portal="world">${icon('world')}<span>월드 보스</span></button>
+        <button class="round" data-portal="raid">${icon('raid')}<span>레이드</span></button>
         <button class="round main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
       </div>
       <div class="dock">
-        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['soon:미션|D', '미션', 'mission'], ['soon:업적|D', '업적', 'achieve'], ['soon:친구|D', '친구', 'friend'], ['shop', '상점', 'shop'], ['soon:길드|D', '길드', 'guild'], ['soon:랭킹|D', '랭킹', 'ranking'], ['title', '설정', 'settings']]
+        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['soon:미션|D', '미션', 'mission'], ['soon:업적|D', '업적', 'achieve'], ['soon:친구|D', '친구', 'friend'], ['shop', '상점', 'shop'], ['soon:길드|D', '길드', 'guild'], ['soon:랭킹|D', '랭킹', 'ranking'], ['title', '설정', 'settings']]
           .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
           .join('')}
       </div>`;
     $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never)));
     $('[data-next]', root).onclick = () => go('prep', { stage: ns });
+    $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-soon]', root).forEach((b) => (b.onclick = () => comingSoon(...(b.dataset.soon!.split('|') as [string, string]))));
     offlinePopup();
   },
@@ -103,7 +107,7 @@ function offlinePopup() {
   if (!o) return;
   const r = o.reward;
   modal(`${icon('offline')} 그동안 원정대는…`, `<p class="dim">${fmtTime(o.away)} 동안 ${stageName(o.stage)}에서 사냥했어요${o.away > o.seconds ? ` (최대 ${CONFIG.offline.maxHours}시간까지)` : ''}.</p>
-    <div class="rw row">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="panel col">${icon(k as string)}<span class="xs">${CUR_NAME[k as string]}</span><b class="gold">+${fmt(v as number)}</b></div>`).join('')}</div>`, [
+    <div class="rw row">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="panel col">${icon(k as string)}<span class="xs">${k === 'exp' ? '영웅 경험치' : CUR_NAME[k as string]}</span><b class="gold">+${fmt(v as number)}</b></div>`).join('')}</div>`, [
     ['모두 받기', () => {
       const ups = claimOffline(o);
       persist();
@@ -113,7 +117,25 @@ function offlinePopup() {
   ]);
 }
 
-// ───────── 모험 (C덩어리에서 지도 노드로) ─────────
+// ───────── 모험: 필드 지도 (STAR_PLAN_v2 §3 · 스테이지 = 길 위 노드 · 지금 위치에 영웅 · 지도 안 토벌·상급 던전·탑 입구) ─────────
+/** 노드 자리 (지도 안 %) — 왼쪽 아래에서 오른쪽 위로 굽이치는 길 */
+const NODES: [number, number][] = [[6, 78], [16, 58], [27, 72], [37, 50], [46, 66], [55, 42], [64, 58], [73, 34], [82, 50], [92, 26]];
+function fieldMap(c: number, d: number, sel: StageId) {
+  const ns = nextStage();
+  const here = ns.c === c && d === 0 ? ns.s : null;
+  const lead = partyIds()[0] ?? 'woongs';
+  return `<div class="fmap panel">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>
+    ${NODES.map(([x, y], i) => {
+      const id = { c, s: i + 1, d };
+      const open = unlocked(id);
+      return `<button class="node${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}${open ? '' : ' off'}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}><b>${open ? `${c}-${i + 1}` : icon('lock')}</b>${starsHtml(starsAt(id))}</button>`;
+    }).join('')}
+    ${here ? `<div class="me-pin" style="left:${NODES[here - 1][0]}%;top:${NODES[here - 1][1] - 16}%"><div class="pt s" style="background-image:url(${heroPortrait(lead)})"></div></div>` : ''}
+    <div class="gates"><button class="btn mini" data-portal="hunt">${icon('battle')} 토벌</button><button class="btn mini" data-portal="dungeon">${icon('bag')} 상급 던전</button><button class="btn mini" data-portal="tower">${icon('tower')} 도전의 탑</button></div>
+  </div>`;
+}
+
 register('adventure', {
   title: `${icon('adventure')} 모험`,
   back: () => go('lobby', {}, false),
@@ -137,11 +159,7 @@ register('adventure', {
             <div class="tabs">${CHAPTERS.map((x) => `<button class="tab${x.n === c ? ' on' : ''}" data-c="${x.n}" ${unlocked({ c: x.n, s: 1, d: 0 }) ? '' : 'disabled'}>${x.n}장</button>`).join('')}</div>
             <div class="row"><b class="grow">${c}장 · ${ch.name}${ch.waves ? '' : ' <span class="xs mute">(자리표시자)</span>'}</b>
               <div class="tabs">${C.diffName.map((n, i) => `<button class="tab${i === d ? ' on' : ''}" data-d="${i}" ${diffOpen(c, i) ? '' : 'disabled'}>${diffOpen(c, i) ? '' : icon('lock')}${n}</button>`).join('')}</div></div>
-            ${chOpen ? `<div class="stagemap">${Array.from({ length: C.stages }, (_, i) => {
-              const id = { c, s: i + 1, d };
-              const open = unlocked(id);
-              return `<button class="btn stg${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}" data-s="${i + 1}" ${open ? '' : 'disabled'}><b>${open ? '' : icon('lock')}${c}-${i + 1}${isBoss(id) ? ' 보스' : ''}</b>${starsHtml(starsAt(id))}</button>`;
-            }).join('')}</div>` : `<div class="panel mute">이전 장을 깨면 열려요</div>`}
+            ${chOpen ? fieldMap(c, d, sel) : `<div class="panel mute">이전 장을 깨면 열려요</div>`}
             <div class="xs mute">${ch.star} · 장을 깨면 별이 하나 다시 켜지고 지역 전설 영웅이 합류해요</div>
           </div>
           <div class="panel col side">
@@ -159,6 +177,7 @@ register('adventure', {
       $$('[data-c]', root).forEach((b) => (b.onclick = () => ((c = +b.dataset.c!), (sel.s = 1), draw())));
       $$('[data-d]', root).forEach((b) => (b.onclick = () => ((d = +b.dataset.d!), draw())));
       $$('[data-s]', root).forEach((b) => (b.onclick = () => ((sel.s = +b.dataset.s!), draw())));
+      $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
       $('[data-prep]', root).onclick = () => go('prep', { stage: { ...sel } });
     };
     draw();
@@ -167,10 +186,11 @@ register('adventure', {
 
 // ───────── 전투 준비 = 편성 (킹스레이드 0-4: 왼쪽 카드 격자 + 위치 탭 · 오른쪽 파티 4 + 부스터 + 행동력 + [반복 전투][전투 시작]) ─────────
 register('prep', {
-  title: (p) => (p.stage ? `${icon('battle')} 전투 준비 · ${stageName(p.stage as StageId)}` : `${icon('formation')} 편성`),
-  back: (p) => (p.stage ? go('adventure', { ...(p.stage as StageId) }, false) : go('lobby', {}, false)),
+  title: (p) => (p.run ? `${icon('battle')} 전투 준비 · ${runTitle(p.run as Run)}` : p.stage ? `${icon('battle')} 전투 준비 · ${stageName(p.stage as StageId)}` : `${icon('formation')} 편성`),
+  back: (p) => (p.run ? go('portal', { tab: (p.run as Run).mode }, false) : p.stage ? go('adventure', { ...(p.stage as StageId) }, false) : go('lobby', {}, false)),
   enter(root, p) {
     const st = p.stage as StageId | undefined;
+    const run = p.run as Run | undefined;
     let tab = 'all';
     let rep = 10;
     const draw = () => {
@@ -194,6 +214,14 @@ register('prep', {
               <div class="kv"><span>파티 전투력</span><b>${fmt(partyPower())}</b></div>
               <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<span class="chip${bonds.includes(x) ? ' on' : ''}" title="${x.members.map((m) => heroOf(m).name).join(' · ')} (${x.need}명)">${x.name}</span>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
             </div>
+            ${run ? `<div class="panel col">
+              <b>${runTitle(run)}</b>
+              <div class="kv"><span>오늘 남은 도전</span><b>${triesText(run) || '제한 없음'}</b></div>
+              <div class="kv"><span>적</span><b>${esc(buildRun(run).waves.flat().filter((m) => m.boss)[0]?.name ?? `${buildRun(run).waves.length}웨이브`)}</b></div>
+              ${run.mode === 'raid' ? `<span class="xs dim">AI 동료: ${(buildRun(run).allies ?? []).map((h) => h.def.name).join(' · ')}</span>` : ''}
+              <button class="btn hi big" data-runstart ${lockOf(run) || !ids.length ? 'disabled' : ''}>전투 시작</button>
+              ${lockOf(run) ? `<span class="xs bad">${esc(lockOf(run)!)}</span>` : ''}
+            </div>` : ''}
             ${st ? `<div class="panel col">
               <div class="row"><span class="grow sm">${icon('booster')} 부스터 (전리품 ${CONFIG.booster.mult}배 1시간)</span><button class="btn mini${bl ? ' on' : ''}" data-boost>${bl ? fmtTime(bl) : `${icon('gold')}${fmt(CONFIG.booster.gold)}`}</button></div>
               <div class="kv"><span>행동력</span><b>${icon('stamina')} ${cost} / 보유 ${stamina()}</b></div>
@@ -233,6 +261,8 @@ register('prep', {
             draw();
           }),
       );
+      const rs = root.querySelector<HTMLElement>('[data-runstart]');
+      if (rs && run) rs.onclick = () => go('battle', { run });
       if (!st) return;
       $<HTMLSelectElement>('[data-n]', root).onchange = (e) => (rep = +(e.target as HTMLSelectElement).value);
       $('[data-boost]', root).onclick = () => {

@@ -8,7 +8,7 @@ import { descPassive, descSkill } from '../data/skills';
 import { autoEquip, bagUsed, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
 import { expNeed, fullStats, heroPower, levelCap, owned } from '../game/heroes';
-import { buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
+import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { GEAR_SLOTS, partyIds, persist, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
@@ -273,7 +273,8 @@ register('shop', {
           <div class="panel col shopc"><b>장비 소환 10+1회</b><span class="xs dim">11개 · 같은 확률</span><button class="btn hi" data-sum="11">${icon('stardust')}${fmt(sm.ten)}</button></div></div>
           <span class="xs mute">뽑기는 장비·코스튬만, 게임 재화로만 (영웅 뽑기 없음) · 전용 무기 조각은 재화·소모품</span><div class="pk" data-out></div>`;
       } else if (cat === 'costume') body = '<span class="mute">코스튬 칸 자리 (별 단계 해금·상점 코스튬 · 그림은 3단계)</span>';
-      else body = '<span class="mute">길드·리그·탑 코인 상점 자리 (C·D덩어리)</span>';
+      else
+        body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${n}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
       const after = (r: string, m: Record<string, string>) => {
@@ -284,6 +285,7 @@ register('shop', {
       };
       $$('[data-pack]', root).forEach((b) => (b.onclick = () => after(buyPack(b.dataset.pack!), { ok: '꾸러미를 받았어요', poor: '별가루가 모자라요', done: '이미 샀어요' })));
       $$('[data-item]', root).forEach((b) => (b.onclick = () => after(buyItem(b.dataset.item!), { ok: '샀어요', poor: '재화가 모자라요' })));
+      $$('[data-coin]', root).forEach((b) => (b.onclick = () => after(buyCoin(b.dataset.coin!), { ok: '샀어요', poor: '코인이 모자라요' })));
       $$('[data-hero]', root).forEach(
         (b) =>
           (b.onclick = () => {
