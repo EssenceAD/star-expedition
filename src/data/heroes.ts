@@ -401,7 +401,7 @@ const SHEETS: Record<string, AnimSet> = {
   gonu: basic('gonu'),
 };
 /** 컷인 일러스트가 있는 영웅 (public/art/cutin/<id>.png) — 없으면 초상화 확대 */
-export const CUTIN_ART = new Set(['woongs']);
+export const CUTIN_ART = new Set(['woongs', 'jaehi']);
 /** 화면 키 (논리 px) */
 const HEIGHT: Record<string, number> = { woongs: 108, ikamolly: 104, walwal: 100, warmnight: 104, gonu: 100 };
 export interface HeroArt {
