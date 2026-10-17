@@ -132,6 +132,8 @@ export interface SaveV6 {
   /** 이정표: 받은 것 · 콘텐츠별 이긴 수 */
   miles: string[];
   wins: Record<string, number>;
+  /** 레이드 한 판 최고 피해 (콘텐츠 레이드 카드 · POLISH_1017 ④) */
+  raidBest?: number;
   /** D덩어리: 한 일 세기 (오늘 · 이번 주 · 모두) — 미션·업적 */
   track: { day: string; week: string; d: Record<string, number>; w: Record<string, number>; all: Record<string, number> };
   /** 받은 미션·업적·이벤트 보상 (오늘·이번 주는 날/주가 바뀌면 비움) */

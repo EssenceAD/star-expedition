@@ -464,6 +464,11 @@
 7. 쿨다운: `brightness(0.45)`만(흑백 제거) · 덮개 그림 0.35 · 숫자 흰 글씨 + 검은 외곽선 `--sh-cdNum`
 - 도구: `tools/gif-scene.mjs bosshud`
 
+## 2-AD. POLISH ④ 영웅 정보 · 콘텐츠 레이드/월드 보스 (v0.11.5 · docs/POLISH_1017.md ④)
+- `bossCard()`(screensC): `art/<raidboss|worldboss>/anim1/r0c0.png` 200px · 패턴 칩 · 기록 줄 · 도전 버튼 · 레이드 최고 피해는 새 저장값 `S.raidBest`(finishRun · 선택 필드라 이전 저장과 호환) · 클리어 = `S.wins.raid`
+- 영웅 정보: `.body > .hlist` 남색 판(panelDeep + 테두리) · 전신 `.fbcol .fb` left 62%
+- 승리 별: 결과가 뜬 뒤 0.45초 + 0.32초 간격으로 하나씩 떨어지는 연출이라 캡처 순간에 따라 2개만 보일 수 있음 — 승리 GIF에서 3개 모두 확인
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
