@@ -45,11 +45,29 @@ const sheet: Art['sheet'] = { img: {}, cell: {}, base: {} };
 const bar = document.querySelector<HTMLElement>('#loading .ld-bar i');
 const jobs: Promise<unknown>[] = [];
 let done = 0;
+let moved = Date.now();
+// 그림 하나가 오래 걸려도 전체를 막지 않게: loadItemSec 지나면 그 그림 없이 넘어감 (PLAYTEST §1)
 const track = <T,>(p: Promise<T>) => {
-  jobs.push(p);
-  void p.finally(() => bar && (bar.style.width = `${Math.round((++done / jobs.length) * 100)}%`));
-  return p;
+  const capped = Promise.race([p, new Promise<undefined>((ok) => setTimeout(() => ok(undefined), CONFIG.ui.loadItemSec * 1000))]);
+  jobs.push(capped);
+  void capped.finally(() => {
+    moved = Date.now();
+    if (bar) bar.style.width = `${Math.round((++done / jobs.length) * 100)}%`;
+  });
+  return capped as Promise<T>;
 };
+// 막대가 loadStallSec 동안 그대로면 「다시 시도」 (새로고침)
+const stall = setInterval(() => {
+  const ld = document.getElementById('loading');
+  if (!ld) return clearInterval(stall);
+  if (Date.now() - moved < CONFIG.ui.loadStallSec * 1000 || ld.querySelector('[data-retry]')) return;
+  const b2 = document.createElement('button');
+  b2.className = 'btn hi';
+  b2.dataset.retry = '1';
+  b2.textContent = '다시 시도';
+  b2.onclick = () => location.reload();
+  ld.querySelector('.ld-tx')?.append(b2);
+}, 1000);
 if (bar) bar.classList.add('real');
 track(setPxHeights());
 track(loadInto(sheet, [...mobDirs]));

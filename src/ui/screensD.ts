@@ -10,7 +10,7 @@ import {
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { icon } from '../theme/tokens';
-import { $, $$, CUR_NAME, esc, fmt, go, modal, register, setChatOpener, syncBar, toast } from './core';
+import { $, $$, CUR_NAME, esc, fmt, go, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
 
 const SO = CONFIG.social;
 const giveText = (g: Record<string, number>) => Object.entries(g).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ');
@@ -27,7 +27,7 @@ register('mission', {
   enter(root, p) {
     let tab = (p.tab as string) ?? 'd';
     const draw = () => {
-      const tabs: [string, string][] = [['d', '일일'], ['w', '주간'], ['ev', '이벤트'], ['r', '레이드'], ['ach', '업적'], ['att', '출석']];
+      const tabs: [string, string, string][] = [['d', '일일', 'menu/dailymission'], ['w', '주간', 'menu/mission'], ['ev', '이벤트', 'icons/star'], ['r', '레이드', 'menu/raid'], ['ach', '업적', 'menu/trophy'], ['att', '출석', 'menu/achieve']];
       let body = '';
       if (tab === 'd' || tab === 'w' || tab === 'r' || tab === 'ach') {
         const k = tab as Kind;
@@ -46,7 +46,7 @@ register('mission', {
         body = `<div class="cards">${SO.attend.map((g, i) => `<div class="panel col shopc${i < S.attend.n % SO.attend.length || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}"><b>${i + 1}일째</b><span class="xs">${giveText(g)}</span></div>`).join('')}</div>
           <button class="btn hi" data-att ${attendToday() ? '' : 'disabled'}>${attendToday() ? '오늘 출석하기' : '오늘 출석 완료'}</button>`;
       }
-      root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
+      root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $$('[data-claim]', root).forEach((b) => (b.onclick = () => (claim(tab as Kind, b.dataset.claim!), after(draw, '받았어요'))));
       $$('[data-go]', root).forEach((b) => (b.onclick = () => {
@@ -68,7 +68,10 @@ register('mission', {
 export function attendPopup() {
   if (!attendToday()) return;
   const day = (S.attend.n % SO.attend.length) + 1;
-  modal(`${icon('mission')} 출석 ${day}일째`, `<p class="dim">오늘 출석 보상: ${giveText(SO.attend[day - 1])}${eventLeft() ? ` · ${SO.event.name} 별가루 ${SO.event.dust}` : ''}</p>`, [
+  // 보상 = 칸 카드(아이콘 + 수량) 가로로 (PLAYTEST §10)
+  const gifts: [string, number, string][] = Object.entries(SO.attend[day - 1]).map(([k, v]) => [k, v, CUR_NAME[k] ?? k]);
+  if (eventLeft()) gifts.push(['stardust', SO.event.dust, SO.event.name]);
+  modal(`${icon('mission')} 출석 ${day}일째`, `<div class="rw gifts">${gifts.map(([k, v, n]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${esc(n)}<b>+${fmt(v)}</b></div>`).join('')}</div>`, [
     ['받기', () => {
       attend();
       persist();
@@ -108,8 +111,8 @@ register('guild', {
           <div class="panel col"><b>${esc(gb.name)}</b><div class="xbar big"><i style="width:${(gb.hp / gb.max) * 100}%"></i></div><span class="xs dim">남은 체력 ${fmt(gb.hp)} / ${fmt(gb.max)} · 내 이번 주 피해 ${fmt(S.guild.raid)}</span></div>
           <button class="btn hi big" data-graid ${lockOf(r) ? 'disabled' : ''}>길드 레이드 도전</button>`;
       }
-      const tabs: [string, string][] = [['info', '정보·기여'], ['shop', '길드 상점'], ['chat', '길드 채팅'], ['raid', '길드 레이드']];
-      root.innerHTML = `<div class="body">${g ? `<div class="col shopcats">${tabs.map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>` : ''}<div class="col grow scroll">${body}</div></div>`;
+      const tabs: [string, string, string][] = [['info', '정보·기여', 'menu/guildhall'], ['shop', '길드 상점', 'menu/shop'], ['chat', '길드 채팅', 'menu/chat'], ['raid', '길드 레이드', 'menu/raid']];
+      root.innerHTML = `<div class="body">${g ? `<div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}</button>`).join('')}</div>` : ''}<div class="col grow scroll">${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $$('[data-join]', root).forEach((b) => (b.onclick = () => (joinGuild(b.dataset.join!), after(draw, '길드에 들어왔어요 (우편 확인)'))));
       const at = root.querySelector<HTMLElement>('[data-att]');
@@ -144,6 +147,8 @@ register('friends', {
 });
 
 // ───────── 랭킹 · 칭호 ─────────
+/** 랭킹 왼쪽 메뉴 그림 (PLAYTEST §0-4) */
+const BOARD_PIC: Record<Board, string> = { tower: 'menu/tower', world: 'menu/worldboss', arena: 'menu/arena', guild: 'menu/guildhall' };
 register('ranking', {
   title: `${icon('ranking')} 랭킹`,
   enter(root, p) {
@@ -152,7 +157,7 @@ register('ranking', {
       const got = checkTitles();
       if (got.length) persist();
       const bd = board(tab).slice(0, 13);
-      root.innerHTML = `<div class="body"><div class="col shopcats">${(Object.keys(BOARD_NAME) as Board[]).map((k) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${BOARD_NAME[k]}</button>`).join('')}</div>
+      root.innerHTML = `<div class="body"><div class="col shopcats">${(Object.keys(BOARD_NAME) as Board[]).map((k) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(BOARD_PIC[k], BOARD_NAME[k])}</button>`).join('')}</div>
         <div class="col grow scroll"><div class="panel col">${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div>
           <span class="xs dim">내 순위 ${myRank(tab) || '-'}위 · ${SO.titleTop}위 안이면 랭커 칭호 「${TITLE_OF[tab]}」 (채팅 이름 옆) · 칭호 달기는 설정</span>
           <span class="xs mute">1단계: AI 원정대 + 나 · 실유저 순위는 서버 연결 뒤</span></div></div>`;

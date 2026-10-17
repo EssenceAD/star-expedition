@@ -116,6 +116,8 @@ export const T = {
     pillOn0: '#f3d27a',
     pillOn1: '#b8862e',
     pillOnInk: '#2a1a08',
+    /** 메뉴 화면 배경 위 남색 막 (PLAYTEST §0-3: 흐리게 + 남색 40%) */
+    scrNavy: 'rgba(14,22,48,0.4)',
     cream: '#f6ecd6',
     creamInk: '#5b3a1e',
   } as Record<string, string>,
@@ -216,7 +218,7 @@ export const T = {
   radius: { sm: '3px', md: '8px', pill: '999px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
   border: { thin: '1px', base: '2px', thick: '3px', stroke: '3px' },
   /** 유리 판 뒤 흐림 */
-  fx: { glass: 'blur(6px)' } as Record<string, string>,
+  fx: { glass: 'blur(6px)', scrBlur: 'blur(6px)' } as Record<string, string>,
   /** UI 키트 그림 테두리 (public/art/ui/kit · docs/ART_UI_1017.md) — [파일, 9-slice(위 오른 아래 왼 · 원본 px), 화면 테두리 두께]
    *  border-image로 그림 (테두리 두께는 그림 칸 안쪽으로 겹쳐 그려서 배치·여백은 그대로) · CSS에서 var(--kit-이름) */
   kit: {
