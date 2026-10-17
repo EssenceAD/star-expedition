@@ -14,11 +14,15 @@
   <canvas id="cv"></canvas>
   <div id="hud" hidden>
     <div id="tl">
-      <button id="bAuto" aria-pressed="false"><i></i>AUTO</button>
-      <button id="bSpeed">×1</button>
+      <button id="bAuto" class="rb" aria-pressed="false" title="자동 전투"><span>자동</span></button>
+      <button id="bSpeed" class="rb" title="배속"><span>×1</span></button>
     </div>
     <div id="stg"></div>
-    <button id="bQuit" class="btn mini">포기</button>
+    <div id="tr">
+      <button id="bPause" class="rb" aria-pressed="false" title="일시정지"></button>
+      <button id="bQuit" class="rb" title="포기"></button>
+    </div>
+    <div id="pausedTag" hidden>일시정지</div>
     <div id="boss" hidden>
       <div class="bp"></div>
       <div class="bi">
@@ -31,7 +35,7 @@
     <button id="bDodge" hidden>줄 바꾸기</button>
     <div id="wave">WAVE 1</div>
     <div id="warn" hidden></div>
-    <div id="dps" class="open"><button id="bDps">DPS</button><div id="dpsL"></div></div>
+    <div id="dps"><button id="bDps" title="DPS"></button><div id="dpsL"></div></div>
     <div id="bar"></div>
     <div id="result" hidden></div>
   </div>

@@ -14,7 +14,7 @@ import { stageCost, useStamina } from '../game/account';
 import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
-import { applyTheme, elemColor, icon, iconText } from '../theme/tokens';
+import { applyTheme, icon, iconText, T } from '../theme/tokens';
 import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, skillIconUrl, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
@@ -36,7 +36,8 @@ let shown = false;
 let talking = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
-let dpsOpen = true;
+let dpsOpen = false;
+let paused = false;
 const hud = () => $('#hud');
 
 const BUFF = (u: Unit): [string, string][] =>
@@ -55,7 +56,7 @@ function buildBar() {
       <div class="nm">${h.name}<small>${JOBS[h.job].name} Lv.${u.hero!.lv}</small></div>
       <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
       <div class="bf"></div>
-      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background-image:url(${skillIconUrl(h.id, k)})"><em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동">A</button></div></div>`;
+      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background-image:url(${skillIconUrl(h.id, k)})"><em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"></button></div></div>`;
     })
     .join('');
   $$('.hc', bar).forEach((c) => {
@@ -85,6 +86,8 @@ function syncHud() {
       btn.classList.toggle('ok', canCast(bb, u, i));
       const cd = u.scd[i];
       btn.classList.toggle('cd', cd > 0);
+      // 쿨타임 남은 비율 → 남색 원을 시계방향으로 걷어냄 (BATTLE_HUD §5)
+      btn.style.setProperty('--cd', cd > 0 ? String(cd / u.hero!.def.skills[i].cd) : '0');
       btn.querySelector('b')!.textContent = cd > 0 ? String(Math.ceil(cd)) : '';
     });
   });
@@ -93,7 +96,15 @@ function syncHud() {
   $('#boss').hidden = !showBoss;
   $('#wave').hidden = showBoss;
   const waves = bb.setup.waves.length;
-  if (!showBoss) $('#wave').textContent = bb.wave < 0 ? `WAVE 1 / ${waves}` : `WAVE ${Math.min(bb.wave + 1 + (bb.phase === 'walk' ? 1 : 0), waves)} / ${waves}`;
+  const waveT = bb.wave < 0 ? `WAVE 1 / ${waves}` : `WAVE ${Math.min(bb.wave + 1 + (bb.phase === 'walk' ? 1 : 0), waves)} / ${waves}`;
+  // 웨이브가 바뀌면 판이 위에서 내려옴
+  if (!showBoss && $('#wave').textContent !== waveT) {
+    const el = $('#wave');
+    el.textContent = waveT;
+    el.classList.remove('drop');
+    void el.offsetWidth;
+    el.classList.add('drop');
+  }
   const left = Math.max(0, bb.setup.limit - bb.stats.time);
   if (showBoss) {
     $('#bName').textContent = boss!.name;
@@ -114,7 +125,8 @@ function syncHud() {
     const sorted = [...bb.heroes].sort((a, c) => c.dealt - a.dealt).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
     const top = Math.max(1, sorted[0].dealt);
     const t = Math.max(1, bb.stats.time);
-    $('#dpsL').innerHTML = sorted.map((u) => `<div class="dr"><div class="t"><span>${u.name}</span><b>${shortNum(u.dealt)}</b></div><div class="g"><i style="width:${(u.dealt / top) * 100}%;background:${elemColor(u.hero!.def.elem)}"></i></div><div class="t"><small>초당 ${shortNum(u.dealt / t)}</small></div></div>`).join('');
+    // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 피해량 (BATTLE_HUD §3)
+    $('#dpsL').innerHTML = `<div class="dh">${bb.raid ? '피해 순위' : 'DPS'}</div>${sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u.dealt)}</b><div class="g"><i style="width:${(u.dealt / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i></div><small>${shortNum(u.dealt / t)}/초</small></div>`).join('')}`;
   }
 }
 
@@ -134,9 +146,18 @@ function buildRaid() {
   }));
   $('#bDodge').onclick = () => b && raidDodge(b);
 }
+function speedLabel() {
+  $('#bSpeed span').textContent = `×${b!.speed}`;
+  $('#bSpeed').classList.toggle('fast', b!.speed > 1);
+}
+function setPaused(on: boolean) {
+  paused = on;
+  $('#bPause').setAttribute('aria-pressed', String(on));
+  $('#pausedTag').hidden = !on;
+}
 function dpsLabel() {
   $('#dps').classList.toggle('open', dpsOpen);
-  $('#bDps').innerHTML = `${b?.raid ? '피해 순위' : 'DPS'} ${icon(dpsOpen ? 'fold' : 'open')}`;
+  $('#bDps').title = b?.raid ? '피해 순위' : 'DPS';
 }
 function syncRaid(bb: Battle) {
   const r = bb.raid;
@@ -161,8 +182,8 @@ function setup() {
   b.speed = keepSpeed;
   b.cutIns = flag('cutIn') && !getPref('cutOff', false) ? 'big' : 'off';
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
-  $('#bAuto i').textContent = iconText('auto');
-  $('#bSpeed').textContent = `×${b.speed}`;
+  speedLabel();
+  setPaused(false);
   $('#stg').textContent = b.setup.title;
   buildBar();
   buildRaid();
@@ -374,18 +395,26 @@ register('battle', {
       if (!b) return;
       const sp = CONFIG.ui.speeds as readonly number[];
       b.speed = sp[(sp.indexOf(b.speed) + 1) % sp.length];
-      $('#bSpeed').textContent = `×${b.speed}`;
+      speedLabel();
     };
+    $('#bPause').onclick = () => setPaused(!paused);
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
       dpsLabel();
     };
     $('#cv').onpointerdown = () => b?.raid && b.phase === 'fight' && raidDodge(b);
+    // 포기: 멈추고 확인 창 (양피지 패널)
     $('#bQuit').onclick = () => {
-      if (b && (b.phase === 'fight' || b.phase === 'walk')) {
-        b.phase = 'lose';
-        b.why = 'wipe';
-      }
+      if (!b || (b.phase !== 'fight' && b.phase !== 'walk')) return;
+      const was = paused;
+      setPaused(true);
+      modal(`${icon('warn')} 전투를 포기할까요?`, '<p class="dim">이 전투는 패배로 끝나요.</p>', [
+        ['계속 싸우기', () => setPaused(was)],
+        ['포기하기', () => {
+          setPaused(false);
+          if (b && (b.phase === 'fight' || b.phase === 'walk')) ((b.phase = 'lose'), (b.why = 'wipe'));
+        }, true],
+      ]);
     };
     view.onResize.push(onResize);
     firstRun = !!p.first;
@@ -409,6 +438,7 @@ register('battle', {
       idleStep(b, dt);
       return render(ctx, view.art, b, performance.now() / 1000);
     }
+    if (paused) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {

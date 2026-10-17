@@ -190,6 +190,8 @@ export const T = {
   } as Record<string, [string, string, string, string?]>,
   /** UI 키트 통째 그림 (background-image · var(--kimg-이름)) */
   kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
+  /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
+  hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
   shadow: {
     glow: '0 0 10px rgba(242,200,106,0.55)',
     glowHi: '0 0 14px rgba(255,210,100,0.7)',
@@ -261,13 +263,17 @@ export const T = {
     cutBar: 'rgba(255,255,255,0.9)',
     cutStroke: 'rgba(20,10,4,0.95)',
     cutName: '#ffe9a8',
-    numStroke: '#22140c',
-    numCritStroke: '#4a0e00',
+    numStroke: '#4a2a14',
+    numCritStroke: '#3a1c08',
     numHealStroke: '#0b3d18',
     numText: '#ffffff',
     numHeal: '#7dff9b',
     numMob: '#ffb0b0',
-    numCrit: ['#fffbd0', '#ffcf3a', '#ff6a1a'],
+    /** 치명타 숫자: 흰색 → 금 (BATTLE_HUD §4) · 「치명타」 리본 */
+    numCrit: ['#ffffff', '#ffe9a0', '#f4b632'],
+    critRibbon: '#a82418',
+    /** DPS 목록 막대 = 직업색 (BATTLE_HUD §3) */
+    jobColor: { knight: '#6fa8ff', warrior: '#ff7a4a', fighter: '#ffb03a', assassin: '#c77dff', archer: '#7ddc6a', engineer: '#4fd6c8', mage: '#5a8cff', priest: '#ffe27a', druid: '#9bd65a' } as Record<string, string>,
     numCritLabel: '#ffe36b',
     white: '#ffffff',
     clear: 'rgba(0,0,0,0)',
@@ -424,5 +430,6 @@ export function applyTheme(m: Mode = 'light', root: HTMLElement = document.docum
   const kit = (f: string) => `url("${new URL(`${import.meta.env.BASE_URL}art/ui/kit/${f}.png`, location.href).href}")`;
   for (const [k, [f, slice, w, nofill]] of Object.entries(T.kit)) set(`--kit-${k}`, `${kit(f)} ${slice}${nofill ? '' : ' fill'} / ${w} / 0 stretch`);
   for (const [k, f] of Object.entries(T.kitImg)) set(`--kimg-${k}`, kit(f));
+  for (const f of T.hudImg) set(`--hud-${f.replace(/_/g, '-')}`, `url("${new URL(`${import.meta.env.BASE_URL}art/ui/battle/${f}.png`, location.href).href}")`);
   for (const [k, v] of Object.entries(T.shadow)) set(`--sh-${k}`, m === 'light' ? (T.shadowLight[k] ?? v) : v);
 }
