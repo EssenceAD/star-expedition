@@ -4,7 +4,7 @@ import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
 import { heroDirs, HEROES, setPxHeights } from './data/heroes';
 import { MOB_KINDS } from './data/mobs';
-import { loadSave, PARTY_MAX, partyIds, persist, S } from './game/state';
+import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state';
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
 import { applyTheme, iconText } from './theme/tokens';
@@ -16,6 +16,8 @@ import './ui/screensC';
 import './ui/screensD';
 import * as cloud from './core/net/cloud';
 import { battleArtWait, battleNow } from './ui/battle';
+import { gachaShow } from './ui/gacha';
+import { makeGear } from './game/gear';
 
 applyTheme();
 $('#rotate').textContent = `${iconText('rotate')} 가로로 돌려 주세요`;
@@ -135,4 +137,6 @@ if (q.get('go')) {
   }
 }
 // 시험·녹화용 손잡이
-Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __cfg: CONFIG, __S: () => S, __tick: frame });
+// 소환 연출 녹화용 (tools/gif-gacha.mjs): 정한 등급으로 연출만 (가방에 넣지 않음)
+const gachaDemo = (grades: number[]) => gachaShow(grades.map((g, i) => makeGear((['weapon', 'armor', 'acc'] as const)[i % 3], g, 10, newSave())), null, () => {});
+Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cfg: CONFIG, __S: () => S, __tick: frame });

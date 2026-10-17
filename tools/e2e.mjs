@@ -137,7 +137,11 @@ await click('[data-cbuy][data-cid="woongs"]');
 await p.evaluate(() => (window.__S().cur.stardust += 5000));
 await click('[data-cat="summon"]');
 await click('[data-sum="11"]');
+// 소환 연출 (src/ui/gacha.ts): 건너뛰기 → 등급순 결과 → 확인
+await click('.gacha [data-skip]');
+await p.waitForTimeout(500);
 await shot('shop_summon');
+await click('.gacha [data-ok]');
 await click('[data-back]');
 await click('[data-go="bag"]');
 await p.waitForSelector('[data-screen="bag"]');

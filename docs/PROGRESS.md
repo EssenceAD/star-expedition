@@ -374,6 +374,13 @@
 - 모험: 노드 = 둥근 메달(`done` 금 · `now` 파랑 빛 · `off` 회색 자물쇠) + 아래 별 · 장 탭은 띠 안 · 몬스터 칩 = 대기 첫 칸 얼굴 + 이름
 - 업적: 로비 「업적」은 미션 화면의 업적 탭으로 열림 (확인함 — 원래 그렇게 동작)
 
+## 2-S. 첫 플레이 피드백 ④ 장비 소환 연출 · 상점 기능 (v0.10.4 · docs/PLAYTEST_1017.md §11·§12)
+- `src/ui/gacha.ts` `gachaShow(gears, again, done)`: 마법진(`.floor` scaleY + 회전) → 상자 떨어짐 → 흔들림 `CONFIG.ui.gacha.shakes[최고 등급]`(전설 3번 크게 · 금빛) → 카드 뒷면 두 줄(10연 5×2 · 10+1 6+5) → 한 장씩 뒤집기(`burst_<등급>` · 영웅 = 화면 흔들림 · 전설 = `beam_legend` + 흰 번쩍 + `sparkle` + 0.5초 느리게) → 등급순 정리 + 「다시 소환」「확인」 · 누르면 다 뒤집기 · 건너뛰기
+- 시간·흔들림 횟수는 `CONFIG.ui.gacha` · 색은 토큰(gachaVeil · glow* · sh-g*)
+- 상점: 영웅 카드 → `go('hero', {id, shop:true})` (뒤로 = 상점) · 미보유는 `previewHtml`(패시브·스킬·영입) · 가격 버튼은 그대로 바로 영입(카드 클릭으로 안 번지게)
+- 재화·소모품: 품목마다 그림(`items/m_*`) · 전용 무기 조각 = `ui/icons/slot_exclusive`
+- 도구: `tools/gif-gacha.mjs`(CDP 화면 스트림 → ffmpeg GIF · `__gachaDemo(등급들)`) · `tools/shot-menus.mjs`에 상점 미리보기 · e2e 소환 단계는 건너뛰기 → 확인
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
