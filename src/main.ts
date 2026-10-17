@@ -25,6 +25,12 @@ const fit = () => fitView(stage, cv);
 addEventListener('resize', fit);
 fit();
 
+// 로딩 화면 (docs/ART_DONE_1017_3.md §2): 아무 영웅 전신 + 칭호 + 한 줄
+{
+  const h = HEROES[Math.floor(Math.random() * HEROES.length)];
+  const ld = document.getElementById('loading')!;
+  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>별의 원정대를 준비하고 있어요…</small></div>`;
+}
 await loadFlags();
 const B = import.meta.env.BASE_URL;
 const img = (src: string) =>
@@ -54,12 +60,15 @@ for (const h of HEROES) {
 }
 const RB = CONFIG.raidArena.art;
 const raidBoss = RB.have ? { intact: await img(`${B}art/${RB.intact}`).catch(() => null), broken: await img(`${B}art/${RB.broken}`).catch(() => null) } : undefined;
-view.art = { sheet, bg, cutin, raidBoss };
+const bgs: Record<string, HTMLImageElement> = {};
+for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
+view.art = { sheet, bg, cutin, raidBoss, bgs };
 
 loadSave();
 addEventListener('pagehide', () => persist());
 document.addEventListener('visibilitychange', () => document.hidden && persist());
 go('title', {}, false);
+document.getElementById('loading')?.remove();
 
 // 녹화·자동 플레이 (tools/gif.mjs · play.mjs): ?go=1(=1-10) 또는 ?go=장-스테이지-난이도 · &auto=1 · &speed=2 · &rec=1(고정 걸음 · __tick)
 const q = new URLSearchParams(location.search);

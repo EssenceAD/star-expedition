@@ -18,7 +18,11 @@ export interface Art {
   cutin: Record<string, HTMLImageElement | HTMLCanvasElement>;
   /** 보스 전장 보스 그림 (부서지기 전 · 후) — 없으면 골렘 시트 */
   raidBoss?: { intact: HTMLImageElement | null; broken: HTMLImageElement | null };
+  /** 콘텐츠 전투 배경 (탑·레이드·결투장·던전·요일 · docs/ART_DONE_1017_3.md §5) */
+  bgs?: Record<string, HTMLImageElement>;
 }
+/** 이 전투 배경 그림 · 전용 배경이면 지역 색 안 씀 */
+const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[key], own: true } : { im: art.bg, own: false });
 
 const off = document.createElement('canvas');
 off.width = 360;
@@ -134,14 +138,14 @@ function tag(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) 
 }
 
 // ───────── 배경 (그림 1장을 장마다 색 바꾸기) ─────────
-function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number) {
-  if (art.bg) {
-    const im = art.bg;
+function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number, key?: string) {
+  const { im, own } = bgOf(art, key);
+  if (im) {
     const y0 = -160;
     const h = LH - y0;
     const w = (im.width / im.height) * h;
     const o = -((s * 0.25) % w);
-    ctx.filter = B.region[region] ?? 'none';
+    ctx.filter = own ? 'none' : (B.region[region] ?? 'none');
     for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), y0, Math.ceil(w) + 1, h);
     ctx.filter = 'none';
   } else {
@@ -427,7 +431,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   const W = b.w;
   ctx.save();
   if (b.shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * b.shake * 2), Math.round((Math.random() - 0.5) * b.shake * 2));
-  background(ctx, art, b.scroll, W, b.setup.region);
+  background(ctx, art, b.scroll, W, b.setup.region, b.setup.bg);
   // 보스 패턴 경고: 영웅 발밑이 붉게 깜빡
   if (b.pat.warn > 0)
     for (const h of b.heroes) {
@@ -459,9 +463,9 @@ const bx = bossCv.getContext('2d')!;
 /** 다층 배경 (멀수록 느리게 · 페이즈마다 색) */
 function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) {
   const r = b.raid!;
-  const tint = `${B.region[b.setup.region] ?? 'none'} ${B.phaseTint[Math.min(r.phase, B.phaseTint.length - 1)]}`.replace(/none ?/g, '').trim() || 'none';
-  if (art.bg) {
-    const im = art.bg;
+  const { im, own } = bgOf(art, b.setup.bg);
+  const tint = `${own ? 'none' : (B.region[b.setup.region] ?? 'none')} ${B.phaseTint[Math.min(r.phase, B.phaseTint.length - 1)]}`.replace(/none ?/g, '').trim() || 'none';
+  if (im) {
     RA.parallax.forEach(([sp, sc], i) => {
       const h = (LH + 160) * sc;
       const w = (im.width / im.height) * h;
@@ -472,7 +476,7 @@ function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: n
     });
     ctx.globalAlpha = 1;
     ctx.filter = 'none';
-  } else background(ctx, art, b.t * 10, W, b.setup.region);
+  } else background(ctx, art, b.t * 10, W, b.setup.region, b.setup.bg);
   // 두 줄 바닥 + 경고 줄
   const half = Math.abs(RA.lanes[1] - RA.lanes[0]) / 2;
   RA.lanes.forEach((y, i) => {

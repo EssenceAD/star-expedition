@@ -183,6 +183,7 @@ export const T = {
     outline: '-2px -2px 0 #1d2a58, 2px -2px 0 #1d2a58, -2px 2px 0 #1d2a58, 2px 2px 0 #1d2a58, 0 -2px 0 #1d2a58, -2px 0 0 #1d2a58, 2px 0 0 #1d2a58, 0 4px 0 #1d2a58, 0 5px 6px rgba(20,15,0,0.35)',
     outlineSm: '-1px -1px 0 #1d2a58, 1px -1px 0 #1d2a58, -1px 1px 0 #1d2a58, 1px 1px 0 #1d2a58, 0 2px 0 #1d2a58',
     outlineIvory: '-1px -1px 0 #fffaf0, 1px -1px 0 #fffaf0, -1px 1px 0 #fffaf0, 1px 1px 0 #fffaf0, 0 2px 0 rgba(255,250,240,0.9)',
+    ringGlow: '0 0 14px rgba(255,210,100,0.7), inset 0 0 40px rgba(255,224,138,0.8)',
     fxDrop: '0 2px 0 #3a2a14, 0 0 14px rgba(255,200,90,0.55), 0 4px 8px rgba(30,20,0,0.3)',
     /** 바탕 그림 위 작은 글씨 받침 (어두운 화면) */
     textBack: '0 1px 1px #000000',
