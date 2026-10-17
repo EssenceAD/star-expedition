@@ -59,8 +59,8 @@ export const CONFIG = {
     bossSlot: [180, 258] as [number, number],
     /** 피해 숫자: 대상 위 가로로 흩뿌리는 폭(±) · 줄 수 · 줄 높이 · 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) · 이보다 위(보스 바)에는 안 놓음 */
     /** 피해 숫자 · 일반 크기 배율 · 외곽선 두께(일반·치명타 px) · 치명타 커졌다 작아지는 시간 · 폭발 그림 크기(글자 폭 배) (docs/BATTLE_HUD_1017.md §4) */
-    /** 영웅 동작 칸 시간(초 · ANIM_1017): 숨쉬기 · 걷기 칸마다 · 평타 4칸 · 스킬 4칸 · 스킬1은 0.8배 · 스킬3은 0.7배 속도 */
-    anim: { idle: 0.17, walk: 0.11, attack: [0.2, 0.06, 0.16, 0.15] as number[], skill: [0.3, 0.12, 0.38, 0.3] as number[], skill1Speed: 0.8, skill3Speed: 0.7 },
+    /** 영웅 동작 칸 시간(초 · ANIM_1017): 숨쉬기 · 걷기 칸마다 · 평타 4칸 · 스킬 4칸 · 다단 히트 c1·c2 · 스킬1·3 속도 배수 (POLISH_1017 ②: 1 — 0.8·0.7배에 컷인 0.6초가 더해져 2초 넘게 멈춰 보이던 것) */
+    anim: { idle: 0.17, walk: 0.11, attack: [0.2, 0.06, 0.16, 0.15] as number[], skill: [0.3, 0.12, 0.38, 0.3] as number[], multiHit: [0.07, 0.16] as number[], skill1Speed: 1, skill3Speed: 1 },
     /** 이펙트 그림 (ANIM_1017 ②): 칸 하나 초 · bolt 날아가는 초 · meteor 떨어지는 거리(px) · 크기 = 대상 키 × centerK/bottomK (최소 px) · 보호막 유지 1↔2 바뀌는 초 · 진하기 · 기절 별 크기 · 진하기 alpha 0.6 (회복·기둥·버프는 soft) · 높이 상한 = 화면 45%(maxH) · 대상 키 × maxOfH · 회복 기둥 폭 healW · 한 번에 그리는 그림 이펙트 maxOn (레이드 maxOnRaid) · 한 대상 위 perTarget개 (POLISH_1017 ①) */
     fxArt: { alpha: 0.6, soft: { heal: 0.45, pillar: 0.45, buff: 0.45 } as Record<string, number>, frameSec: 0.08, boltTravel: 0.16, meteorDrop: [90, -170] as number[], centerK: 1.15, bottomK: 1.3, minCenter: 60, minBottom: 80, maxH: 175, maxOfH: 1.3, healW: 0.55, maxOn: 6, maxOnRaid: 10, perTarget: 2, fadeFast: 0.08, shieldLoopSec: 0.6, shieldAlpha: 0.5, stunH: 34 },
     /** 몹 쓰러짐 (ANIM_1017 ③): 지역 몹 사라지는 초 · 장 보스 초 · 가라앉는 px · 흔들림 px (경고 중 떨림은 절반) · 맞은 칸을 보일 번쩍 세기 */

@@ -388,14 +388,23 @@ const px = (id: string): AnimSet => {
   const f = (...c: string[]) => c.map((k) => `px2/${id}:${k}`);
   const A = CONFIG.combat.anim;
   const four = (row: string) => f(`${row}c0`, `${row}c1`, `${row}c2`, `${row}c3`);
-  const skill = (speed: number, lunge: number) => ({ frames: four('m2r1'), fps: 1, loop: false, hit: [2], lunge, durs: A.skill.map((d) => d / speed) });
+  // 스킬: 4칸을 한 번 재생하고 대기로 (POLISH_1017 ②) · 다단 히트면 c1→c2를 타격마다 짧게 되풀이한 뒤 c3
+  const skill = (i: number, speed: number, lunge: number) => {
+    const n = Math.max(1, ...HERO_BY_ID[id].skills[i].eff.map((e) => (e.k === 'dmg' ? e.n ?? 1 : 1)));
+    const [s0, s1, s2, s3] = A.skill.map((d) => d / speed);
+    if (n === 1) return { frames: four('m2r1'), fps: 1, loop: false, hit: [2], lunge, durs: [s0, s1, s2, s3] };
+    const [m1, m2] = A.multiHit;
+    const frames = [f('m2r1c0')[0], ...Array.from({ length: n }, () => f('m2r1c1', 'm2r1c2')).flat(), f('m2r1c3')[0]];
+    const durs = [s0, ...Array.from({ length: n }, () => [m1, m2]).flat(), s3];
+    return { frames, fps: 1, loop: false, hit: Array.from({ length: n }, (_, k) => 2 + k * 2), lunge, durs };
+  };
   return {
     idle: { frames: four('m1r1'), fps: 1, loop: true, durs: four('m1r1').map(() => A.idle) },
     walk: { frames: four('m1r0'), fps: 1, loop: true, durs: four('m1r0').map(() => A.walk) },
     attack: { frames: four('m2r0'), fps: 1, loop: false, hit: [2], lunge: 10, durs: A.attack },
-    skill1: skill(A.skill1Speed, 20),
-    skill2: skill(1, 30),
-    skill3: skill(A.skill3Speed, 40),
+    skill1: skill(0, A.skill1Speed, 20),
+    skill2: skill(1, 1, 30),
+    skill3: skill(2, A.skill3Speed, 40),
     hurt: { frames: f('r1c0'), fps: 4, loop: false },
     down: { frames: f('r1c1'), fps: 1, loop: false },
     win: { frames: f('r1c2'), fps: 1, loop: false },
