@@ -408,6 +408,30 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
   }
   ctx.globalAlpha = 1;
 }
+/** 결투장 감정 표현: 머리 위 흰 말풍선 + 아이콘 (톡 튀어나옴) */
+function drawEmotes(ctx: CanvasRenderingContext2D, b: Battle) {
+  for (const e of b.emotes) {
+    const u = [...b.heroes, ...b.mobs].find((x) => x.uid === e.uid);
+    if (!u || u.dead) continue;
+    const k = e.t < 0.15 ? 0.5 + (e.t / 0.15) * 0.6 : e.t < 0.3 ? 1.1 - ((e.t - 0.15) / 0.15) * 0.1 : 1;
+    const x = u.x;
+    const y = u.y - u.h - 34;
+    ctx.globalAlpha = Math.min(1, (CONFIG.ui.arenaShow.emoteSec - e.t) * 4);
+    ctx.fillStyle = B.white;
+    ctx.beginPath();
+    ctx.arc(x, y, 17 * k, 0, Math.PI * 2);
+    ctx.moveTo(x - 5, y + 14 * k);
+    ctx.lineTo(x, y + 23 * k);
+    ctx.lineTo(x + 5, y + 14 * k);
+    ctx.fill();
+    ctx.font = canvasFace(Math.round(20 * k), 'num');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(iconText(e.key), x, y + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+  ctx.globalAlpha = 1;
+}
 /** 마지막 일격 흰 번쩍 (MOBILE_REF §3-A-7) */
 function drawWhite(ctx: CanvasRenderingContext2D, b: Battle, W: number) {
   if (b.white <= 0) return;
@@ -506,6 +530,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   drawFx(ctx, b);
   // 전투 중 혼잣말 말풍선은 끔 — 대사는 스킬 컷인에만 (PLAYTEST §2)
   drawNums(ctx, b, art);
+  drawEmotes(ctx, b);
   ctx.restore();
   if (b.flash > 0) {
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;

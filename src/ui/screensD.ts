@@ -13,7 +13,7 @@ import { HEROES } from '../data/heroes';
 import { icon, iconText } from '../theme/tokens';
 import { view } from './view';
 import { goFullscreen } from './mobile';
-import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
+import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast, uiPic } from './core';
 
 const SO = CONFIG.social;
 const giveText = (g: Record<string, number>) => Object.entries(g).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ');
@@ -94,8 +94,11 @@ register('guild', {
       const g = guildOf();
       let body = '';
       if (!g) {
-        body = `<p class="sm dim">길드에 들어가면 출석·기여·길드 상점·길드 채팅·길드 레이드가 열려요. 실멤버 길드는 단톡방 원정대, 나머지는 AI 길드예요.</p>
-          <div class="cards">${GUILDS.map((x) => `<div class="panel col shopc"><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
+        // 길드 카드: 문양 메달 · 대표 멤버 초상화 3 · 오늘 출석(AI 길드) — 빈 아래 절반 채우기 (MOBILE_REF §4)
+        const face = (n: string) => heroPortrait(HEROES.find((h) => h.name === n)?.id ?? avatarOf(n));
+        const came = (x: (typeof GUILDS)[number]) => 1 + ([...(dayKey() + x.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % x.members.length);
+        body = `<p class="sm why band">길드에 들어가면 출석·기여·길드 상점·길드 채팅·길드 레이드가 열려요. 실멤버 길드는 단톡방 원정대, 나머지는 AI 길드예요.</p>
+          <div class="cards gcards">${GUILDS.map((x) => `<div class="panel col shopc gcard"><div class="gem">${uiPic(x.real ? 'menu/guildhall' : 'menu/guild')}</div><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><div class="gface">${x.members.slice(0, 3).map((n) => `<i class="pt s" style="background-image:url(${face(n)})" title="${esc(n)}"></i>`).join('')}</div><span class="xs gold">${x.real ? `멤버 영웅 ${x.members.length}명` : `오늘 출석 ${came(x)}/${x.members.length + 1}`}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
       } else if (tab === 'info') {
         const bd = guildBoard();
         body = `<div class="panel col"><b>${g.name} · Lv.${g.lv}</b><span class="xs dim">${esc(g.desc)}</span>

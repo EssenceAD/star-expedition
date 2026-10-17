@@ -77,7 +77,7 @@ export function specFor(id: string, lv: number, star = 1): HeroSpec {
   st.hp = Math.round(st.hp * m);
   st.atk = Math.round(st.atk * m);
   st.def = Math.round(st.def * m);
-  return { def, art: artOf(def), zone: JOBS[def.job].zone, lv, st };
+  return { def, art: artOf(def), zone: JOBS[def.job].zone, lv, star, st };
 }
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const hashStr = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 17) || 1;

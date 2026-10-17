@@ -11,6 +11,8 @@ export interface HeroSpec {
   /** 위치 3구역 (직업으로 정해짐) */
   zone: Zone;
   lv: number;
+  /** 별 (결투장 VS 카드에 보임 · 없으면 1) */
+  star?: number;
   st: Stats;
 }
 export interface MobSpec {
