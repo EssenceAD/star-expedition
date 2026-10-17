@@ -754,3 +754,30 @@ select.tab option { background: var(--c-panelDeep); color: var(--c-text); }
 .skn { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 로딩 막대: 실제 받은 비율 (SPRITE_RES §C) */
 #loading .ld-bar i.real { width: 4%; animation: none; transition: width 0.25s; }
+/* ───────── 첫 플레이 피드백 ① 공통 규칙 (docs/PLAYTEST_1017.md §0) ───────── */
+/* 0-1 글씨: 입력 칸·고르기도 같은 글씨 (브라우저 기본 고딕 안 쓰게) */
+input, select, textarea { font-family: inherit; }
+/* 0-3 메뉴 화면 배경: 그림 한 장이 위 띠(재화 바 아래)까지 이어지게 · 흐리게 + 남색 40% → 판이 떠 보임 */
+.scr.artbg.veiled { isolation: isolate; background: none; }
+.scr.artbg.veiled::before { content: ''; position: absolute; z-index: -1; left: calc(var(--s-lg) * -1); right: calc(var(--s-lg) * -1); top: calc(var(--s-xxl) * -2 - var(--s-lg)); bottom: calc(var(--s-lg) * -1); background-image: linear-gradient(var(--c-scrNavy), var(--c-scrNavy)), var(--scr-art); background-size: cover; background-position: center; filter: var(--fx-scrBlur); pointer-events: none; }
+#ticker, .top { -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); }
+/* 0-2 그림 배경 위 맨글씨 금지: 판 밖 설명 글씨는 남색 유리 띠 안으로 */
+.scr.veiled .body :is(p, .col > .kv, .col > span.xs, .col > span.mute, .col > .row > span.xs):not(.panel *):not(.modal *):not(.hcard *):not(.shopc *) { align-self: stretch; margin: 0; padding: var(--s-xs) var(--s-md); border-radius: var(--r-md); background: var(--c-panel); -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); color: var(--c-text); text-shadow: var(--sh-navyText); }
+/* 0-4 왼쪽 세로 메뉴: 그림 메달 아이콘 + Noto 15 */
+.shopcats .tab { height: 40px; justify-content: flex-start; gap: var(--s-sm); font-family: var(--f-base); font-size: calc(var(--fs-lg) + var(--s-xxs)); }
+.shopcats .tab .ti { width: 30px; height: 30px; flex: none; object-fit: contain; }
+.shopcats .tab span { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 0-5 내용 적은 판은 억지로 늘리지 않음: 최대 640 · 가운데 / 큰 버튼 최대 360 */
+.scroll > .panel:not(.shopc), .scroll > .btn.big { align-self: center; width: 100%; max-width: 640px; }
+.scroll > .btn.big, .scroll > .row > .btn.big { max-width: 360px; }
+/* 0-7 불투명 네모 배경 대신 반투명 남색 알약 */
+.chip { background: color-mix(in srgb, var(--c-panelDeep) 80%, transparent); }
+/* §9 로비 진행 중 목록: 알림 점을 줄 안쪽 오른쪽으로 (판 테두리에 안 잘리게) */
+.qrow .badge { position: static; margin-left: auto; margin-right: var(--s-lg); flex: none; }
+/* §10 출석: 보상 칸 카드 가로 · 받기 버튼은 판 안쪽 가운데 아래 */
+.modal .gifts { justify-content: center; flex-wrap: wrap; }
+.modal .gifts .rwc { min-width: 84px; }
+.modal .panel > .row:last-child { justify-content: center !important; padding-bottom: var(--s-sm); }
+/* §1 로딩: 다시 시도 */
+#loading [data-retry] { align-self: flex-start; margin-top: var(--s-sm); }
+.shopcats { width: 150px; flex: none; }

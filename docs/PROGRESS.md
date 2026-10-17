@@ -348,6 +348,15 @@
 - 움직임: 대기 숨쉬기(`CONFIG.combat.breathe`) · 피격 = 밝게(`hitFlash` 최대 0.5 · 0.08초) · 내딛기 들어갈 때 ease-out / 돌아올 때 ease-in-out(`lungeIn`)
 - 첫 로딩(20Mbps 제한 · 웹폰트 제외 · `node tools/load-time.mjs 20 2`): 29.2초 · 53.8MB · 그림 355장 → 5.6초 · 13MB · 73장
 
+## 2-P. 첫 플레이 피드백 ① 공통 규칙 (v0.10.1 · docs/PLAYTEST_1017.md §0 · §1 로딩 · §9 · §10)
+- 메뉴 배경(`.scr.artbg.veiled::before`): 그림을 위 띠(재화 바 아래)까지 이어서 깔고 흐림 6px + 남색 40%(`--c-scrNavy`)
+- 판 밖 맨글씨(설명 p · 판 밖 kv · 아래 안내 줄)는 남색 유리 띠 (CSS 한 묶음 · 화면마다 고치지 않아도 됨)
+- 왼쪽 세로 메뉴(콘텐츠·미션·길드·랭킹): `tabLabel('menu/…')` 그림 메달 + Noto 15 · 폭 150
+- 내용 적은 판 최대 640 가운데 · 큰 버튼 최대 360 · 입력 칸·고르기도 같은 글씨
+- 출석 팝업: 보상 칸 카드 + 받기 가운데 · 로비 진행 목록 알림 점은 줄 안쪽
+- 로딩: 그림 하나가 12초(`loadItemSec`) 넘으면 건너뜀 · 막대가 5초(`loadStallSec`) 그대로면 「다시 시도」
+- 캡처: `node tools/shot-menus.mjs out/menus` (로비·출석·콘텐츠 9탭·편성·모험·가방·미션·친구·랭킹·길드·상점)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

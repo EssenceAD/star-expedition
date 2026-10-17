@@ -10,11 +10,11 @@ import { owned } from '../game/heroes';
 import { cleared } from '../game/stage';
 import { persist, S } from '../game/state';
 import { icon } from '../theme/tokens';
-import { $$, esc, fmt, go, heroPortrait, register, syncBar, toast } from './core';
+import { $$, esc, fmt, go, heroPortrait, register, syncBar, tabLabel, toast } from './core';
 
 const CC = CONFIG.content;
 const TABS: [string, string, string][] = [
-  ['hunt', '토벌', 'battle'], ['dungeon', '상급 던전', 'bag'], ['tower', '도전의 탑', 'tower'], ['day', '요일 던전', 'day'], ['raid', '레이드', 'raid'], ['world', '월드 보스', 'world'], ['arena', '결투장', 'arena'], ['side', '영웅 외전', 'story'], ['miles', '이정표', 'mission'],
+  ['hunt', '토벌', 'menu/hunt'], ['dungeon', '상급 던전', 'menu/content'], ['tower', '도전의 탑', 'menu/tower'], ['day', '요일 던전', 'menu/daily'], ['raid', '레이드', 'menu/raid'], ['world', '월드 보스', 'menu/worldboss'], ['arena', '결투장', 'menu/arena'], ['side', '영웅 외전', 'menu/sidestory'], ['miles', '이정표', 'menu/milestone'],
 ];
 const goRun = (r: Run) => {
   const l = lockOf(r);
@@ -74,7 +74,7 @@ register('portal', {
         body = `<div class="row"><b class="grow">이정표 ${S.miles.length}/${MILESTONES.length}</b><button class="btn hi" data-claim ${ready.length ? '' : 'disabled'}>모두 받기 (${ready.length})</button></div>
           <div class="col">${MILESTONES.map((m) => `<div class="kv"><span>${S.miles.includes(m.id) ? icon('check') : ready.includes(m) ? icon('badge') : icon('lock')} ${m.name}</span><b>${icon('stardust')}${CC.milestoneDust}</b></div>`).join('')}</div>`;
       }
-      root.innerHTML = `<div class="body"><div class="col shopcats">${TABS.map(([k, n, ic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${icon(ic)} ${n}${k === 'miles' && milesReady().length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
+      root.innerHTML = `<div class="body"><div class="col shopcats">${TABS.map(([k, n, ic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(ic, n)}${k === 'miles' && milesReady().length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $$('[data-league]', root).forEach((b) => (b.onclick = () => ((league = b.dataset.league as League), draw())));
       $$('[data-run]', root).forEach((b) => (b.onclick = () => goRun(JSON.parse(b.dataset.run!) as Run)));
