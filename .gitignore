@@ -4,3 +4,4 @@ out/
 .env.local
 *.log
 tools/_*.mjs
+__pycache__/
