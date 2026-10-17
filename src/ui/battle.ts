@@ -3,11 +3,10 @@
 import { ensureBattleArt } from './assets';
 import { CONFIG } from '../config';
 import { headHpPref, render, renderBg, type Art } from '../battle/render';
-import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
+import { bossOf, canCast, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
 import { heroOf } from '../data/heroes';
-import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
@@ -20,7 +19,9 @@ import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, p
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
-import { view } from './view';
+import { setBackdrop, view } from './view';
+import { k9, kit9, kitBar, kitSocket, setBar, titleUrl } from './kit';
+import { bustUrl } from './bust';
 import { aiEmote, countdown, emote, pvpHudHtml, resetAiEmote, syncPvpHud, vsIntro } from './arena';
 
 const C = CONFIG.story;
@@ -43,7 +44,7 @@ let intro = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
 /** DPS 판: 펼침(기억함) · 탭 피해·회복·받은 피해 (MOBILE_REF §3-A-4) */
-let dpsOpen = getPref('dpsOpen', true);
+let dpsOpen = getPref('dpsOpen', false);
 let dpsTab: 'dealt' | 'healed' | 'taken' = 'dealt';
 const DPS_HEAD = { dealt: '피해량', healed: '회복량', taken: '받은 피해' } as const;
 let paused = false;
@@ -51,81 +52,64 @@ let paused = false;
 let artWait = false;
 const hud = () => $('#hud');
 
-const BUFF = (u: Unit): [string, string][] =>
-  ([
-    [u.shield > 0, 'shield', '보호막'], [has(u, 'guard'), 'guard', '받는 피해 감소'], [has(u, 'taunt'), 'taunt', '도발'], [has(u, 'regen'), 'regen', '회복'], [has(u, 'atkUp'), 'atkUp', '공격력 증가'],
-    [has(u, 'spdUp'), 'spdUp', '공격 속도 증가'], [has(u, 'critUp'), 'critUp', '치명타 증가'], [has(u, 'atkDown'), 'atkDown', '공격력 감소'], [has(u, 'stun'), 'stun', '기절'], [has(u, 'silence'), 'silence', '침묵'], [has(u, 'slow'), 'slow', '둔화'], [has(u, 'burn'), 'burn', '화상'],
-  ] as [boolean, string, string][]).filter((x) => x[0]).map(([, k, t]) => [iconText(k), t]);
-
+// ───────── 아래 영웅 4칸 (UI_KIT_1018 §4 · target_1018/battle.jpg) ─────────
+//  칸 너비 203 · 칸 안 좌표: 상반신(틀 없음 · x+33 중심 · 아래 붙임) · nameplate x+68 y302 126×18 · HP bar y321 126×9 · MP y330 126×7 · socket 40 ×3 x+68+j·43 y339
+const SLOT = 203;
 function buildBar() {
   const bar = $('#bar');
   bar.innerHTML = b!.heroes
     .filter((u) => !u.ai)
     .map((u, i) => {
       const h = u.hero!.def;
-      return `<div class="hc" data-h="${i}"><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div>
-      <div class="nm">${h.name}<small>${JOBS[h.job].name} Lv.${u.hero!.lv}</small></div>
-      <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
-      <div class="bf"></div>
-      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background-image:url(${skillIconUrl(h.id, k)})"><em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"></button></div></div>`;
+      return `<div class="hc" data-h="${i}" style="left:${i * SLOT}px"><img class="bust" data-bust="${h.id}" alt="" draggable="false">
+      ${kit9('nameplate', 126, 18, 9, 'np', '', `<span class="tx nm">${esc(h.name)}</span><span class="tx lv">Lv.${u.hero!.lv}</span>`)}
+      ${kitBar(126, 9, u.hp / u.max, T.kit2.hp, 'bar', 'hp')}${kitBar(126, 7, u.mana / 100, T.kit2.mp, 'bar', 'mp')}
+      ${h.skills.map((s, k) => `<button class="sk" data-s="${k}" style="left:${68 + k * 43}px" title="${esc(s.name)} · ${esc(descSkill(s))} (마나 ${s.cost} · ${s.cd}초)">${kitSocket(skillIconUrl(h.id, k), 40, null, '', '<b class="tx"></b>')}</button>`).join('')}</div>`;
     })
     .join('');
   $$('.hc', bar).forEach((c) => {
     const u = b!.heroes[+c.dataset.h!];
     $$<HTMLButtonElement>('button[data-s]', c).forEach((btn) => (btn.onclick = () => requestSkill(b!, u, +btn.dataset.s!)));
-    const au = $('.au', c);
-    au.onclick = () => {
-      u.autoOn = !u.autoOn;
-      au.setAttribute('aria-pressed', String(u.autoOn));
-    };
+    const im = $<HTMLImageElement>('.bust', c);
+    void bustUrl(im.dataset.bust!).then((url) => (im.src = url)).catch(() => {});
   });
 }
-
+const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 function syncHud() {
   const bb = b!;
+  if ($('#bAuto').getAttribute('aria-pressed') !== String(bb.auto)) $('#bAuto').setAttribute('aria-pressed', String(bb.auto));
+  if ($('#bSpeed span').textContent !== `×${bb.speed}`) speedLabel();
   $$('.hc', $('#bar')).forEach((c) => {
     const u = bb.heroes[+c.dataset.h!];
     c.classList.toggle('dead', u.dead);
-    $('.hp i', c).style.width = `${(u.hp / u.max) * 100}%`;
-    $('.hp s', c).style.width = `${Math.min(100, (u.shield / u.max) * 100)}%`;
-    $('.mp i', c).style.width = `${u.mana}%`;
-    const bf = BUFF(u).map(([i, t]) => `<span title="${t}">${i}</span>`).join('');
-    const el = $('.bf', c);
-    if (el.innerHTML !== bf) el.innerHTML = bf;
+    setBar($('.hp', c), u.hp / u.max);
+    setBar($('.mp', c), u.mana / 100);
     $$<HTMLButtonElement>('button[data-s]', c).forEach((btn) => {
       const i = +btn.dataset.s!;
-      btn.classList.toggle('ok', canCast(bb, u, i));
-      // 마나 부족 (쿨타임 아님): 채도 30% + 파란 자물쇠 점 (PLAYTEST §2)
-      btn.classList.toggle('nomana', u.scd[i] <= 0 && u.mana < u.hero!.def.skills[i].cost);
       const cd = u.scd[i];
+      btn.classList.toggle('ok', canCast(bb, u, i));
+      // 마나 부족 (쿨타임 아님): 채도 낮춤 · 쿨타임: 창 위 알파 0.55 검정 + 남은 초 (UI_KIT_1018 §4)
+      btn.classList.toggle('nomana', cd <= 0 && u.mana < u.hero!.def.skills[i].cost);
       btn.classList.toggle('cd', cd > 0);
-      // 쿨타임 남은 비율 → 남색 원을 시계방향으로 걷어냄 (BATTLE_HUD §5)
-      btn.style.setProperty('--cd', cd > 0 ? String(cd / u.hero!.def.skills[i].cd) : '0');
-      btn.querySelector('b')!.textContent = cd > 0 ? String(Math.ceil(cd)) : '';
+      const t = cd > 0 ? String(Math.ceil(cd)) : '';
+      const el = btn.querySelector('b')!;
+      if (el.textContent !== t) el.textContent = t;
     });
   });
   const boss = bossOf(bb);
   const showBoss = !!boss && bb.phase !== 'walk';
   $('#boss').hidden = !showBoss;
-  $('#wave').hidden = showBoss;
   const waves = bb.setup.waves.length;
-  const waveT = bb.wave < 0 ? `WAVE 1 / ${waves}` : `WAVE ${Math.min(bb.wave + 1 + (bb.phase === 'walk' ? 1 : 0), waves)} / ${waves}`;
-  // 웨이브가 바뀌면 판이 위에서 내려옴
-  if (!showBoss && $('#wave').textContent !== waveT) {
-    const el = $('#wave');
-    el.textContent = waveT;
-    el.classList.remove('drop');
-    void el.offsetWidth;
-    el.classList.add('drop');
-  }
+  const wave = bb.wave < 0 ? 1 : Math.min(bb.wave + 1 + (bb.phase === 'walk' ? 1 : 0), waves);
   const left = Math.max(0, bb.setup.limit - bb.stats.time);
+  // 가운데 띠: 「숲 동굴 1-2 · WAVE 1/2 · 2:41」 (30초 남으면 시간만 빨강)
+  const st = `${esc(bb.setup.title)}<i>·</i>${bb.raid ? '' : `WAVE ${wave}/${waves}<i>·</i>`}<b class="${left <= CONFIG.ui.clockLowSec ? 'low' : ''}">${mmss(left)}</b>`;
+  const se = $('#stripT');
+  if (se.innerHTML !== st) se.innerHTML = st;
   if (showBoss) {
     $('#bName').textContent = boss!.name;
     $('#bPct').textContent = `${Math.ceil((boss!.hp / boss!.max) * 100)}%`;
-    $('#bHp').style.width = `${(boss!.hp / boss!.max) * 100}%`;
-    $('#bHpN').textContent = `${shortNum(boss!.hp)} / ${shortNum(boss!.max)}`;
-    $('#bDmg').textContent = shortNum(bb.stats.bossDealt);
-    $('#bTime').textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
+    setBar($('#boss .kbar'), boss!.hp / boss!.max);
   }
   // 보스 전장은 보스가 나올 때 생김 → 그때 HUD를 바꿈
   if (!!bb.raid !== hud().classList.contains('raid')) (buildRaid(), dpsLabel());
@@ -135,18 +119,11 @@ function syncHud() {
   const wt = `${iconText('warn')} ${bb.pat.text}`;
   if (bb.pat.text && w.textContent !== wt) w.textContent = wt;
   if (run?.mode === 'arena') syncPvpHud(bb, $('#pvpHud'));
-  // 남은 시간 (WAVE 판 옆 · 30초 남으면 빨강 · 보스 HUD가 뜨면 그쪽에 있음)
-  const ck = $('#clock');
-  ck.hidden = showBoss || !!bb.raid;
-  const ct = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
-  if (ck.textContent !== ct) ck.textContent = ct;
-  ck.classList.toggle('low', left <= CONFIG.ui.clockLowSec);
   if (dpsOpen) {
     const sorted = [...bb.heroes].sort((a, c) => c[dpsTab] - a[dpsTab]).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
     const top = Math.max(1, sorted[0][dpsTab]);
-    const t = Math.max(1, bb.stats.time);
-    // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 값 (BATTLE_HUD §3)
-    const rows = sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u[dpsTab])}</b><div class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i><small>${shortNum(u[dpsTab] / t)}/초</small></div></div>`).join('');
+    // 한 줄 = 이름 · 값 · 아래 얇은 직업색 막대 (글씨 1종 · UI_KIT_1018 §4)
+    const rows = sorted.map((u) => `<div class="dr"><span class="tx nm">${esc(u.name)}</span><span class="tx v">${shortNum(u[dpsTab])}</span><i class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background-color:${T.battle.jobColor[u.hero!.def.job]}"></i></i></div>`).join('');
     const el = $('#dpsL .rows');
     if (el.innerHTML !== rows) el.innerHTML = rows;
   }
@@ -159,7 +136,8 @@ function buildRaid() {
   $('#raidHud').hidden = !r;
   $('#bDodge').hidden = !r;
   if (!r) return;
-  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false"><span>${esc(p.name)}</span><div class="bh"><i></i></div></button>`).join('');
+  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false" style="${k9('pill', 10)}"><span class="tx">${esc(p.name)}</span>${kitBar(74, 7, 1, T.kit2.mobHp)}</button>`).join('');
+  $('#raidHud .ggb').innerHTML = kitBar(150, 9, 0, T.kit2.mp);
   $$<HTMLButtonElement>('#rParts button').forEach((btn) => (btn.onclick = () => {
     const rr = b?.raid;
     if (!rr) return;
@@ -172,14 +150,29 @@ function speedLabel() {
   $('#bSpeed span').textContent = `×${b!.speed}`;
   $('#bSpeed').classList.toggle('fast', b!.speed > 1);
 }
+let pauseMenu: HTMLElement | null = null;
 function setPaused(on: boolean) {
   paused = on;
   $('#bPause').setAttribute('aria-pressed', String(on));
-  $('#pausedTag').hidden = !on;
+  if (!on && pauseMenu) (pauseMenu.remove(), (pauseMenu = null));
+}
+/** 일시정지 메뉴 (팝업 1종): 계속하기 · 포기하기 (포기 버튼은 여기 안으로 · UI_KIT_1018 §4) */
+function openPause() {
+  if (!b || pauseMenu) return;
+  const canQuit = b.phase === 'fight' || b.phase === 'walk';
+  setPaused(true);
+  pauseMenu = modal('일시정지', `<p>${esc(b.setup.title)} · ${mmss(b.stats.time)} 진행 중</p>${canQuit ? '<p class="dim">포기하면 이 전투는 패배로 끝나요.</p>' : ''}`, [
+    ...(canQuit ? ([['포기하기', () => {
+      pauseMenu = null;
+      setPaused(false);
+      if (b && (b.phase === 'fight' || b.phase === 'walk')) ((b.phase = 'lose'), (b.why = 'wipe'));
+    }]] as [string, () => void][]) : []),
+    ['계속하기', () => ((pauseMenu = null), setPaused(false)), true],
+  ]);
+  pauseMenu.dataset.pause = '';
 }
 function dpsLabel() {
   $('#dps').classList.toggle('open', dpsOpen);
-  $('#bDps').textContent = iconText(dpsOpen ? 'fold' : 'open');
   $('#bDps').title = dpsOpen ? '피해 판 접기' : '피해 판 펼치기';
   $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => {
     t.classList.toggle('on', t.dataset.dt === dpsTab);
@@ -194,11 +187,100 @@ function syncRaid(bb: Battle) {
     const p = r.parts[+btn.dataset.p!];
     btn.classList.toggle('broken', p.broken);
     btn.setAttribute('aria-pressed', String(+btn.dataset.p! === auto && !p.broken));
-    $('i', btn).style.width = `${(p.hp / p.max) * 100}%`;
+    setBar($('.kbar', btn), p.hp / p.max);
   });
-  $('#rGg').style.width = `${r.downT > 0 ? 100 : (r.groggy / r.gMax) * 100}%`;
+  setBar($('#raidHud .ggb .kbar'), r.downT > 0 ? 1 : r.groggy / r.gMax);
   $('#rDown').textContent = r.downT > 0 ? `다운 ${Math.ceil(r.downT)}초` : '';
   $('#bDodge').classList.toggle('hot', r.warnLane != null);
+}
+
+// ───────── 연출 (UI_KIT_1018 §4 연출 순서): BATTLE → (보스 등장 카드) → … → VICTORY / DEFEAT → 결과 ─────────
+/** 연출 타이머: 전투 화면 tick(dt)이 줄여 감 (녹화 모드에서도 장면 시간 그대로 · 화면을 떠나면 버림) */
+let cueTimers: { left: number; fn: () => void }[] = [];
+const after = (sec: number, fn: () => void) => cueTimers.push({ left: sec, fn });
+function cueTimersTick(dt: number) {
+  if (!cueTimers.length) return;
+  for (const t of cueTimers) t.left -= dt;
+  const due = cueTimers.filter((t) => t.left <= 0);
+  cueTimers = cueTimers.filter((t) => t.left > 0);
+  for (const t of due) t.fn();
+}
+/** 빛살 (캔버스로 한 번 그려 둠 · 16줄 · 흐림) */
+let raysUrl = '';
+function rays() {
+  if (raysUrl) return raysUrl;
+  const W = 844;
+  const H = 390;
+  const c = document.createElement('canvas');
+  c.width = W * 2;
+  c.height = H * 2;
+  const x = c.getContext('2d')!;
+  x.scale(2, 2);
+  x.filter = 'blur(6px)';
+  x.fillStyle = T.kit2.ray;
+  const [cx, cy] = [422, 170];
+  for (let k = 0; k < 16; k++) {
+    const a = (k * Math.PI) / 8;
+    x.beginPath();
+    x.moveTo(cx, cy);
+    x.lineTo(cx + Math.cos(a - 0.07) * 900, cy + Math.sin(a - 0.07) * 900);
+    x.lineTo(cx + Math.cos(a + 0.07) * 900, cy + Math.sin(a + 0.07) * 900);
+    x.fill();
+  }
+  return (raysUrl = c.toDataURL('image/png'));
+}
+/** 그림 글씨 한 번 (어둡게 + 빛살 + 가운데 (422,170) · 0.15초 커짐 → 유지 → 0.15초 사라짐) */
+function cueWord(name: 'word_battle' | 'word_victory' | 'word_defeat', w: number, sec: number): Promise<void> {
+  const el = document.createElement('div');
+  el.className = `cue word ${name}`;
+  el.style.setProperty('--cue', `${sec}s`);
+  el.innerHTML = `<img class="rays" src="${rays()}" alt=""><img class="wd" src="${titleUrl(`${name}.png`)}" alt="" style="width:${w}px;left:calc(50% - ${w / 2}px)">`;
+  $('#cue').append(el);
+  after(Math.max(0, sec - 0.15), () => el.classList.add('out'));
+  return new Promise((ok) => after(sec, () => (el.remove(), ok())));
+}
+/** 보스 등장 카드: 검은 화면 0.6 + 보스 전신(오른쪽) + 리본 「BOSS」 + 이름 · 1.5초 · 누르면 넘김 */
+let bossCard: { el: HTMLElement; end: () => void } | null = null;
+function bossIntro(boss: Unit): Promise<void> {
+  return new Promise((ok) => {
+    const cell = boss.anims.idle!.frames[0];
+    const [dir, key] = cell.split(':');
+    const el = document.createElement('div');
+    el.className = 'cue boss';
+    el.innerHTML = `<img class="bfull" src="${import.meta.env.BASE_URL}art/${dir}/${key}.png" alt="">
+      ${kit9('ribbon', 210, 40, 20, 'brib', '', '<span class="th">BOSS</span>')}<b class="th bname">${esc(boss.name)}</b><span class="tx bskip">눌러서 넘기기</span>`;
+    $('#cue').append(el);
+    let done = false;
+    const end = () => {
+      if (done) return;
+      done = true;
+      bossCard = null;
+      el.classList.add('out');
+      after(0.2, () => (el.remove(), ok()));
+    };
+    bossCard = { el, end };
+    el.onclick = end;
+    after(1.5, end);
+  });
+}
+/** 연출이 화면을 잡고 있는 동안 전투 진행 멈춤 */
+let cueHold = false;
+let cueBattle = false;
+let cueBossWave = -1;
+function cueTick(bb: Battle) {
+  if (!cueBattle && !talking && !intro && !artWait) {
+    cueBattle = true;
+    void cueWord('word_battle', 360, 0.9);
+  }
+  const bw = bb.wave;
+  if (bw >= 0 && bw !== cueBossWave && bb.phase === 'fight' && run?.mode !== 'arena') {
+    cueBossWave = bw;
+    const boss = bb.mobs.find((m) => m.mob?.boss);
+    if (boss) {
+      cueHold = true;
+      void bossIntro(boss).then(() => (cueHold = false));
+    }
+  }
 }
 
 function setup() {
@@ -216,11 +298,12 @@ function setup() {
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
   speedLabel();
   setPaused(false);
-  $('#stg').textContent = b.setup.title;
-  // 스테이지 이름은 시작할 때 다시 보여 줌 (보스 전장에선 2초 뒤 사라짐)
-  $('#stg').classList.remove('show');
-  void $('#stg').offsetWidth;
-  $('#stg').classList.add('show');
+  setBackdrop(`${import.meta.env.BASE_URL}art/${b.setup.bg ? `bgs/${b.setup.bg}` : 'bg'}.jpg`);
+  cueBattle = false;
+  cueHold = false;
+  cueBossWave = -1;
+  cueTimers = [];
+  $('#cue').innerHTML = '';
   buildBar();
   buildRaid();
   dpsLabel();
@@ -238,7 +321,7 @@ function setup() {
   $('#result').hidden = true;
   shown = false;
   const boss = b.setup.waves.flat().find((m) => m.boss);
-  if (boss?.portrait) $('#boss .bp').style.backgroundImage = `url(${portraitUrl(boss.portrait)})`;
+  $('#boss').innerHTML = `${boss?.portrait ? kitSocket(portraitUrl(boss.portrait), 30, null, 'bp') : ''}<span class="tx bn" id="bName">보스</span><span class="tx bpct" id="bPct">100%</span>${kitBar(300, 14, 1, T.kit2.mobHp, 'bar_thick')}`;
 }
 
 /** 콘텐츠 결과 (토벌·던전·탑·요일·레이드·월드 보스·결투장·외전) */
@@ -459,7 +542,7 @@ register('battle', {
       b.speed = sp[(sp.indexOf(b.speed) + 1) % sp.length];
       speedLabel();
     };
-    $('#bPause').onclick = () => setPaused(!paused);
+    $('#bPause').onclick = () => (paused ? setPaused(false) : openPause());
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
       setPref('dpsOpen', dpsOpen);
@@ -475,19 +558,6 @@ register('battle', {
       if (b) emote(b, 'hero', x.dataset.emo!);
       $('#emoPop').hidden = true;
     }));
-    // 포기: 멈추고 확인 창 (양피지 패널)
-    $('#bQuit').onclick = () => {
-      if (!b || (b.phase !== 'fight' && b.phase !== 'walk')) return;
-      const was = paused;
-      setPaused(true);
-      modal(`${icon('warn')} 전투를 포기할까요?`, '<p class="dim">이 전투는 패배로 끝나요.</p>', [
-        ['계속 싸우기', () => setPaused(was)],
-        ['포기하기', () => {
-          setPaused(false);
-          if (b && (b.phase === 'fight' || b.phase === 'walk')) ((b.phase = 'lose'), (b.why = 'wipe'));
-        }, true],
-      ]);
-    };
     view.onResize.push(onResize);
     firstRun = !!p.first;
     talking = false;
@@ -500,6 +570,10 @@ register('battle', {
     hud().classList.remove('raid', 'pvp');
     document.querySelectorAll('#stage > .vs, #stage > .cdown').forEach((e) => e.remove());
     intro = false;
+    setPaused(false);
+    bossCard?.end();
+    cueTimers = [];
+    $('#cue').innerHTML = '';
     $('#cv').onpointerdown = null;
     $('#result').hidden = true;
     b = null;
@@ -507,18 +581,26 @@ register('battle', {
   },
   tick(dt) {
     const ctx = view.ctx;
+    cueTimersTick(dt);
     if (!b) return void renderIdle(ctx, view.art, dt);
     if (talking || intro) {
       idleStep(b, dt);
       return render(ctx, view.art, b, performance.now() / 1000);
     }
-    if (paused || artWait) return void render(ctx, view.art, b, performance.now() / 1000);
+    cueTick(b);
+    if (paused || artWait || cueHold) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
+    // 끝: 마지막 일격 슬로우 뒤 VICTORY(가로 470) / DEFEAT 그림 글씨 + 빛살 1.2초 → 결과 화면 (UI_KIT_1018 §4-5)
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
       shown = true;
-      setTimeout(showResult, (b.phase === 'win' ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose) * 1000);
+      const me = b;
+      const win = b.phase === 'win';
+      after(win ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose, () => {
+        if (b !== me) return;
+        void cueWord(win ? 'word_victory' : 'word_defeat', 470, 1.2).then(() => b === me && showResult());
+      });
     }
     syncHud();
     // 컷인 동안엔 HUD를 내려 컷인이 맨 위로 (보스 체력 바는 남김 · POLISH_1017 ③-2)

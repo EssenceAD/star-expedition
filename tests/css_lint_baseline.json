@@ -1,18 +1,18 @@
 {
  "total": {
-  "border": 125,
-  "radius": 92,
-  "gradient": 72,
-  "boxShadow": 50,
-  "outline": 2
+  "border": 99,
+  "radius": 66,
+  "gradient": 55,
+  "boxShadow": 41,
+  "outline": 1
  },
  "files": {
   "style.css": {
-   "border": 124,
-   "radius": 92,
-   "gradient": 72,
-   "boxShadow": 50,
-   "outline": 2
+   "border": 98,
+   "radius": 66,
+   "gradient": 55,
+   "boxShadow": 41,
+   "outline": 1
   },
   "theme/tokens.ts": {
    "border": 1,

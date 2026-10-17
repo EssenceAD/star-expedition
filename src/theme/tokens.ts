@@ -268,7 +268,7 @@ export const T = {
     gold: '#ffd678', cream: '#fff0d2', name: '#ffecbe', lv: '#f3dca0', strip: '#faeccd', ink: '#0f0e1e',
     hp: '#6ed25a', mp: '#5096ff', mobHp: '#dc463c', exp: '#78dc5a', expText: '#96e678', party: '#5aa0ff',
     brown: '#3c2819', goldInk: '#46280f', navyInk: '#e6e1f0', tabOff: '#c8beaa', ver: '#c8c8dc', white: '#ffffff',
-    cd: 'rgba(0,0,0,0.55)', dim: 'rgba(8,10,22,0.59)', dim2: 'rgba(8,10,22,0.69)', veil: 'rgba(8,10,22,0.35)', black: '#000000',
+    cd: 'rgba(0,0,0,0.55)', ray: 'rgba(255,210,120,0.16)', dim: 'rgba(8,10,22,0.59)', dim2: 'rgba(8,10,22,0.69)', veil: 'rgba(8,10,22,0.35)', black: '#000000',
   } as Record<string, string>,
   /** UI 키트 통째 그림 (background-image · var(--kimg-이름)) */
   kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
@@ -339,7 +339,7 @@ export const T = {
   } as Record<string, string>,
   /** 전투 캔버스 */
   battle: {
-    shadow: 'rgba(25,30,20,0.3)',
+    shadow: 'rgba(10,12,8,0.47)',
     road0: 'rgba(190,156,100,0)',
     road1: 'rgba(200,164,108,0.12)',
     road2: 'rgba(120,90,60,0.35)',

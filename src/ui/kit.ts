@@ -25,6 +25,14 @@ export async function loadKit() {
   } catch {
     /* 그림 정보가 없으면 9-slice 기본값으로 */
   }
+  kitVars();
+}
+/** CSS에서 쓰는 키트 변수: --kit2-<이름> = url(그림) · --kit2-<이름>-s = 9-slice 칸(원본 px) */
+export function kitVars(root: HTMLElement = document.documentElement) {
+  for (const [n, k] of Object.entries(KIT)) {
+    root.style.setProperty(`--kit2-${n}`, `url("${new URL(kitUrl(n), location.href).href}")`);
+    root.style.setProperty(`--kit2-${n}-s`, String(k.slice?.[0] ?? Math.round(Math.min(k.w, k.h) / 3)));
+  }
 }
 /** 시험용 */
 export const setKit = (k: Record<string, KitPart>) => (KIT = k);
@@ -35,7 +43,7 @@ const n2 = (v: number) => Math.round(v * 100) / 100;
 export function k9(name: string, corner: number) {
   const k = kitOf(name);
   const s = k.slice?.[0] ?? Math.round(Math.min(k.w, k.h) / 3);
-  return `border-style:solid;border-width:0;border-image:url("${kitUrl(name)}") ${s} fill / ${n2(corner)}px / 0 stretch;`;
+  return `border-style:solid;border-width:0;border-image:url('${kitUrl(name)}') ${s} fill / ${n2(corner)}px / 0 stretch;`;
 }
 /** 요소에 9-slice 틀 */
 export function kitFrame(el: HTMLElement, name: string, o: { corner: number }) {

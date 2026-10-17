@@ -79,7 +79,7 @@ async function battleScene(p, stopAt) {
   });
   await p.waitForFunction(() => !window.__artWait(), null, { timeout: 20000 });
   await tick(p, 0.05);
-  await p.waitForTimeout(400);
+  await p.waitForTimeout(350);
   return stopAt(p);
 }
 
@@ -138,8 +138,10 @@ for (const name of want) {
       await p.evaluate(() => { const b = window.__b(); for (const h of b.heroes) (h.atk *= 30); });
       for (let i = 0; i < 900 && (await p.evaluate(() => window.__b().phase)) !== 'win'; i++) await tick(p, 0.5);
       if (name === 'victory') {
-        await tick(p, 0.5);
-        await p.waitForTimeout(300);
+        // 승리 → resultDelayWin 뒤 VICTORY 글씨 (실시간 타이머) → 글씨가 뜰 때 찍음
+        await p.evaluate(() => { for (let i = 0; i < 300 && !document.querySelector('#cue .word_victory'); i++) window.__tick(1 / 30); });
+        await tick(p, 0.4);
+        await p.waitForTimeout(500);
         return shot(p, name);
       }
       for (let i = 0; i < 40 && (await p.evaluate(() => document.querySelector('#result').hidden)); i++) {
@@ -150,6 +152,29 @@ for (const name of want) {
       await p.waitForTimeout(1500);
       return shot(p, name);
     });
+    await p.close();
+  } else if (name === 'boss_intro' || name === 'pause') {
+    // (확인용) 보스 등장 카드 · 일시정지 메뉴
+    const p = await page(844, 390, 'rec=1');
+    await p.evaluate((pause) => {
+      const S = window.__S();
+      S.party = ['woongs', 'gonu', 'ikamolly', 'walwal'];
+      window.__go('battle', { stage: { c: 1, s: pause ? 2 : 10, d: 0 } });
+    }, name === 'pause');
+    await p.waitForFunction(() => !window.__artWait(), null, { timeout: 20000 });
+    if (name === 'pause') {
+      await tick(p, 4);
+      await p.click('#bPause');
+      await p.waitForTimeout(400);
+      await shot(p, 'pause');
+    } else {
+      await p.evaluate(() => { const b = window.__b(); b.auto = true; for (const h of b.heroes) (h.atk *= 40); });
+      await p.evaluate(() => { for (let i = 0; i < 1200 && !document.querySelector('#cue .boss'); i++) window.__tick(1 / 30); });
+      await tick(p, 0.4);
+      await p.waitForTimeout(600);
+      if (process.env.DBG) console.log(await p.evaluate(() => { const c = document.querySelector('.cue.boss'); return [c.className, c.getAnimations().map((a) => a.animationName + ':' + a.playState + ':' + a.currentTime), document.timeline.currentTime, c && getComputedStyle(c).opacity, c && getComputedStyle(c).display, c && JSON.stringify(c.getBoundingClientRect()), getComputedStyle(document.querySelector('#cue')).display]; }));
+      await shot(p, 'boss_intro');
+    }
     await p.close();
   } else if (name === 'busts') {
     const p = await page(1360, 900);

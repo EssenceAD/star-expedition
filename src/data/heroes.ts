@@ -35,6 +35,8 @@ export interface HeroDef {
   voice?: [string, string, string];
   /** 외형 (그림 주문서 · 실루엣·머리색이 다른 영웅과 안 겹치게) */
   look?: string;
+  /** 전투 아래 상반신 보정 (UI_KIT_1018 §4 · ui/bust.ts): dx·dy = 몸 너비·키 비율만큼 옮김 · scale = 확대 */
+  bust?: { dx?: number; dy?: number; scale?: number };
 }
 
 export const HEROES: HeroDef[] = [
