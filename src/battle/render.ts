@@ -6,6 +6,7 @@ import { animOf, drawFrame, frameAt, heightOf, type Sheet } from '../sprite/shee
 import { canvasFace, canvasFont, elemColor, iconText, T } from '../theme/tokens';
 import { has, shortNum, type Battle, type Unit } from './sim';
 import { view } from '../ui/view';
+import { getPref } from '../core/save';
 
 export const LH = CONFIG.view.h;
 export const GROUND = CONFIG.view.ground;
@@ -139,20 +140,37 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
     ctx.ellipse(x, y - H * 0.48, H * 0.36, H * 0.56, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
-  ctx.textAlign = 'center';
-  const marks = [has(u, 'stun') && iconText('stun'), has(u, 'silence') && iconText('silence'), has(u, 'burn') && iconText('burn'), has(u, 'slow') && iconText('slow')].filter(Boolean) as string[];
-  if (marks.length) {
-    ctx.font = canvasFont(F.stun, 'bold', false);
-    ctx.fillStyle = B.stun;
-    ctx.fillText(marks.join(' '), x + Math.sin(now * 8) * 4, y - H - (u.mob && !u.mob.boss ? 12 : 4));
-  }
-  if (u.mob && !u.mob.boss) {
-    const w = 46;
+  if (!u.mob?.boss) headHp(ctx, u, x, y, H);
+}
+/** 설정 「머리 위 체력 바 늘 보기」 (전투 화면이 들어올 때 다시 읽음) */
+export const headHpPref = { always: getPref('hpAlways', false) };
+/** 상태 아이콘 순서 (디버프 먼저) */
+const ST_ICONS = ['stun', 'silence', 'burn', 'slow', 'atkDown', 'taunt', 'guard', 'atkUp', 'spdUp', 'critUp', 'regen'] as const;
+/** 머리 위 작은 체력 바 (아군 초록 · 적 빨강 · 맞은 뒤 잠깐) + 그 위 상태 아이콘 한 줄 (MOBILE_REF §3-A-1) */
+function headHp(ctx: CanvasRenderingContext2D, u: Unit, x: number, y: number, H: number) {
+  const HH = CONFIG.combat.headHp;
+  const w = Math.max(HH.minW, Math.round(H * HH.wOfH));
+  const top = y - H - (u.mob ? 10 : 6);
+  const show = headHpPref.always || u.hurtT < HH.showSec;
+  if (show) {
+    ctx.globalAlpha = headHpPref.always ? 1 : Math.min(1, (HH.showSec - u.hurtT) * 3);
     ctx.fillStyle = B.hpBar;
-    ctx.fillRect(x - w / 2 - 1, y - H - 7, w + 2, 6);
-    ctx.fillStyle = has(u, 'slow') ? B.slowBar : B.hpMob;
-    ctx.fillRect(x - w / 2, y - H - 6, w * (u.hp / u.max), 4);
+    ctx.fillRect(x - w / 2 - 1, top - 1, w + 2, 6);
+    ctx.fillStyle = u.side === 'hero' ? B.hpAlly : has(u, 'slow') ? B.slowBar : B.hpMob;
+    ctx.fillRect(x - w / 2, top, w * (u.hp / u.max), 4);
+    if (u.shield > 0) {
+      ctx.fillStyle = B.numShield;
+      ctx.fillRect(x - w / 2, top, Math.min(w, w * (u.shield / u.max)), 1.5);
+    }
+    ctx.globalAlpha = 1;
   }
+  const marks = ST_ICONS.filter((k) => has(u, k)).slice(0, HH.icons);
+  if (!marks.length) return;
+  ctx.textAlign = 'center';
+  ctx.font = canvasFont(F.stun, 'bold', false);
+  ctx.fillStyle = B.stun;
+  const gap = F.stun + 2;
+  marks.forEach((k, i) => ctx.fillText(iconText(k), x + (i - (marks.length - 1) / 2) * gap, top - 4));
 }
 function tag(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
   ctx.font = canvasFont(F.tag, 'bold', false);
@@ -217,6 +235,25 @@ function drawFx(ctx: CanvasRenderingContext2D, b: Battle) {
     ctx.shadowColor = f.color;
     ctx.shadowBlur = 14;
     switch (f.kind) {
+      case 'dome': {
+        // 궁극기 범위: 바닥에서 솟는 반투명 반구 (속성색) · 처음 0.15초 차오르고 사라짐
+        const grow = Math.min(1, u / 0.25);
+        const r = (f.r ?? 120) * (0.6 + 0.4 * grow);
+        ctx.globalAlpha = CONFIG.combat.ultDome.alpha * (1 - u * 0.8);
+        const g = ctx.createRadialGradient(f.x, f.y, r * 0.2, f.x, f.y, r);
+        g.addColorStop(0, B.clear);
+        g.addColorStop(0.75, f.color);
+        g.addColorStop(1, B.white);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(f.x, f.y, r, r * 0.8, 0, Math.PI, 0);
+        ctx.ellipse(f.x, f.y, r, r * 0.25, 0, 0, Math.PI);
+        ctx.fill();
+        ctx.globalAlpha = Math.max(0, 1 - u) * 0.8;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        break;
+      }
       case 'slash': {
         ctx.lineWidth = 9 * (1 - u) + 1;
         const r = 44 + u * 18;
@@ -339,10 +376,12 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
     const pop = crit
       ? n.t < N.critPop * 0.35 ? 0.6 + (n.t / (N.critPop * 0.35)) * 0.7 : 1.3 - Math.min(0.3, ((n.t - N.critPop * 0.35) / (N.critPop * 0.65)) * 0.3)
       : n.t < 0.08 ? 0.6 + (n.t / 0.08) * 0.55 : 1.15 - Math.min(0.15, (n.t - 0.08) * 0.8);
-    const base = crit ? F.numCrit : (n.big ? F.numBig : n.kind === 'hurt' || n.kind === 'burn' ? F.num * 0.8 : F.num) * N.normalScale;
+    // 크기 위계 (MOBILE_REF §3-A-2): 일반 작게 · 치명타 = 일반 × 1.6 주황 · 회복 초록 +n · 보호막 하늘색
+    const normal = F.num * N.normalScale;
+    const base = crit ? normal * N.critMul : n.big ? F.numBig * N.normalScale : n.kind === 'hurt' || n.kind === 'burn' || n.kind === 'shield' ? normal * 0.85 : normal;
     const size = base * pop;
     const y = n.y - n.t * N.rise;
-    const text = shortNum(n.v) + (n.kind === 'heal' ? '+' : '');
+    const text = (n.kind === 'heal' ? '+' : '') + shortNum(n.v);
     const alpha = Math.min(1, (N.life - n.t) * 4);
     ctx.globalAlpha = alpha;
     ctx.font = canvasFont(Math.round(size));
@@ -356,7 +395,7 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
     }
     // 외곽선은 가운데 기준으로 그어지니 두께 × 2
     ctx.lineWidth = (crit ? N.critStroke : N.stroke) * 2;
-    ctx.strokeStyle = n.kind === 'heal' ? B.numHealStroke : crit ? B.numCritStroke : B.numStroke;
+    ctx.strokeStyle = n.kind === 'heal' ? B.numHealStroke : n.kind === 'shield' ? B.numShieldStroke : crit ? B.numCritStroke : B.numStroke;
     ctx.strokeText(text, n.x, y);
     if (crit) {
       const g = ctx.createLinearGradient(0, y - size * 0.8, 0, y);
@@ -364,12 +403,19 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
       g.addColorStop(0.5, B.numCrit[1]);
       g.addColorStop(1, B.numCrit[2]);
       ctx.fillStyle = g;
-    } else ctx.fillStyle = n.kind === 'heal' ? B.numHeal : n.kind === 'hurt' ? B.numMob : n.kind === 'burn' ? B.burn : B.numText;
+    } else ctx.fillStyle = n.kind === 'heal' ? B.numHeal : n.kind === 'shield' ? B.numShield : n.kind === 'hurt' ? B.numMob : n.kind === 'burn' ? B.burn : B.numText;
     ctx.fillText(text, n.x, y);
   }
   ctx.globalAlpha = 1;
 }
-
+/** 마지막 일격 흰 번쩍 (MOBILE_REF §3-A-7) */
+function drawWhite(ctx: CanvasRenderingContext2D, b: Battle, W: number) {
+  if (b.white <= 0) return;
+  ctx.globalAlpha = Math.min(1, b.white / CONFIG.combat.lastHit.flash) * 0.85;
+  ctx.fillStyle = B.white;
+  ctx.fillRect(0, 0, W, LH);
+  ctx.globalAlpha = 1;
+}
 
 /** 일러스트 컷인: 기울어진 띠 + 일러스트가 화면을 가로지름 */
 function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) {
@@ -465,6 +511,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;
     ctx.fillRect(0, 0, W, LH);
   }
+  drawWhite(ctx, b, W);
   drawCut(ctx, art, b, W);
 }
 
@@ -739,6 +786,7 @@ function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: num
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;
     ctx.fillRect(0, 0, W, LH);
   }
+  drawWhite(ctx, b, W);
   drawNote(ctx, b, W);
   drawCut(ctx, art, b, W);
   drawDuo(ctx, art, b, W);

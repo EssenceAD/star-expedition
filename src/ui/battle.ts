@@ -2,7 +2,7 @@
 //  흐름: 행동력 → 파티를 필드에 세우고 (처음이면 대사) → 전투 → 승리 기록 → (장 클리어 대사 → 합류 연출) → 결과 → 다시 / 다음 / 반복 / 모험
 import { battleHeroIds, ensureHeroes } from './assets';
 import { CONFIG } from '../config';
-import { render, renderBg, type Art } from '../battle/render';
+import { headHpPref, render, renderBg, type Art } from '../battle/render';
 import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
@@ -25,7 +25,9 @@ import { view } from './view';
 const C = CONFIG.story;
 /** 승리·패배 엠블럼 (public/art/ui · 리본은 비어 있음 → 글자는 금박 글씨로 얹음) */
 const UI_ART = `${import.meta.env.BASE_URL}art/ui/`;
-const emb = (text: string, win: boolean) => `<div class="emb" style="background-image:url(${UI_ART}${win ? 'victory' : 'defeat'}.png)">${fxt(text, win ? '' : 'lose')}</div>`;
+/** 승리·패배 엠블럼 · stars를 주면 엠블럼 위로 별 3개가 하나씩 「쾅」 + 뒤에서 금빛 햇살이 돎 (MOBILE_REF §3-A-5) */
+const emb = (text: string, win: boolean, stars?: number) =>
+  `<div class="emb${stars !== undefined ? ' starred' : ''}" style="background-image:url(${UI_ART}${win ? 'victory' : 'defeat'}.png)">${stars !== undefined ? `<i class="rays"></i><div class="stars3">${[0, 1, 2].map((i) => `<img class="${i < stars ? 'on' : ''}" style="--i:${i}" src="${UI_ART}icons/star.png" alt="">`).join('')}</div>` : ''}${fxt(text, win ? '' : 'lose')}</div>`;
 let b: Battle | null = null;
 let st: StageId = { c: 1, s: 1, d: 0 };
 /** 콘텐츠 전투 (없으면 스토리) */
@@ -37,7 +39,10 @@ let shown = false;
 let talking = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
-let dpsOpen = false;
+/** DPS 판: 펼침(기억함) · 탭 피해·회복·받은 피해 (MOBILE_REF §3-A-4) */
+let dpsOpen = getPref('dpsOpen', true);
+let dpsTab: 'dealt' | 'healed' | 'taken' = 'dealt';
+const DPS_HEAD = { dealt: '피해량', healed: '회복량', taken: '받은 피해' } as const;
 let paused = false;
 /** 전투 그림(영웅 시트·컷인)을 받는 중 */
 let artWait = false;
@@ -126,12 +131,20 @@ function syncHud() {
   w.hidden = !bb.pat.text || bb.phase === 'win' || bb.phase === 'lose';
   const wt = `${iconText('warn')} ${bb.pat.text}`;
   if (bb.pat.text && w.textContent !== wt) w.textContent = wt;
+  // 남은 시간 (WAVE 판 옆 · 30초 남으면 빨강 · 보스 HUD가 뜨면 그쪽에 있음)
+  const ck = $('#clock');
+  ck.hidden = showBoss || !!bb.raid;
+  const ct = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
+  if (ck.textContent !== ct) ck.textContent = ct;
+  ck.classList.toggle('low', left <= CONFIG.ui.clockLowSec);
   if (dpsOpen) {
-    const sorted = [...bb.heroes].sort((a, c) => c.dealt - a.dealt).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
-    const top = Math.max(1, sorted[0].dealt);
+    const sorted = [...bb.heroes].sort((a, c) => c[dpsTab] - a[dpsTab]).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
+    const top = Math.max(1, sorted[0][dpsTab]);
     const t = Math.max(1, bb.stats.time);
-    // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 피해량 (BATTLE_HUD §3)
-    $('#dpsL').innerHTML = `<div class="dh">${bb.raid ? '피해 순위' : '피해량'}</div>${sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u.dealt)}</b><div class="g"><i style="width:${(u.dealt / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i><small>${shortNum(u.dealt / t)}/초</small></div></div>`).join('')}`;
+    // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 값 (BATTLE_HUD §3)
+    const rows = sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u[dpsTab])}</b><div class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i><small>${shortNum(u[dpsTab] / t)}/초</small></div></div>`).join('');
+    const el = $('#dpsL .rows');
+    if (el.innerHTML !== rows) el.innerHTML = rows;
   }
 }
 
@@ -162,7 +175,12 @@ function setPaused(on: boolean) {
 }
 function dpsLabel() {
   $('#dps').classList.toggle('open', dpsOpen);
-  $('#bDps').title = b?.raid ? '피해 순위' : 'DPS';
+  $('#bDps').textContent = iconText(dpsOpen ? 'fold' : 'open');
+  $('#bDps').title = dpsOpen ? '피해 판 접기' : '피해 판 펼치기';
+  $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => {
+    t.classList.toggle('on', t.dataset.dt === dpsTab);
+    t.textContent = t.dataset.dt === 'dealt' && b?.raid ? '피해 순위' : DPS_HEAD[t.dataset.dt as typeof dpsTab].replace('량', '');
+  });
 }
 function syncRaid(bb: Battle) {
   const r = bb.raid;
@@ -180,6 +198,7 @@ function syncRaid(bb: Battle) {
 }
 
 function setup() {
+  headHpPref.always = getPref('hpAlways', false);
   const keepAuto = b?.auto ?? getPref('auto', false);
   const keepSpeed = b?.speed ?? 1;
   b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
@@ -313,13 +332,14 @@ function showResult() {
   const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
   const hasNext = st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
   const show = () => {
-    r.innerHTML = `${emb('승리!', true)}<div class="rcol"><div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
-      <p class="why band">클리어 ${ck(true)} · 아무도 안 쓰러짐 ${ck(allUp)} · ${bb.setup.starTime}초 안 ${ck(bb.stats.time <= bb.setup.starTime)}<br>
+    r.innerHTML = `${emb('승리!', true, stars)}<div class="rcol"><p class="why band">클리어 ${ck(true)} · 아무도 안 쓰러짐 ${ck(allUp)} · ${bb.setup.starTime}초 안 ${ck(bb.stats.time <= bb.setup.starTime)}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP <b class="hn">${mvp.name}</b> ${shortNum(mvp.dealt)}
       ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl" style="background-image:url(${UI_ART}levelup.png)">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
       <div class="rw">${items.map(([k, n, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
       ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}</div>`;
     r.hidden = false;
+    // 별이 박힐 때마다 「쾅」
+    for (let i = 0; i < stars; i++) setTimeout(() => combatSynth('block', 0.8 + i * 0.2), (CONFIG.ui.winStars.delay + i * CONFIG.ui.winStars.gap) * 1000 + 250);
     wire(next);
   };
   const joined = () => (res.joined ? joinShow(res.joined, show) : show());
@@ -421,8 +441,10 @@ register('battle', {
     $('#bPause').onclick = () => setPaused(!paused);
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
+      setPref('dpsOpen', dpsOpen);
       dpsLabel();
     };
+    $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => (t.onclick = () => ((dpsTab = t.dataset.dt as typeof dpsTab), dpsLabel())));
     $('#cv').onpointerdown = () => b?.raid && b.phase === 'fight' && raidDodge(b);
     // 포기: 멈추고 확인 창 (양피지 패널)
     $('#bQuit').onclick = () => {

@@ -389,6 +389,16 @@
 - 채팅: 입력칸 포커스 → `.kb` + `#stage.typing` · 키보드가 가린 높이(`--kbT/B/L/R`)만큼 빼고 판을 꽉 채움 · 나머지 화면은 어둡게 · blur면 원래대로 · 😊 빠른 채팅(`CONFIG.social.quick` 8말 + 감정 4 · 결투장 감정 표현과 같은 묶음) · 누르는 버튼은 입력 포커스를 안 뺏음 · 터치 기기는 채팅 글씨 한 단계 작게
 - 확인 도구: `tools/shot-mobile.mjs` (세로 회전 + 실제 탭으로 로비·상점 이동 · 가로 · 전체 화면 · 홈 화면 실행 흉내 · 키보드 채팅 · 빠른 채팅)
 
+## 2-U. 모바일 ② 전투 디테일 (v0.10.6 · docs/MOBILE_REF_1017.md §3-A)
+- 머리 위 체력 바 `render.headHp`: 보스 빼고 모든 유닛 · 아군 `hpAlly` / 적 `hpMob` · `Unit.hurtT`(맞은 뒤 초) < `headHp.showSec`일 때만 (설정 「머리 위 체력 바 늘 보기」 = pref `hpAlways`) · 위에 상태 아이콘 최대 4개(디버프 먼저)
+- 숫자: 치명타 = 일반 × `nums.critMul`(1.6) · 주황 그라데이션(`numCrit`) · 회복 `+n` 초록 · 보호막이 막은 만큼 `shield` 종류 하늘색(`numShield`) · placeNum 크기 계산도 같게
+- `#clock`: WAVE 판 옆 남은 시간 (`ui.clockLowSec` 30 이하 빨강) · 보스 HUD·결과 화면에선 숨김
+- DPS 판: 오른쪽 끝 손잡이 `#bDps`(◂/▸) → 왼쪽으로 접힘 · pref `dpsOpen` 기억 · 탭 피해/회복/받은 피해(`dealt/healed/taken`) · 줄만 다시 그림
+- 승리: `emb(text, win, stars)` → 별 3개(`art/ui/icons/star.png`)가 `ui.winStars` 간격으로 떨어져 박힘 + 효과음 · 뒤에 회전 햇살(`--c-ray`) · 별 조건은 `starsOf` 그대로 (클리어 · 전원 생존 · `starTime` 120초 안)
+- 궁극기(3번째 스킬)가 적 전체 공격이면 첫 타에 `dome` 이펙트(영웅 속성색 · `combat.ultDome`) · 컷인은 그 앞
+- 마지막 적이 쓰러지면 `b.white`(0.15초 흰 번쩍) + `b.slowT`(0.4초 동안 ×0.3) · `combat.lastHit`
+- 도구: `tools/gif-scene.mjs win` (마지막 일격 → 승리 별 GIF)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
