@@ -78,6 +78,36 @@ export const T = {
     tagBg: 'rgba(255,250,240,0.9)',
   },
   /** 어두운 예외 (심연의 탑 · 레이드 · 월드 보스 · 길드 레이드 · 밤 이벤트) — 1단계 남색 팔레트 */
+  /** 「남색 유리」 (docs/HARMONY_1017.md §0 · 메뉴·전투 기본) — 크림 판을 걷어내고 반투명 남색 판 + 뒤 그림이 비침 · 글씨 크림/흰 · 강조 금
+   *  여기 없는 색은 밤 테마(colorDark) 값을 그대로 씀 */
+  colorGlass: {
+    panel: 'rgba(20,30,58,0.62)',
+    panel2: 'rgba(28,40,74,0.66)',
+    panelHi: 'rgba(40,56,98,0.72)',
+    panelDeep: 'rgba(12,20,42,0.66)',
+    chip: 'rgba(36,52,94,0.8)',
+    line: '#c99a3b',
+    lineHi: '#e8c46a',
+    gold: '#e8c46a',
+    gold2: '#c99a3b',
+    text: '#f6ecd6',
+    textDim: '#e6d8b8',
+    textMute: '#b9ab8c',
+    textSoft: '#f6ecd6',
+    accent: '#e8c46a',
+    btn: 'rgba(28,40,74,0.85)',
+    glass: 'rgba(20,30,58,0.62)',
+    veil2: 'rgba(16,24,48,0.94)',
+    tagBg: 'rgba(16,24,48,0.85)',
+    shade: 'rgba(10,16,34,0.6)',
+    scrVeil: 'rgba(14,20,40,0.28)',
+    cardShade: 'rgba(12,18,40,0.85)',
+    hiLine: 'rgba(255,243,196,0.06)',
+    panelGrain: 'rgba(255,255,255,0.02)',
+    /** 크림은 작은 곳에만 (영웅 카드 이름 띠 · 확인 창) */
+    cream: '#f6ecd6',
+    creamInk: '#5b3a1e',
+  } as Record<string, string>,
   colorDark: {
     bg: '#0b0918',
     bg2: '#151131',
@@ -159,9 +189,12 @@ export const T = {
     title: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
     menu: '"Gowun Batang", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
     hero: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
+    /** 전투 피해 숫자 (캔버스 · 타격감) */
     num: '"Luckiest Guy", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
+    /** 메뉴·재화·능력치 숫자 (UI_POLISH §1 · HARMONY §0) — 한글은 Hahmlet */
+    numUi: '"Cinzel", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
     /** 꾸밈 글씨 굵기 */
-    face: { title: '900', menu: '700', hero: '800', num: '400' },
+    face: { title: '900', menu: '700', hero: '800', num: '600' },
     size: { xxs: '8px', xs: '9px', sm: '10px', md: '11px', base: '12px', lg: '13px', xl: '15px', xxl: '18px', h2: '24px', h1: '40px', logo: '54px' },
     weight: { normal: '500', bold: '700', black: '700' },
     /** 캔버스 글자 크기 (px 숫자) */
@@ -170,11 +203,15 @@ export const T = {
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
   radius: { sm: '3px', md: '8px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
   border: { thin: '1px', base: '2px', thick: '3px', stroke: '3px' },
+  /** 유리 판 뒤 흐림 */
+  fx: { glass: 'blur(6px)' } as Record<string, string>,
   /** UI 키트 그림 테두리 (public/art/ui/kit · docs/ART_UI_1017.md) — [파일, 9-slice(위 오른 아래 왼 · 원본 px), 화면 테두리 두께]
    *  border-image로 그림 (테두리 두께는 그림 칸 안쪽으로 겹쳐 그려서 배치·여백은 그대로) · CSS에서 var(--kit-이름) */
   kit: {
     panel: ['panel_parchment', '70', '14px'],
     navy: ['panel_navy', '40', '14px'],
+    /** 유리 판 금테 (가운데 비움 → 반투명 남색이 보임) */
+    edge: ['panel_navy', '40', '12px', 'nofill'],
     btn: ['btn_blue', '0 70', '0 18px'],
     gold: ['btn_gold', '0 70', '0 18px'],
     tab: ['tab', '0 50', '0 14px'],
@@ -220,6 +257,8 @@ export const T = {
     fxDrop: '0 2px 0 #3a2a14, 0 0 14px rgba(255,200,90,0.55), 0 4px 8px rgba(30,20,0,0.3)',
     /** 바탕 그림 위 작은 글씨 받침 (어두운 화면) */
     textBack: '0 1px 1px #000000',
+    /** 흰 글씨 + 금 외곽선 (로비 메달 이름 · HARMONY §1) */
+    outlineGold: '-1px -1px 0 #7a4f12, 1px -1px 0 #7a4f12, -1px 1px 0 #7a4f12, 1px 1px 0 #7a4f12, 0 2px 2px rgba(0,0,0,0.45)',
     enhBurst: '0 0 30px rgba(255,210,100,0.95), 0 4px 0 #6a3a00',
   },
   /** 글씨 외곽선 (T3 꾸밈: 굵은 남색 선 + 아래 그림자) — shadow 안에 넣어 두고 밝은/어두운 같이 씀 */
@@ -388,8 +427,16 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
   sweep: ['M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5'],
 };
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
+/** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
+export const ICON_UI: Record<string, string> = {
+  stamina: 'icons/stamina', gold: 'icons/gold', stardust: 'icons/stardust', lock: 'icons/lock', power: 'icons/power', plusArt: 'icons/plus',
+  hp: 'icons/hp', atk: 'icons/atk', def: 'icons/def', crit: 'icons/crit', critDmg: 'icons/critdmg', spd: 'icons/speed', mana: 'icons/mana', levelup: 'icons/levelup',
+  mail: 'menu/mail', chat: 'menu/chat', heroes: 'menu/heroes', formation: 'menu/formation', content: 'menu/content', bag: 'menu/bag', mission: 'menu/mission', achieve: 'menu/achieve',
+  friend: 'menu/friend', shop: 'menu/shop', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
+};
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
+  if (ICON_UI[key]) return `<img class="${cls} img ui" src="${import.meta.env.BASE_URL}art/ui/${ICON_UI[key]}.png" alt="">`;
   if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
   const sv = ICON_SVG[key];
   if (sv) return `<svg class="${cls} svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${sv[0]}" fill="${sv[1] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
@@ -406,18 +453,18 @@ export const canvasFont = (px: number, weight: keyof typeof T.font.weight = 'bla
 export const canvasFace = (px: number, face: 'title' | 'menu' | 'hero' | 'num') => `${T.font.face[face]} ${px}px ${T.font[face]}`;
 
 /** :root 에 CSS 변수로 쓰기 — 화면의 모든 색·크기는 여기서 */
-export type Mode = 'light' | 'dark';
+export type Mode = 'light' | 'dark' | 'glass';
 let mode: Mode | null = null;
-export function applyTheme(m: Mode = 'light', root: HTMLElement = document.documentElement) {
+export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.documentElement) {
   if (m === mode && root === document.documentElement) return;
   mode = m;
   root.dataset.theme = m;
   const set = (k: string, v: string) => root.style.setProperty(k, v);
-  for (const [k, v] of Object.entries(m === 'dark' ? T.colorDark : T.color)) set(`--c-${k}`, v);
+  for (const [k, v] of Object.entries(m === 'light' ? T.color : m === 'dark' ? T.colorDark : { ...T.colorDark, ...T.colorGlass })) set(`--c-${k}`, v);
   for (const [k, v] of Object.entries(T.grade)) set(`--g-${k}`, v);
   for (const [k, v] of Object.entries(T.elem)) set(`--e-${k}`, v);
   set('--f-base', T.font.base);
-  set('--f-num', T.font.num);
+  set('--f-num', T.font.numUi);
   set('--f-title', T.font.title);
   set('--f-menu', T.font.menu);
   set('--f-hero', T.font.hero);
@@ -427,6 +474,7 @@ export function applyTheme(m: Mode = 'light', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.space)) set(`--s-${k}`, v);
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
+  for (const [k, v] of Object.entries(T.fx)) set(`--fx-${k}`, v);
   const kit = (f: string) => `url("${new URL(`${import.meta.env.BASE_URL}art/ui/kit/${f}.png`, location.href).href}")`;
   for (const [k, [f, slice, w, nofill]] of Object.entries(T.kit)) set(`--kit-${k}`, `${kit(f)} ${slice}${nofill ? '' : ' fill'} / ${w} / 0 stretch`);
   for (const [k, f] of Object.entries(T.kitImg)) set(`--kimg-${k}`, kit(f));

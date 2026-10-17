@@ -308,6 +308,15 @@
 - ⑥ WAVE 판(`wave_banner`) · 바뀔 때 위에서 0.5초
 - 캡처: `node tools/shot-hud.mjs out/hud` (평상시·DPS·치명타·쿨타임·자동 · 자동 장면만 컷인 끔)
 
+## 2-K. 화면 조화: 남색 유리 (v0.9.6 · docs/HARMONY_1017.md · 형철 빨간 표시 docs/captures/feedback_1612_1~6)
+- 테마 「glass」(tokens `colorGlass` · `applyTheme` 기본값) = 밤 테마 위에 반투명 남색 판·크림 글씨·금 강조 · 메뉴와 일반 전투 모두 · 어두운 콘텐츠(레이드 등)는 그대로 「dark」
+- 판: `.panel` = 반투명 남색 + `backdrop-filter`(`T.fx.glass`) + UI 키트 금테만(`--kit-edge` · 가운데 비움) · 버튼은 모두 파랑 그림(`.btn`) · 구매·영입·각성·스킬 올리기·별 올리기는 금 · 목록 줄·카드는 그림 버튼에서 뺌
+- 그림 아이콘: `ICON_UI`(tokens) → `icon()`이 먼저 `public/art/ui/{icons,menu}` 그림을 씀 (행동력·금화·별가루·우편·채팅·로비 메뉴 11·월드 보스·레이드·모험·능력치) · 탭은 `tabLabel()`(core)로 아이콘 + 글씨 · 그 밖 그림은 `uiPic()`
+- 숫자 글씨: 메뉴는 Cinzel(`T.font.numUi` → `--f-num`) · 전투 피해 숫자는 Luckiest Guy 그대로 · 알림은 화면 위 가운데
+- 영웅 정보: 목록은 초상화 + 이름만(58px) · 전신은 목록 오른쪽부터 · 성장 칩 대신 별 5 + 각성 점 5 + 초월 점 5 · 장비 빈 칸 = 부위 그림 흐리게 · 칸 이름은 title로만 · 능력치 아이콘 + 상한은 숫자 아래
+- 승리 화면: 결과가 뜨면 전투 HUD(자동·배속·DPS·포기·WAVE·아래 영웅 칸) 숨김 · 엠블럼 왼쪽(위 18% · 높이 50%) · 결과(별·조건 띠·보상 칸 틀·버튼)는 오른쪽
+- 캡처: `node tools/shot-screens.mjs out/screens` (로비·영웅 성장/스킬·상점·가방·승리)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

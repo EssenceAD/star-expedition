@@ -76,7 +76,7 @@ register('lobby', {
     root.innerHTML = `
       <div class="me panel"><div class="pt" style="background-image:url(${heroPortrait(lead)})"></div><div class="col grow"><b>${S.titles.on ? `<span class="chip on">${esc(S.titles.on)}</span> ` : ''}${esc(S.acc.name)} <span class="gold">Lv.${S.acc.lv}</span></b>
         <div class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></div>
-        <span class="xs dim">${bl ? `${icon('booster')} 부스터 ${fmtTime(bl)}` : `파티 전투력 ${fmt(partyPower())}`}</span></div></div>
+        <span class="xs dim">${bl ? `${icon('booster')} 부스터 ${fmtTime(bl)}` : `${icon('power')} <b class="pw">${fmt(partyPower())}</b>`}</span></div></div>
       <div class="quest panel col">
         <b class="sm">${icon('mission')} 진행 중</b>
         <button class="btn qrow" data-next>${icon('adventure')} 다음: ${stageName(ns)} ${CHAPTERS[ns.c - 1].name}</button>
@@ -87,9 +87,9 @@ register('lobby', {
         <div class="bondl">${activeBonds(partyIds()).map((x) => `<span class="chip on">${x.name}</span>`).join('')}</div>
       </div>
       <div class="bigs">
-        <button class="round art" data-portal="world" style="background-image:url(${import.meta.env.BASE_URL}art/bgs/raid.jpg)">${icon('world')}<span>월드 보스</span></button>
-        <button class="round art" data-portal="raid" style="background-image:url(${import.meta.env.BASE_URL}art/raidboss/intact.png)">${icon('raid')}<span>레이드</span></button>
-        <button class="round main art" data-go="adventure" style="background-image:url(${import.meta.env.BASE_URL}art/screens/map.jpg)">${icon('adventure')}<span>모험</span></button>
+        <button class="medal" data-portal="world">${icon('world')}<span>월드 보스</span></button>
+        <button class="medal" data-portal="raid">${icon('raid')}<span>레이드</span></button>
+        <button class="medal main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
       </div>
       <div class="dock">
         ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['mission', '미션', 'mission'], ['mission:ach', '업적', 'achieve'], ['friends', '친구', 'friend'], ['shop', '상점', 'shop'], ['guild', '길드', 'guild'], ['ranking', '랭킹', 'ranking'], ['settings', '설정', 'settings']]
