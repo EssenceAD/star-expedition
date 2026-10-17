@@ -1,4 +1,4 @@
-/* 별의 원정대 — 1단계: 모든 색·폰트·여백·테두리·그림자는 theme/tokens.ts 가 :root 에 쓴 var(--…) 만 쓴다 (tests/theme.test.ts)
+/* W.I.N.D (바람의 원정대) — 1단계: 모든 색·폰트·여백·테두리·그림자는 theme/tokens.ts 가 :root 에 쓴 var(--…) 만 쓴다 (tests/theme.test.ts)
    크기(width·height·위치)는 화면 배치라서 여기서 · 꾸밈 값은 전부 토큰 */
 [hidden] { display: none !important; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -60,13 +60,6 @@ button { font-family: inherit; cursor: pointer; }
 .stars i { color: var(--c-starOff); font-style: normal; }
 
 /* ───────── 타이틀 ───────── */
-#title { align-items: center; justify-content: center; gap: var(--s-lg); background: radial-gradient(ellipse at 50% 40%, var(--c-titleGlow), var(--c-veil)); }
-.logo { text-align: center; text-shadow: var(--sh-logo); }
-.logo small { display: block; font-size: var(--fs-lg); color: var(--c-logoSub); letter-spacing: 3px; }
-.logo b { display: block; font-size: var(--fs-logo); font-weight: var(--fw-black); background: linear-gradient(var(--c-logo0), var(--c-logo1)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: var(--b-thin) var(--c-logoEdge); }
-.logo i { font-style: normal; font-size: var(--fs-base); color: var(--c-accent); }
-.tip { margin: 0; font-size: var(--fs-base); color: var(--c-textSoft); }
-.ver { position: absolute; right: var(--s-md); bottom: var(--s-sm); font-size: var(--fs-xs); color: var(--c-textMute); }
 
 /* ───────── 대화 (프롤로그·스토리) ───────── */
 .talk { position: absolute; inset: 0; z-index: 15; display: flex; align-items: flex-end; padding: var(--s-lg); background: linear-gradient(transparent 40%, var(--c-veil2)); }
@@ -327,7 +320,7 @@ input.tab { color: var(--c-text); }
 .btn.big { font-size: var(--fs-h2); }
 .btn.hi { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
 .tab { font-size: var(--fs-base); }
-.logo b, #result h1, .join b, .enhfx .num { font-family: var(--f-title); font-weight: var(--fw-title); background: none; -webkit-text-stroke: 0; color: inherit; filter: none; text-shadow: none; }
+.join b, .enhfx .num { font-family: var(--f-title); font-weight: var(--fw-title); background: none; -webkit-text-stroke: 0; color: inherit; filter: none; text-shadow: none; }
 .enhfx .num { font-family: var(--f-num); }
 /* 꾸밈 글씨 fxt(): 뒤 겹(굵은 남색 선 + 아래 그림자) 위에 앞 겹(금 그라데이션) */
 .fxt { position: relative; display: inline-block; line-height: 1.1; white-space: nowrap; }
@@ -343,8 +336,6 @@ input.tab { color: var(--c-text); }
 .talk .who { color: var(--c-gold1); text-shadow: var(--sh-outlineSm); font-size: var(--fs-xl); }
 #wave, #stg, .bn b, #warn { font-family: var(--f-hero); font-weight: var(--fw-hero); letter-spacing: 1px; }
 #wave, #stg, .bn b { color: var(--c-gold1); text-shadow: var(--sh-outlineSm); }
-.logo { text-shadow: none; }
-.logo small, .logo i { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
 .capline { align-self: flex-start; margin-bottom: var(--s-xs); padding: var(--s-xxs) var(--s-md); background: var(--c-glass); border: var(--b-thin) solid var(--c-line); border-radius: var(--r-md); }
@@ -388,9 +379,6 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 .join .jface { width: 104px; height: 104px; border-radius: 50%; background: center 15%/cover no-repeat; }
 .join .jfb { width: 300px; height: 300px; flex: none; background: center bottom/contain no-repeat; animation: rcIn 0.6s 0.2s ease-out both; }
 /* 타이틀 키 아트(17명): 로고는 위 빈 하늘에, 버튼은 아래로 — 얼굴을 가리지 않게 */
-#title { justify-content: flex-end; padding-top: var(--s-md); padding-bottom: var(--s-xl); }
-#title .logo { margin-bottom: auto; }
-#title .tip { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
 .fmap.panel { background: var(--c-ink); border-color: var(--c-gold); }
 /* 지도 그림은 비율 그대로(가로 꽉) · 노드 %는 그림 기준 · 위아래만 살짝 잘림 */
 .fmap-in { position: absolute; left: 0; top: 50%; width: 100%; aspect-ratio: 1672 / 941; transform: translateY(-50%); background-position: center; background-repeat: no-repeat; background-size: cover; }
@@ -471,7 +459,6 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
 .lobby .dock { pointer-events: none; }
 .lobby .dock .dk { pointer-events: auto; }
 .gi.slot { border-style: dashed; border-color: var(--c-line); background: var(--c-glass); opacity: 0.7; }
-#title.artbg { background-image: var(--scr-art); background-position: center; background-size: cover; }
 /* 편성: 아직 없는 영웅 (흐리게 · 자물쇠 · docs/SCREENS_1017.md) */
 .roster .hcard > .lk { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: var(--fs-xxl); color: var(--c-white); text-shadow: var(--sh-outlineSm); }
 /* ───────── UI 키트 그림 테두리 (docs/ART_UI_1017.md · UI_POLISH_1017 §5) ─────────

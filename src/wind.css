@@ -17,3 +17,14 @@
 /* 글씨: 정보 = Gothic A1 800 · 제목·리본 = Hahmlet 800 · 어두운 외곽선 1px */
 .tx { font-family: var(--f-base); font-weight: var(--fw-black); color: var(--k-cream); text-shadow: var(--sh-ink); white-space: nowrap; line-height: 1; }
 .th { font-family: var(--f-title); font-weight: var(--fw-title); color: var(--k-name); text-shadow: var(--sh-ink); white-space: nowrap; line-height: 1; }
+
+/* ───────── 타이틀 (§3 · target_1018/title.jpg) ───────── */
+#title { cursor: pointer; overflow: hidden; }
+#title .tt-art { position: absolute; inset: 0; background-position: center; background-size: cover; background-repeat: no-repeat; }
+#title .tt-logo { position: absolute; left: calc(50% - 190px); top: calc(var(--st) + 4px); width: 380px; height: auto; pointer-events: none; }
+#title .tt-sub { position: absolute; left: 0; right: 0; top: calc(var(--st) + 8px + 160px + 4px); margin: 0; text-align: center; font-size: var(--fk-19); text-shadow: var(--sh-ink2); }
+#title .tt-tap { position: absolute; left: 0; right: 0; top: calc(390px - var(--sb) - 40px - 8px); height: 16px; margin: 0; text-align: center; font-size: var(--fk-15); line-height: 16px; color: var(--k-white); text-shadow: var(--sh-ink2); animation: ttTap 1.6s ease-in-out infinite alternate; }
+@keyframes ttTap { from { opacity: 0.5; } to { opacity: 1; } }
+#title .tt-ver { position: absolute; right: var(--sr); bottom: var(--sb); font-size: var(--fk-7); color: var(--k-ver); }
+#title .tw { position: absolute; width: 2px; height: 2px; background-color: var(--k-white); opacity: 0; animation: ttTwinkle 2.4s ease-in-out infinite; pointer-events: none; }
+@keyframes ttTwinkle { 0%, 100% { opacity: 0; transform: scale(0.6); } 50% { opacity: 1; transform: scale(1.4); } }

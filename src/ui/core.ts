@@ -10,6 +10,7 @@ import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
 import { cur, persist, S, type ChatLine } from '../game/state';
 import { fullbodyPath } from '../game/costume';
 import { icon, iconText } from '../theme/tokens';
+import { setBackdrop } from './view';
 
 export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as E;
 export const $$ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => [...root.querySelectorAll(s)] as E[];
@@ -84,6 +85,7 @@ export function go(id: ScreenId, params: Record<string, unknown> = {}, push = tr
   // 화면 배경 그림 (타이틀·로비·지도·길드 · docs/ART_DONE_1017_3.md §4)
   const sb = CONFIG.ui.screenBg[id];
   // 변수 안 url은 쓰는 CSS 파일 기준으로 풀리므로 절대 주소로
+  setBackdrop(sb ? `${BASE}art/screens/${sb}.jpg` : null);
   if (sb) (root.classList.add('artbg'), root.style.setProperty('--scr-art', `url(${new URL(`${BASE}art/screens/${sb}.jpg`, location.href).href})`));
   if (CONFIG.ui.screenVeil.includes(id)) root.classList.add('veiled');
   $('#ui').append(root);

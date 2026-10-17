@@ -20,10 +20,11 @@ import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
 import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
-import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
+import { PARTY_MAX, partyIds, persist, S } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
+import { $, $$, comingSoon, CUR_NAME, esc, fmt, go, heroPortrait, modal, register, starsHtml, syncBar, toast } from './core';
+import { setBackdrop } from './view';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
@@ -38,17 +39,25 @@ const card = (id: string, extra = '', cls = '') => {
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
 
-// ───────── 타이틀 ─────────
+// ───────── 타이틀 (docs/UI_KIT_1018.md §3 · target_1018/title.jpg) ─────────
+//  키 아트 cover · 로고(그림) 가로 380 · 위 SAFE+4 · 「바람의 원정대」 Hahmlet 19 · 「화면을 눌러 시작」 1.6초 깜빡 · 오른쪽 아래 버전 · 하늘에 별 12개 반짝
+//  어디를 눌러도 시작 (처음부터는 설정 안으로)
 register('title', {
   enter(root) {
     root.id = 'title';
-    root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>${fxt('별의 원정대')}</b><i>(가제) · 1단계 시스템 시험판</i></div>
-      <button class="btn hi big" data-go>원정 출발</button>
-      <p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
-      <div class="row"><button class="btn mini" data-reset>처음부터</button></div>
-      <div class="ver">v${__APP_VERSION__}</div>`;
+    root.dataset.go = '';
+    const T = `${import.meta.env.BASE_URL}art/ui/title/`;
+    setBackdrop(`${T}key_art.jpg`);
+    const stars = Array.from({ length: 12 }, () => `<i class="tw" style="left:${(4 + Math.random() * 92).toFixed(1)}%;top:${(3 + Math.random() * 42).toFixed(1)}%;animation-delay:-${(Math.random() * 2.4).toFixed(2)}s;animation-duration:${(1.6 + Math.random() * 1.6).toFixed(2)}s"></i>`).join('');
+    root.innerHTML = `<div class="tt-art" style="background-image:url(${T}key_art.jpg)"></div>${stars}
+      <img class="tt-logo" src="${T}logo.png" alt="W.I.N.D — Wayfarers of the Infinite Night's Dawn" draggable="false">
+      <h1 class="tt-sub th">바람의 원정대</h1>
+      <p class="tt-tap tx">화면을 눌러 시작</p>
+      <span class="tt-ver tx">v${__APP_VERSION__}</span>`;
     a2hsBanner(root);
-    $('[data-go]', root).onclick = async () => {
+    root.onclick = async (e) => {
+      if ((e.target as HTMLElement).closest('.a2hs')) return;
+      root.onclick = null;
       goFullscreen();
       const { initAudioEngine } = await import('../core/audio/engine');
       initAudioEngine();
@@ -56,16 +65,6 @@ register('title', {
       if (!S.prologue) go('battle', { stage: { c: 1, s: 1, d: 0 }, first: true });
       else go('lobby');
     };
-    $('[data-reset]', root).onclick = () =>
-      modal('처음부터 할까요?', '<p class="dim">이 기기에 저장된 원정대 기록이 모두 지워져요.</p>', [
-        ['그만두기', null],
-        ['처음부터', () => {
-          setSave(newSave());
-          persist();
-          refresh();
-          toast('새 원정대를 꾸렸어요');
-        }, true],
-      ]);
   },
 });
 

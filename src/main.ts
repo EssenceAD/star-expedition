@@ -1,4 +1,4 @@
-// 별의 원정대 (가제) 1단계: 부팅 → 테마 토큰 → 그림 → 저장 불러오기 → 타이틀 · 매 프레임 지금 화면 tick (전투 화면은 캔버스 직접, 나머지는 배경만)
+// W.I.N.D (바람의 원정대) 1단계: 부팅 → 테마 토큰 → 그림 → 저장 불러오기 → 타이틀 · 매 프레임 지금 화면 tick (전투 화면은 캔버스 직접, 나머지는 배경만)
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
@@ -43,7 +43,7 @@ fitView(stage, cv);
 {
   const h = HEROES[Math.floor(Math.random() * HEROES.length)];
   const ld = document.getElementById('loading')!;
-  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>별의 원정대를 준비하고 있어요…</small></div>`;
+  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>바람의 원정대를 준비하고 있어요…</small></div>`;
 }
 await Promise.all([loadFlags(), loadKit()]);
 const B = import.meta.env.BASE_URL;
