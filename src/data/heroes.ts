@@ -1,4 +1,4 @@
-// 영웅 36명 (STAR_EXPEDITION_SPEC §3 + HEROES_ADD_4) — 창립 13 · 「체크인」 전설 14 · 새 영웅 5 · 멤버 4
+// 영웅 36명 — 멤버 영웅 17 (docs/MEMBERS.md 최우선: 개척자 5 + 추가 멤버 11 + 황짐승) · 오리지널 19 (「체크인」 전설 14 · 스토리 5)
 //  그림: 개척자 5명은 자기 도트 시트 · 나머지는 직업별 자리표시자 시트 + 색 바꾸기(T.battle.tint) + 이름표 (ROADMAP §0)
 //  초상화: 개척자 star_<id> · 전설 legend_<key> · 그 외 「체크인」 mc_<직업>_<m|f> (그림 없는 영웅)
 //  능력치 숫자는 CONFIG.jobs × stat(영웅별 배수)
@@ -6,7 +6,8 @@ import type { AnimSet } from '../sprite/sheet';
 import { JOBS, type JobId } from './jobs';
 import { pas, sk, type PassiveDef, type SkillDef } from './skills';
 
-export type Origin = 'founder' | 'legend' | 'new' | 'member';
+/** founder = 멤버 영웅 17명 (docs/MEMBERS.md) · legend = 「체크인」 전설 · new = 스토리 오리지널 */
+export type Origin = 'founder' | 'legend' | 'new';
 export interface HeroDef {
   id: string;
   name: string;
@@ -36,7 +37,7 @@ export interface HeroDef {
 }
 
 export const HEROES: HeroDef[] = [
-  // ───────── 창립 멤버 13명 ─────────
+  // ───────── 멤버 영웅 17명 (docs/MEMBERS.md · 개척자 5 + 추가 멤버 11 + 황짐승) ─────────
   {
     id: 'hwang', name: '황짐승', gender: 'm', job: 'druid', title: '야성의 여관 주인', concept: '평소 느긋한 사장님, 전투 시 짐승 변신. 어깨의 숲 정령 「코드」', origin: 'founder', elem: 'beast', exWeapon: '숲의 계약서',
     look: '구릿빛 피부 · 멋진 수염 (형철 본인) · 느긋한 사장님 인상 · 어깨 위 숲 정령 「코드」',
@@ -329,7 +330,7 @@ export const HEROES: HeroDef[] = [
       sk(2, '다시 빛나라', 'star', 'light', 'meteor', { k: 'dmg', to: 'all', m: 3.2, n: 2 }),
     ],
   },
-  // ───────── 멤버 영웅 4명 (docs/HEROES_ADD_4.md · 다른 영웅과 같은 급 · 진열은 역할별로 섞임) ─────────
+  // ───────── (멤버 영웅 이어서 · 추가 멤버 · 상세는 docs/HEROES_ADD_4.md · 다른 멤버와 완전히 같은 급) ─────────
   {
     id: 'sermi', name: '세르미뉴', gender: 'm', job: 'mage', title: '별을 읽는 자', concept: '신중하고 진중한 계산형 마법사. 말수는 적지만 한마디가 정확하고, 모두가 「세르님」께 물어봄', origin: 'founder', elem: 'light', groggy: 1.6,
     look: '시크한 미소년 · 은회색 앞머리가 눈을 살짝 가림 · 남색 롱코트(별자리 무늬 안감) · 손 위에 떠 있는 작은 천구의',
