@@ -61,7 +61,11 @@ export function lobbyLifeTick(dt: number) {
       w.x += step;
       w.face = step > 0 ? 1 : -1;
     } else if ((w.wait -= dt) <= 0) {
-      w.to = W * (L.xMin + Math.random() * (L.xMax - L.xMin));
+      // 다른 영웅과 minGap 넘게 떨어진 곳으로 (몇 번 골라 보고 안 되면 마지막 자리)
+      const pick = () => W * (L.xMin + Math.random() * (L.xMax - L.xMin));
+      let to = pick();
+      for (let k = 0; k < 8 && walkers.some((o) => o !== w && (Math.abs(o.x - to) < L.minGap || Math.abs(o.to - to) < L.minGap)); k++) to = pick();
+      w.to = to;
       w.wait = 2 + Math.random() * 4;
       if (Math.random() < L.sayChance) {
         const h = heroOf(w.id);

@@ -7,7 +7,7 @@ import { MOB_KINDS } from './data/mobs';
 import { loadSave, persist, S } from './game/state';
 import { loadSheets } from './sprite/sheet';
 import { applyTheme, iconText } from './theme/tokens';
-import { $, currentScreen, go, tickChat } from './ui/core';
+import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
 import './ui/screensB';
@@ -67,6 +67,8 @@ const critBurst = await img(`${B}art/ui/battle/crit_burst.png`).catch(() => null
 view.art = { sheet, bg, cutin, raidBoss, bgs, critBurst };
 
 loadSave();
+// 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)
+watchFit($('#stage'));
 addEventListener('pagehide', () => persist());
 document.addEventListener('visibilitychange', () => document.hidden && persist());
 // 타이틀 키 아트는 먼저 받아 두고 (첫 화면이 빈 바탕으로 뜨지 않게)

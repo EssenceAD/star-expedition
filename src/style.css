@@ -664,7 +664,7 @@ body, .scr, #topbar, #ticker, .modal, #result, .toast { font-family: var(--f-bas
 .body > .col > .row.panel .dim { font-size: var(--fs-md); opacity: 0.8; }
 .body > .col > .row.panel .mute { font-size: var(--fs-md); }
 /* 각성·초월 = 그림 보석 점 (빈 칸 어두운 보석 · 찬 칸 금 보석) */
-.road2 .dots i { width: 9px; height: 9px; margin-left: var(--s-xs); border-radius: var(--r-sm); transform: rotate(45deg); border: var(--b-thin) solid var(--c-gold2); background: linear-gradient(135deg, var(--c-gemDark0), var(--c-gemDark1)); }
+.road2 .dots i { width: 9px; height: 9px; margin-left: var(--s-xs); border-radius: var(--r-sm); transform: rotate(45deg); border: var(--b-thin) solid var(--c-gold2); background: var(--c-gemOff); }
 .road2 .dots i.on { background: linear-gradient(135deg, var(--c-gold0), var(--c-gold1) 45%, var(--c-gold3)); border-color: var(--c-gold1); }
 .road2 { font-size: var(--fs-md); }
 /* 성장 줄: 아이콘·글씨·버튼 세로 가운데 */
@@ -702,3 +702,53 @@ body, .scr, #topbar, #ticker, .modal, #result, .toast { font-family: var(--f-bas
 .body > .side > .panel { flex: none; }
 /* 스크롤 목록 안 판·버튼은 줄지 않게 (글씨가 커져도 겹치지 않음) */
 .scroll > .panel, .scroll > .btn, .scroll > p { flex: none; }
+/* ───────── 마무리 2차 (docs/FONT_FINAL2_1017.md · 형철 빨간 표시 feedback_1714_1~6) ───────── */
+/* §2 영웅 카드 정보 띠: 칩 / 이름 / 설명 / 가격 각 1줄 · 높이 고정 → 띠 위 경계가 모든 카드에서 같음 */
+.shopc.hero .band { position: relative; z-index: 1; width: 100%; height: 108px; display: grid; grid-template-rows: 22px 22px 18px 1fr; justify-items: center; align-items: center; padding: 0 var(--s-sm); }
+.shopc.hero .band .chips { flex-wrap: nowrap; gap: var(--s-xs); overflow: hidden; max-width: 100%; }
+.shopc.hero .band b, .shopc.hero .band .one { display: block; max-width: 100%; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shopc.hero .band b { font-size: var(--fs-xxl); }
+.shopc.hero .band .one { font-size: var(--fs-md); }
+.hcard .nm { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 이름 판 설명·스킬 설명: 2줄 고정 · 단어 안 갈라지게 */
+.fit2, .skd { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+.body > .col > .row.panel .mute.fit2 { line-height: 1.35; }
+/* §3 탭 = 테두리 없는 남색 반투명 알약 · 선택만 금 그라데이션 + 금 밑줄 2px */
+.tab, .tab.on { border: 0; border-image: none; border-radius: var(--r-pill); background: var(--c-pill); box-shadow: none; -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); }
+.tab.on { background: linear-gradient(var(--c-pillOn0), var(--c-pillOn1)); color: var(--c-pillOnInk); text-shadow: none; box-shadow: inset 0 calc(var(--b-base) * -1) 0 var(--c-gold1); }
+.shopcats .tab, .shopcats .tab.on { border-radius: var(--r-md); }
+.shopcats .tab .ti { width: 28px; height: 28px; flex: none; object-fit: contain; }
+.shopcats .tab span { flex: 1; text-align: left; white-space: nowrap; }
+/* 「일반 이하」 고르기 상자 = 같은 알약 + 금 ▾ */
+select.tab { appearance: none; -webkit-appearance: none; padding-right: calc(var(--s-xl) + var(--s-sm)); background-image: linear-gradient(45deg, transparent 50%, var(--c-gold1) 50%), linear-gradient(135deg, var(--c-gold1) 50%, transparent 50%); background-position: calc(100% - var(--s-lg)) 55%, calc(100% - var(--s-md)) 55%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; background-color: var(--c-pill); color: var(--c-text); }
+select.tab option { background: var(--c-panelDeep); color: var(--c-text); }
+/* 영웅 목록 이름: 상자 없이 초상화 아래 남색 그라데이션 띠 위 글씨 */
+.hrow, .hrow.on { border: 0; border-image: none; background: none; box-shadow: none; }
+.hrow .pt.s { border-color: var(--c-gold2); }
+.hrow.on .pt.s { border-color: var(--c-gold1); box-shadow: var(--sh-glow); }
+.hrow span { margin-top: calc(var(--s-md) * -1); padding-top: var(--s-md); background: linear-gradient(transparent, var(--c-panelDeep) 55%); }
+/* §4 각성·초월 보석 점: 12px 정사각 45도 · 찬 칸 금빛 · 빈 칸 남색 + 금테 1px */
+.road2 .dots i { width: 12px; height: 12px; margin-left: var(--s-sm); border-radius: var(--r-sm); border: var(--b-thin) solid var(--c-gold2); background: var(--c-gemOff); box-shadow: none; }
+.road2 .dots i.on { border-color: var(--c-gold1); background: radial-gradient(circle at 35% 35%, var(--c-gemOn0), var(--c-gemOn1)); box-shadow: var(--sh-gemGlow); }
+.road2 .dots { display: inline-flex; align-items: center; }
+/* §5 승리: 리본 「승리!」 Hahmlet 900 · 금 그라데이션 + 진갈색 외곽선 2px · 리본 높이의 60% */
+#result:has(.rcol) > .emb .fxt { top: 21%; font-family: var(--f-title); font-weight: var(--fw-title); font-size: calc(var(--fs-h2) * 1.3); letter-spacing: 1px; }
+#result:has(.rcol) > .emb .fxt > span { background: linear-gradient(var(--c-gold0), var(--c-gold1) 45%, var(--c-gold3)); -webkit-background-clip: text; background-clip: text; }
+#result:has(.rcol) > .emb .fxt::before { -webkit-text-stroke: 0; color: transparent; text-shadow: var(--sh-winText); }
+.why.band { font-size: var(--fs-lg); line-height: 1.6; }
+.why.band .ck { display: inline-flex; vertical-align: -0.15em; }
+.why.band .ck svg.ic.svg { width: 1em; height: 1em; }
+/* 성장 줄: 별·각성·초월·만렙 한 줄 */
+.road2 { flex-wrap: nowrap; gap: var(--s-sm); white-space: nowrap; }
+.road2 .stpic { width: 14px; height: 14px; }
+.road2 .dots i { margin-left: var(--s-xs); }
+/* 스킬 줄: 이름 · 마나/쿨을 한 줄에 → 설명 2줄이 판 안에 다 보이게 */
+.skl .col { gap: 0; }
+.skn .skm { margin-left: var(--s-sm); font-family: var(--f-base); font-weight: var(--fw-normal); text-shadow: var(--sh-navyText); }
+/* 금박 글씨(fxt) 안쪽은 그림자 없음 — 투명 글자에 그림자가 비쳐 어둡게 보이던 것 */
+.fxt > span { text-shadow: none; }
+/* 보석 점: 간격 넓게 · 빈 칸도 면이 보이게(왼쪽 위 밝은 면) */
+.road2 .dots i { margin-left: calc(var(--s-sm) + var(--s-xs)); background: linear-gradient(135deg, var(--c-gemFacet) 0 35%, var(--c-gemOff) 35%); }
+.road2 .dots i:first-child { margin-left: var(--s-sm); }
+/* 스킬 이름 줄은 1줄 (넘치면 글씨를 줄임) */
+.skn { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -266,7 +266,7 @@ function beginRun(r: Run) {
 }
 
 /** 결과 조건 표시: 됨 = 금색 체크 · 안 됨 = 흐린 X */
-const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${iconText(ok ? 'check' : 'cross')}</i>`;
+const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${icon(ok ? 'check' : 'cross')}</i>`;
 function showResult() {
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;

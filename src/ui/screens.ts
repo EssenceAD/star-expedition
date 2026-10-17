@@ -31,7 +31,7 @@ const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간
 const card = (id: string, extra = '', cls = '') => {
   const h = heroOf(id);
   const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn">${icon(`zone_${zoneOf(id)}`)}</span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
+  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn">${icon(`zone_${zoneOf(id)}`)}</span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
 };
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
