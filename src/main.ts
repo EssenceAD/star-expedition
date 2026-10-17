@@ -17,6 +17,8 @@ import './ui/screensD';
 import * as cloud from './core/net/cloud';
 import { battleArtWait, battleNow } from './ui/battle';
 import { gachaShow } from './ui/gacha';
+import { loadFxArt } from './battle/fxart';
+import { requestSkill } from './battle/sim';
 import { makeGear } from './game/gear';
 
 applyTheme();
@@ -95,7 +97,9 @@ if (raidBoss) {
 }
 const bgs: Record<string, HTMLImageElement> = {};
 for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
-view.art = { sheet, bg: await bgP, cutin: {}, raidBoss, bgs, critBurst: await critP };
+view.art = { sheet, bg: await bgP, cutin: {}, raidBoss, bgs, critBurst: await critP, fx: null };
+// 스킬 이펙트 그림은 뒤에서 (오기 전까진 선 그리기 · ANIM_1017 ②)
+void loadFxArt().then((a) => (view.art.fx = a));
 // 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)
 watchFit($('#stage'));
 addEventListener('pagehide', () => persist());
@@ -147,5 +151,13 @@ if (q.get('go')) {
 }
 // 시험·녹화용 손잡이
 // 소환 연출 녹화용 (tools/gif-gacha.mjs): 정한 등급으로 연출만 (가방에 넣지 않음)
+// 스킬 바로 쓰기 (tools/gif-scene.mjs shield): 영웅 번호 · 스킬 번호 · 마나 채워서
+const castNow = (h: number, i: number) => {
+  const b = battleNow();
+  if (!b?.heroes[h]) return false;
+  b.heroes[h].mana = 100;
+  b.heroes[h].scd[i] = 0;
+  return requestSkill(b, b.heroes[h], i);
+};
 const gachaDemo = (grades: number[]) => gachaShow(grades.map((g, i) => makeGear((['weapon', 'armor', 'acc'] as const)[i % 3], g, 10, newSave())), null, () => {});
-Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cfg: CONFIG, __S: () => S, __tick: frame });
+Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame });
