@@ -9,6 +9,7 @@ import { img } from './ui/assets';
 import { applyTheme } from './theme/tokens';
 import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
+import { loadKit } from './ui/kit';
 import './ui/screens';
 import './ui/screensB';
 import './ui/screensC';
@@ -44,7 +45,7 @@ fitView(stage, cv);
   const ld = document.getElementById('loading')!;
   ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>별의 원정대를 준비하고 있어요…</small></div>`;
 }
-await loadFlags();
+await Promise.all([loadFlags(), loadKit()]);
 const B = import.meta.env.BASE_URL;
 // ───────── 그림 (SPRITE_RES_1017 §C: 처음엔 꼭 필요한 것만) ─────────
 // 꼭 필요한 것: 전투 기본 배경 · 치명타 별 · 타이틀 그림 · 로비에 걸어 다닐 영웅 + 지금 편성 · 영웅 키(칸 정보만)

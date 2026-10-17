@@ -1,0 +1,25 @@
+{
+ "total": {
+  "border": 125,
+  "radius": 92,
+  "gradient": 72,
+  "boxShadow": 50,
+  "outline": 2
+ },
+ "files": {
+  "style.css": {
+   "border": 124,
+   "radius": 92,
+   "gradient": 72,
+   "boxShadow": 50,
+   "outline": 2
+  },
+  "theme/tokens.ts": {
+   "border": 1,
+   "radius": 0,
+   "gradient": 0,
+   "boxShadow": 0,
+   "outline": 0
+  }
+ }
+}

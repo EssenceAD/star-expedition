@@ -1,8 +1,8 @@
 // 모든 숫자는 여기 한 곳 (ROADMAP §0 1단계 원칙) — 밸런스는 tests/balance.test.ts · tools/econ.mjs 로 확인
 //  전투 공식은 「체크인」 전투(combat/field.ts · CONFIG.combat): 치명 15% ×2 · 받는 피해 × (1 − 방어/(방어+K)) 최대 40% · 히트스톱/넉백/흔들림
 export const CONFIG = {
-  /** 논리 화면: 높이 고정 · 너비는 창 비율에 맞춰 (화면 꽉 채우기) */
-  view: { h: 390, wMin: 640, wMax: 960, wBase: 844, ground: 254 },
+  /** 논리 화면: 기준 844×390 · 더 넓은 창만 너비가 wMax까지 · 더 높은 창은 위아래에 배경 (UI_KIT_1018 §0-4) · 안전 여백 최소 safe */
+  view: { h: 390, wMin: 844, wMax: 960, wBase: 844, ground: 254, safe: 16 },
   combat: {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
     pxScale: 26 / 72,

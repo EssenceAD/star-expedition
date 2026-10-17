@@ -1,0 +1,19 @@
+/* W.I.N.D 키트 화면 (docs/UI_KIT_1018.md) — 틀·판·버튼·바·받침은 public/art/ui/kit2 그림(border-image 9-slice · <img>)만
+   CSS로 선·둥근 모서리·그라데이션·그림자·외곽선을 그리지 않는다 (tests/css_lint.test.ts · 이 파일은 0개)
+   위치·크기는 논리 px(844×390) · 안전 여백 --sl --sr --st --sb (view.ts fitView · 최소 16) */
+#bd { position: fixed; inset: -24px; background: var(--c-bg) center / cover no-repeat; filter: var(--fx-bd); }
+#stage { --sl: 16px; --sr: 16px; --st: 16px; --sb: 16px; --unitK: 1; }
+
+/* ───────── 키트 부품 공통 (src/ui/kit.ts) ───────── */
+.kp { display: block; flex: none; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.k9 { flex: none; }
+.ksock { position: relative; flex: none; }
+.ksock .ki, .ksock .kwin, .ksock .kf { position: absolute; display: block; pointer-events: none; }
+.ksock .kf { left: 0; top: 0; width: 100%; height: 100%; }
+.ksock .kwin { display: flex; align-items: center; justify-content: center; font-style: normal; }
+.kbar { position: relative; flex: none; }
+.kbar .kfill { position: absolute; display: block; transform-origin: 0 50%; transform: scaleX(var(--p)); transition: transform 0.12s; }
+.kbar em { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-style: normal; }
+/* 글씨: 정보 = Gothic A1 800 · 제목·리본 = Hahmlet 800 · 어두운 외곽선 1px */
+.tx { font-family: var(--f-base); font-weight: var(--fw-black); color: var(--k-cream); text-shadow: var(--sh-ink); white-space: nowrap; line-height: 1; }
+.th { font-family: var(--f-title); font-weight: var(--fw-title); color: var(--k-name); text-shadow: var(--sh-ink); white-space: nowrap; line-height: 1; }

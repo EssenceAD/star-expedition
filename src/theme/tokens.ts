@@ -219,20 +219,22 @@ export const T = {
   /** 속성 색 (스킬 이펙트 · 영웅 상징색 · 데이터는 키로만 부른다) */
   elem: { fire: '#ff6b3d', ice: '#8fe3ff', holy: '#fff3a8', light: '#ffd36b', nature: '#9dffb0', wind: '#8fd0ff', shadow: '#c79bff', steel: '#ffffff', ember: '#ffa040', pink: '#ff8ac8', earth: '#ff7a3d', gold: '#ffe08a', wave: '#5fa8ff', blood: '#ff4a6a', beast: '#c8a060' },
   font: {
-    /** 글씨 (모두 OFL · index.html에서 Google Fonts) — T7(10/17) 뒤 FONT_FINAL_1017로 바꿈 */
-    /** 글씨 3종 (FONT_FINAL_1017 §1): 본문·버튼·탭 = Noto Serif KR 600 · 제목·이름 = Hahmlet · 숫자 = Cinzel (IBM Plex는 폴백만) */
-    base: '"Noto Serif KR", "Hahmlet", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", serif',
-    title: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
-    menu: '"Noto Serif KR", "Hahmlet", "IBM Plex Sans KR", serif',
-    hero: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
+    /** 글씨 2종 (docs/UI_KIT_1018.md §0-2 · 모두 OFL · index.html Google Fonts): 정보 글씨 = Gothic A1 700/800 · 화면 제목·리본·이름 = Hahmlet 800
+     *  피해 숫자만 전투 캔버스에서 Luckiest Guy · Noto Serif KR · Cinzel 은 뺌 */
+    base: '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    title: '"Hahmlet", "Gothic A1", "Apple SD Gothic Neo", serif',
+    menu: '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    hero: '"Hahmlet", "Gothic A1", "Apple SD Gothic Neo", serif',
     /** 전투 피해 숫자 (캔버스 · 타격감) */
-    num: '"Luckiest Guy", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
-    /** 메뉴·재화·능력치 숫자 (UI_POLISH §1 · HARMONY §0) — 한글은 Hahmlet */
-    numUi: '"Cinzel", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
+    num: '"Luckiest Guy", "Gothic A1", system-ui, sans-serif',
+    /** 메뉴·재화·능력치 숫자 = 정보 글씨와 같은 Gothic A1 (숫자 폭 고정) */
+    numUi: '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
     /** 꾸밈 글씨 굵기 */
-    face: { title: '900', menu: '600', hero: '700', num: '600' },
+    face: { title: '800', menu: '800', hero: '800', num: '600' },
     size: { xxs: '8px', xs: '9px', sm: '12px', md: '12px', base: '12px', lg: '14px', xl: '14px', xxl: '17px', h2: '20px', h1: '40px', logo: '54px' },
-    weight: { normal: '600', bold: '700', black: '700' },
+    weight: { normal: '700', bold: '800', black: '800' },
+    /** UI 키트 글씨 크기 (논리 px · docs/UI_KIT_1018.md 표의 숫자 그대로) → var(--fk-<이름>) */
+    kit: { t7: '7px', t75: '7.5px', t8: '8px', t85: '8.5px', t9: '9px', t95: '9.5px', t10: '10px', t11: '11px', t12: '12px', t13: '13px', t15: '15px', t19: '19px' } as Record<string, string>,
     /** 캔버스 글자 크기 (px 숫자) */
     canvas: { num: 20, numBig: 26, numCrit: 34, critLabel: 13, cutName: 38, cutHero: 15, stun: 13, tag: 10 },
   },
@@ -240,7 +242,7 @@ export const T = {
   radius: { sm: '3px', md: '8px', pill: '999px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
   border: { thin: '1px', base: '2px', thick: '3px', stroke: '3px' },
   /** 유리 판 뒤 흐림 */
-  fx: { glass: 'blur(6px)', scrBlur: 'blur(6px)' } as Record<string, string>,
+  fx: { glass: 'blur(6px)', scrBlur: 'blur(6px)', bd: 'blur(10px) brightness(0.5)', resBg: 'blur(6px)' } as Record<string, string>,
   /** UI 키트 그림 테두리 (public/art/ui/kit · docs/ART_UI_1017.md) — [파일, 9-slice(위 오른 아래 왼 · 원본 px), 화면 테두리 두께]
    *  border-image로 그림 (테두리 두께는 그림 칸 안쪽으로 겹쳐 그려서 배치·여백은 그대로) · CSS에서 var(--kit-이름) */
   kit: {
@@ -261,11 +263,21 @@ export const T = {
     'slot-epic': ['slot_epic', '40', '15px'],
     'slot-legend': ['slot_legend', '40', '15px'],
   } as Record<string, [string, string, string, string?]>,
+  /** UI 키트 kit2 글씨·채움 색 (docs/UI_KIT_1018.md · tools/target_screens.py 값) → var(--k-<이름>) */
+  kit2: {
+    gold: '#ffd678', cream: '#fff0d2', name: '#ffecbe', lv: '#f3dca0', strip: '#faeccd', ink: '#0f0e1e',
+    hp: '#6ed25a', mp: '#5096ff', mobHp: '#dc463c', exp: '#78dc5a', expText: '#96e678', party: '#5aa0ff',
+    brown: '#3c2819', goldInk: '#46280f', navyInk: '#e6e1f0', tabOff: '#c8beaa', ver: '#c8c8dc', white: '#ffffff',
+    cd: 'rgba(0,0,0,0.55)', dim: 'rgba(8,10,22,0.59)', dim2: 'rgba(8,10,22,0.69)', veil: 'rgba(8,10,22,0.35)', black: '#000000',
+  } as Record<string, string>,
   /** UI 키트 통째 그림 (background-image · var(--kimg-이름)) */
   kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
   /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
   hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
   shadow: {
+    /** 키트 글씨 외곽선 1px 4방향 (UI_KIT_1018 §0-2 · 글씨 가독용 예외) */
+    ink: '-1px 0 0 #0f0e1e, 1px 0 0 #0f0e1e, 0 -1px 0 #0f0e1e, 0 1px 0 #0f0e1e, -1px -1px 0 #0f0e1e, 1px 1px 0 #0f0e1e, 1px -1px 0 #0f0e1e, -1px 1px 0 #0f0e1e',
+    ink2: '-2px 0 0 #0f0e1e, 2px 0 0 #0f0e1e, 0 -2px 0 #0f0e1e, 0 2px 0 #0f0e1e, -1px -1px 0 #0f0e1e, 1px 1px 0 #0f0e1e, 1px -1px 0 #0f0e1e, -1px 1px 0 #0f0e1e',
     /** 쿨다운 숫자 검은 외곽선 (POLISH_1017 ③-7) */
     cdNum: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 -2px 0 #000, -2px 0 0 #000, 2px 0 0 #000, 0 2px 0 #000',
     /** 채팅 입력 중 나머지 화면 가리기 (MOBILE_REF §2) */
@@ -533,6 +545,8 @@ export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.font.face)) set(`--fw-${k}`, v);
   for (const [k, v] of Object.entries(T.font.size)) set(`--fs-${k}`, v);
   for (const [k, v] of Object.entries(T.font.weight)) set(`--fw-${k}`, v);
+  for (const [k, v] of Object.entries(T.font.kit)) set(`--fk-${k.slice(1)}`, v);
+  for (const [k, v] of Object.entries(T.kit2)) set(`--k-${k}`, v);
   for (const [k, v] of Object.entries(T.space)) set(`--s-${k}`, v);
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
