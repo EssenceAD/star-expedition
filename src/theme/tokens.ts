@@ -57,6 +57,11 @@ export const T = {
     btnEdge: '#1d5fa8',
     special: '#ff9a3c',
     special2: '#e07a1c',
+    /** 화면 그림 위 막 · 가장자리 비네트 · 카드 아래 글씨 받침 (DENSITY) */
+    scrVeil: 'rgba(255,248,232,0.5)',
+    vignette: 'rgba(60,40,10,0.42)',
+    cardShade: 'rgba(20,16,40,0.82)',
+    panelGrain: 'rgba(140,100,40,0.05)',
     logo0: '#fff6c8',
     logo1: '#ffb84a',
     logoEdge: '#6a3a10',
@@ -139,6 +144,10 @@ export const T = {
     gold4: '#b8741a',
     special: '#ff9a3c',
     special2: '#e07a1c',
+    scrVeil: 'rgba(10,8,24,0.5)',
+    vignette: 'rgba(0,0,0,0.5)',
+    cardShade: 'rgba(10,8,24,0.85)',
+    panelGrain: 'rgba(255,255,255,0.03)',
   },
   /** 등급 색 (장비·룬·영웅 희귀도) */
   grade: { common: '#c8c8d8', uncommon: '#7ee08a', rare: '#58b8ff', epic: '#c79bff', legend: '#ffb347', ancient: '#ff6a52' },
@@ -184,6 +193,8 @@ export const T = {
     outlineSm: '-1px -1px 0 #1d2a58, 1px -1px 0 #1d2a58, -1px 1px 0 #1d2a58, 1px 1px 0 #1d2a58, 0 2px 0 #1d2a58',
     outlineIvory: '-1px -1px 0 #fffaf0, 1px -1px 0 #fffaf0, -1px 1px 0 #fffaf0, 1px 1px 0 #fffaf0, 0 2px 0 rgba(255,250,240,0.9)',
     ringGlow: '0 0 14px rgba(255,210,100,0.7), inset 0 0 40px rgba(255,224,138,0.8)',
+    roundIn: '0 0 10px rgba(242,200,106,0.55), inset 0 0 0 40px rgba(20,16,40,0.55)',
+    roundInMain: '0 3px 0 #1d5fa8, 0 0 14px rgba(79,179,255,0.45), inset 0 0 0 60px rgba(20,16,40,0.45)',
     fxDrop: '0 2px 0 #3a2a14, 0 0 14px rgba(255,200,90,0.55), 0 4px 8px rgba(30,20,0,0.3)',
     /** 바탕 그림 위 작은 글씨 받침 (어두운 화면) */
     textBack: '0 1px 1px #000000',
@@ -220,6 +231,9 @@ export const T = {
     burn: '#ff7a3d',
     warnFloor: 'rgba(255,50,30,',
     flash: 'rgba(255,250,230,',
+    /** 로비 말풍선 */
+    sayBg: 'rgba(255,250,240,0.92)',
+    sayText: '#1d2a58',
     hitFlash: 'rgba(255,255,255,',
     cutVeil: 'rgba(8,8,24,0.42)',
     cutEdge: '#0d0a20',

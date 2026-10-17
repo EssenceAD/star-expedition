@@ -204,7 +204,7 @@ register('bag', {
       if (tab === 'gear') {
         body = `<div class="row"><span class="xs dim">정렬</span>${(['grade', 'power', 'enh', 'part'] as SortKey[]).map((k) => `<button class="tab${sort === k ? ' on' : ''}" data-sort="${k}">${{ grade: '등급', power: '전투력', enh: '강화', part: '부위' }[k]}</button>`).join('')}<span class="grow"></span>
           <select data-g class="tab">${CONFIG.gear.grades.map((g, i) => `<option value="${i}">${g.name} 이하</option>`).join('')}</select><button class="btn mini" data-bulk="sell">일괄 판매</button><button class="btn mini" data-bulk="salvage">일괄 분해</button><button class="btn mini" data-craft>제작</button></div>
-          <div class="pk grow scroll">${sortedGear(sort).map((g) => gearCell(g, `data-gear="${g.uid}"`)).join('') || '<span class="mute">장비가 없어요 · 스테이지·장비 소환·제작으로 얻어요</span>'}</div>`;
+          <div class="pk grow scroll">${sortedGear(sort).map((g) => gearCell(g, `data-gear="${g.uid}"`)).join('') || '<span class="mute">장비가 없어요 · 스테이지·장비 소환·제작으로 얻어요</span>'}${'<i class="gi slot"></i>'.repeat(Math.max(0, CONFIG.ui.bagShowMin - sortedGear(sort).length))}</div>`;
       } else if (tab === 'rune') {
         const rs = Object.values(S.items).filter((x): x is Rune => x.kind === 'rune').sort((a, b) => b.grade - a.grade);
         body = `<div class="row">${RUNE_GRADE.slice(0, -1).map((n, i) => `<button class="btn mini" data-fuse="${i}">${n} ${CONFIG.rune.fuse}개 합성</button>`).join('')}</div>

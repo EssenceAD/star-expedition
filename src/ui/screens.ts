@@ -12,6 +12,7 @@ import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/acco
 import { freeSummonLeft } from '../game/gear';
 import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
+import { lobbyLifeStart, lobbyLifeTick } from './lobbyLife';
 import { attendPopup, dailyText, missionBadge } from './screensD';
 import { eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
@@ -86,9 +87,9 @@ register('lobby', {
         <div class="bondl">${activeBonds(partyIds()).map((x) => `<span class="chip on">${x.name}</span>`).join('')}</div>
       </div>
       <div class="bigs">
-        <button class="round" data-portal="world">${icon('world')}<span>월드 보스</span></button>
-        <button class="round" data-portal="raid">${icon('raid')}<span>레이드</span></button>
-        <button class="round main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
+        <button class="round art" data-portal="world" style="background-image:url(${import.meta.env.BASE_URL}art/bgs/raid.jpg)">${icon('world')}<span>월드 보스</span></button>
+        <button class="round art" data-portal="raid" style="background-image:url(${import.meta.env.BASE_URL}art/raidboss/intact.png)">${icon('raid')}<span>레이드</span></button>
+        <button class="round main art" data-go="adventure" style="background-image:url(${import.meta.env.BASE_URL}art/screens/map.jpg)">${icon('adventure')}<span>모험</span></button>
       </div>
       <div class="dock">
         ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['mission', '미션', 'mission'], ['mission:ach', '업적', 'achieve'], ['friends', '친구', 'friend'], ['shop', '상점', 'shop'], ['guild', '길드', 'guild'], ['ranking', '랭킹', 'ranking'], ['settings', '설정', 'settings']]
@@ -102,7 +103,9 @@ register('lobby', {
     $$('[data-soon]', root).forEach((b) => (b.onclick = () => comingSoon(...(b.dataset.soon!.split('|') as [string, string]))));
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
+    lobbyLifeStart();
   },
+  tick: (dt) => lobbyLifeTick(dt),
 });
 let offlineChecked = false;
 /** 로비에 처음 들어올 때 한 번: 방치 보상 */
