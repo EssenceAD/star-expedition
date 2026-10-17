@@ -19,8 +19,6 @@ export interface Art {
   bg: HTMLImageElement | null;
   /** 컷인 일러스트 (영웅 id → 그림) · 없으면 초상화 확대 */
   cutin: Record<string, HTMLImageElement | HTMLCanvasElement>;
-  /** 보스 전장 보스 그림 (부서지기 전 · 후) — 없으면 골렘 시트 */
-  raidBoss?: { intact: HTMLImageElement | null; broken: HTMLImageElement | null };
   /** 콘텐츠 전투 배경 (탑·레이드·결투장·던전·요일 · docs/ART_DONE_1017_3.md §5) */
   bgs?: Record<string, HTMLImageElement>;
   /** 치명타 폭발 별 (public/art/ui/battle/crit_burst.png) */
@@ -273,7 +271,11 @@ function imgFx(ctx: CanvasRenderingContext2D, art: Art, f: Fx): boolean {
 function drawFx(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
+  // 그림 이펙트는 최신 maxOn개만 (많이 겹치면 lighter로 화면이 하얗게 탐)
+  const imgs = b.fx.filter((f) => f.img);
+  const skip = new Set(imgs.slice(0, Math.max(0, imgs.length - CONFIG.combat.fxArt.maxOn)));
   for (const f of b.fx) {
+    if (skip.has(f)) continue;
     if (f.img && art.fx && imgFx(ctx, art, f)) continue;
     const u = f.t / f.dur;
     ctx.globalAlpha = Math.max(0, 1 - u);
@@ -637,25 +639,33 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
   const cx = BW / 2;
   const fy = BH - 20;
   auxReady(bossCv, bx, BW, BH);
-  const ri = art.raidBoss;
   const box = (p: { box: number[] }) => {
     const [px, up, w, h] = p.box;
     return [cx + px * H * 0.9, fy - up * H, w * H * 0.9, h * H] as const;
   };
-  if (ri?.intact) {
-    const w = (ri.intact.width / ri.intact.height) * H;
-    bx.drawImage(ri.intact, cx - w / 2, fy - H, w, H);
-    if (ri.broken)
-      for (const p of r.parts.filter((x) => x.broken)) {
-        const [x, y, w2, h2] = box(p);
-        bx.save();
-        bx.beginPath();
-        bx.rect(x, y, w2, h2);
-        bx.clip();
-        bx.clearRect(x, y, w2, h2);
-        bx.drawImage(ri.broken, cx - w / 2, fy - H, w, H);
-        bx.restore();
-      }
+  const dir = ref.split(':')[0].split('/')[0];
+  const big = dir === 'raidboss' || dir === 'worldboss';
+  let bxShake = 0;
+  if (big) {
+    // 레이드·월드 보스 동작 (ANIM_1017 ④): 상태마다 칸을 고름
+    const a = (rr: number, c: number) => `${dir}/anim1:r${rr}c${c}`;
+    const z = (rr: number, c: number) => `${dir}/anim2:r${rr}c${c}`;
+    const BA = CONFIG.raidArena.anim;
+    const rage = u.hp / u.max < RA.phases[RA.phases.length - 1];
+    const broke = r.parts.some((p) => p.broken);
+    const loop2 = (c0: string, c1: string) => (Math.floor(now * BA.idleFps) % 2 ? c1 : c0);
+    let cell: string;
+    if (u.dead) cell = def.frames[fi];
+    else if (r.downT > 0) cell = a(1, 3);
+    else if (r.parts.some((p) => p.broken && (p.brokenT ?? 9) < BA.flinchSec)) cell = z(0, 0);
+    else if (r.warnLane != null && r.warnT > 0) {
+      // 경고: 준비 칸 + 떨림 · 줄 광선 = 기 모으기 · 두 줄 폭발 = 포효 · 나머지 = 팔 들기
+      cell = r.warnKey === 'beam' ? a(1, 0) : r.warnKey === 'nova' ? a(1, 2) : a(0, 2);
+      bxShake = Math.sin(now * 45) * 2;
+    } else if (u.act === 'attack' && u.busy > 0) cell = rage ? z(1, 0) : r.warnKey === 'beam' ? a(1, 1) : a(0, 3);
+    else cell = rage ? z(0, 3) : broke ? loop2(z(0, 1), z(0, 2)) : loop2(a(0, 0), a(0, 1));
+    bx.filter = 'none';
+    drawFrame(bx, art.sheet, art.sheet.img[cell] ? cell : def.frames[fi], cx + bxShake, fy, k, 1);
   } else {
     bx.filter = filterOf(u);
     drawFrame(bx, art.sheet, def.frames[fi], cx, fy, k, 1);
@@ -667,9 +677,9 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
       bx.globalCompositeOperation = 'destination-out';
       bx.beginPath();
       for (let i = 0; i < 10; i++) {
-        const a = (i / 10) * Math.PI * 2;
+        const an = (i / 10) * Math.PI * 2;
         const rr = 0.32 + ((i * 37) % 7) / 30;
-        bx.lineTo(x + w / 2 + Math.cos(a) * w * rr, y + h / 2 + Math.sin(a) * h * rr);
+        bx.lineTo(x + w / 2 + Math.cos(an) * w * rr, y + h / 2 + Math.sin(an) * h * rr);
       }
       bx.closePath();
       bx.fill();
@@ -693,18 +703,21 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
     bx.fillRect(0, 0, BW, BH);
     bx.globalCompositeOperation = 'source-over';
   }
-  if (r.downT > 0) {
+  // 그로기: 그림이 따로 없는 보스만 어둡게 + 기울임 (레이드·월드 보스는 그로기 칸)
+  if (r.downT > 0 && !big) {
     bx.globalCompositeOperation = 'source-atop';
     bx.fillStyle = B.downVeil;
     bx.fillRect(0, 0, BW, BH);
     bx.globalCompositeOperation = 'source-over';
   }
   shadow(ctx, u.x, u.y, 170);
-  const tilt = r.downT > 0 ? 0.08 : 0;
+  const tilt = r.downT > 0 && !big ? 0.08 : 0;
   ctx.save();
   ctx.translate(u.x + u.knock, u.y);
   ctx.rotate(tilt);
-  ctx.globalAlpha = u.dead ? Math.max(0, 1 - u.deadT) : 1;
+  // 쓰러짐: 큰 보스는 쓰러짐→무너짐→잔해(1.2초)를 다 보여 준 뒤 사라짐
+  const fadeAt = big ? CONFIG.raidArena.anim.dieSec : 0;
+  ctx.globalAlpha = u.dead ? Math.max(0, 1 - Math.max(0, u.deadT - fadeAt) / CONFIG.raidArena.anim.fadeSec) : 1;
   ctx.drawImage(bossCv, -cx, -fy, BW, BH);
   ctx.restore();
   // 집중 공격 부위 테두리

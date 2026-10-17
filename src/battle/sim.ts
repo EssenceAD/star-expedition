@@ -522,7 +522,7 @@ const foeTargets = (b: Battle, u: Unit, to: string): Unit[] => {
   return [line.sort((a, c) => (to === 'back' ? a.x - c.x : c.x - a.x))[0]];
 };
 /** 이펙트 그림 크기: 몸통 가운데 것 · 발밑에서 솟는 것 (대상 키에 맞춤) */
-const fxH = (m: Unit, bottom = false) => Math.max(bottom ? K.fxArt.minBottom : K.fxArt.minCenter, m.h * (bottom ? K.fxArt.bottomK : K.fxArt.centerK));
+const fxH = (m: Unit, bottom = false) => Math.min(K.fxArt.maxH, Math.max(bottom ? K.fxArt.minBottom : K.fxArt.minCenter, m.h * (bottom ? K.fxArt.bottomK : K.fxArt.centerK)));
 function hitFx(b: Battle, u: Unit, s: SkillDef, m: Unit, k: number) {
   const color = elemColor(s.elem);
   const fx = (f: Omit<Fx, 't'>) => b.fx.push({ ...f, t: 0 });
