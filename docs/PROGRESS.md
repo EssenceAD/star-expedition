@@ -449,6 +449,11 @@
 - `allyFx(…, by)`: 시전자 자신에게 거는 기둥·회복·버프·고리는 그림 이펙트 없음(스킬 칸 m2r1c2 그림에 이미 효과) · 보호막은 남김
 - 도구: `tools/gif-scene.mjs triple` (스킬 3개 동시)
 
+## 2-AB. POLISH ② 스킬 포즈 멈춤 (v0.11.3 · docs/POLISH_1017.md ②)
+- 원인: 스킬3은 0.7배·스킬1은 0.8배 속도 + 컷인 0.6초(×0.15 느림)가 겹쳐 실제 2.3초 동안 스킬 자세 → `combat.anim.skill1Speed/skill3Speed` = 1 (4칸 1.1초 한 번 → 대기)
+- 다단 히트(eff.n > 1): `c0 → (c1 c2)×n → c3` · `combat.anim.multiHit` [0.07, 0.16] · hit = 각 c2 → 타격 시점이 그림과 맞음
+- 평타: 0.57초 한 번 → 대기 (측정 확인)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
