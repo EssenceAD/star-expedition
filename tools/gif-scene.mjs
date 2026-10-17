@@ -71,6 +71,19 @@ if (scene === 'win') {
     }, 50);
   });
   secs = 8;
+} else if (scene === 'triple') {
+  // 스킬 3개가 한꺼번에 (POLISH_1017 ① 하얗게 타는지 비교) · 웅스 3번 · 콩선생 2번(보호막) · 이카몰리 3번 · 컷인 끔
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 12);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 10, d: 0 } }); window.__b().auto = false; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  await fast("b.phase === 'fight' && b.mobs.some((m) => !m.dead && m.x <= m.tx + 1)", 40);
+  await p.evaluate(() => {
+    const b = window.__b();
+    b.cutIns = 'off';
+    const at = (id) => b.heroes.findIndex((h) => h.hero.def.id === id);
+    setTimeout(() => { window.__cast(at('woongs'), 2); window.__cast(at('walwal'), 1); window.__cast(at('ikamolly'), 2); window.__cast(at('walwal'), 2); }, 300);
+  });
+  secs = 2.6;
 } else if (scene === 'shield') {
   // 콩선생 보호막: 걸림(0→1) → 유지(1↔2) → 깨짐(3)
   await party(['woongs', 'walwal'], 25);
@@ -97,11 +110,12 @@ if (scene === 'win') {
   await p.evaluate(() => { const b = window.__b(); b.pat.left = 0.6; b.cutIns = 'off'; });
   secs = 5;
 } else if (scene === 'forest') {
-  // 숲 동굴 1-2: 숲 배경 + 지역 몹 3종 (걸어 들어가 싸움)
-  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 8);
-  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 2, d: 0 } }); window.__b().auto = true; });
+  // 숲 동굴 1-2(슬라임·고블린 · 두 웨이브) — STAGE=1-6 이면 늑대 웨이브 · 숲 배경 + 지역 몹
+  const [c, st] = (process.env.STAGE ?? '1-2').split('-').map(Number);
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], Number(process.env.LV ?? 3));
+  await p.evaluate(([c, st]) => { window.__go('battle', { stage: { c, s: st, d: 0 } }); window.__b().auto = true; }, [c, st]);
   await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
-  secs = 7;
+  secs = Number(process.env.SECS ?? 12);
 } else if (scene === 'raid' || scene === 'world') {
   // 레이드 「잿날개」: 대기 → 그로기 → 부위 파괴(움찔 → 부서진 대기) → 쓰러짐·무너짐·잔해 (ANIM_1017 ④) · world = 월드 보스 그림
   await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 22);

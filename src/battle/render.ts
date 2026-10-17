@@ -273,7 +273,7 @@ function drawFx(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
   ctx.globalCompositeOperation = 'lighter';
   // 그림 이펙트는 최신 maxOn개만 (많이 겹치면 lighter로 화면이 하얗게 탐)
   const imgs = b.fx.filter((f) => f.img);
-  const skip = new Set(imgs.slice(0, Math.max(0, imgs.length - CONFIG.combat.fxArt.maxOn)));
+  const skip = new Set(imgs.slice(0, Math.max(0, imgs.length - (b.raid ? CONFIG.combat.fxArt.maxOnRaid : CONFIG.combat.fxArt.maxOn))));
   for (const f of b.fx) {
     if (skip.has(f)) continue;
     if (f.img && art.fx && imgFx(ctx, art, f)) continue;

@@ -442,6 +442,13 @@
 - 이펙트: 크기 상한 `fxArt.maxH` 190 · 한 번에 그림 이펙트 최신 `maxOn` 10개 (8인 레이드에서 lighter가 쌓여 하얗게 타던 것)
 - 도구: `tools/gif-scene.mjs raid · world`
 
+## 2-AA. POLISH ① 이펙트 과다 정리 (v0.11.2 · docs/POLISH_1017.md ①)
+- `fxArt.alpha` 0.85→0.6 · `soft`(heal·pillar·buff) 0.45 · 보호막 유지 `shieldAlpha` 0.7→0.5
+- 크기: `fxH` = min(`maxH` 175 = 화면 45%, 대상 키 × `maxOfH` 1.3, …) · 회복 기둥 폭 × `healW` 0.55
+- `pushFx()`: 한 대상(`Fx.on`) 위 그림 이펙트 `perTarget` 2개 — 넘치면 오래된 것을 `fadeFast`만 남기고 끔 · 화면 전체 `maxOn` 6(레이드 `maxOnRaid` 10)
+- `allyFx(…, by)`: 시전자 자신에게 거는 기둥·회복·버프·고리는 그림 이펙트 없음(스킬 칸 m2r1c2 그림에 이미 효과) · 보호막은 남김
+- 도구: `tools/gif-scene.mjs triple` (스킬 3개 동시)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
