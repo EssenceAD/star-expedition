@@ -299,6 +299,15 @@
 - 아직 안 쓴 키트: `skill_ring.png`(가운데가 막혀 있어 아이콘 위에 덮으면 가려짐 → 아이콘 자체 금테로 대신) · `btn_close.png`(닫기 버튼 자리가 아직 없음)
 - 황짐승: 같은 파일 이름 교체 → 코드 그대로 · 서비스 워커 없음 · GitHub Pages 캐시(10분) 뒤 새 그림
 
+## 2-J. 전투 HUD 다듬기 (v0.9.5 · docs/BATTLE_HUD_1017.md · 그림 public/art/ui/battle)
+- 그림 변수: 토큰 `T.hudImg` → `applyTheme`가 `--hud-<이름>` (밑줄은 -) · CSS 맨 아래 「전투 HUD 다듬기」 묶음
+- ①② 왼쪽 위 자동·배속(44px · 켜짐은 빛나는 판 + 도는 빛 · 글씨는 아래 작게) · 오른쪽 위 일시정지·포기(40px) · 포기는 확인 창(양피지) · 일시정지 중엔 전투 시간이 멈춤(`#pausedTag`)
+- ③ DPS: 칼 탭 + 두루마리 판(9-slice) · 기본 접힘 · 한 줄 22px = 초상화 20px · 이름 · 직업색 막대(`T.battle.jobColor`) + 초당 · 피해량
+- ④ 피해 숫자(`render.ts drawNums` · `CONFIG.combat.nums`): 일반 0.85배 · 외곽선 1.5px · 치명타는 폭발 별(`crit_burst`) 뒤에 · 흰→금 · 외곽선 2px · 기운 「치명타」 리본 · 0.35초 커졌다 작아짐
+- ⑤ 영웅 칸: 이름은 초상화 오른쪽에서 · 스킬 34px(1.15배) · 쓸 수 있음 = 밝게 + 반짝 · 마나 부족·대기 = 채도 50% · 쿨타임 = `cd_overlay`를 남은 비율만큼(시계방향으로 걷힘 · `--cd`) · 영웅 자동 = 28px 토글
+- ⑥ WAVE 판(`wave_banner`) · 바뀔 때 위에서 0.5초
+- 캡처: `node tools/shot-hud.mjs out/hud` (평상시·DPS·치명타·쿨타임·자동 · 자동 장면만 컷인 끔)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

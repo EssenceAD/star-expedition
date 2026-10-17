@@ -20,6 +20,8 @@ export interface Art {
   raidBoss?: { intact: HTMLImageElement | null; broken: HTMLImageElement | null };
   /** 콘텐츠 전투 배경 (탑·레이드·결투장·던전·요일 · docs/ART_DONE_1017_3.md §5) */
   bgs?: Record<string, HTMLImageElement>;
+  /** 치명타 폭발 별 (public/art/ui/battle/crit_burst.png) */
+  critBurst?: HTMLImageElement | null;
 }
 /** 이 전투 배경 그림 · 전용 배경이면 지역 색 안 씀 */
 const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[key], own: true } : { im: art.bg, own: false });
@@ -302,26 +304,37 @@ function drawFx(ctx: CanvasRenderingContext2D, b: Battle) {
   ctx.restore();
 }
 
-function drawNums(ctx: CanvasRenderingContext2D, b: Battle) {
+function drawNums(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
   const N = CONFIG.combat.nums;
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   for (const n of b.nums) {
     const crit = n.kind === 'crit';
-    const pop = n.t < 0.08 ? 0.6 + (n.t / 0.08) * 0.55 : 1.15 - Math.min(0.15, (n.t - 0.08) * 0.8);
-    const base = crit ? F.numCrit : n.big ? F.numBig : n.kind === 'hurt' || n.kind === 'burn' ? F.num * 0.8 : F.num;
+    // 치명타: critPop초 동안 커졌다(1.3배) 작아짐 · 일반: 짧게 톡 튀어나옴
+    const pop = crit
+      ? n.t < N.critPop * 0.35 ? 0.6 + (n.t / (N.critPop * 0.35)) * 0.7 : 1.3 - Math.min(0.3, ((n.t - N.critPop * 0.35) / (N.critPop * 0.65)) * 0.3)
+      : n.t < 0.08 ? 0.6 + (n.t / 0.08) * 0.55 : 1.15 - Math.min(0.15, (n.t - 0.08) * 0.8);
+    const base = crit ? F.numCrit : (n.big ? F.numBig : n.kind === 'hurt' || n.kind === 'burn' ? F.num * 0.8 : F.num) * N.normalScale;
     const size = base * pop;
     const y = n.y - n.t * N.rise;
     const text = shortNum(n.v) + (n.kind === 'heal' ? '+' : '');
-    ctx.globalAlpha = Math.min(1, (N.life - n.t) * 4);
+    const alpha = Math.min(1, (N.life - n.t) * 4);
+    ctx.globalAlpha = alpha;
     ctx.font = canvasFont(Math.round(size));
-    ctx.lineWidth = crit ? 9 : 6;
+    // 치명타 폭발 별을 숫자 뒤에
+    if (crit && art.critBurst) {
+      const bw = ctx.measureText(text).width * N.burstW;
+      const bh = (bw * art.critBurst.naturalHeight) / art.critBurst.naturalWidth;
+      ctx.globalAlpha = alpha * Math.min(1, n.t * 10);
+      ctx.drawImage(art.critBurst, n.x - bw / 2, y - size * 0.42 - bh / 2, bw, bh);
+      ctx.globalAlpha = alpha;
+    }
+    // 외곽선은 가운데 기준으로 그어지니 두께 × 2
+    ctx.lineWidth = (crit ? N.critStroke : N.stroke) * 2;
     ctx.strokeStyle = n.kind === 'heal' ? B.numHealStroke : crit ? B.numCritStroke : B.numStroke;
-    // T3 꾸밈: 아래로 한 번 더 그은 선(그림자) → 외곽선 → 채움
-    ctx.strokeText(text, n.x, y + (crit ? 4 : 3));
     ctx.strokeText(text, n.x, y);
     if (crit) {
-      const g = ctx.createLinearGradient(0, y - size, 0, y);
+      const g = ctx.createLinearGradient(0, y - size * 0.8, 0, y);
       g.addColorStop(0, B.numCrit[0]);
       g.addColorStop(0.5, B.numCrit[1]);
       g.addColorStop(1, B.numCrit[2]);
@@ -329,11 +342,20 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle) {
     } else ctx.fillStyle = n.kind === 'heal' ? B.numHeal : n.kind === 'hurt' ? B.numMob : n.kind === 'burn' ? B.burn : B.numText;
     ctx.fillText(text, n.x, y);
     if (crit) {
-      ctx.font = canvasFace(F.critLabel + 2, 'menu');
-      ctx.lineWidth = 5;
-      ctx.strokeText('치명타', n.x, y - size + 1);
+      // 「치명타」 = 숫자 위 작은 기운 리본
+      ctx.save();
+      ctx.translate(n.x - size * 0.5, y - size * 0.95);
+      ctx.rotate(-0.14);
+      ctx.font = canvasFace(F.critLabel, 'menu');
+      const lw = ctx.measureText('치명타').width + 10;
+      const lh = F.critLabel + 4;
+      ctx.fillStyle = B.critRibbon;
+      ctx.beginPath();
+      ctx.roundRect(-lw / 2, -lh + 3, lw, lh, 3);
+      ctx.fill();
       ctx.fillStyle = B.numCritLabel;
-      ctx.fillText('치명타', n.x, y - size + 1);
+      ctx.fillText('치명타', 0, 0);
+      ctx.restore();
     }
   }
   ctx.globalAlpha = 1;
@@ -447,7 +469,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   for (const u of units) drawUnit(ctx, art, u, now);
   drawFx(ctx, b);
   drawSays(ctx, b);
-  drawNums(ctx, b);
+  drawNums(ctx, b, art);
   ctx.restore();
   if (b.flash > 0) {
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;
@@ -689,7 +711,7 @@ function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: num
   for (const u of units) drawUnit(ctx, art, u, now);
   drawFx(ctx, b);
   drawSays(ctx, b);
-  drawNums(ctx, b);
+  drawNums(ctx, b, art);
   ctx.restore();
   if (b.flash > 0) {
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;

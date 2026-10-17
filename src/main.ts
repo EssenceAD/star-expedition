@@ -63,7 +63,8 @@ const RB = CONFIG.raidArena.art;
 const raidBoss = RB.have ? { intact: await img(`${B}art/${RB.intact}`).catch(() => null), broken: await img(`${B}art/${RB.broken}`).catch(() => null) } : undefined;
 const bgs: Record<string, HTMLImageElement> = {};
 for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
-view.art = { sheet, bg, cutin, raidBoss, bgs };
+const critBurst = await img(`${B}art/ui/battle/crit_burst.png`).catch(() => null);
+view.art = { sheet, bg, cutin, raidBoss, bgs, critBurst };
 
 loadSave();
 addEventListener('pagehide', () => persist());

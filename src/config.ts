@@ -50,7 +50,8 @@ export const CONFIG = {
     mobSlots: [[292, 238], [238, 282], [184, 238], [130, 282]] as [number, number][],
     bossSlot: [180, 266] as [number, number],
     /** 피해 숫자: 대상 위 가로로 흩뿌리는 폭(±) · 줄 수 · 줄 높이 · 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) · 이보다 위(보스 바)에는 안 놓음 */
-    nums: { scatter: 34, rows: 6, rowH: 22, spread: 90, life: 1.15, rise: 30, minY: 70 },
+    /** 피해 숫자 · 일반 크기 배율 · 외곽선 두께(일반·치명타 px) · 치명타 커졌다 작아지는 시간 · 폭발 그림 크기(글자 폭 배) (docs/BATTLE_HUD_1017.md §4) */
+    nums: { scatter: 34, rows: 6, rowH: 22, spread: 90, life: 1.15, rise: 30, minY: 70, normalScale: 0.85, stroke: 1.5, critStroke: 2, critPop: 0.35, burstW: 1.9 },
   },
   /** 영웅 성장 (1단계 A: 레벨만 · 각성·스킬 레벨·초월은 B) */
   hero: {
