@@ -122,8 +122,19 @@ await p.waitForSelector('[data-screen="shop"]');
 await click('[data-pack="starter"]');
 await click('[data-cat="hero"]');
 await shot('shop_hero');
+// 영입 무대 (recruit.jpg + 전신) → 합류 연출 (별빛 마법진 + 영웅 틀)
 await click('[data-hero="hwang"]');
-await click('.modal .btn.hi');
+await p.waitForTimeout(600);
+await shot('recruit_stage');
+await click('.recruit [data-buy]');
+await p.waitForTimeout(1800);
+await shot('recruit_join');
+await click('.recruit');
+// 코스튬 상점 → 사기
+await click('[data-cat="costume"]');
+await shot('shop_costume');
+await click('[data-cbuy][data-cid="woongs"]');
+await p.evaluate(() => (window.__S().cur.stardust += 5000));
 await click('[data-cat="summon"]');
 await click('[data-sum="11"]');
 await shot('shop_summon');
@@ -162,6 +173,11 @@ await click('[data-auto]');
 await shot('hero_info');
 await click('[data-tab="skill"]');
 await shot('hero_skill');
+// 코스튬 탭에서 입기 → 전신 그림이 코스튬으로
+await click('[data-tab="costume"]');
+await click('[data-wear="festival"]');
+await p.waitForTimeout(300);
+await shot('hero_costume');
 // C덩어리: 모험 지도 → 콘텐츠(토벌·탑·레이드·월드 보스·결투장·외전·이정표) → 전투 준비 → 전투
 await p.evaluate(() => {
   const S = window.__S();

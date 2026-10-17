@@ -15,13 +15,16 @@ import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } f
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
 import { applyTheme, elemColor, icon, iconText } from '../theme/tokens';
-import { $, $$, esc, fmt, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
+import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
 import { view } from './view';
 
 const C = CONFIG.story;
+/** 승리·패배 엠블럼 (public/art/ui · 리본은 비어 있음 → 글자는 금박 글씨로 얹음) */
+const UI_ART = `${import.meta.env.BASE_URL}art/ui/`;
+const emb = (text: string, win: boolean) => `<div class="emb" style="background-image:url(${UI_ART}${win ? 'victory' : 'defeat'}.png)">${fxt(text, win ? '' : 'lose')}</div>`;
 let b: Battle | null = null;
 let st: StageId = { c: 1, s: 1, d: 0 };
 /** 콘텐츠 전투 (없으면 스토리) */
@@ -180,7 +183,7 @@ function showRunResult() {
     series[win ? 'wins' : 'losses']++;
     if (series.wins < 2 && series.losses < 2) {
       const leg = (r.leg ?? 0) + 1;
-      $('#result').innerHTML = `<h1>${fxt(win ? '이번 판 승리' : '이번 판 패배', win ? '' : 'lose')}</h1><p class="why">최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}</p><div class="row"><button class="btn hi" data-a="leg">다음 판 ${icon('next')}</button></div>`;
+      $('#result').innerHTML = `${emb(win ? '이번 판 승리' : '이번 판 패배', win)}<p class="why">최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}</p><div class="row"><button class="btn hi" data-a="leg">다음 판 ${icon('next')}</button></div>`;
       $('#result').hidden = false;
       $('#result [data-a="leg"]').onclick = () => {
         run = { ...r, leg };
@@ -201,7 +204,7 @@ function showRunResult() {
   const left = triesText(r);
   const rs = raidSummary(bb);
   const raidLines = rs ? `<br>${rs.phase}페이즈까지 · 회피 직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}<br>부위 파괴 1등: ${rs.parts.map((p) => `${esc(p.name)} ${p.broken ? esc(p.top) : '못 부숨'}`).join(' · ')}` : '';
-  $('#result').innerHTML = `<h1>${fxt(head, win || scoreRun ? '' : 'lose')}</h1>
+  $('#result').innerHTML = `${emb(head, win || scoreRun)}
     <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${raidLines}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
     <div class="rw">${o.items.map(([k, v]) => `<div><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
     <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div>`;
@@ -251,7 +254,7 @@ function showResult() {
   const r = $('#result');
   const mvp = mvpOf(bb);
   if (!win) {
-    r.innerHTML = `<h1>${fxt(bb.why === 'time' ? '시간 초과' : '패배…', 'lose')}</h1><p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 반복 전투·방치 보상으로 경험치 모으기</p>
+    r.innerHTML = `${emb(bb.why === 'time' ? '시간 초과' : '패배…', false)}<p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 반복 전투·방치 보상으로 경험치 모으기</p>
       <div class="row"><button class="btn" data-a="form">${icon('formation')} 편성</button><button class="btn hi" data-a="again">다시 하기 ${icon('stamina')}${stageCost(st.d)}</button>${firstRun ? '' : `<button class="btn" data-a="adv">${icon('adventure')} 모험</button>`}</div>`;
     r.hidden = false;
     wire();
@@ -268,10 +271,10 @@ function showResult() {
   const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
   const hasNext = st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
   const show = () => {
-    r.innerHTML = `<h1>${fxt('승리!')}</h1><div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
+    r.innerHTML = `${emb('승리!', true)}<div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
       <p class="why">클리어 ${iconText('check')} · 아무도 안 쓰러짐 ${allUp ? iconText('check') : iconText('cross')} · ${bb.setup.starTime}초 안 ${bb.stats.time <= bb.setup.starTime ? iconText('check') : iconText('cross')}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP ${mvp.name} ${shortNum(mvp.dealt)}
-      ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><b class="good">레벨 업!</b> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
+      ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl" style="background-image:url(${UI_ART}levelup.png)">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
       <div class="rw">${items.map(([k, n, v]) => `<div><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
       ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}`;
     r.hidden = false;
@@ -295,7 +298,7 @@ function joinShow(id: string, done: () => void) {
   const line = CHAPTERS.flatMap((c) => c.clear ?? []).find(([who]) => who === id)?.[1] ?? h.concept;
   const el = document.createElement('div');
   el.className = 'join';
-  el.innerHTML = `<div class="pt xl" style="background-image:url(${heroPortrait(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${fxt(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
+  el.innerHTML = `<div class="jframe" style="background-image:url(${UI_ART}hero_frame.png)"><div class="jface" style="background-image:url(${heroPortrait(id)})"></div></div><div class="jfb" style="background-image:url(${fullbodyUrl(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${fxt(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
   $('#stage').append(el);
   el.onclick = () => {
     el.remove();

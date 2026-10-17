@@ -12,7 +12,8 @@ import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../gam
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, go, heroPortrait, modal, register, syncBar, toast } from './core';
+import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, syncBar, toast } from './core';
+import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
 const GR = CONFIG.growth;
@@ -43,6 +44,7 @@ register('hero', {
       const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
       root.innerHTML = `<div class="body">
         <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}<br><span class="mute">Lv.${S.heroes[x].lv}</span></span></button>`).join('')}</div>
+        <div class="fbcol"><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
         <div class="col grow">
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
@@ -151,7 +153,15 @@ function tabHtml(tab: string, id: string): string {
       <div class="row"><span class="grow xs dim">공용 조각 ${S.cur.exShard ?? 0}개 (상점)을 이 영웅에게</span><button class="btn mini" data-sh="10" ${(S.cur.exShard ?? 0) >= 10 ? '' : 'disabled'}>10개 넣기</button></div>
       <button class="btn hi" data-exup ${hs.ex < 5 && exShards(id) >= exNeed(id) ? '' : 'disabled'}>${hs.ex ? '별 올리기' : '만들기'}</button>
       <span class="xs mute">장착하면 외형이 바뀌는 자리 (그림은 3단계) · 고유 옵션·룬은 B 다음 단계에서</span>`;
-  if (tab === 'costume')
+  if (tab === 'costume') {
+    const sets = setsOf(id);
+    return `<div class="cards costumes">${[null, ...sets].map((k) => {
+      const on = (hs.costume ?? null) === k;
+      const own = !k || hasCostume(k, id);
+      return `<div class="panel col shopc costume${on ? ' on' : ''}"><div class="fbc" style="background-image:url(${fullbodyUrl(id, k)})"></div><b class="sm">${k ? esc(CONFIG.costume[k].name) : '기본'}</b>${on ? '<span class="xs good">입는 중</span>' : own ? `<button class="btn mini hi" data-wear="${k ?? ''}">입기</button>` : `<button class="btn mini" data-cbuy="${k}">${icon('stardust')}${fmt(CONFIG.costume[k!].dust)}</button>`}</div>`;
+    }).join('')}</div>${sets.length ? '' : '<span class="xs mute">이 영웅 코스튬은 다음 묶음에서 나와요</span>'}`;
+  }
+  if (tab === 'costume_old')
     return `<div class="md">코스튬 칸 (STAR_PLAN_v2 §4 · 그림은 3단계)</div>
       <div class="cards">${[['기본', true], ['별 3 해금 코스튬', hs.star >= 3], ['별 5 해금 코스튬', hs.star >= 5], ['상점 코스튬', false]].map(([n, open]) => `<div class="panel col shopc"><b class="sm">${n}</b><span class="xs ${open ? 'good' : 'mute'}">${open ? (n === '기본' ? '입는 중' : '해금 · 그림 준비 중') : n === '상점 코스튬' ? '상점 「코스튬」 (준비 중)' : '잠김'}</span></div>`).join('')}</div>`;
   const bonds = BONDS.filter((x) => x.members.includes(id));
@@ -164,6 +174,9 @@ function wireTab(root: HTMLElement, id: string, draw: () => void) {
     say(r, m);
     draw();
   };
+  // 코스튬: 입기 · (영웅 정보에서) 사기
+  $$('[data-wear]', root).forEach((b) => (b.onclick = () => (wearCostume(id, b.dataset.wear || null), persist(), draw())));
+  $$('[data-cbuy]', root).forEach((b) => (b.onclick = () => after(buyCostume(b.dataset.cbuy!, id), { ok: '코스튬을 샀어요', poor: '별가루가 모자라요', owned: '이미 있어요' })));
   $$('[data-pot]', root).forEach((b) => (b.onclick = () => after(String(usePotion(id, +b.dataset.pot!)), { '-1': '경험치 물약이 없어요 (상점)', '0': '경험치를 넣었어요' })));
   const aw = root.querySelector<HTMLElement>('[data-g="awaken"]');
   if (aw) aw.onclick = () => after(awaken(id), { ok: '각성! 레벨 상한이 올랐어요', need: '레벨이 상한이어야 해요', poor: '각성석이나 금화가 모자라요', max: '최대 각성' });
@@ -266,6 +279,39 @@ export function heroShopCard(id: string) {
   return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${j.name}</span></div><b>${esc(h.name)}</b><span class="xs dim one">${esc(h.title)} — ${esc(h.concept.split('.')[0])}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div>`;
 }
 
+/** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
+export function recruitShow(id: string, done: () => void) {
+  const h = heroOf(id);
+  const j = JOBS[h.job];
+  const el = document.createElement('div');
+  el.className = 'recruit';
+  el.style.backgroundImage = `url(${BASE}art/screens/recruit.jpg)`;
+  const stage = () => {
+    el.innerHTML = `<div class="rc-fb" style="background-image:url(${fullbodyUrl(id, null)})"></div>
+      <div class="rc-info panel col"><small class="dim">${esc(h.title)}</small><b class="rc-name">${fxt(h.name)}</b>
+        <div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div>
+        <p class="sm">${esc(h.concept)}</p>
+        <div class="row"><button class="btn" data-x>그만두기</button><button class="btn hi big" data-buy ${owned(id) ? 'disabled' : ''}>${owned(id) ? '이미 있어요' : `${icon('stardust')}${fmt(heroPrice(id))} 영입`}</button></div></div>`;
+    $('[data-x]', el).onclick = () => el.remove();
+    $('[data-buy]', el).onclick = (e) => {
+      // 같은 클릭이 합류 연출(눌러서 닫기)까지 올라가 바로 닫히지 않게
+      e.stopPropagation();
+      const r = buyHero(id);
+      if (r !== 'ok') return say(r, { poor: '별가루가 모자라요', owned: '이미 있어요' });
+      done();
+      joined();
+    };
+  };
+  const joined = () => {
+    el.classList.add('joined');
+    el.innerHTML = `<div class="rc-circle"></div><div class="rc-frame" style="background-image:url(${BASE}art/ui/hero_frame.png)"><div class="rc-face" style="background-image:url(${heroPortrait(id)})"></div></div><div class="rc-fb rise" style="background-image:url(${fullbodyUrl(id, null)})"></div><div class="rc-join">${fxt(`${h.name} 합류!`)}</div><span class="xs rc-tap">눌러서 계속</span>`;
+    el.onclick = () => el.remove();
+  };
+  stage();
+  $('#stage').append(el);
+}
+const BASE = import.meta.env.BASE_URL;
+
 // ───────── 상점 (왼쪽 세로 카테고리) ─────────
 register('shop', {
   title: `${icon('shop')} 상점`,
@@ -289,7 +335,11 @@ register('shop', {
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>
           <div class="panel col shopc"><b>장비 소환 10+1회</b><span class="xs dim">11개 · 같은 확률</span><button class="btn hi" data-sum="11">${icon('stardust')}${fmt(sm.ten)}</button></div></div>
           <span class="xs mute">뽑기는 장비·코스튬만, 게임 재화로만 (영웅 뽑기 없음) · 전용 무기 조각은 재화·소모품</span><div class="pk" data-out></div>`;
-      } else if (cat === 'costume') body = '<span class="mute">코스튬 상점 자리 (별 단계 해금 코스튬은 영웅 정보 「코스튬」 탭 · 그림은 3단계)</span>';
+      } else if (cat === 'costume')
+        body = `<div class="capline xs">${Object.values(CONFIG.costume).map((c) => `「${esc(c.name)}」 ${c.heroes.length}벌`).join(' · ')} — 산 코스튬은 영웅 정보 「코스튬」에서 입어요 (전신 그림이 바뀌어요)</div><div class="cards costumes">${costumeStock().map(({ set, id }) => {
+          const own = hasCostume(set, id);
+          return `<div class="panel col shopc costume"><div class="fbc" style="background-image:url(${fullbodyUrl(id, set)})"></div><b class="sm">${esc(heroOf(id).name)}</b><span class="xs dim">${esc(CONFIG.costume[set].name)}</span>${own ? '<span class="xs good">가짐</span>' : `<button class="btn mini hi" data-cbuy="${set}" data-cid="${id}">${icon('stardust')}${fmt(CONFIG.costume[set].dust)}</button>`}</div>`;
+        }).join('')}</div>`;
       else
         body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${n}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
@@ -307,13 +357,14 @@ register('shop', {
       $$('[data-hero]', root).forEach(
         (b) =>
           (b.onclick = () => {
-            const h = heroOf(b.dataset.hero!);
-            modal(`${h.name} 영입`, `<p class="dim">별가루 ${fmt(heroPrice(h.id))}로 ${h.name}(${h.title})을(를) 확정 영입해요.</p>`, [
-              ['그만두기', null],
-              ['영입', () => after(buyHero(h.id), { ok: `${h.name} 합류!`, poor: '별가루가 모자라요', owned: '이미 있어요' }), true],
-            ]);
+            recruitShow(b.dataset.hero!, () => {
+              persist();
+              syncBar();
+              draw();
+            });
           }),
       );
+      $$('[data-cbuy]', root).forEach((b) => (b.onclick = () => after(buyCostume(b.dataset.cbuy!, b.dataset.cid!), { ok: '코스튬을 샀어요 · 영웅 정보에서 입어 봐요', poor: '별가루가 모자라요', owned: '이미 있어요' })));
       $$('[data-sum]', root).forEach(
         (b) =>
           (b.onclick = () => {

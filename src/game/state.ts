@@ -23,6 +23,8 @@ export interface HeroSave {
   trans: number[];
   /** 전용 무기: 별 0 = 없음 · 1~5 */
   ex: number;
+  /** 입은 코스튬 묶음 (예: 'festival') · 없으면 기본 */
+  costume?: string | null;
   /** 장착한 장비 uid */
   gear: Record<GearSlot, number | null>;
 }
@@ -146,6 +148,8 @@ export interface SaveV6 {
   chat: ChatLine[];
   /** 클라우드: 마지막으로 올린 시각 */
   cloud: { pushedAt: number };
+  /** 가진 코스튬 「묶음:영웅」 (예: 'festival:woongs') */
+  costumes: string[];
 }
 export type Save = SaveV6;
 export const SAVE_VERSION = 7;
@@ -167,7 +171,7 @@ export function newSave(now = Date.now()): Save {
     arena: { score: CONFIG.content.arena.start, best: CONFIG.content.arena.start, win: 0, lose: 0, log: [] }, side: {}, treasure: {}, miles: [], wins: {},
     track: { day: '', week: '', d: {}, w: {}, all: {} }, claimed: { d: [], w: [], ach: [], ev: [] }, attend: { last: '', n: 0, ev: 0, evLast: '' },
     guild: { id: null, attendDay: '', donateDay: '', contrib: 0, week: '', weekContrib: 0, raid: 0 }, friends: { list: [], day: '', sent: [], got: 0 }, titles: { own: [], on: null },
-    mail: { list: [{ id: 1, from: '여관 주인', title: '원정대에 온 걸 환영해요!', body: '작은 선물을 넣었어요. 별을 되찾으러 가 볼까요?', give: { stardust: 200, gold: 20000 }, at: now, got: false }], next: 2 }, chat: [], cloud: { pushedAt: 0 },
+    costumes: [], mail: { list: [{ id: 1, from: '여관 주인', title: '원정대에 온 걸 환영해요!', body: '작은 선물을 넣었어요. 별을 되찾으러 가 볼까요?', give: { stardust: 200, gold: 20000 }, at: now, got: false }], next: 2 }, chat: [], cloud: { pushedAt: 0 },
   };
 }
 /** 옛 저장 → 지금 버전 (없거나 망가지면 새로) */
@@ -203,7 +207,7 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.shop ??= base.shop;
     s.exShards ??= {};
     // v4 → v5: 콘텐츠 칸
-    for (const k of ['daily', 'tower', 'world', 'arena', 'side', 'treasure', 'miles', 'wins', 'track', 'claimed', 'attend', 'guild', 'friends', 'titles', 'mail', 'chat', 'cloud'] as const) (s as unknown as Record<string, unknown>)[k] ??= structuredClone(base[k]);
+    for (const k of ['daily', 'tower', 'world', 'arena', 'side', 'treasure', 'miles', 'wins', 'track', 'claimed', 'attend', 'guild', 'friends', 'titles', 'mail', 'chat', 'cloud', 'costumes'] as const) (s as unknown as Record<string, unknown>)[k] ??= structuredClone(base[k]);
     // v6 → v7: 장비 모양(종류) — 낀 장비는 낀 영웅 직업에 맞게 · 안 낀 것은 파티 직업 중에서
     for (const it of Object.values(s.items)) if (it.kind === 'gear' && !it.type) it.type = typeFor(it, s);
     s.version = 7;

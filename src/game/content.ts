@@ -107,7 +107,7 @@ const top = (s: Save) => {
 
 // ───────── 전투 입력 ─────────
 function base(s: Save, title: string, waves: MobSpec[][], region: number, extra: Partial<BattleSetup> = {}): BattleSetup {
-  return { heroes: buildHeroes(s), waves, limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime, bonds: activeBonds(partyIds(s)), region, title, ...extra };
+  return { bg: CONFIG.ui.battleBg[title.split(' · ')[0]], heroes: buildHeroes(s), waves, limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime, bonds: activeBonds(partyIds(s)), region, title, ...extra };
 }
 export const towerP = (floor: number) => CC.tower.base + (floor - 1);
 export const dayKind = (now = Date.now()) => CC.day.kinds[kstDay(now)];

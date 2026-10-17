@@ -124,21 +124,21 @@ function offlinePopup() {
 }
 
 // ───────── 모험: 필드 지도 (STAR_PLAN_v2 §3 · 스테이지 = 길 위 노드 · 지금 위치에 영웅 · 지도 안 토벌·상급 던전·탑 입구) ─────────
-/** 노드 자리 (지도 안 %) — 왼쪽 아래에서 오른쪽 위로 굽이치는 길 */
-const NODES: [number, number][] = [[6, 78], [16, 58], [27, 72], [37, 50], [46, 66], [55, 42], [64, 58], [73, 34], [82, 50], [92, 26]];
+/** 노드 자리 (지도 그림 map.jpg 안 % · 그림의 길 위) — 왼쪽 아래 항구에서 다리를 건너 오른쪽 위 폐성(보스)까지 */
+const NODES: [number, number][] = [[18, 78], [30, 68], [37, 58], [47, 55], [57, 48], [63, 39], [69, 34], [77, 31], [83, 23], [87, 16]];
 function fieldMap(c: number, d: number, sel: StageId) {
   const ns = nextStage();
   const here = ns.c === c && d === 0 ? ns.s : null;
   const lead = partyIds()[0] ?? 'woongs';
-  return `<div class="fmap panel">
+  return `<div class="fmap panel"><div class="fmap-in" style="background-image:url(${import.meta.env.BASE_URL}art/screens/map.jpg)">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>
     ${NODES.map(([x, y], i) => {
       const id = { c, s: i + 1, d };
       const open = unlocked(id);
       return `<button class="node${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}${open ? '' : ' off'}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}><b>${open ? `${c}-${i + 1}` : icon('lock')}</b>${starsHtml(starsAt(id))}</button>`;
     }).join('')}
-    ${here ? `<div class="me-pin" style="left:${NODES[here - 1][0]}%;top:${NODES[here - 1][1] - 16}%"><div class="pt s" style="background-image:url(${heroPortrait(lead)})"></div></div>` : ''}
-    <div class="gates"><button class="btn mini" data-portal="hunt">${icon('battle')} 토벌</button><button class="btn mini" data-portal="dungeon">${icon('bag')} 상급 던전</button><button class="btn mini" data-portal="tower">${icon('tower')} 도전의 탑</button></div>
+    ${here ? `<div class="me-pin" style="left:${NODES[here - 1][0]}%;top:${NODES[here - 1][1] - 12}%"><div class="pt s" style="background-image:url(${heroPortrait(lead)})"></div></div>` : ''}
+    </div><div class="gates"><button class="btn mini" data-portal="hunt">${icon('battle')} 토벌</button><button class="btn mini" data-portal="dungeon">${icon('bag')} 상급 던전</button><button class="btn mini" data-portal="tower">${icon('tower')} 도전의 탑</button></div>
   </div>`;
 }
 

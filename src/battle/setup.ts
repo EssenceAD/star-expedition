@@ -46,4 +46,6 @@ export interface BattleSetup {
   arena?: boolean;
   /** 시간이 다 되면: 'lose'(기본) · 'win'(월드 보스처럼 준 피해로 끝) */
   timeUp?: 'lose' | 'win';
+  /** 콘텐츠 전용 전투 배경 (public/art/bgs/<이것>.jpg · 없으면 스토리 배경 + region 색) */
+  bg?: string;
 }

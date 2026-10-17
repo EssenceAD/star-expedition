@@ -159,3 +159,30 @@ describe('주간 획득 상한 (B 보강 §4)', () => {
     expect(capLeft('stardust', s)).toBe(cap);
   });
 });
+
+describe('코스튬 (그림 3차)', () => {
+  it('별가루로 사고 · 가진 영웅만 입기 · 입으면 전신 그림이 코스튬 그림 · 옛 저장에 칸 채움', async () => {
+    const { buyCostume, fullbodyPath, hasCostume, wearCostume, costumeStock } = await import('../src/game/costume');
+    const { CONFIG } = await import('../src/config');
+    const { migrate, newSave } = await import('../src/game/state');
+    const s = newSave(0);
+    expect(costumeStock().length).toBe(CONFIG.costume.festival.heroes.length);
+    expect(wearCostume('woongs', 'festival', s)).toBe(false);
+    s.cur.stardust = 0;
+    expect(buyCostume('festival', 'woongs', s)).toBe('poor');
+    s.cur.stardust = 5000;
+    expect(buyCostume('festival', 'woongs', s)).toBe('ok');
+    expect(s.cur.stardust).toBe(5000 - CONFIG.costume.festival.dust);
+    expect(buyCostume('festival', 'woongs', s)).toBe('owned');
+    expect(buyCostume('festival', 'aria', s)).toBe('none');
+    expect(hasCostume('festival', 'woongs', s)).toBe(true);
+    expect(fullbodyPath('woongs', s)).toBe('fullbody/woongs.png');
+    expect(wearCostume('woongs', 'festival', s)).toBe(true);
+    expect(fullbodyPath('woongs', s)).toBe('costume_festival/woongs.png');
+    wearCostume('woongs', null, s);
+    expect(fullbodyPath('woongs', s)).toBe('fullbody/woongs.png');
+    const old = JSON.parse(JSON.stringify(s));
+    delete old.costumes;
+    expect(migrate({ ...old, version: 7 }).costumes).toEqual([]);
+  });
+});

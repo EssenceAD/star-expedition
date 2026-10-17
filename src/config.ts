@@ -215,6 +215,10 @@ export const CONFIG = {
   /** 전용 무기: 조각 30개 = 획득 · 공격 · 별 1~5 (조각) · 전용 보물: 외전(C덩어리)에서 해금 */
   exWeapon: { shards: 30, atkPct: 0.12, perStar: 0.06, starShards: [10, 20, 40, 80] },
   treasure: { slots: 1, atkPct: 0.08 },
+  /** 코스튬 (docs/ART_DONE_1017_3.md §3): 묶음마다 그림 폴더 · 별가루 값 · 입을 수 있는 영웅 — 영웅 정보·영입·로딩의 전신 그림이 바뀜 (전투 도트는 그대로) */
+  costume: {
+    festival: { name: '별빛 축제', dir: 'costume_festival', dust: 800, heroes: ['woongs', 'gonu', 'walwal', 'ikamolly', 'warmnight', 'hwang', 'kleine', 'sermi', 'jaehi', 'mochi', 'ichae', 'kkangto'] },
+  } as Record<string, { name: string; dir: string; dust: number; heroes: string[] }>,
   /** 상점 (현금 결제 없음): 영웅 값(별가루) · 재화·소모품 금화 값 · 꾸러미 */
   shop: {
     /** 멤버 영웅(founder) 17명 같은 값 · 전설·스토리 오리지널 */
@@ -342,6 +346,10 @@ export const CONFIG = {
   /** 채팅·기타 */
   ui: {
     /** 어두운 톤 예외 (스타일 D 규칙 · 형철 10/17): 이 콘텐츠 전투만 남색 팔레트 */
-    darkModes: ['tower', 'raid', 'world', 'graid'] as string[], speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    darkModes: ['tower', 'raid', 'world', 'graid'] as string[],
+    /** 콘텐츠 전투 배경 (전투 제목 앞부분 = 콘텐츠 이름 → public/art/bgs/<값>.jpg) · 스토리는 bg.jpg */
+    battleBg: { '도전의 탑': 'tower', 레이드: 'raid', '월드 보스': 'raid', '길드 레이드': 'raid', 결투장: 'arena', '상급 던전': 'dungeon', '토벌 전투': 'dungeon', '요일 던전': 'daily' } as Record<string, string>,
+    /** 화면 배경 그림 (public/art/screens/<값>.jpg) */
+    screenBg: { title: 'title', lobby: 'lobby', guild: 'guild' } as Record<string, string>, speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;
