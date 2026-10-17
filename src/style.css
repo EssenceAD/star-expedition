@@ -353,7 +353,7 @@ input.tab { color: var(--c-text); }
 img.ic.img { width: 1.35em; height: 1.35em; vertical-align: -0.32em; object-fit: contain; }
 svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
 .enhfx { background: radial-gradient(circle, var(--c-bg2), var(--c-panelHi) 75%); }
-.scr.artbg { background: center/cover no-repeat; }
+.scr.artbg { background-image: var(--veil-layer, none), var(--scr-art); background-position: center; background-size: cover; background-repeat: no-repeat; }
 /* ───────── 그림 3차: 전신 · 코스튬 · 영입 무대 · 엠블럼 · 로딩 ───────── */
 .fbcol { width: 150px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
 .fb { width: 100%; flex: 1; background: center bottom/contain no-repeat; filter: drop-shadow(0 4px 6px var(--c-shade)); }
@@ -403,3 +403,70 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 .fmap-in .node.off { opacity: 0.55; background: var(--c-veil2); }
 .fmap-in .node.sel { background: var(--c-gold1); box-shadow: var(--sh-glowHi); }
 .fmap-in .node .stars { font-size: var(--fs-xxs); }
+
+/* ───────── 화면 밀도 보강 (docs/DENSITY_1017.md · 「채워진 밝음」) ───────── */
+/* 그림 배경 위 반투명 막 + 가장자리 비네트 */
+.scr.artbg.veiled { --veil-layer: radial-gradient(ellipse at 50% 45%, transparent 55%, var(--c-vignette)), linear-gradient(var(--c-scrVeil), var(--c-scrVeil)); }
+/* 질감 패널: 양피지 결 + 위쪽 빛 + 금 테두리 + 안쪽 금 선 + 네 모서리 금 점 (반투명) */
+.panel { background:
+    radial-gradient(circle at var(--s-md) var(--s-md), var(--c-gold) 1.5px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - var(--s-md)) var(--s-md), var(--c-gold) 1.5px, transparent 2.5px),
+    radial-gradient(circle at var(--s-md) calc(100% - var(--s-md)), var(--c-gold) 1.5px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - var(--s-md)) calc(100% - var(--s-md)), var(--c-gold) 1.5px, transparent 2.5px),
+    radial-gradient(ellipse at 30% 0%, var(--c-hiLine), transparent 60%),
+    repeating-linear-gradient(115deg, var(--c-panelGrain) 0 2px, transparent 2px 7px),
+    linear-gradient(170deg, color-mix(in srgb, var(--c-panel2) 93%, transparent), color-mix(in srgb, var(--c-panel) 92%, transparent) 55%, color-mix(in srgb, var(--c-panelHi) 92%, transparent));
+  border-color: var(--c-gold); box-shadow: var(--sh-inset), var(--sh-drop); }
+/* 영웅 카드(목록·편성): 그림이 카드를 꽉 · 이름·직업은 그림 위 */
+.roster { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--s-sm); }
+.hcard { height: 132px; padding: 0; overflow: hidden; justify-content: flex-end; gap: 0; border-color: var(--c-gold); }
+.hcard .pt { position: absolute; inset: 0; width: auto; height: auto; border: 0; border-radius: 0; background-size: cover; background-position: center 14%; }
+.hcard .pt::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 48%; background: linear-gradient(transparent, var(--c-cardShade)); }
+.hcard > :not(.pt) { position: relative; z-index: 1; }
+.hcard .nm { color: var(--c-white); font-size: var(--fs-lg); text-shadow: var(--sh-outlineSm); }
+.hcard .xs { color: var(--c-gold1); text-shadow: var(--sh-outlineSm); padding-bottom: var(--s-xs); }
+.hcard .zn, .hcard .lv { position: absolute; z-index: 1; padding: 0 var(--s-xs); border-radius: var(--r-sm); background: var(--c-cardShade); color: var(--c-gold1); }
+/* 상점·미보유 영웅 카드: 일러스트 85% 이상 · 배지·이름은 그림 위 */
+.hcards { grid-auto-rows: max-content; align-content: start; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
+.shopc.hero { height: 252px; padding: 0 0 var(--s-sm); overflow: hidden; justify-content: flex-end; border-color: var(--c-gold); }
+.shopc.hero .pt.card { position: absolute; inset: 0; height: auto; border: 0; border-radius: 0; background-position: center 18%; }
+.shopc.hero .pt.card::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(transparent, var(--c-cardShade)); }
+.shopc.hero > :not(.pt) { position: relative; z-index: 1; }
+.shopc.hero b { color: var(--c-white); font-size: var(--fs-xl); text-shadow: var(--sh-outlineSm); }
+.shopc.hero .one { color: var(--c-gold1); min-height: 0; padding: 0 var(--s-sm); text-shadow: var(--sh-outlineSm); }
+.shopc.hero .chip { background: var(--c-cardShade); color: var(--c-white); border-color: var(--c-gold); }
+/* 코스튬 카드 */
+.costumes { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); grid-auto-rows: max-content; align-content: start; }
+.fbc { height: 196px; background-color: transparent; background-image: inherit; }
+/* 영웅 정보 전신: 화면 높이 가깝게 (발은 아래 UI에 살짝 가려져도 됨) */
+.fbcol { width: 176px; margin: calc(var(--s-md) * -1) calc(var(--s-md) * -1) calc(var(--s-xl) * -1); }
+.fb { transform: scale(1.14); transform-origin: 50% 100%; }
+.recruit .rc-fb { align-self: flex-end; width: 300px; height: 98%; }
+/* 아이콘 크게 (1.2~1.4배) */
+.dk { width: 72px; height: 64px; }
+.dk .ic { font-size: var(--fs-h2); }
+.lobby .dock { height: 74px; }
+.round { width: 92px; height: 92px; }
+.round.main { width: 124px; height: 124px; }
+.round.art { background-size: cover; background-position: center; color: var(--c-white); text-shadow: var(--sh-outlineSm); border-color: var(--c-gold1); box-shadow: var(--sh-roundIn); }
+.round.main.art { box-shadow: var(--sh-roundInMain); }
+.round .ic { font-size: var(--fs-h1); }
+.round span { font-family: var(--f-menu); font-weight: var(--fw-menu); }
+.shopcats { width: 124px; }
+.shopcats .tab { height: 40px; font-size: var(--fs-lg); }
+.cur { height: 28px; font-size: var(--fs-base); }
+img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
+.gi { width: 72px; height: 72px; }
+[data-screen="bag"] .pk .gi { width: 84px; height: 84px; }
+.hrow { height: 52px; }
+.hrow .pt.s { width: 40px; height: 40px; }
+/* 결과·보상: 아이콘 크게 + 빛 */
+.rw div { min-width: 92px; box-shadow: var(--sh-glow); }
+.rw div span { font-size: var(--fs-h1); }
+.rw div img.ic.img { width: 48px; height: 48px; }
+.lobby .bigs { top: var(--s-xs); gap: var(--s-xs); }
+.round { width: 84px; height: 84px; }
+.round.main { width: 112px; height: 112px; }
+.lobby .dock { pointer-events: none; }
+.lobby .dock .dk { pointer-events: auto; }
+.gi.slot { border-style: dashed; border-color: var(--c-line); background: var(--c-glass); opacity: 0.7; }
