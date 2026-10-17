@@ -1,4 +1,4 @@
-// 메뉴 화면 캡처 (docs/PLAYTEST_1017.md 확인용): 로비 · 출석 · 콘텐츠 9탭 · 편성 · 모험 · 가방 · 미션(업적) · 친구 · 랭킹 · 길드 · 상점(영웅·재화)
+// 메뉴 화면 캡처 (docs/PLAYTEST_1017.md 확인용): 로비 · 출석 · 콘텐츠 9탭 · 편성 · 모험 · 가방 · 미션(업적) · 친구 · 랭킹 · 길드 · 상점(영웅·미리보기·재화)
 //  node tools/shot-menus.mjs [out폴더]  (먼저 npm run build · W=844 H=390)
 import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
@@ -62,6 +62,10 @@ await go('guild', {});
 await shot('11_guild');
 await go('shop', { cat: 'hero' });
 await shot('12_shop_hero');
+// 상점 영웅 카드 → 영웅 상세 (안 가진 영웅은 미리보기 + 영입)
+await p.evaluate(() => document.querySelector('.shopc.hero[data-h]')?.click());
+await wait(700);
+await shot('12b_shop_hero_preview');
 await go('shop', { cat: 'goods' });
 await shot('13_shop_goods');
 await go('shop', { cat: 'summon' });

@@ -13,6 +13,7 @@ import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
 import { taglineOf } from '../data/taglines';
+import { gachaShow } from './gacha';
 import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast, uiPic } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
@@ -31,7 +32,7 @@ const say = (r: string, m: Record<string, string>) => toast(m[r] ?? r);
 // ───────── 영웅 정보 ─────────
 register('hero', {
   title: (p) => `${icon('heroes')} 영웅 정보 · ${heroOf(p.id as string).name}`,
-  back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : go('heroes', {}, false)),
+  back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : p.shop ? go('shop', { cat: 'hero' }, false) : go('heroes', {}, false)),
   enter(root, p) {
     let id = p.id as string;
     let tab = (p.tab as string) ?? 'grow';
@@ -52,7 +53,7 @@ register('hero', {
               <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
               <span class="xs mute fit2 fit" data-min="${CONFIG.ui.fit.desc}">${esc(h.concept)}</span></div></div>
           <div class="tabs">${[['grow', '성장', 'hero_growth'], ['skill', '스킬', 'hero_skill'], ['trans', '초월', 'hero_trans'], ['ex', '전용 무기', 'hero_exclusive'], ['costume', '코스튬', 'hero_costume'], ['info', '능력·인연', 'hero_bond']].map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div>
-          <div class="panel col grow scroll">${!own ? '<span class="mute">아직 없는 영웅이에요 (영웅 상점)</span>' : tabHtml(tab, id)}</div>
+          <div class="panel col grow scroll">${!own ? previewHtml(id) : tabHtml(tab, id)}</div>
         </div>
         <div class="col eq">
           <div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k], k === 'weapon' ? 'slot_weapon' : k === 'armor' ? 'slot_armor' : 'slot_acc')}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
@@ -67,6 +68,9 @@ register('hero', {
       $$('[data-id]', root).forEach((b) => (b.onclick = () => ((id = b.dataset.id!), draw())));
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $('[data-treasure]', root).onclick = () => comingSoon('전용 보물(영웅 외전에서 해금)', 'C');
+      // 미리보기 영입 → 영입 무대 → 끝나면 이 화면 다시 (이제 가진 영웅)
+      const rb = root.querySelector<HTMLElement>('.preview [data-hero]');
+      if (rb) rb.onclick = () => recruitShow(id, () => (persist(), syncBar(), draw()));
       if (!own) return;
       $('[data-auto]', root).onclick = () => {
         const n = autoEquip(id);
@@ -113,6 +117,13 @@ register('hero', {
     draw();
   },
 });
+/** 아직 없는 영웅 미리보기 (PLAYTEST §12): 스킬 3개 + 패시브 · 능력치는 오른쪽 판(1레벨 기준) · 영입 버튼 */
+function previewHtml(id: string): string {
+  const h = heroOf(id);
+  return `<div class="row preview"><span class="grow sm">아직 없는 영웅이에요 · 능력치는 1레벨 기준</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))} 영입</button></div>
+    <div class="panel col"><b class="sm">패시브 · ${h.passive.name}</b><span class="xs dim">${descPassive(h.passive)}</span></div>
+    ${h.skills.map((s, i) => `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="skn">${s.name}<span class="skm">마나 <i>${s.cost}</i> · <i>${s.cd}</i>초</span></b><span class="skd">${descSkill(s)}</span></div></div>`).join('')}`;
+}
 function tabHtml(tab: string, id: string): string {
   const hs = S.heroes[id];
   const h = heroOf(id);
@@ -327,7 +338,7 @@ register('shop', {
         body = `<div class="cards">${CONFIG.shop.packs.map((pk) => `<div class="panel col shopc"><b>${pk.name}</b><span class="xs dim">${Object.entries(pk.give).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ')}</span>${pk.once ? '<span class="xs mute">한 번만</span>' : ''}<button class="btn hi" data-pack="${pk.id}" ${S.shop.packs.includes(pk.id) ? 'disabled' : ''}>${S.shop.packs.includes(pk.id) ? '샀어요' : `${icon('stardust')}${fmt(pk.dust)}`}</button></div>`).join('')}
           <div class="panel col shopc"><b>오늘의 추천</b><span class="xs dim">${icon('summon')} 장비 무료 소환 ${freeSummonLeft()}회</span><button class="btn" data-cat="summon">가 보기</button></div></div>`;
       else if (cat === 'goods')
-        body = `<div class="cards">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
+        body = `<div class="cards goods">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><span class="gpic">${icon(Object.keys(it.give)[0])}</span><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone));
         rollTrack(S);
@@ -356,9 +367,12 @@ register('shop', {
       $$('[data-pack]', root).forEach((b) => (b.onclick = () => after(buyPack(b.dataset.pack!), { ok: '꾸러미를 받았어요', poor: '별가루가 모자라요', done: '이미 샀어요' })));
       $$('[data-item]', root).forEach((b) => (b.onclick = () => after(buyItem(b.dataset.item!), { ok: '샀어요', poor: '재화가 모자라요', cap: '이번 주 획득 상한이에요 (월요일에 다시 차요)' })));
       $$('[data-coin]', root).forEach((b) => (b.onclick = () => after(buyCoin(b.dataset.coin!), { ok: '샀어요', poor: '코인이 모자라요', cap: '이번 주 획득 상한이에요 (월요일에 다시 차요)' })));
+      // 영웅 카드를 누르면 영웅 정보(미보유 미리보기) — 가격 버튼은 바로 영입 (PLAYTEST §12)
+      $$('.shopc.hero[data-h]', root).forEach((c) => (c.onclick = () => go('hero', { id: c.dataset.h, shop: true })));
       $$('[data-hero]', root).forEach(
         (b) =>
-          (b.onclick = () => {
+          (b.onclick = (e) => {
+            e.stopPropagation();
             recruitShow(b.dataset.hero!, () => {
               persist();
               syncBar();
@@ -370,15 +384,18 @@ register('shop', {
       $$('[data-sum]', root).forEach(
         (b) =>
           (b.onclick = () => {
-            const r = summon(+b.dataset.sum! as 1 | 11, ilvNow());
-            if (r === 'poor') return toast('별가루가 모자라요');
-            if (r === 'full') return toast('가방 칸이 모자라요');
-            persist();
-            syncBar();
-            draw();
-            const out = root.querySelector<HTMLElement>('[data-out]');
-            if (out) out.innerHTML = r.map((g) => gearCell(g)).join('');
-            toast(`장비 ${r.length}개!`);
+            const n = +b.dataset.sum! as 1 | 11;
+            // 소환 → 전용 연출 화면 (PLAYTEST §11) · 「다시 소환」은 같은 횟수로
+            const pull = () => {
+              const r = summon(n, ilvNow());
+              if (r === 'poor') return toast('별가루가 모자라요');
+              if (r === 'full') return toast('가방 칸이 모자라요');
+              persist();
+              syncBar();
+              draw();
+              gachaShow(r, pull, () => {});
+            };
+            pull();
           }),
       );
     };

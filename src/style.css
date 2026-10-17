@@ -896,3 +896,67 @@ input, select, textarea { font-family: inherit; }
 .scroll > .cards { flex: none; grid-auto-rows: max-content; }
 .cards.sides .shopc { min-height: 128px; }
 .shopcats { width: 166px; }
+/* ───────── 장비 소환 연출 (docs/PLAYTEST_1017.md §11 · src/ui/gacha.ts) ───────── */
+.gacha { position: absolute; inset: 0; z-index: 30; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 62%, var(--c-panelHi), var(--c-gachaVeil) 65%); animation: gFade 0.3s ease-out; }
+@keyframes gFade { from { opacity: 0; } }
+.gacha .skip { position: absolute; right: var(--s-md); top: var(--s-md); z-index: 5; }
+/* 1 바닥 마법진: 회전 · 빛남 */
+.gacha .stage { position: absolute; left: 50%; bottom: 6%; width: 340px; height: 260px; transform: translateX(-50%); }
+.gacha .floor { position: absolute; left: 0; bottom: 0; width: 100%; transform: scaleY(0.42); transform-origin: 50% 100%; }
+.gacha .circle { display: block; width: 100%; animation: gSpin 6s linear infinite, gGlow 0.8s ease-out; filter: drop-shadow(var(--sh-glowHi)); }
+@keyframes gSpin { to { rotate: 360deg; } }
+@keyframes gGlow { from { opacity: 0; filter: brightness(3); } }
+/* 2 상자: 위에서 떨어짐 · 흔들림 · 최고 등급 빛으로 미리 바뀜 */
+.gacha .orb { position: absolute; left: 50%; bottom: 22%; width: 190px; translate: -50% -420px; opacity: 0; }
+.gacha.drop .orb { animation: gDrop 0.5s cubic-bezier(0.3, 0, 0.6, 1.4) forwards; }
+@keyframes gDrop { to { translate: -50% 0; opacity: 1; } }
+.gacha.rattle .orb { animation: gRattle 0.4s ease-in-out; translate: -50% 0; opacity: 1; }
+@keyframes gRattle { 20% { rotate: -9deg; scale: 1.06; } 45% { rotate: 8deg; } 70% { rotate: -5deg; scale: 1.1; } 100% { rotate: 0deg; } }
+.gacha.best-epic.rattle .orb { filter: drop-shadow(var(--sh-gEpic)); }
+.gacha.best-legend.rattle .orb { filter: drop-shadow(var(--sh-gLegend)) brightness(1.25) sepia(0.3); }
+.gacha.best-legend.rattle .orb { animation: gRattleBig 0.42s ease-in-out; }
+@keyframes gRattleBig { 20% { rotate: -14deg; scale: 1.14; } 45% { rotate: 12deg; scale: 1.18; } 70% { rotate: -8deg; scale: 1.22; } 100% { rotate: 0deg; scale: 1.1; } }
+/* 3 터지며 카드 뒷면 펼침 */
+.gacha.opened .stage { animation: gOut 0.4s ease-in forwards; }
+@keyframes gOut { to { opacity: 0; scale: 1.4; } }
+.gacha .cardsg { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(var(--cols, 5), max-content); justify-content: center; gap: var(--s-md); }
+.gacha .gc { position: relative; width: 72px; height: 104px; perspective: 600px; cursor: pointer; animation: gDeal 0.45s calc(var(--i) * 0.04s) cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+@keyframes gDeal { from { opacity: 0; translate: 0 120px; scale: 0.3; } }
+.gacha .gc .back, .gacha .gc .face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transition: transform 0.35s ease-in-out; }
+.gacha .gc .back .cb { width: 100%; height: 100%; }
+.gacha .gc .face { transform: rotateY(180deg); border-radius: var(--r-md); background: var(--c-panelDeep); }
+.gacha .gc.open .back { transform: rotateY(180deg); }
+.gacha .gc.open .face { transform: rotateY(360deg); }
+.gacha .gc .gi { width: 64px; height: 64px; }
+/* 4 등급별 터짐 · 영웅·전설은 테두리에 빛이 계속 돎 + NEW 리본 */
+.gacha .gc .burst { position: absolute; left: 50%; top: 50%; width: 190%; translate: -50% -50%; pointer-events: none; animation: gBurst 0.7s ease-out forwards; }
+@keyframes gBurst { from { opacity: 1; scale: 0.3; } 60% { opacity: 1; } to { opacity: 0; scale: 1.25; } }
+.gacha .gc.open.g-rare .face { box-shadow: var(--sh-gRare); }
+.gacha .gc.open.g-epic .face, .gacha .gc.open.g-legend .face { animation: gHalo 1.4s linear infinite; }
+.gacha .gc.open.g-epic .face { box-shadow: var(--sh-gEpic); }
+.gacha .gc.open.g-legend .face { box-shadow: var(--sh-gLegend); }
+@keyframes gHalo { 50% { filter: brightness(1.35); } }
+.gacha .gc .ribbon { position: absolute; left: 50%; top: -14px; width: 76px; translate: -50% 0; z-index: 3; pointer-events: none; }
+.gacha .gc .new { position: absolute; left: 0; right: 0; top: -9px; z-index: 4; text-align: center; font-family: var(--f-num); font-size: var(--fs-xs); color: var(--c-ink); pointer-events: none; }
+/* 영웅: 화면 살짝 흔들림 */
+.gacha.shake { animation: gShake 0.35s ease-in-out; }
+@keyframes gShake { 25% { translate: -5px 2px; } 50% { translate: 4px -3px; } 75% { translate: -3px 1px; } }
+/* 전설: 하늘에서 금빛 기둥 · 흰 번쩍 · 반짝이 흩날림 */
+.gacha .fx { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.gacha .fx .beam { position: absolute; left: 50%; top: -10%; height: 120%; translate: -50% 0; animation: gBeam 1.3s ease-out forwards; }
+@keyframes gBeam { from { opacity: 0; scale: 0.4 1; } 15% { opacity: 1; scale: 1.2 1; } to { opacity: 0; scale: 1 1; } }
+.gacha .fx .white { position: absolute; inset: 0; background: var(--c-white); animation: gWhite 0.5s ease-out forwards; }
+@keyframes gWhite { from { opacity: 0.9; } to { opacity: 0; } }
+.gacha .fx .spark { position: absolute; width: 50%; animation: gSpark 1.4s ease-out forwards; }
+.gacha .fx .s1 { left: 0; top: 10%; }
+.gacha .fx .s2 { right: 0; top: 30%; scale: -1 1; }
+@keyframes gSpark { from { opacity: 0; translate: 0 -40px; } 30% { opacity: 1; } to { opacity: 0; translate: 0 60px; } }
+/* 5 결과 정리 + 다시 소환 / 확인 */
+.gacha .tail { position: relative; z-index: 2; display: flex; gap: var(--s-md); margin-top: var(--s-lg); min-height: 34px; }
+.gacha .cardsg.done .gc { animation: none; height: 80px; }
+/* §12 상점: 재화·소모품 칸마다 그림 · 영웅 카드는 누르면 미리보기 */
+.cards.goods .shopc { gap: var(--s-xs); }
+.cards.goods .gpic img.ic.img { width: 48px; height: 48px; vertical-align: top; }
+.cards.goods .gpic svg.ic.svg { width: 40px; height: 40px; color: var(--c-gold1); }
+.shopc.hero[data-h] { cursor: pointer; }
+.row.preview { align-items: center; gap: var(--s-md); flex: none; }

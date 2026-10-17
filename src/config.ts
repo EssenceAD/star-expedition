@@ -369,6 +369,8 @@ export const CONFIG = {
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */
+    /** 장비 소환 연출 (PLAYTEST §11): 마법진·떨어짐·흔들림 1번·카드 펼침·한 장씩 간격·끝나고 기다림·전설 슬로우(초) · 최고 등급별 흔들림 횟수(일반~전설) */
+    gacha: { circleSec: 0.8, dropSec: 0.5, shakeSec: 0.42, spreadSec: 0.6, flipGap: 0.28, endWait: 0.6, legendSlow: 0.5, shakes: [1, 1, 1, 2, 3] },
     loadStallSec: 5,
     loadItemSec: 12,
     /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */

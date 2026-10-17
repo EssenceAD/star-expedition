@@ -124,6 +124,12 @@ export const T = {
     rank2: '#c9d2de',
     rank3: '#d08a4c',
     nodeNow: '#4fa8ff',
+    /** 소환 연출 등급 빛 (일반·고급·희귀·영웅·전설) · 어두운 막 */
+    gachaVeil: 'rgba(6,8,22,0.9)',
+    glowUncommon: '#6be07a',
+    glowRare: '#5aa8ff',
+    glowEpic: '#b46bff',
+    glowLegend: '#ffcf4a',
     cream: '#f6ecd6',
     creamInk: '#5b3a1e',
   } as Record<string, string>,
@@ -280,6 +286,10 @@ export const T = {
     /** 남색 판 위 글씨 그림자 · 제목(크림 + 진갈색 외곽선 + 아래 그림자) (FONT_FINAL §1) */
     navyText: '0 1px 2px rgba(10,16,32,0.8)',
     gemGlow: '0 0 5px rgba(255,214,120,0.85)',
+    /** 소환 카드 등급 빛 */
+    gEpic: '0 0 14px rgba(180,107,255,0.95), 0 0 30px rgba(180,107,255,0.6)',
+    gLegend: '0 0 16px rgba(255,207,74,1), 0 0 36px rgba(255,170,40,0.7)',
+    gRare: '0 0 10px rgba(90,168,255,0.8)',
     /** 「승리!」 진갈색 외곽선 2px (FONT_FINAL2 §5) */
     winText: '-2px -2px 0 #3a2410, 2px -2px 0 #3a2410, -2px 2px 0 #3a2410, 2px 2px 0 #3a2410, 0 -2px 0 #3a2410, 0 2px 0 #3a2410, -2px 0 0 #3a2410, 2px 0 0 #3a2410, 0 4px 4px rgba(0,0,0,0.5)',
     titleText: '-1px -1px 0 #3a2410, 1px -1px 0 #3a2410, -1px 1px 0 #3a2410, 1px 1px 0 #3a2410, 0 2px 3px rgba(10,16,32,0.8)',
@@ -461,7 +471,7 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
 export const ICON_UI: Record<string, string> = {
   stamina: 'icons/stamina', gold: 'icons/gold', stardust: 'icons/stardust', lock: 'icons/lock', power: 'icons/power', plusArt: 'icons/plus',
   hp: 'icons/hp', atk: 'icons/atk', def: 'icons/def', crit: 'icons/crit', critDmg: 'icons/critdmg', spd: 'icons/speed', mana: 'icons/mana', levelup: 'icons/levelup',
-  arenaCoin: 'menu/arena', towerCoin: 'menu/tower',
+  arenaCoin: 'menu/arena', towerCoin: 'menu/tower', exShard: 'icons/slot_exclusive',
   mail: 'menu/mail', chat: 'menu/chat', heroes: 'menu/heroes', formation: 'menu/formation', content: 'menu/content', bag: 'menu/bag', mission: 'menu/mission', achieve: 'menu/achieve',
   friend: 'menu/friend', shop: 'menu/shop', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
 };
