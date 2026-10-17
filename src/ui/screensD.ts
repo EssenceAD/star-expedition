@@ -10,7 +10,9 @@ import {
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { HEROES } from '../data/heroes';
-import { icon } from '../theme/tokens';
+import { icon, iconText } from '../theme/tokens';
+import { view } from './view';
+import { goFullscreen } from './mobile';
 import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
 
 const SO = CONFIG.social;
@@ -195,24 +197,64 @@ async function notice() {
 }
 
 // ───────── 채팅 창 ─────────
+// 😊 빠른 채팅 (MOBILE_REF §2): 자주 쓰는 말 8 + 감정 4 · 누르면 바로 보냄 · 키보드 없이
+const QUICK = SO.quick;
+export const quickHtml = () => `<div class="qpop" hidden>${QUICK.phrases.map((t) => `<button class="tab" data-q="${esc(t)}">${esc(t)}</button>`).join('')}${QUICK.emotes.map((k) => `<button class="tab emo" data-qe="${k}">${icon(k)}</button>`).join('')}</div>`;
 export function chatHtml(ch: ChatLine['ch']) {
   const lines = S.chat.filter((l) => l.ch === ch).slice(-30);
-  return `<div class="chatlog" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
-    <div class="row"><input class="tab grow chatin" data-in maxlength="${SO.chat.max}" placeholder="${ch === 'world' ? '월드 채팅' : '길드 채팅'} (로그인하면 다른 사람에게도)"><button class="btn mini hi" data-send>보내기</button></div>`;
+  return `<div class="chatbox"><div class="chatlog" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
+    ${quickHtml()}<div class="row chatrow"><button class="btn mini qbtn" data-quick title="빠른 채팅">${icon('emote')}</button><input class="tab grow chatin" data-in maxlength="${SO.chat.max}" enterkeyhint="send" placeholder="${ch === 'world' ? '월드 채팅' : '길드 채팅'} (로그인하면 다른 사람에게도)"><button class="btn mini hi" data-send>보내기</button></div></div>`;
+}
+/** 키보드가 가린 만큼 (게임 좌표 px) → 채팅 판을 남은 자리에 꽉 차게 (돌린 화면이면 게임 오른쪽·왼쪽이 화면 아래·위) */
+function kbFit() {
+  const st = $('#stage');
+  const vv = visualViewport;
+  if (!vv) return;
+  const r = st.getBoundingClientRect();
+  const k = view.scale;
+  const top = Math.max(0, vv.offsetTop - r.top) / k;
+  const bot = Math.max(0, r.bottom - (vv.offsetTop + vv.height)) / k;
+  const [a, b] = view.rotated ? (['--kbL', '--kbR'] as const) : (['--kbT', '--kbB'] as const);
+  for (const v of ['--kbT', '--kbB', '--kbL', '--kbR']) st.style.setProperty(v, '0px');
+  st.style.setProperty(a, `${Math.round(top)}px`);
+  st.style.setProperty(b, `${Math.round(bot)}px`);
 }
 function wireChat(root: HTMLElement, ch: ChatLine['ch'], draw: () => void) {
   const send = root.querySelector<HTMLElement>('[data-send]');
   const inp = root.querySelector<HTMLInputElement>('[data-in]');
   if (!send || !inp) return;
-  const go1 = () => {
-    const line = sendChat(inp.value, ch);
+  const say = (text: string) => {
+    const line = sendChat(text, ch);
     if (!line) return;
     persist();
     void cloud.postChat({ ch, guild: S.guild.id, name: line.name, title: line.title, text: line.text });
     draw();
   };
-  send.onclick = go1;
-  inp.onkeydown = (e) => e.key === 'Enter' && go1();
+  send.onclick = () => say(inp.value);
+  inp.onkeydown = (e) => e.key === 'Enter' && say(inp.value);
+  // 입력 중 전용 배치: 최근 몇 줄 + 입력줄만 키보드 바로 위에 (보내거나 키보드 닫으면 원래대로)
+  const box = (root.querySelector<HTMLElement>('.chatp') ?? root.querySelector<HTMLElement>('.chatbox'))!;
+  const st = $('#stage');
+  inp.onfocus = () => {
+    kbFit();
+    box.classList.add('kb');
+    st.classList.add('typing');
+    visualViewport?.addEventListener('resize', kbFit);
+    const log = box.querySelector<HTMLElement>('[data-log]');
+    if (log) log.scrollTop = log.scrollHeight;
+  };
+  inp.onblur = () => {
+    box.classList.remove('kb');
+    st.classList.remove('typing');
+    visualViewport?.removeEventListener('resize', kbFit);
+  };
+  // 입력 중에 누르는 버튼(😊 · 빠른 말 · 보내기)은 입력칸 포커스를 뺏지 않게 → 키보드가 닫혔다 열리며 자리가 튀지 않음
+  $$('[data-quick], [data-q], [data-qe], [data-send]', root).forEach((b) => (b.onpointerdown = (e) => e.preventDefault()));
+  const pop = root.querySelector<HTMLElement>('.qpop');
+  const qb = root.querySelector<HTMLElement>('[data-quick]');
+  if (pop && qb) qb.onclick = () => (pop.hidden = !pop.hidden);
+  $$('[data-q]', root).forEach((b) => (b.onclick = () => say(b.dataset.q!)));
+  $$('[data-qe]', root).forEach((b) => (b.onclick = () => say(iconText(b.dataset.qe!))));
   const log = root.querySelector<HTMLElement>('[data-log]');
   if (log) log.scrollTop = log.scrollHeight;
 }
@@ -245,7 +287,7 @@ register('settings', {
           <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
           <div class="panel col"><b>소리 · 화면</b>
-            <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label></div></div>
+            <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label></div></div>
           <div class="row"><button class="btn" data-title-screen>타이틀로</button><button class="btn mini" data-reset>처음부터</button></div>
         </div></div>`;
       const q = <E extends HTMLElement = HTMLElement>(s: string) => root.querySelector<E>(s);
@@ -294,6 +336,12 @@ register('settings', {
       q<HTMLInputElement>('[data-bgm]')?.addEventListener('change', (e) => ((prefs.bgmOn = (e.target as HTMLInputElement).checked), savePrefs(), applyPrefs()));
       q<HTMLInputElement>('[data-sfx]')?.addEventListener('change', (e) => ((prefs.sfxOn = (e.target as HTMLInputElement).checked), savePrefs(), applyPrefs()));
       q<HTMLInputElement>('[data-cut]')?.addEventListener('change', (e) => setPref('cutOff', !(e.target as HTMLInputElement).checked));
+      q<HTMLInputElement>('[data-full]')?.addEventListener('change', (e) => {
+        const on = (e.target as HTMLInputElement).checked;
+        setPref('fullscreen', on);
+        if (on) goFullscreen();
+        else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+      });
       q('[data-title-screen]')?.addEventListener('click', () => go('title'));
       q('[data-reset]')?.addEventListener('click', () =>
         modal('처음부터 할까요?', '<p class="dim">이 기기에 저장된 원정대 기록이 모두 지워져요. (클라우드는 그대로)</p>', [

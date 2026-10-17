@@ -7,7 +7,7 @@ import { MOB_KINDS } from './data/mobs';
 import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state';
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
-import { applyTheme, iconText } from './theme/tokens';
+import { applyTheme } from './theme/tokens';
 import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
@@ -20,13 +20,22 @@ import { gachaShow } from './ui/gacha';
 import { makeGear } from './game/gear';
 
 applyTheme();
-$('#rotate').textContent = `${iconText('rotate')} 가로로 돌려 주세요`;
 const stage = $('#stage');
 const cv = $('#cv') as HTMLCanvasElement;
 view.ctx = cv.getContext('2d')!;
-const fit = () => fitView(stage, cv);
+// 화면 맞춤: 창·방향·주소창/키보드가 바뀔 때마다 (채팅 입력 중엔 그대로 두고 채팅만 키보드 위로 · MOBILE_REF §1·§2)
+const typing = () => document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
+let fitT = 0;
+const fit = () => {
+  if (typing()) return;
+  cancelAnimationFrame(fitT);
+  fitT = requestAnimationFrame(() => fitView(stage, cv));
+};
 addEventListener('resize', fit);
-fit();
+addEventListener('orientationchange', fit);
+visualViewport?.addEventListener('resize', fit);
+document.addEventListener('focusout', () => setTimeout(fit, 300));
+fitView(stage, cv);
 
 // 로딩 화면 (docs/ART_DONE_1017_3.md §2): 아무 영웅 전신 + 칭호 + 한 줄
 {

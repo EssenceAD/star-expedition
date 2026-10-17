@@ -1,5 +1,6 @@
 // 타이틀 · 로비(여관) · 모험 · 전투 준비(편성) · 영웅 목록/정보 (STAR_PLAN_v2 §0-2·0-4·§1)
 //  배치는 킹스레이드 문법(구조·밀도만), 꾸밈은 2단계 — 색·폰트·여백·테두리·아이콘은 전부 토큰(var / icon())
+import { a2hsBanner, goFullscreen } from './mobile';
 import { preloadRest } from './assets';
 import { CONFIG } from '../config';
 import { activeBonds, BONDS } from '../data/bonds';
@@ -46,7 +47,9 @@ register('title', {
       <p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
       <div class="row"><button class="btn mini" data-reset>처음부터</button></div>
       <div class="ver">v${__APP_VERSION__}</div>`;
+    a2hsBanner(root);
     $('[data-go]', root).onclick = async () => {
+      goFullscreen();
       const { initAudioEngine } = await import('../core/audio/engine');
       initAudioEngine();
       // 첫 진입: 프롤로그(1-1 필드에서) → 1-1 전투 → 승리 → 로비 (STAR_PLAN_v2 §1-1)

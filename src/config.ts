@@ -291,6 +291,11 @@ export const CONFIG = {
     cloud: { pushSec: 60, emailDomain: 'players.legacy-of-adventure.app', guestPrefix: 'g_' },
     /** 월드 채팅: 보관 줄 수 · 내 글 길이 */
     chat: { keep: 60, max: 60 },
+    /** 빠른 채팅 (MOBILE_REF §2 · 결투장 감정 표현 §3-B와 같은 묶음): 자주 쓰는 말 8 + 감정 4(아이콘 키) · 누르면 바로 보냄 */
+    quick: {
+      phrases: ['ㅎㅇ', 'ㄱㄱ', '고마워요!', '같이 레이드?', 'ㅋㅋㅋ', '수고했어요', '잘 부탁해요', '굿굿'],
+      emotes: ['emo_smile', 'emo_wow', 'emo_angry', 'emo_heart'],
+    },
   },
   /**
    * 보스 전장 (레이드 8인 · 월드 보스 · 길드 레이드 — 스토리와 다른 화면) · 형철 10/17 지시 ①~⑥
