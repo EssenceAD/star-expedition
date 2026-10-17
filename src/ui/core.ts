@@ -186,7 +186,7 @@ export function toast(msg: string) {
   t.className = 'toast';
   t.textContent = msg;
   $('#stage').append(t);
-  setTimeout(() => t.remove(), 2300);
+  setTimeout(() => t.remove(), CONFIG.ui.toastSec * 1000);
 }
 /** 창: 버튼 [글, 할 일, 강조] · 할 일이 false 를 돌려주면 안 닫힘 */
 export function modal(title: string, html: string, buttons: [string, (() => void | boolean) | null, boolean?][]): HTMLElement {
