@@ -111,7 +111,7 @@ function doc() {
     '# 경제 시뮬 표 (자동 생성 · tests/economy.test.ts)',
     '',
     '가정: 추천 레벨이면 별 3개로 깸 · 장비 옵션 효과는 안 넣음(보수적) · 레벨 상한이면 각성(각성석은 금화) · 하루 무료 장비 소환 · 매일 희귀 이하 분해 · 파티 자동 장착 후 남은 강화석·금화로 강화 · 방치 보상 매일 · C 콘텐츠: 탑(추천 레벨 층까지) · 결투장 5판(반 승) · 월드 보스 3판(보통·헤비, 상위 30%) · 이정표 · 출석·이벤트 출석·미션·업적·길드 출석 · **별가루는 영웅 사는 데만 씀**(헤비는 행동력 구매에도)',
-    `영웅 값: 창립 ${CONFIG.shop.hero.founder} · 전설·새·멤버 ${CONFIG.shop.hero.legend} (상점 진열 첫 영웅부터 삼) · 주간 획득 상한: 별가루 ${cap.stardust.toLocaleString('ko-KR')} · 각성석 ${cap.awakenStone} · 초월석 ${cap.transStone} · 장 클리어 무료 합류 ${HEROES.filter((h) => h.joinChapter).length}명`,
+    `영웅 값: 멤버 영웅 ${CONFIG.shop.hero.founder} · 오리지널(전설·스토리) ${CONFIG.shop.hero.legend} (상점 진열 첫 영웅부터 삼) · 주간 획득 상한: 별가루 ${cap.stardust.toLocaleString('ko-KR')} · 각성석 ${cap.awakenStone} · 초월석 ${cap.transStone} · 장 클리어 무료 합류 ${HEROES.filter((h) => h.joinChapter).length}명`,
     '',
     '## 한눈에 (7일 · 30일)',
     '',

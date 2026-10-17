@@ -18,12 +18,12 @@ export interface Guild {
   real: boolean;
   desc: string;
   lv: number;
-  /** 멤버 이름 (실멤버 길드는 단톡방 창립 멤버 · AI 길드는 AI 이름) */
+  /** 멤버 이름 (실멤버 길드는 멤버 영웅 17명 · docs/MEMBERS.md · AI 길드는 AI 이름) */
   members: string[];
 }
-const FOUNDERS = HEROES.filter((h) => h.origin === 'founder' || h.origin === 'member').map((h) => h.name);
+const MEMBERS = HEROES.filter((h) => h.origin === 'founder').map((h) => h.name);
 export const GUILDS: Guild[] = [
-  { id: 'real', name: '별의 원정대', real: true, desc: '단톡방 창립 멤버 길드 (실멤버 · 서버 연결 뒤 진짜 기록)', lv: 1, members: FOUNDERS },
+  { id: 'real', name: '별의 원정대', real: true, desc: '멤버 영웅 17명의 길드 (실멤버 · 서버 연결 뒤 진짜 기록)', lv: 1, members: MEMBERS },
   { id: 'ai1', name: '새벽등불 상단', real: false, desc: '매일 출석하는 성실파 AI 길드', lv: 7, members: CHAT_NAMES.slice(0, 6) },
   { id: 'ai2', name: '심연낚시 동호회', real: false, desc: '탑과 월드 보스에 진심인 AI 길드', lv: 9, members: CHAT_NAMES.slice(6, 12) },
   { id: 'ai3', name: '느긋한 여관', real: false, desc: '천천히 즐기는 AI 길드', lv: 4, members: [...CHAT_NAMES.slice(3, 9)] },

@@ -24,7 +24,7 @@
 - 2) `Same boss, exact same pose, size and framing, but BROKEN: the arm is shattered and hanging, the head horns cracked off, the chest core cracked and dim with sparks. Keep everything else identical.` + 배경 문장
 - 부위 상자(`config.raidArena.parts[].box`)는 그림을 보고 다시 맞출 것
 
-## 3. 멤버 영웅 4명 (HEROES_ADD_4) → 초상화 `public/art/portraits/star_<id>.png` · 카드 · 표정 3종 · 도트
+## 3. 멤버 영웅 세르미뉴·이치애·딸기망고모찌·재희아빠 (HEROES_ADD_4) → 초상화 `public/art/portraits/star_<id>.png` · 카드 · 표정 3종 · 도트
 - 영웅별 새 대화. 기존 영웅과 **실루엣·머리색이 안 겹치게** (아래 「겹침 확인」), **등신은 기존 기준(2등신 금지)**
 - 초상화(정사각 흉상) → 카드 일러스트(세로 전신) → 표정 3종(기본·웃음·진지, 1줄×3칸) → 횡스크롤 도트(대기 6 · 평타 6, 2줄×6칸, 오른쪽 보기)
 | id | 이름 | 외형 (프롬프트 핵심 · MUST KEEP) | 겹침 확인 |
@@ -40,7 +40,7 @@
 - 그다음 기존 11조 (남쪽 항구 합동 무대 등)
 
 ## 5. 2단계 화면 (스타일 보드 승인 뒤)
-- 타이틀 키 아트: 창립 멤버 단체(가로 · 밤하늘 · 별) + 로고 자리 비움
+- 타이틀 키 아트: 멤버 영웅 17명 단체 (docs/MEMBERS.md)(가로 · 밤하늘 · 별) + 로고 자리 비움
 - 로비: 여관 마을 전경(가로 · 건물 6곳이 로비 아이콘 자리와 맞게)
 - 로딩: 영웅 전신 일러스트 (먼저 개척자 5명)
 - 아이콘: 스타일 보드의 벡터 아이콘으로 충분하면 그림 안 뽑음 (형철 판단)

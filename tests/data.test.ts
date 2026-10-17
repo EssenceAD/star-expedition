@@ -13,7 +13,6 @@ import { existsSync } from 'node:fs';
 describe('데이터', () => {
   it('영웅 36명 = 멤버 17(개척자 5 + 추가 멤버 11 + 황짐승) + 전설 14 + 새 5 · id 겹침 없음 (docs/MEMBERS.md)', () => {
     expect(HEROES.length).toBe(36);
-    expect(HEROES.filter((h) => h.origin === 'member').length).toBe(0);
     expect(HEROES.filter((h) => h.origin === 'founder').length).toBe(17);
     expect(HEROES.filter((h) => h.fiveStar).map((h) => h.name).sort()).toEqual(['고느끼', '따뜻한밤', '왈왈콩선생', '웅스', '이카몰리'].sort());
     expect(HEROES.filter((h) => h.origin === 'legend').length).toBe(14);
@@ -63,7 +62,12 @@ describe('데이터', () => {
   });
 });
 
-describe('멤버 영웅 4명 (HEROES_ADD_4)', () => {
+describe('멤버 영웅 관계 (docs/MEMBERS.md · HEROES_ADD_4)', () => {
+  it('멤버 영웅 17명 = 실멤버 길드 「별의 원정대」 명단 (개척자 5 + 추가 멤버 11 + 황짐승)', async () => {
+    const { GUILDS } = await import('../src/game/social');
+    const want = ['웅스', '고느끼', '이카몰리', '왈왈콩선생', '따뜻한밤', '세르미뉴', '클레이네', '팬더', '부브', '하응', '이치애', '재희아빠', '유월', '깡토끼', '딸기망고모찌', '신야군', '황짐승'];
+    expect(GUILDS.find((g) => g.real)!.members.sort()).toEqual(want.sort());
+  });
   it('관계: 인연 · 협공 컷인 자리 · 세르님 리스펙 대사 · 대사 3종 · 외형', async () => {
     const { BONDS, SER_ASK } = await import('../src/data/bonds');
     const { comboOf } = await import('../src/data/combos');
@@ -83,7 +87,7 @@ describe('멤버 영웅 4명 (HEROES_ADD_4)', () => {
   });
 });
 
-describe('외전 대사 초안 (멤버 4명)', () => {
+describe('외전 대사 초안 (세르미뉴·이치애·딸기망고모찌·재희아빠)', () => {
   it('4명 모두 3막 + 끝 대사 · 말하는 사람은 영웅 id 또는 SPEAKER', async () => {
     const { SIDE } = await import('../src/data/side');
     const { SPEAKER } = await import('../src/data/story');
