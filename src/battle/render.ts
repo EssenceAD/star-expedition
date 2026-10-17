@@ -538,12 +538,16 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.fillStyle = B.cutBar;
   ctx.fillRect(-bw / 2, -bh / 2 - 3, bw * ein, 3);
   ctx.fillRect(-bw / 2, bh / 2, bw * ein, 3);
+  // 스킬 이름: 화면 오른쪽 안에 들어오게 (오른쪽 여백 · 길면 글씨를 줄임 · POLISH_1017 ③-3)
+  const room = W * CONFIG.combat.cutText.maxW;
   ctx.font = canvasFace(F.cutName, 'title');
+  const tw = ctx.measureText(c.skill.name).width;
+  if (tw > room) ctx.font = canvasFace(Math.floor((F.cutName * room) / tw), 'title');
   ctx.textAlign = 'right';
   ctx.lineWidth = 10;
   ctx.lineJoin = 'round';
   ctx.strokeStyle = B.cutStroke;
-  const tx = W * 0.42 + (1 - ein) * 160;
+  const tx = W / 2 - CONFIG.combat.cutText.right + (1 - ein) * 60;
   ctx.strokeText(c.skill.name, tx, 22);
   ctx.fillStyle = B.white;
   ctx.fillText(c.skill.name, tx, 22);

@@ -49,7 +49,7 @@ export const CONFIG = {
     /** 사제 AUTO: 체력 이 비율 아래인 아군이 있으면 회복 */
     autoHealAt: 0.65,
     /** 위치 3구역 (킹스레이드 문법: 직업마다 고정) — 파티를 전방 → 중앙 → 후방 순으로 세워 이 4자리에 (화면 왼쪽 기준 x · 발 y) · 대각선으로 엇갈려 안 가림 */
-    places: [[430, 272], [380, 230], [300, 272], [250, 230]] as [number, number][],
+    places: [[440, 272], [372, 226], [292, 272], [222, 226]] as [number, number][],
     /** 레이드 8인 자리 (내 4 + AI 4, 내 파티가 앞) */
     places8: [[480, 272], [440, 230], [395, 272], [355, 230], [295, 272], [255, 230], [210, 272], [170, 230]] as [number, number][],
     /** 같은 구역이 비면 생기는 틈 (구역이 바뀔 때마다 이만큼 더 뒤로) */
@@ -65,6 +65,8 @@ export const CONFIG = {
     fxArt: { alpha: 0.6, soft: { heal: 0.45, pillar: 0.45, buff: 0.45 } as Record<string, number>, frameSec: 0.08, boltTravel: 0.16, meteorDrop: [90, -170] as number[], centerK: 1.15, bottomK: 1.3, minCenter: 60, minBottom: 80, maxH: 175, maxOfH: 1.3, healW: 0.55, maxOn: 6, maxOnRaid: 10, perTarget: 2, fadeFast: 0.08, shieldLoopSec: 0.6, shieldAlpha: 0.5, stunH: 34 },
     /** 몹 쓰러짐 (ANIM_1017 ③): 지역 몹 사라지는 초 · 장 보스 초 · 가라앉는 px · 흔들림 px (경고 중 떨림은 절반) · 맞은 칸을 보일 번쩍 세기 */
     mobDie: { sec: 0.4, bossSec: 1.0, sink: 18, shake: 3, hurtFlash: 0.3 },
+    /** 컷인 스킬 이름: 오른쪽 여백(px) · 가장 넓은 폭(화면 비율) */
+    cutText: { right: 40, maxW: 0.5 },
     /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
     headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4 },
     /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */
