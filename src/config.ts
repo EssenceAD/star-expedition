@@ -61,6 +61,8 @@ export const CONFIG = {
     /** 피해 숫자 · 일반 크기 배율 · 외곽선 두께(일반·치명타 px) · 치명타 커졌다 작아지는 시간 · 폭발 그림 크기(글자 폭 배) (docs/BATTLE_HUD_1017.md §4) */
     /** 영웅 동작 칸 시간(초 · ANIM_1017): 숨쉬기 · 걷기 칸마다 · 평타 4칸 · 스킬 4칸 · 스킬1은 0.8배 · 스킬3은 0.7배 속도 */
     anim: { idle: 0.17, walk: 0.11, attack: [0.2, 0.06, 0.16, 0.15] as number[], skill: [0.3, 0.12, 0.38, 0.3] as number[], skill1Speed: 0.8, skill3Speed: 0.7 },
+    /** 이펙트 그림 (ANIM_1017 ②): 칸 하나 초 · bolt 날아가는 초 · meteor 떨어지는 거리(px) · 크기 = 대상 키 × centerK/bottomK (최소 px) · 보호막 유지 1↔2 바뀌는 초 · 진하기 · 기절 별 크기 · 전체 진하기(alpha) */
+    fxArt: { alpha: 0.85, frameSec: 0.08, boltTravel: 0.16, meteorDrop: [90, -170] as number[], centerK: 1.25, bottomK: 1.55, minCenter: 70, minBottom: 100, shieldLoopSec: 0.6, shieldAlpha: 0.7, stunH: 34 },
     /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
     headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4 },
     /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */

@@ -92,6 +92,12 @@ export interface Num {
 export type FxKind = 'slash' | 'burst' | 'ring' | 'bolt' | 'star' | 'heal' | 'shield' | 'slam' | 'beam' | 'pillar' | 'dome';
 export interface Fx {
   kind: FxKind;
+  /** 이펙트 그림 이름 (public/art/fx · 없으면 kind대로 선 그리기 · ANIM_1017 ②) */
+  img?: string;
+  /** 그림 칸 순서 (기본 0~3) */
+  seq?: number[];
+  /** 그림 높이 (논리 px) */
+  h?: number;
   x: number;
   y: number;
   x2?: number;
@@ -399,6 +405,9 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
     to.shield -= s;
     left -= s;
   }
+  // 보호막이 이번에 깨지면: 깨짐 그림(3)
+  if (dmg > left && to.shield <= 0 && !to.dead) b.fx.push({ kind: 'shield', img: 'shield', seq: [3], h: fxH(to, true), x: to.x, y: to.y, color: T.battle.fxShield, t: 0, dur: K.fxArt.frameSec * 3 });
+  if (crit && by.side === 'hero') b.fx.push({ kind: 'burst', img: 'crit', h: fxH(to) * 1.2, x: to.x, y: to.y - to.h * 0.55, color: T.battle.burstCrit, t: 0, dur: K.fxArt.frameSec * 4 });
   to.hp = Math.max(0, to.hp - left);
   to.taken += dmg;
   to.flash = 1;
@@ -508,43 +517,45 @@ const foeTargets = (b: Battle, u: Unit, to: string): Unit[] => {
   const line = to === 'back' ? backLine(ms) : frontLine(ms);
   return [line.sort((a, c) => (to === 'back' ? a.x - c.x : c.x - a.x))[0]];
 };
+/** 이펙트 그림 크기: 몸통 가운데 것 · 발밑에서 솟는 것 (대상 키에 맞춤) */
+const fxH = (m: Unit, bottom = false) => Math.max(bottom ? K.fxArt.minBottom : K.fxArt.minCenter, m.h * (bottom ? K.fxArt.bottomK : K.fxArt.centerK));
 function hitFx(b: Battle, u: Unit, s: SkillDef, m: Unit, k: number) {
   const color = elemColor(s.elem);
   const fx = (f: Omit<Fx, 't'>) => b.fx.push({ ...f, t: 0 });
   const y = m.y - m.h * 0.55;
   switch (s.vfx) {
     case 'slash':
-      fx({ kind: 'slash', x: m.x, y, color, dur: 0.32, r: k % 2 ? 1 : -1 });
+      fx({ kind: 'slash', img: 'slash', h: fxH(m), x: m.x, y, color, dur: 0.32, r: k % 2 ? 1 : -1 });
       break;
     case 'smash':
-      fx({ kind: 'pillar', x: m.x, y: m.y, color, dur: 0.55, r: 50 });
-      fx({ kind: 'slam', x: m.x, y: m.y, color, dur: 0.55, r: 140 });
+      fx({ kind: 'slam', img: 'smash', h: fxH(m, true), x: m.x, y: m.y, color, dur: 0.55, r: 140 });
       b.shake = Math.max(b.shake, K.shake.smash);
       b.flash = Math.max(b.flash, 0.5);
       break;
     case 'pierce':
-      fx({ kind: 'beam', x: u.x + 20, y: u.y - u.h * 0.5, x2: m.x + 60, y2: y, color, dur: 0.45 });
+      fx({ kind: 'beam', img: 'pierce', h: fxH(m), x: m.x, y, color, dur: 0.45 });
       b.flash = Math.max(b.flash, 0.6);
       break;
     case 'bolt':
-      fx({ kind: 'bolt', x: u.x + 26, y: u.y - u.h * 0.65, x2: m.x, y2: y, color, dur: 0.25 });
-      fx({ kind: 'burst', x: m.x, y, color, dur: 0.35, r: 34 });
+      fx({ kind: 'bolt', img: 'bolt', h: fxH(m) * 0.8, x: u.x + 26 * (u.side === 'hero' ? 1 : -1), y: u.y - u.h * 0.65, x2: m.x, y2: y, color, dur: K.fxArt.boltTravel + K.fxArt.frameSec * 2 });
       break;
     case 'meteor':
-      fx({ kind: 'star', x: m.x + (rand() - 0.5) * 40, y, color, dur: 0.55, r: 55 });
+      fx({ kind: 'star', img: 'meteor', h: fxH(m, true), x: m.x + (rand() - 0.5) * 40, y: m.y, color, dur: 0.55, r: 55 });
       b.shake = Math.max(b.shake, K.shake.meteor);
       break;
     case 'ring':
-      fx({ kind: 'ring', x: m.x, y: m.y, color, dur: 0.7, r: 60 });
+      fx({ kind: 'ring', img: 'ring', h: fxH(m, true), x: m.x, y: m.y, color, dur: 0.7, r: 60 });
       break;
     default:
-      fx({ kind: 'burst', x: m.x, y, color, dur: 0.5, r: 60 });
+      fx({ kind: 'burst', img: 'burst', h: fxH(m), x: m.x, y, color, dur: 0.5, r: 60 });
   }
 }
 function allyFx(b: Battle, s: SkillDef, t: Unit, e: Eff) {
   const color = elemColor(s.elem);
   const kind: FxKind = e.k === 'shield' || s.vfx === 'shield' ? 'shield' : e.k === 'regen' || s.vfx === 'heal' ? 'heal' : e.k === 'taunt' ? 'ring' : 'pillar';
-  b.fx.push({ kind, x: t.x, y: kind === 'ring' ? t.y : kind === 'pillar' ? t.y : t.y - t.h * 0.5, color, t: 0, dur: 0.85, r: kind === 'ring' ? 110 : kind === 'pillar' ? 24 : 50 });
+  // 그림: 보호막 = 걸림(0→1) · 회복 · 도발 = 고리 · 버프 = 빛 기둥(buff) · 나머지 기둥 (모두 발밑)
+  const img = kind === 'shield' ? 'shield' : kind === 'heal' ? 'heal' : kind === 'ring' ? 'ring' : e.k === 'buff' ? 'buff' : 'pillar';
+  b.fx.push({ kind, img, seq: img === 'shield' ? [0, 1] : undefined, h: fxH(t, true), x: t.x, y: kind === 'ring' ? t.y : kind === 'pillar' ? t.y : t.y - t.h * 0.5, color: img === 'shield' ? T.battle.fxShield : color, t: 0, dur: 0.85, r: kind === 'ring' ? 110 : kind === 'pillar' ? 24 : 50 });
 }
 function cast(b: Battle, u: Unit, i: number, manual = false) {
   const h = specOf(u)!;
@@ -775,8 +786,9 @@ export function step(b: Battle, dtReal: number) {
         fn: () => {
           if (t.dead) return;
           const ty = t.y - t.h * 0.55;
-          if (ranged) b.fx.push({ kind: 'bolt', x: h.x + 26, y: h.y - h.h * 0.62, x2: t.x, y2: ty, color, t: 0, dur: 0.22 });
-          else b.fx.push({ kind: 'slash', x: t.x, y: ty, color: T.battle.white, t: 0, dur: 0.22, r: 1 });
+          // 평타: 원거리 = 날아가는 bolt · 근접 = hit (속성색 · ANIM_1017 ②)
+          if (ranged) b.fx.push({ kind: 'bolt', img: 'bolt', h: fxH(t) * 0.6, x: h.x + 26, y: h.y - h.h * 0.62, x2: t.x, y2: ty, color, t: 0, dur: K.fxArt.boltTravel + K.fxArt.frameSec * 2 });
+          else b.fx.push({ kind: 'slash', img: 'hit', h: fxH(t), x: t.x, y: ty, color, t: 0, dur: 0.32, r: 1 });
           damage(b, h, t, 1);
         },
       });

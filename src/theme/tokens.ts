@@ -361,6 +361,8 @@ export const T = {
     /** 치명타 = 주황 (MOBILE_REF §3-A-2) · 보호막 막은 숫자 = 하늘색 */
     numCrit: ['#fff4d6', '#ffb14a', '#ff7417'],
     numShield: '#9fe2ff',
+    /** 보호막 그림 색 (lighter로 더해지니 진한 파랑 · ANIM_1017 ②) */
+    fxShield: '#2f6fd8',
     numShieldStroke: '#0b2a48',
     critRibbon: '#a82418',
     /** 레이드 약점 표적 링 · 이름표 글씨 테두리 */

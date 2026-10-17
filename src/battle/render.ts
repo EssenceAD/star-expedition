@@ -4,9 +4,10 @@
 import { CONFIG } from '../config';
 import { animOf, drawFrame, frameAt, heightOf, lenOf, type Sheet } from '../sprite/sheet';
 import { canvasFace, canvasFont, elemColor, iconText, T } from '../theme/tokens';
-import { has, shortNum, type Battle, type Unit } from './sim';
+import { has, shortNum, type Battle, type Fx, type Unit } from './sim';
 import { view } from '../ui/view';
 import { getPref } from '../core/save';
+import { drawFxImg, type FxArt } from './fxart';
 
 export const LH = CONFIG.view.h;
 export const GROUND = CONFIG.view.ground;
@@ -24,6 +25,8 @@ export interface Art {
   bgs?: Record<string, HTMLImageElement>;
   /** 치명타 폭발 별 (public/art/ui/battle/crit_burst.png) */
   critBurst?: HTMLImageElement | null;
+  /** 스킬 이펙트 그림 14종 (public/art/fx · 뒤에서 받음 · ANIM_1017 ②) */
+  fx?: FxArt | null;
 }
 /** 이 전투 배경 그림 · 전용 배경이면 지역 색 안 씀 */
 const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[key], own: true } : { im: art.bg, own: false });
@@ -137,13 +140,17 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
   if (sp && (u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
   // 보호막 · 기절 · 침묵 · 화상
-  if (u.shield > 0) {
+  // 보호막이 남아 있는 동안: 그림 1↔2를 shieldLoopSec마다 · 알파 0.7로 몸에 겹침 (그림이 없으면 예전 타원)
+  const FA = CONFIG.combat.fxArt;
+  if (u.shield > 0 && !drawFxImg(ctx, art.fx, 'shield', 1 + (Math.floor(now / FA.shieldLoopSec) % 2), x, y + 4, Math.max(FA.minBottom, H * FA.bottomK), B.fxShield, FA.shieldAlpha)) {
     ctx.strokeStyle = B.shield;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(x, y - H * 0.48, H * 0.36, H * 0.56, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
+  // 기절: 머리 위에서 stun 그림 반복
+  if (has(u, 'stun')) drawFxImg(ctx, art.fx, 'stun', Math.floor(now / FA.frameSec) % 4, x, y - H - FA.stunH * 0.3, FA.stunH, B.stun);
   if (!u.mob?.boss) headHp(ctx, u, x, y, H);
 }
 /** 설정 「머리 위 체력 바 늘 보기」 (전투 화면이 들어올 때 다시 읽음) */
@@ -228,10 +235,36 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
 }
 
 // ───────── 이펙트 ─────────
-function drawFx(ctx: CanvasRenderingContext2D, b: Battle) {
+/** 그림 이펙트 한 개 (칸 진행 · bolt는 날아감 · meteor는 위 오른쪽에서 떨어짐) — 그림이 없으면 false */
+function imgFx(ctx: CanvasRenderingContext2D, art: Art, f: Fx): boolean {
+  const FA = CONFIG.combat.fxArt;
+  const h = f.h ?? 100;
+  if (f.img === 'bolt' && f.x2 !== undefined && f.y2 !== undefined) {
+    // 0~2를 돌며 날아가고 도착하면 3
+    if (f.t < FA.boltTravel) {
+      const p = f.t / FA.boltTravel;
+      return drawFxImg(ctx, art.fx, 'bolt', Math.floor(f.t / FA.frameSec) % 3, f.x + (f.x2 - f.x) * p, f.y + (f.y2 - f.y) * p, h, f.color);
+    }
+    return drawFxImg(ctx, art.fx, 'bolt', 3, f.x2, f.y2, h * 1.3, f.color, Math.max(0, 1 - (f.t - FA.boltTravel) / (FA.frameSec * 2)));
+  }
+  const seq = f.seq ?? [0, 1, 2, 3];
+  const i = Math.floor(f.t / FA.frameSec);
+  const len = seq.length * FA.frameSec;
+  // 마지막 칸은 남은 시간 동안 흐려지며 사라짐
+  const alpha = f.t <= len ? 1 : Math.max(0, 1 - (f.t - len) / Math.max(0.05, f.dur - len));
+  let { x, y } = f;
+  if (f.img === 'meteor' && i < 2) {
+    const p = 1 - f.t / (FA.frameSec * 2);
+    x += FA.meteorDrop[0] * p;
+    y += FA.meteorDrop[1] * p;
+  }
+  return drawFxImg(ctx, art.fx, f.img!, seq[Math.min(seq.length - 1, i)], x, y, h, f.color, alpha);
+}
+function drawFx(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (const f of b.fx) {
+    if (f.img && art.fx && imgFx(ctx, art, f)) continue;
     const u = f.t / f.dur;
     ctx.globalAlpha = Math.max(0, 1 - u);
     ctx.strokeStyle = f.color;
@@ -531,7 +564,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
     }
   const units = [...b.heroes, ...b.mobs].sort((a, c) => (a.mob?.boss ? -1 : c.mob?.boss ? 1 : a.y - c.y));
   for (const u of units) drawUnit(ctx, art, u, now);
-  drawFx(ctx, b);
+  drawFx(ctx, b, art);
   // 전투 중 혼잣말 말풍선은 끔 — 대사는 스킬 컷인에만 (PLAYTEST §2)
   drawNums(ctx, b, art);
   drawEmotes(ctx, b);
@@ -807,7 +840,7 @@ function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: num
   if (boss) drawRaidBoss(ctx, art, boss, b, now);
   const units = [...b.heroes, ...b.mobs.filter((m) => !m.mob?.boss)].sort((a, c) => a.y - c.y);
   for (const u of units) drawUnit(ctx, art, u, now);
-  drawFx(ctx, b);
+  drawFx(ctx, b, art);
   // 전투 중 혼잣말 말풍선은 끔 — 대사는 스킬 컷인에만 (PLAYTEST §2)
   drawNums(ctx, b, art);
   ctx.restore();

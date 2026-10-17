@@ -71,6 +71,22 @@ if (scene === 'win') {
     }, 50);
   });
   secs = 8;
+} else if (scene === 'shield') {
+  // 콩선생 보호막: 걸림(0→1) → 유지(1↔2) → 깨짐(3)
+  await party(['woongs', 'walwal'], 25);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 3, d: 0 } }); window.__b().auto = false; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  await p.waitForFunction(() => window.__fxReady?.() ?? true, null, { timeout: 30000 });
+  // 몹이 영웅을 때리기 시작할 때까지 빨리 감기
+  await fast("b.phase === 'fight' && b.heroes.some((h) => h.taken > 0)", 30);
+  await p.evaluate(() => {
+    const b = window.__b();
+    const wi = b.heroes.findIndex((h) => h.hero.def.id === 'walwal');
+    setTimeout(() => window.__cast(wi, 2), 400);
+    // 3초 뒤 보호막을 조금만 남겨 다음 한 대에 깨지게
+    setTimeout(() => b.heroes.forEach((h) => h.shield > 0 && (h.shield = 1)), 3400);
+  });
+  secs = 6;
 } else if (scene === 'arena') {
   await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 30);
   await p.evaluate(() => window.__go('portal', { tab: 'arena' }));

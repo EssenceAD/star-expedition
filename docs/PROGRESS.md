@@ -419,6 +419,14 @@
 - 밸런스: 평타 그림이 길어진 만큼 쿨다운에서 빼서 공격 간격은 예전(`combat.attackBeat` 0.46초 기준) 그대로 — 레이드 AUTO 테스트 통과
 - 도구: `tools/gif-scene.mjs heroes` · `tools/shot-acts.mjs`에 스킬·걷기 자세
 
+## 2-X. ANIM ② 이펙트 그림 14종 (v0.10.9 · docs/ANIM_1017.md ②)
+- `battle/fxart.ts`: `loadFxArt()`(뒤에서 · `view.art.fx`) · `drawFxImg()` = 보조 캔버스(dpr)에 jpg → 속성색 `multiply` → 본 캔버스 `lighter` · 앵커 center/bottom은 `_fx.json`
+- `Fx.img/seq/h`: 스킬 vfx와 1:1 (slash smash pierce bolt burst meteor ring heal shield pillar) + hit(근접 평타) · crit(치명타) · buff(버프) · stun(기절 머리 위 반복) · 그림이 아직 없으면 예전 선 그리기
+- bolt: 0~2를 돌며 시전자→대상(`fxArt.boltTravel`) · 도착 3 · meteor: 위 오른쪽에서 0~1 낙하 · 2~3 착지
+- 보호막: 걸림 `shield` 0→1 · 남아 있는 동안 1↔2(`shieldLoopSec` 0.6) 알파 0.7 · 깨지는 순간 3 · 색은 진한 파랑 토큰 `fxShield` · 타원 선은 그림이 없을 때만
+- 크기 = 대상 키 × `centerK/bottomK`(최소 px) · 전체 진하기 `fxArt.alpha` 0.85 · 시험 손잡이 `__cast(영웅, 스킬)` · `__fxReady()`
+- 도구: `tools/gif-scene.mjs shield`
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
