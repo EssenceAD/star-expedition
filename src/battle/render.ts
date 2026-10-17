@@ -157,9 +157,11 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
 function tag(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
   ctx.font = canvasFont(F.tag, 'bold', false);
   ctx.textAlign = 'center';
-  const w = ctx.measureText(text).width + 8;
-  ctx.fillStyle = B.placeholderTag;
-  ctx.fillRect(x - w / 2, y - 9, w, 13);
+  // 불투명 네모 대신 글씨 테두리 + 그림자 (PLAYTEST §0-7)
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = B.tagEdge;
+  ctx.strokeText(text, x, y + 1);
   ctx.fillStyle = B.tagText;
   ctx.fillText(text, x, y + 1);
 }
@@ -364,45 +366,10 @@ function drawNums(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
       ctx.fillStyle = g;
     } else ctx.fillStyle = n.kind === 'heal' ? B.numHeal : n.kind === 'hurt' ? B.numMob : n.kind === 'burn' ? B.burn : B.numText;
     ctx.fillText(text, n.x, y);
-    if (crit) {
-      // 「치명타」 = 숫자 위 작은 기운 리본
-      ctx.save();
-      ctx.translate(n.x - size * 0.5, y - size * 0.95);
-      ctx.rotate(-0.14);
-      ctx.font = canvasFace(F.critLabel, 'menu');
-      const lw = ctx.measureText('치명타').width + 10;
-      const lh = F.critLabel + 4;
-      ctx.fillStyle = B.critRibbon;
-      ctx.beginPath();
-      ctx.roundRect(-lw / 2, -lh + 3, lw, lh, 3);
-      ctx.fill();
-      ctx.fillStyle = B.numCritLabel;
-      ctx.fillText('치명타', 0, 0);
-      ctx.restore();
-    }
   }
   ctx.globalAlpha = 1;
 }
 
-/** 인연 말풍선 */
-function drawSays(ctx: CanvasRenderingContext2D, b: Battle) {
-  for (const s of b.says) {
-    if (s.t < 0) continue;
-    const u = b.heroes.find((h) => h.uid === s.uid);
-    if (!u || u.dead) continue;
-    ctx.globalAlpha = Math.min(1, s.t * 5, (s.dur - s.t) * 4);
-    ctx.font = canvasFont(F.tag + 1, 'bold', false);
-    ctx.textAlign = 'center';
-    const w = ctx.measureText(s.text).width + 12;
-    const x = Math.max(w / 2 + 4, u.x);
-    const y = u.y - u.h - 22;
-    ctx.fillStyle = B.placeholderTag;
-    ctx.fillRect(x - w / 2, y - 12, w, 18);
-    ctx.fillStyle = B.tagText;
-    ctx.fillText(s.text, x, y + 1);
-  }
-  ctx.globalAlpha = 1;
-}
 
 /** 일러스트 컷인: 기울어진 띠 + 일러스트가 화면을 가로지름 */
 function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) {
@@ -491,7 +458,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   const units = [...b.heroes, ...b.mobs].sort((a, c) => (a.mob?.boss ? -1 : c.mob?.boss ? 1 : a.y - c.y));
   for (const u of units) drawUnit(ctx, art, u, now);
   drawFx(ctx, b);
-  drawSays(ctx, b);
+  // 전투 중 혼잣말 말풍선은 끔 — 대사는 스킬 컷인에만 (PLAYTEST §2)
   drawNums(ctx, b, art);
   ctx.restore();
   if (b.flash > 0) {
@@ -623,13 +590,46 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
   ctx.restore();
   // 집중 공격 부위 테두리
   const fp = r.focus >= 0 ? r.parts[r.focus] : r.parts.find((p) => !p.broken);
-  if (fp && !u.dead) {
-    const [x, y, w, h] = box(fp);
-    ctx.strokeStyle = B.focusRing;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.strokeRect(u.x - cx + x, u.y - fy + y, w, h);
-    ctx.setLineDash([]);
+  // 약점 표시: 점선 상자 대신 보스 몸 위 은은한 빨간 표적 링 (PLAYTEST §3) · 부서진 부위는 깨진 링이 잠깐
+  for (const p of r.parts) {
+    const [x, y, w, h] = box(p);
+    const px = u.x - cx + x + w / 2;
+    const py = u.y - fy + y + h / 2;
+    const rr = Math.min(w, h) * 0.32;
+    if (p.broken) {
+      const t = p.brokenT ?? 0;
+      if (t > 0.6) continue;
+      ctx.globalAlpha = 1 - t / 0.6;
+      ctx.strokeStyle = B.weakRing;
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 6; i++) {
+        const a0 = (i / 6) * Math.PI * 2 + t * 2;
+        ctx.beginPath();
+        ctx.arc(px + Math.cos(a0) * t * 30, py + Math.sin(a0) * t * 30, rr, a0, a0 + 0.7);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      continue;
+    }
+    if (u.dead) continue;
+    const on = p === fp;
+    const pulse = 0.5 + 0.5 * Math.sin(now * 4);
+    ctx.globalAlpha = on ? 0.55 + 0.35 * pulse : 0.28;
+    ctx.strokeStyle = B.weakRing;
+    ctx.lineWidth = on ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(px, py, rr * (on ? 1 + 0.06 * pulse : 0.9), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(px, py, rr * 0.45, 0, Math.PI * 2);
+    ctx.stroke();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      ctx.beginPath();
+      ctx.moveTo(px + dx * rr * 0.7, py + dy * rr * 0.7);
+      ctx.lineTo(px + dx * rr * 1.25, py + dy * rr * 1.25);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   }
   if (r.downT > 0) {
     ctx.font = canvasFont(F.stun + 6, 'black', false);
@@ -732,7 +732,7 @@ function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: num
   const units = [...b.heroes, ...b.mobs.filter((m) => !m.mob?.boss)].sort((a, c) => a.y - c.y);
   for (const u of units) drawUnit(ctx, art, u, now);
   drawFx(ctx, b);
-  drawSays(ctx, b);
+  // 전투 중 혼잣말 말풍선은 끔 — 대사는 스킬 컷인에만 (PLAYTEST §2)
   drawNums(ctx, b, art);
   ctx.restore();
   if (b.flash > 0) {

@@ -87,6 +87,8 @@ function syncHud() {
     $$<HTMLButtonElement>('button[data-s]', c).forEach((btn) => {
       const i = +btn.dataset.s!;
       btn.classList.toggle('ok', canCast(bb, u, i));
+      // 마나 부족 (쿨타임 아님): 채도 30% + 파란 자물쇠 점 (PLAYTEST §2)
+      btn.classList.toggle('nomana', u.scd[i] <= 0 && u.mana < u.hero!.def.skills[i].cost);
       const cd = u.scd[i];
       btn.classList.toggle('cd', cd > 0);
       // 쿨타임 남은 비율 → 남색 원을 시계방향으로 걷어냄 (BATTLE_HUD §5)
@@ -129,7 +131,7 @@ function syncHud() {
     const top = Math.max(1, sorted[0].dealt);
     const t = Math.max(1, bb.stats.time);
     // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 피해량 (BATTLE_HUD §3)
-    $('#dpsL').innerHTML = `<div class="dh">${bb.raid ? '피해 순위' : 'DPS'}</div>${sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u.dealt)}</b><div class="g"><i style="width:${(u.dealt / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i></div><small>${shortNum(u.dealt / t)}/초</small></div>`).join('')}`;
+    $('#dpsL').innerHTML = `<div class="dh">${bb.raid ? '피해 순위' : '피해량'}</div>${sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u.dealt)}</b><div class="g"><i style="width:${(u.dealt / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i><small>${shortNum(u.dealt / t)}/초</small></div></div>`).join('')}`;
   }
 }
 
@@ -192,6 +194,10 @@ function setup() {
   speedLabel();
   setPaused(false);
   $('#stg').textContent = b.setup.title;
+  // 스테이지 이름은 시작할 때 다시 보여 줌 (보스 전장에선 2초 뒤 사라짐)
+  $('#stg').classList.remove('show');
+  void $('#stg').offsetWidth;
+  $('#stg').classList.add('show');
   buildBar();
   buildRaid();
   dpsLabel();
@@ -231,11 +237,17 @@ function showRunResult() {
   const nextFloor = r.mode === 'tower' && win ? { ...r, arg: +r.arg + 1 } : r.mode === 'side' && win && (r.sub ?? 0) < CONFIG.content.side.acts ? { ...r, sub: (r.sub ?? 1) + 1 } : null;
   const left = triesText(r);
   const rs = raidSummary(bb);
-  const raidLines = rs ? `<br>${rs.phase}페이즈까지 · 회피 직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}<br>부위 파괴 1등: ${rs.parts.map((p) => `${esc(p.name)} ${p.broken ? esc(p.top) : '못 부숨'}`).join(' · ')}` : '';
-  $('#result').innerHTML = `${emb(head, win || scoreRun)}
-    <p class="why">${MODE_NAME[r.mode]} · 시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(partyDps(bb))} · MVP ${mvp.name}${raidLines}${o.lines.map((l) => `<br>${esc(l)}`).join('')}</p>
-    <div class="rw">${o.items.map(([k, v]) => `<div><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
-    <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div>`;
+  // 결과 표 (남색 판 안 항목: 값 2열 · PLAYTEST §3·§4) — 부위는 아이콘 + ✓/✕
+  const rows: [string, string][] = [['콘텐츠', MODE_NAME[r.mode]], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['초당', shortNum(partyDps(bb))], ['MVP', `<b class="hn">${esc(mvp.name)}</b>`]];
+  if (rs) {
+    rows.push(['페이즈', `${rs.phase}페이즈까지`], ['회피', `직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}`]);
+    for (const p of rs.parts) rows.push([`${icon('target')} ${esc(p.name)}`, p.broken ? `${ck(true)} ${esc(p.top)}` : ck(false)]);
+  }
+  const table = `<div class="rtable">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}${o.lines.map((l) => `<em>${esc(l)}</em>`).join('')}</div>`;
+  $('#result').innerHTML = `${emb(head, win || scoreRun)}<div class="rcol">
+    ${table}
+    <div class="rw">${o.items.map(([k, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
+    <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div></div>`;
   $('#result').hidden = false;
   $$('#result [data-a]').forEach(
     (btn) =>

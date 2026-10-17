@@ -15,6 +15,8 @@ export interface PartState {
   max: number;
   hp: number;
   broken: boolean;
+  /** 부서진 뒤 지난 초 (깨지는 표적 링) */
+  brokenT?: number;
   /** 그림 안 자리 (보스 그림 기준 비율) */
   box: number[];
   pattern: string;
@@ -124,6 +126,7 @@ export function raidOnHit(b: Battle, by: Unit, boss: Unit, dmg: number, skill: b
     p.dealt[by.uid] = (p.dealt[by.uid] ?? 0) + dmg;
     if (p.hp <= 0 && !p.broken) {
       p.broken = true;
+      p.brokenT = 0;
       if (r.focus === alivePart) r.focus = -1;
       r.note = { text: `${p.name} 파괴! 「${RA.patterns[p.pattern]?.text.split(' — ')[1] ?? p.pattern}」 패턴이 사라져요`, t: 0 };
       b.shake = Math.max(b.shake, CONFIG.combat.shake.boss);
@@ -161,6 +164,7 @@ export function raidUltZoom(b: Battle, u: Unit) {
 
 /** 한 걸음 (fight 중 · 보스 패턴 대신) */
 export function raidStep(b: Battle, dt: number, dtReal: number) {
+  for (const p of b.raid?.parts ?? []) if (p.broken) p.brokenT = (p.brokenT ?? 0) + dtReal;
   const r = b.raid!;
   const boss = b.mobs.find((m) => m.mob?.boss && !m.dead);
   for (const h of b.heroes) {
