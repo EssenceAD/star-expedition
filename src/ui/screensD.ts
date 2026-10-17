@@ -9,8 +9,9 @@ import {
   addFriend, board, BOARD_NAME, buyGuild, checkTitles, claimAllMail, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
+import { HEROES } from '../data/heroes';
 import { icon } from '../theme/tokens';
-import { $, $$, CUR_NAME, esc, fmt, go, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
+import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
 
 const SO = CONFIG.social;
 const giveText = (g: Record<string, number>) => Object.entries(g).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ');
@@ -130,13 +131,15 @@ register('guild', {
 });
 
 // ───────── 친구 ─────────
+/** 친구 얼굴: 이름으로 정해지는 영웅 초상화 (1단계 · 실유저 프로필은 서버 연결 뒤) */
+const avatarOf = (name: string) => HEROES[[...name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % HEROES.length].id;
 register('friends', {
   title: `${icon('friend')} 친구`,
   enter(root) {
     const draw = () => {
       root.innerHTML = `<div class="body"><div class="col grow scroll">
           <div class="row"><b class="grow">친구 ${S.friends.list.length}/${SO.friends.max}</b><span class="xs dim">하루 한 번씩 선물(행동력 ${SO.friends.gift}) · 받기 하루 ${SO.friends.giftsPerDay}번</span></div>
-          ${S.friends.list.map((n) => `<div class="panel row"><b class="grow sm">${esc(n)} <span class="xs dim">Lv.${friendLv(n)}</span></b><button class="btn mini" data-gift="${esc(n)}" ${S.friends.sent.includes(n) && S.friends.day === dayKey() ? 'disabled' : ''}>선물</button><button class="btn mini" data-del="${esc(n)}">삭제</button></div>`).join('') || '<span class="mute">아직 친구가 없어요</span>'}
+          ${S.friends.list.map((n) => `<div class="panel row frow"><div class="pt s" style="background-image:url(${heroPortrait(avatarOf(n))})"></div><b class="hn grow">${esc(n)} <span class="chip">Lv.${friendLv(n)}</span></b><button class="btn mini" data-gift="${esc(n)}" ${S.friends.sent.includes(n) && S.friends.day === dayKey() ? 'disabled' : ''}>선물</button><button class="btn mini" data-del="${esc(n)}">삭제</button></div>`).join('') || '<span class="mute">아직 친구가 없어요</span>'}
         </div><div class="col side scroll"><b class="sm">추천 원정대 (실유저는 서버 연결 뒤)</b>${friendSuggest().map((n) => `<div class="row"><span class="grow xs">${esc(n)} · Lv.${friendLv(n)}</span><button class="btn mini" data-add="${esc(n)}">추가</button></div>`).join('')}<span class="xs mute">친구 영웅 빌려 쓰기는 선택 기능 — 나중에</span></div></div>`;
       $$('[data-gift]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '선물을 보냈어요 (답례 행동력)', done: '오늘은 이미 보냈어요', none: '' }[gift(b.dataset.gift!)])));
       $$('[data-del]', root).forEach((b) => (b.onclick = () => (removeFriend(b.dataset.del!), after(draw, ''))));
@@ -158,7 +161,7 @@ register('ranking', {
       if (got.length) persist();
       const bd = board(tab).slice(0, 13);
       root.innerHTML = `<div class="body"><div class="col shopcats">${(Object.keys(BOARD_NAME) as Board[]).map((k) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(BOARD_PIC[k], BOARD_NAME[k])}</button>`).join('')}</div>
-        <div class="col grow scroll"><div class="panel col">${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div>
+        <div class="col grow scroll"><div class="panel col">${bd.map((x, i) => `<div class="kv rank${x.me ? ' gold' : ''}"><span>${medal(i)} <b class="hn">${esc(x.name)}</b>${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div>
           <span class="xs dim">내 순위 ${myRank(tab) || '-'}위 · ${SO.titleTop}위 안이면 랭커 칭호 「${TITLE_OF[tab]}」 (채팅 이름 옆) · 칭호 달기는 설정</span>
           <span class="xs mute">1단계: AI 원정대 + 나 · 실유저 순위는 서버 연결 뒤</span></div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab as Board), draw())));

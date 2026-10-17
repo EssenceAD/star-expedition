@@ -119,6 +119,11 @@ export const T = {
     /** 메뉴 화면 배경 위 남색 막 (PLAYTEST §0-3: 흐리게 + 남색 40%) */
     scrNavy: 'rgba(14,22,48,0.4)',
     weakRing: '#ff6a5a',
+    /** 순위 메달 금·은·동 · 지도 노드 (지금 갈 곳 파랑) */
+    rank1: '#f4c542',
+    rank2: '#c9d2de',
+    rank3: '#d08a4c',
+    nodeNow: '#4fa8ff',
     cream: '#f6ecd6',
     creamInk: '#5b3a1e',
   } as Record<string, string>,

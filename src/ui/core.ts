@@ -230,6 +230,8 @@ export function watchFit(root: HTMLElement) {
   }).observe(root, { childList: true, subtree: true });
   void document.fonts?.ready.then(run);
 }
+/** 순위 표시: 1~3 금·은·동 메달 · 그 밖은 숫자 (PLAYTEST §7) */
+export const medal = (i: number) => `<i class="rk r${Math.min(i + 1, 4)}">${i + 1}</i>`;
 export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t="${esc(text)}"><span>${esc(text)}</span></span>`;
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 
