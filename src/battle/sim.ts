@@ -79,8 +79,6 @@ export interface Unit {
   /** 장 보스 경고 동안 붙들고 있을 준비 칸 (예: r0c2 · ANIM_1017 ③) */
   prep?: string;
   pending: { at: number; fn: () => void }[];
-  /** 일반 스킬 시전 준비 (발밑 빛 preCast초 → 발동 · UI_KIT_1018 §4-4) */
-  pre?: { i: number; t: number; manual: boolean } | null;
 }
 export interface Num {
   x: number;
@@ -93,7 +91,7 @@ export interface Num {
   w: number;
   hgt: number;
 }
-export type FxKind = 'slash' | 'burst' | 'ring' | 'bolt' | 'star' | 'heal' | 'shield' | 'slam' | 'beam' | 'pillar' | 'dome' | 'glow';
+export type FxKind = 'slash' | 'burst' | 'ring' | 'bolt' | 'star' | 'heal' | 'shield' | 'slam' | 'beam' | 'pillar' | 'dome';
 export interface Fx {
   kind: FxKind;
   /** 이펙트 그림 이름 (public/art/fx · 없으면 kind대로 선 그리기 · ANIM_1017 ②) */
@@ -497,7 +495,7 @@ const friendsOf = (b: Battle, u: Unit) => (u.side === 'hero' ? b.heroes : b.mobs
 export function canCast(b: Battle, u: Unit, i: number) {
   const s = specOf(u)!.def.skills[i];
   const ready = u.side === 'hero' ? alive(b.mobs).some((m) => m.x <= m.tx + 40) : u.x <= u.tx + 1 && alive(b.heroes).length > 0;
-  return b.phase === 'fight' && !u.dead && !u.pre && !has(u, 'stun') && !has(u, 'silence') && u.mana >= s.cost && u.scd[i] <= 0 && ready;
+  return b.phase === 'fight' && !u.dead && !has(u, 'stun') && !has(u, 'silence') && u.mana >= s.cost && u.scd[i] <= 0 && ready;
 }
 export function requestSkill(b: Battle, u: Unit, i: number): boolean {
   if (!canCast(b, u, i)) return false;
@@ -575,17 +573,7 @@ function allyFx(b: Battle, s: SkillDef, t: Unit, e: Eff, by?: Unit) {
   const self = by === t && img !== 'shield';
   pushFx(b, { kind, img: self ? undefined : img, on: t.uid, seq: img === 'shield' ? [0, 1] : undefined, h: fxH(t, true), x: t.x, y: kind === 'ring' ? t.y : kind === 'pillar' ? t.y : t.y - t.h * 0.5, color: img === 'shield' ? T.battle.fxShield : color, t: 0, dur: 0.85, r: kind === 'ring' ? 110 : kind === 'pillar' ? 24 : 50 });
 }
-/** 이 스킬에 컷인이 붙나 (궁극기 = 3번째만 · 설정 「모두」면 전부) */
-const cutInFor = (b: Battle, u: Unit, i: number) => u.side === 'hero' && !u.ai && (b.cutIns === 'all' || (b.cutIns === 'big' && i === 2));
-/** 스킬 쓰기: 궁극기 = 컷인(시간 멈춤) → 히트스톱 → 발동 · 일반 스킬 = 시전자 발밑 빛 preCast초 → 발동 (UI_KIT_1018 §4 연출 3·4) */
 function cast(b: Battle, u: Unit, i: number, manual = false) {
-  if (cutInFor(b, u, i) || !(u.hero || u.pvp) || K.preCast <= 0) return castNow(b, u, i, manual);
-  u.pre = { i, t: K.preCast, manual };
-  u.busy = K.preCast;
-  if (u.act !== 'idle') ((u.act = 'idle'), (u.at = 0));
-  pushFx(b, { kind: 'glow', x: u.x, y: u.y, color: elemColor(specOf(u)!.def.elem), t: 0, dur: K.preCast + 0.1, r: Math.max(26, u.h * 0.3) });
-}
-function castNow(b: Battle, u: Unit, i: number, manual = false) {
   const h = specOf(u)!;
   const s = h.def.skills[i];
   u.mana -= s.cost;
@@ -593,8 +581,7 @@ function castNow(b: Battle, u: Unit, i: number, manual = false) {
   const p = h.def.passive.p;
   if (p.k === 'onCast') u.mana = Math.min(K.mana.max, u.mana + p.mana);
   b.stats.skills++;
-  if (cutInFor(b, u, i)) b.cut = { u, skill: s, t: 0 };
-  void manual;
+  if (u.side === 'hero' && !u.ai && (b.cutIns === 'all' || (b.cutIns === 'big' && (manual || i === 2)))) b.cut = { u, skill: s, t: 0 };
   b.sounds.push(JOBS[h.def.job].sfx);
   play(u, s.act);
   if (i === 2 && u.side === 'hero') raidUltZoom(b, u);
@@ -698,11 +685,10 @@ function bossStrike(b: Battle, boss: Unit, P: BossPattern) {
 export function step(b: Battle, dtReal: number) {
   b.sounds.length = 0;
   let dt = dtReal * b.speed;
-  // 궁극기 컷인 동안 게임 시간 정지 → 끝나면 히트스톱 → 발동 (UI_KIT_1018 §4-3)
   if (b.cut) {
     b.cut.t += dtReal;
-    if (b.cut.t >= K.cutInSec) ((b.cut = null), (b.stop = Math.max(b.stop, K.ultHitstop)));
-    else dt = 0;
+    if (b.cut.t >= K.cutInSec) b.cut = null;
+    else dt *= K.cutInSlow;
   }
   // 협공 컷인 · 페이즈 전환 중에는 느리게
   if (b.raid && ((b.raid.duo && b.raid.duo.t < 1.1) || b.raid.phaseT > 0)) dt *= CONFIG.combat.cutInSlow;
@@ -764,16 +750,7 @@ export function step(b: Battle, dtReal: number) {
     const due = u.pending.filter((p) => p.at <= u.at);
     u.pending = u.pending.filter((p) => p.at > u.at);
     for (const p of due) p.fn();
-    if (u.pre) {
-      u.pre.t -= dt;
-      if (u.pre.t <= 0 || u.dead) {
-        const p = u.pre;
-        u.pre = null;
-        u.busy = 0;
-        const s = specOf(u)!.def.skills[p.i];
-        if (!u.dead && !has(u, 'stun') && !has(u, 'silence') && u.mana >= s.cost && (b.phase === 'fight' || b.phase === 'walk')) castNow(b, u, p.i, p.manual);
-      }
-    } else if (u.busy > 0) {
+    if (u.busy > 0) {
       u.busy -= dt;
       if (u.busy <= 0 && !u.dead) ((u.act = b.phase === 'walk' && u.side === 'hero' ? 'walk' : b.phase === 'win' && u.side === 'hero' ? 'win' : 'idle'), (u.at = 0));
     }

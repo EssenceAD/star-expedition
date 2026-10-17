@@ -6,8 +6,7 @@ import type { Battle, Unit } from '../battle/sim';
 import { combatSynth } from '../core/audio/combatSfx';
 import { arenaOpps, tierOf, type Run } from '../game/content';
 import { S } from '../game/state';
-import { iconText, T } from '../theme/tokens';
-import { kitBar, kitSocket, setBar } from './kit';
+import { iconText } from '../theme/tokens';
 import { $, esc, fxt, heroPortrait } from './core';
 
 const A = CONFIG.ui.arenaShow;
@@ -69,10 +68,9 @@ export function pvpHudHtml(b: Battle, r: Run) {
   const P = plates(r);
   const capL = b.heroes[0]?.hero?.def.id;
   const capR = foes(b)[0]?.def.id;
-  // 키트 부품만 (UI_KIT_1018): 초상 받침 socket 30 · bar_thick · pill 시계
-  return `<div class="tm me">${capL ? kitSocket(heroPortrait(capL), 30, null, 'cap') : ''}<div class="tb">${kitBar(220, 14, 1, T.kit2.hp, 'bar_thick', '', '<b class="tx"></b>')}<span class="tx nm">${esc(P.me.name)} · ${P.me.score}점</span></div></div>
-    <div class="tclock"><b class="tx"></b></div>
-    <div class="tm op">${capR ? kitSocket(heroPortrait(capR), 30, null, 'cap') : ''}<div class="tb">${kitBar(220, 14, 1, T.kit2.mobHp, 'bar_thick', '', '<b class="tx"></b>')}<span class="tx nm">${esc(P.op.name)} · ${P.op.score}점</span></div></div>`;
+  return `<div class="tm me"><i class="cap" style="background-image:url(${capL ? heroPortrait(capL) : ''})"></i><div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.me.name)} · ${P.me.score}점</span></div></div>
+    <div class="tclock"><b></b></div>
+    <div class="tm op"><div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.op.name)} · ${P.op.score}점</span></div><i class="cap" style="background-image:url(${capR ? heroPortrait(capR) : ''})"></i></div>`;
 }
 const pct = (us: Unit[]) => {
   const max = us.reduce((a, u) => a + u.max, 0);
@@ -83,8 +81,9 @@ export function syncPvpHud(b: Battle, root: HTMLElement) {
   // 상대가 아직 안 들어왔으면 가득
   const theirs = b.mobs.length ? pct(b.mobs) : 100;
   const set = (sel: string, v: number) => {
-    setBar(root.querySelector(`${sel} .kbar`), v / 100);
-    const e = root.querySelector<HTMLElement>(`${sel} .kbar b`);
+    const t = root.querySelector<HTMLElement>(`${sel} .bh i`);
+    if (t) t.style.width = `${v}%`;
+    const e = root.querySelector<HTMLElement>(`${sel} .bh em`);
     if (e) e.textContent = `${Math.ceil(v)}%`;
   };
   set('.me', mine);

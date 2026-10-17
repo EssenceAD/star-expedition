@@ -35,8 +35,6 @@ export interface HeroDef {
   voice?: [string, string, string];
   /** 외형 (그림 주문서 · 실루엣·머리색이 다른 영웅과 안 겹치게) */
   look?: string;
-  /** 전투 아래 상반신 보정 (UI_KIT_1018 §4 · ui/bust.ts): dx·dy = 몸 너비·키 비율만큼 옮김 · scale = 확대 */
-  bust?: { dx?: number; dy?: number; scale?: number };
 }
 
 export const HEROES: HeroDef[] = [
@@ -139,7 +137,7 @@ export const HEROES: HeroDef[] = [
     skills: [
       sk(0, '응급 처치', 'heal', 'nature', 'pillar', { k: 'heal', to: 'lowest', m: 4.5 }),
       sk(1, '주사 한 방', 'needle', 'nature', 'heal', { k: 'regen', to: 'allies', m: 0.4, dur: 5 }),
-      sk(2, '안정 취하이소', 'bed', 'holy', 'shield', { k: 'shield', to: 'allies', m: 3.5 }),
+      sk(2, '안정을 취하세요', 'bed', 'holy', 'shield', { k: 'shield', to: 'allies', m: 3.5 }),
     ],
   },
   {
@@ -308,7 +306,6 @@ export const HEROES: HeroDef[] = [
   },
   {
     id: 'moss', name: '모스 할머니', gender: 'f', job: 'druid', title: '대드루이드', concept: '황짐승의 스승. 느릿한 말투, 엄청난 자연 마법', origin: 'new', elem: 'nature', stat: { atk: 1.05 },
-    bust: { dx: -0.1, dy: 0.07 },
     passive: pas('숲의 숨', { k: 'stat', s: 'heal', v: 0.15, team: true }),
     skills: [
       sk(0, '가시 덩굴', 'leaf', 'nature', 'ring', { k: 'dmg', to: 'all', m: 1.1, st: { s: 'slow', dur: 4 } }),

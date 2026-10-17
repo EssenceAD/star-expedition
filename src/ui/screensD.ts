@@ -10,10 +10,10 @@ import {
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { HEROES } from '../data/heroes';
-import { icon, iconArt, iconText } from '../theme/tokens';
+import { icon, iconText } from '../theme/tokens';
 import { view } from './view';
 import { goFullscreen } from './mobile';
-import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, rewardRow, setChatOpener, syncBar, tabLabel, toast, uiPic } from './core';
+import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast, uiPic } from './core';
 
 const SO = CONFIG.social;
 const giveText = (g: Record<string, number>) => Object.entries(g).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ');
@@ -74,7 +74,7 @@ export function attendPopup() {
   // 보상 = 칸 카드(아이콘 + 수량) 가로로 (PLAYTEST §10)
   const gifts: [string, number, string][] = Object.entries(SO.attend[day - 1]).map(([k, v]) => [k, v, CUR_NAME[k] ?? k]);
   if (eventLeft()) gifts.push(['stardust', SO.event.dust, SO.event.name]);
-  modal(`출석 ${day}일째`, rewardRow(gifts.map(([k, v, n]) => [iconArt(k) ?? `${import.meta.env.BASE_URL}art/ui/icons/star.png`, k === 'stardust' ? 'epic' : k === 'enh' ? 'rare' : 'common', `+${fmt(v)}`, n])), [
+  modal(`${icon('mission')} 출석 ${day}일째`, `<div class="rw gifts">${gifts.map(([k, v, n]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${esc(n)}<b>+${fmt(v)}</b></div>`).join('')}</div>`, [
     ['받기', () => {
       attend();
       persist();

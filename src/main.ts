@@ -1,4 +1,4 @@
-// W.I.N.D (바람의 원정대) 1단계: 부팅 → 테마 토큰 → 그림 → 저장 불러오기 → 타이틀 · 매 프레임 지금 화면 tick (전투 화면은 캔버스 직접, 나머지는 배경만)
+// 별의 원정대 (가제) 1단계: 부팅 → 테마 토큰 → 그림 → 저장 불러오기 → 타이틀 · 매 프레임 지금 화면 tick (전투 화면은 캔버스 직접, 나머지는 배경만)
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
@@ -9,9 +9,6 @@ import { img } from './ui/assets';
 import { applyTheme } from './theme/tokens';
 import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
-import { kitUrl, loadKit } from './ui/kit';
-import { bustSheet } from './ui/bust';
-import { modal, rewardRow, skillIconUrl } from './ui/core';
 import './ui/screens';
 import './ui/screensB';
 import './ui/screensC';
@@ -45,9 +42,9 @@ fitView(stage, cv);
 {
   const h = HEROES[Math.floor(Math.random() * HEROES.length)];
   const ld = document.getElementById('loading')!;
-  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>바람의 원정대를 준비하고 있어요…</small></div>`;
+  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>별의 원정대를 준비하고 있어요…</small></div>`;
 }
-await Promise.all([loadFlags(), loadKit()]);
+await loadFlags();
 const B = import.meta.env.BASE_URL;
 // ───────── 그림 (SPRITE_RES_1017 §C: 처음엔 꼭 필요한 것만) ─────────
 // 꼭 필요한 것: 전투 기본 배경 · 치명타 별 · 타이틀 그림 · 로비에 걸어 다닐 영웅 + 지금 편성 · 영웅 키(칸 정보만)
@@ -86,13 +83,11 @@ track(setPxHeights());
 track(loadInto(sheet, heroDirs(firstHeroes)));
 const bgP = track(img(`${B}art/bg.jpg`).catch(() => null));
 const critP = track(img(`${B}art/ui/battle/crit_burst.png`).catch(() => null));
-const barP = track(img(kitUrl('bar')).catch(() => null));
-track(img(`${B}art/ui/title/key_art.jpg`).catch(() => null));
-track(img(`${B}art/ui/title/logo.png`).catch(() => null));
+track(img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null));
 await Promise.all(jobs);
 const bgs: Record<string, HTMLImageElement> = {};
 for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
-view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: await critP, fx: null, bar: await barP };
+view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: await critP, fx: null };
 // 스킬 이펙트 그림은 뒤에서 (오기 전까진 선 그리기 · ANIM_1017 ②)
 void loadFxArt().then((a) => (view.art.fx = a));
 // 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)
@@ -154,7 +149,5 @@ const castNow = (h: number, i: number) => {
   b.heroes[h].scd[i] = 0;
   return requestSkill(b, b.heroes[h], i);
 };
-/** 팝업 1종 확인 (tools/capture_1018.mjs popup · 정답 화면 popup.jpg와 같은 내용) */
-const popupDemo = () => modal('보상 획득', rewardRow((['common', 'rare', 'epic', 'legend'] as const).map((r, i) => [skillIconUrl('woongs', i % 3), r, '', ''])), [['닫기', null], ['받기', null, true]]);
 const gachaDemo = (grades: number[]) => gachaShow(grades.map((g, i) => makeGear((['weapon', 'armor', 'acc'] as const)[i % 3], g, 10, newSave())), null, () => {});
-Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame, __bustSheet: bustSheet, __popupDemo: popupDemo });
+Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame });
