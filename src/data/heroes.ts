@@ -331,7 +331,7 @@ export const HEROES: HeroDef[] = [
   },
   // ───────── 멤버 영웅 4명 (docs/HEROES_ADD_4.md · 다른 영웅과 같은 급 · 진열은 역할별로 섞임) ─────────
   {
-    id: 'sermi', name: '세르미뉴', gender: 'm', job: 'mage', title: '별을 읽는 자', concept: '신중하고 진중한 계산형 마법사. 말수는 적지만 한마디가 정확하고, 모두가 「세르님」께 물어봄', origin: 'member', elem: 'light', groggy: 1.6,
+    id: 'sermi', name: '세르미뉴', gender: 'm', job: 'mage', title: '별을 읽는 자', concept: '신중하고 진중한 계산형 마법사. 말수는 적지만 한마디가 정확하고, 모두가 「세르님」께 물어봄', origin: 'founder', elem: 'light', groggy: 1.6,
     look: '시크한 미소년 · 은회색 앞머리가 눈을 살짝 가림 · 남색 롱코트(별자리 무늬 안감) · 손 위에 떠 있는 작은 천구의',
     voice: ['계산은 끝났어. 3초 뒤에 쓰러진다.', '…칭찬은 고마워. 다음 수도 보고 있어.', '…괜찮아, 예상한 범위야.'],
     passive: pas('예지', { k: 'stat', s: 'mana', v: 0.12, team: true }),
@@ -342,7 +342,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'ichae', name: '이치애', gender: 'f', job: 'fighter', title: '꺾이지 않는 꽃', concept: '의리 있고 인내심 강한 격투가. 동료가 맞으면 대신 맞으러 감. 원정대(길드)에서 만난 동료', origin: 'member', elem: 'holy', stat: { hp: 1.12, def: 1.05 },
+    id: 'ichae', name: '이치애', gender: 'f', job: 'fighter', title: '꺾이지 않는 꽃', concept: '의리 있고 인내심 강한 격투가. 동료가 맞으면 대신 맞으러 감. 원정대(길드)에서 만난 동료', origin: 'founder', elem: 'holy', stat: { hp: 1.12, def: 1.05 },
     look: '청순한 인상 · 긴 흑발을 낮게 하나로 묶음 · 흰색·연분홍 무도복(넓은 소매) · 붕대 감은 주먹 · 머리끈의 작은 꽃',
     voice: ['괜찮아요, 제가 버틸게요.', '헤헤, 다들 무사해서 다행이에요.', '여기까지 같이 왔잖아요. 끝까지 가요.'],
     passive: pas('인내', { k: 'lowHp', s: 'atk', v: 0.45, at: 0.5 }),
@@ -353,7 +353,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'mochi', name: '딸기망고모찌', gender: 'm', job: 'druid', title: '세 친구의 주인', concept: '유머러스하고 쾌활한 분위기 메이커. 정령견 딸기·망고·모찌 자랑이 끝이 없음', origin: 'member', elem: 'nature',
+    id: 'mochi', name: '딸기망고모찌', gender: 'm', job: 'druid', title: '세 친구의 주인', concept: '유머러스하고 쾌활한 분위기 메이커. 정령견 딸기·망고·모찌 자랑이 끝이 없음', origin: 'founder', elem: 'nature',
     look: '밝은 표정의 청년 · 짧은 갈색 머리 · 개 발자국 배지 · 초록 망토와 큰 간식 가방 · 정령견 셋: 딸기(레드 토이푸들·분홍 리본) · 망고(웰시코기·노란 털) · 모찌(비숑 프리제·하얀 솜뭉치)',
     voice: ['딸기 물어! 망고 막아! 모찌는… 일단 귀여워!', '우리 애들 오늘 컨디션 최고야ㅋㅋ', '애들아, 뒤로. 여긴 내가 볼게.'],
     passive: pas('세 친구', { k: 'teamLowGuard', v: 0.1 }),
@@ -364,7 +364,7 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'jaehi', name: '재희아빠', gender: 'm', job: 'warrior', title: '세상에서 제일 바쁜 아빠', concept: '귀엽고 다소 산만하지만 속은 진국. 재희 얘기를 자주 하고 동료를 가족처럼 챙김', origin: 'member', elem: 'earth', stat: { hp: 1.08 },
+    id: 'jaehi', name: '재희아빠', gender: 'm', job: 'warrior', title: '세상에서 제일 바쁜 아빠', concept: '귀엽고 다소 산만하지만 속은 진국. 재희 얘기를 자주 하고 동료를 가족처럼 챙김', origin: 'founder', elem: 'earth', stat: { hp: 1.08 },
     look: '밝은 피부 · 웨이브 애쉬브라운 머리 · 차분한 미소 (형철 10/17: 웅스와 확실히 다르게) · 큼직한 갑옷 가슴에 아이가 그린 듯한 삐뚤빼뚤 별 패치 · 허리에 작은 인형 고리 · 큰 양손 망치',
     voice: ['앗 잠깐만용~ 이거 먼저 하구!', '우리 팀 다치면 아빠 화난다아~?', '…괜찮아. 내가 지킬게.'],
     passive: pas('아빠 왔다!', { k: 'teamLowGuard', v: 0.12 }),

@@ -217,7 +217,7 @@ export const CONFIG = {
   treasure: { slots: 1, atkPct: 0.08 },
   /** 상점 (현금 결제 없음): 영웅 값(별가루) · 재화·소모품 금화 값 · 꾸러미 */
   shop: {
-    hero: { founder: 3000, legend: 4000, new: 4000, member: 4000 },
+    hero: { founder: 3000, legend: 4000, new: 4000, member: 3000 },
     items: [
       { id: 'potion', name: '경험치 물약 ×5', give: { exp: 5 }, gold: 5000 },
       { id: 'enh', name: '강화석 ×20', give: { enh: 20 }, gold: 8000 },

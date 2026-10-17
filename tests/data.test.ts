@@ -11,10 +11,11 @@ import { T } from '../src/theme/tokens';
 import { existsSync } from 'node:fs';
 
 describe('데이터', () => {
-  it('영웅 36명 = 창립 13 + 전설 14 + 새 5 + 멤버 4 · id 겹침 없음', () => {
+  it('영웅 36명 = 멤버 17(개척자 5 + 추가 멤버 11 + 황짐승) + 전설 14 + 새 5 · id 겹침 없음 (docs/MEMBERS.md)', () => {
     expect(HEROES.length).toBe(36);
-    expect(HEROES.filter((h) => h.origin === 'member').map((h) => h.name)).toEqual(['세르미뉴', '이치애', '딸기망고모찌', '재희아빠']);
-    expect(HEROES.filter((h) => h.origin === 'founder').length).toBe(13);
+    expect(HEROES.filter((h) => h.origin === 'member').length).toBe(0);
+    expect(HEROES.filter((h) => h.origin === 'founder').length).toBe(17);
+    expect(HEROES.filter((h) => h.fiveStar).map((h) => h.name).sort()).toEqual(['고느끼', '따뜻한밤', '왈왈콩선생', '웅스', '이카몰리'].sort());
     expect(HEROES.filter((h) => h.origin === 'legend').length).toBe(14);
     expect(HEROES.filter((h) => h.origin === 'new').length).toBe(5);
     expect(new Set(HEROES.map((h) => h.id)).size).toBe(36);
@@ -73,12 +74,12 @@ describe('멤버 영웅 4명 (HEROES_ADD_4)', () => {
     expect(BONDS.some((x) => x.members.includes('ichae') && x.members.includes('kleine'))).toBe(true);
     expect(SER_ASK.length).toBeGreaterThanOrEqual(5);
     expect(SER_ASK.every(([id, t]) => HEROES.some((h) => h.id === id) && t.includes('세르님'))).toBe(true);
-    for (const h of HEROES.filter((x) => x.origin === 'member')) {
+    for (const h of HEROES.filter((x) => ['sermi', 'ichae', 'mochi', 'jaehi'].includes(x.id))) {
       expect(h.voice?.length).toBe(3);
       expect(h.look?.length).toBeGreaterThan(10);
     }
     // 머리색이 다른 영웅과 안 겹치게 적어 둔 외형 (그림 주문서)
-    expect(new Set(HEROES.filter((x) => x.origin === 'member').map((h) => h.look!.split(' · ')[1])).size).toBe(4);
+    expect(new Set(HEROES.filter((x) => ['sermi', 'ichae', 'mochi', 'jaehi'].includes(x.id)).map((h) => h.look!.split(' · ')[1])).size).toBe(4);
   });
 });
 
