@@ -55,6 +55,7 @@ await p.evaluate(() => {
   b.auto = true;
   b.speed = 2;
 });
+await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
 await p.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 120000 });
 await wait(900);
 await shot('6_win');

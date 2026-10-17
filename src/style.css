@@ -752,3 +752,5 @@ select.tab option { background: var(--c-panelDeep); color: var(--c-text); }
 .road2 .dots i:first-child { margin-left: var(--s-sm); }
 /* 스킬 이름 줄은 1줄 (넘치면 글씨를 줄임) */
 .skn { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 로딩 막대: 실제 받은 비율 (SPRITE_RES §C) */
+#loading .ld-bar i.real { width: 4%; animation: none; transition: width 0.25s; }

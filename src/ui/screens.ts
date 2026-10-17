@@ -1,5 +1,6 @@
 // 타이틀 · 로비(여관) · 모험 · 전투 준비(편성) · 영웅 목록/정보 (STAR_PLAN_v2 §0-2·0-4·§1)
 //  배치는 킹스레이드 문법(구조·밀도만), 꾸밈은 2단계 — 색·폰트·여백·테두리·아이콘은 전부 토큰(var / icon())
+import { preloadRest } from './assets';
 import { CONFIG } from '../config';
 import { activeBonds, BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
@@ -104,6 +105,8 @@ register('lobby', {
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
     lobbyLifeStart();
+    // 로비가 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
+    preloadRest();
   },
   tick: (dt) => lobbyLifeTick(dt),
 });

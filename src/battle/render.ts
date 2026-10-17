@@ -5,6 +5,7 @@ import { CONFIG } from '../config';
 import { animOf, drawFrame, frameAt, heightOf, type Sheet } from '../sprite/sheet';
 import { canvasFace, canvasFont, elemColor, iconText, T } from '../theme/tokens';
 import { has, shortNum, type Battle, type Unit } from './sim';
+import { view } from '../ui/view';
 
 export const LH = CONFIG.view.h;
 export const GROUND = CONFIG.view.ground;
@@ -26,10 +27,32 @@ export interface Art {
 /** 이 전투 배경 그림 · 전용 배경이면 지역 색 안 씀 */
 const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[key], own: true } : { im: art.bg, own: false });
 
+// 보조 캔버스는 화면 해상도(view.dpr)로 — 1배로 그린 뒤 늘리면 도트가 뭉개지고 2~3px씩 툭툭 끊김 (SPRITE_RES_1017 §A)
+//  그 안은 논리 px로 그리고(setTransform dpr) 본 캔버스엔 논리 크기를 지정해 붙인다
+const OW = 360;
+const OH = 360;
 const off = document.createElement('canvas');
-off.width = 360;
-off.height = 360;
 const ox = off.getContext('2d')!;
+/** 보조 캔버스를 지금 dpr 해상도로 맞추고 논리 px 기준으로 비움 */
+function auxReady(cv: HTMLCanvasElement, c: CanvasRenderingContext2D, w: number, h: number) {
+  const d = view.dpr;
+  const pw = Math.round(w * d);
+  const ph = Math.round(h * d);
+  if (cv.width !== pw || cv.height !== ph) ((cv.width = pw), (cv.height = ph));
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.clearRect(0, 0, pw, ph);
+  c.setTransform(d, 0, 0, d, 0, 0);
+}
+/** 내딛기 곡선 (§D): 들어갈 때 빠르게(ease-out) · 돌아올 때 천천히(ease-in-out) · 0~1 → 0~1~0 */
+function lungeCurve(p: number) {
+  const a = CONFIG.combat.lungeIn;
+  if (p <= a) {
+    const t = p / a;
+    return 1 - (1 - t) * (1 - t);
+  }
+  const t = (p - a) / (1 - a);
+  return 1 - (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+}
 
 function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
   ctx.fillStyle = B.shadow;
@@ -54,7 +77,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   let y = u.y;
   let alpha = 1;
   const dur = def.frames.length / def.fps;
-  if (def.lunge && u.busy > 0) x += def.lunge * Math.sin(Math.min(1, u.at / dur) * Math.PI);
+  if (def.lunge && u.busy > 0) x += def.lunge * lungeCurve(Math.min(1, u.at / dur));
   // 걷기: 대기 2칸을 번갈아 + 살짝 들썩임
   if (as === 'walk') y -= CONFIG.combat.walkBob * Math.abs(Math.sin(u.at * def.fps * Math.PI));
   if (u.side === 'mob' && u.dead) {
@@ -70,29 +93,24 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   if (u.trail > 0 && as !== 'idle') {
     for (let j = 3; j >= 1; j--) {
       const pf = Math.max(0, fi - j);
-      ox.setTransform(1, 0, 0, 1, 0, 0);
-      ox.clearRect(0, 0, off.width, off.height);
+      auxReady(off, ox, OW, OH);
       drawFrame(ox, art.sheet, def.frames[pf], 180, 300, k, face);
       ox.globalCompositeOperation = 'source-atop';
       ox.fillStyle = sp ? elemColor(sp.def.elem) : B.white;
-      ox.fillRect(0, 0, off.width, off.height);
+      ox.fillRect(0, 0, OW, OH);
       ox.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 0.18 * (4 - j) * alpha;
-      ctx.drawImage(off, x - 180 - j * 10 * face, y - 300);
+      ctx.drawImage(off, x - 180 - j * 10 * face, y - 300, OW, OH);
     }
     ctx.globalAlpha = 1;
   }
-  ox.setTransform(1, 0, 0, 1, 0, 0);
-  ox.clearRect(0, 0, off.width, off.height);
-  ox.filter = filter;
+  auxReady(off, ox, OW, OH);
+  // 피격: 흰색 덮기 대신 살짝 밝게 (최대 hitFlash.max · 0.08초 안에 꺼짐) — 유령처럼 하얗게 바래 보이던 것 (§D)
+  const HF = CONFIG.combat.hitFlash;
+  const fl = Math.min(HF.max, u.flash);
+  ox.filter = fl > 0.02 ? `${filter === 'none' ? '' : filter} brightness(${1 + HF.bright * fl})`.trim() : filter;
   drawFrame(ox, art.sheet, def.frames[fi], 180, 300, k, face);
   ox.filter = 'none';
-  if (u.flash > 0.05) {
-    ox.globalCompositeOperation = 'source-atop';
-    ox.fillStyle = `${B.hitFlash}${0.8 * u.flash})`;
-    ox.fillRect(0, 0, off.width, off.height);
-    ox.globalCompositeOperation = 'source-over';
-  }
   ctx.globalAlpha = u.hero && u.dead ? 0.85 : alpha;
   if (u.hero && u.dead && as !== 'down') {
     // 쓰러짐 동작이 없는 영웅: 대기 그림을 뒤로 눕힌다
@@ -101,9 +119,14 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
     ctx.translate(x, y);
     ctx.rotate((-Math.PI / 2) * r);
     ctx.filter = 'brightness(0.7)';
-    ctx.drawImage(off, -180, -300 + r * 12);
+    ctx.drawImage(off, -180, -300 + r * 12, OW, OH);
     ctx.restore();
-  } else ctx.drawImage(off, x - 180, y - 300);
+  } else {
+    // 대기 숨쉬기: 발 기준 세로 1.000↔1.012 (1.6초 · 유닛마다 위상 다름)
+    const BR = CONFIG.combat.breathe;
+    const sy = as === 'idle' && !u.dead ? 1 + (BR.amp / 2) * (1 + Math.sin(((now + u.uid * 0.37) / BR.sec) * Math.PI * 2)) : 1;
+    ctx.drawImage(off, x - 180, y - 300 * sy, OW, OH * sy);
+  }
   ctx.globalAlpha = 1;
   if (u.dead) return;
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
@@ -480,9 +503,9 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
 
 // ───────── 보스 전장 (레이드 · 월드 보스 · 길드 레이드) ─────────
 const RA = CONFIG.raidArena;
+const BW = 760;
+const BH = 640;
 const bossCv = document.createElement('canvas');
-bossCv.width = 760;
-bossCv.height = 640;
 const bx = bossCv.getContext('2d')!;
 /** 다층 배경 (멀수록 느리게 · 페이즈마다 색) */
 function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) {
@@ -525,10 +548,9 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
   const fi = frameAt(def, u.at);
   const ref = u.anims.idle!.frames[0];
   const k = H / heightOf(art.sheet, ref);
-  const cx = bossCv.width / 2;
-  const fy = bossCv.height - 20;
-  bx.setTransform(1, 0, 0, 1, 0, 0);
-  bx.clearRect(0, 0, bossCv.width, bossCv.height);
+  const cx = BW / 2;
+  const fy = BH - 20;
+  auxReady(bossCv, bx, BW, BH);
   const ri = art.raidBoss;
   const box = (p: { box: number[] }) => {
     const [px, up, w, h] = p.box;
@@ -582,13 +604,13 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
   if (u.flash > RA.flashMin) {
     bx.globalCompositeOperation = 'source-atop';
     bx.fillStyle = `${B.hitFlash}${RA.flashMax * u.flash})`;
-    bx.fillRect(0, 0, bossCv.width, bossCv.height);
+    bx.fillRect(0, 0, BW, BH);
     bx.globalCompositeOperation = 'source-over';
   }
   if (r.downT > 0) {
     bx.globalCompositeOperation = 'source-atop';
     bx.fillStyle = B.downVeil;
-    bx.fillRect(0, 0, bossCv.width, bossCv.height);
+    bx.fillRect(0, 0, BW, BH);
     bx.globalCompositeOperation = 'source-over';
   }
   shadow(ctx, u.x, u.y, 170);
@@ -597,7 +619,7 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
   ctx.translate(u.x + u.knock, u.y);
   ctx.rotate(tilt);
   ctx.globalAlpha = u.dead ? Math.max(0, 1 - u.deadT) : 1;
-  ctx.drawImage(bossCv, -cx, -fy);
+  ctx.drawImage(bossCv, -cx, -fy, BW, BH);
   ctx.restore();
   // 집중 공격 부위 테두리
   const fp = r.focus >= 0 ? r.parts[r.focus] : r.parts.find((p) => !p.broken);

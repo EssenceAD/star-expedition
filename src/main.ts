@@ -2,10 +2,11 @@
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
-import { CUTIN_ART, HD_PORTRAIT, HEROES, setPxHeights, sheetDirs } from './data/heroes';
+import { heroDirs, HEROES, setPxHeights } from './data/heroes';
 import { MOB_KINDS } from './data/mobs';
-import { loadSave, persist, S } from './game/state';
-import { loadSheets } from './sprite/sheet';
+import { loadSave, PARTY_MAX, partyIds, persist, S } from './game/state';
+import { loadInto } from './sprite/sheet';
+import { img } from './ui/assets';
 import { applyTheme, iconText } from './theme/tokens';
 import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
@@ -14,7 +15,7 @@ import './ui/screensB';
 import './ui/screensC';
 import './ui/screensD';
 import * as cloud from './core/net/cloud';
-import { battleNow } from './ui/battle';
+import { battleArtWait, battleNow } from './ui/battle';
 
 applyTheme();
 $('#rotate').textContent = `${iconText('rotate')} 가로로 돌려 주세요`;
@@ -33,46 +34,43 @@ fit();
 }
 await loadFlags();
 const B = import.meta.env.BASE_URL;
-const img = (src: string) =>
-  new Promise<HTMLImageElement>((ok, no) => {
-    const i = new Image();
-    i.onload = () => ok(i);
-    i.onerror = () => no(new Error(src));
-    i.src = src;
-  });
-// ───────── 그림 ─────────
-const dirs = new Set(sheetDirs());
-for (const m of Object.values(MOB_KINDS)) for (const d of Object.values(m.anims)) for (const f of d!.frames) dirs.add(f.split(':')[0]);
-const sheet = await loadSheets([...dirs]);
-setPxHeights(sheet);
-const bg = await img(`${B}art/bg.jpg`).catch(() => null);
-const cutin: Art['cutin'] = {};
-// 컷인 일러스트가 있으면 그것, 없으면 고화질 초상화 (처음 쓸 때 받음)
-for (const h of HEROES) {
-  const own = CUTIN_ART.has(h.id) ? await img(`${B}art/cutin/${h.id}.png`).catch(() => null) : null;
-  if (own) {
-    cutin[h.id] = own;
-    continue;
-  }
-  if (HD_PORTRAIT.has(h.id))
-    img(`${B}art/portraits_hd/${h.id}.png`)
-      .then((p) => (cutin[h.id] = p))
-      .catch(() => {});
-}
+// ───────── 그림 (SPRITE_RES_1017 §C: 처음엔 꼭 필요한 것만) ─────────
+// 꼭 필요한 것: 몬스터 시트 · 전투 기본 배경 · 치명타 별 · 타이틀 그림 · 로비에 걸어 다닐 영웅 + 지금 편성 · 영웅 키(칸 정보만)
+//  나머지 영웅 시트는 로비 뜬 뒤 뒤에서 · 컷인은 그 영웅이 나오는 전투 전에 · 레이드 보스 그림·콘텐츠 배경은 뒤에서
+loadSave();
+const mobDirs = new Set<string>();
+for (const m of Object.values(MOB_KINDS)) for (const d of Object.values(m.anims)) for (const f of d!.frames) mobDirs.add(f.split(':')[0]);
+const firstHeroes = [...new Set([...partyIds(), ...Object.keys(S.heroes)])].slice(0, Math.max(CONFIG.ui.lobbyLife.walkers, PARTY_MAX));
+const sheet: Art['sheet'] = { img: {}, cell: {}, base: {} };
+const bar = document.querySelector<HTMLElement>('#loading .ld-bar i');
+const jobs: Promise<unknown>[] = [];
+let done = 0;
+const track = <T,>(p: Promise<T>) => {
+  jobs.push(p);
+  void p.finally(() => bar && (bar.style.width = `${Math.round((++done / jobs.length) * 100)}%`));
+  return p;
+};
+if (bar) bar.classList.add('real');
+track(setPxHeights());
+track(loadInto(sheet, [...mobDirs]));
+track(loadInto(sheet, heroDirs(firstHeroes)));
+const bgP = track(img(`${B}art/bg.jpg`).catch(() => null));
+const critP = track(img(`${B}art/ui/battle/crit_burst.png`).catch(() => null));
+track(img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null));
+await Promise.all(jobs);
 const RB = CONFIG.raidArena.art;
-const raidBoss = RB.have ? { intact: await img(`${B}art/${RB.intact}`).catch(() => null), broken: await img(`${B}art/${RB.broken}`).catch(() => null) } : undefined;
+const raidBoss = RB.have ? { intact: null as HTMLImageElement | null, broken: null as HTMLImageElement | null } : undefined;
+if (raidBoss) {
+  img(`${B}art/${RB.intact}`).then((im) => (raidBoss.intact = im)).catch(() => {});
+  img(`${B}art/${RB.broken}`).then((im) => (raidBoss.broken = im)).catch(() => {});
+}
 const bgs: Record<string, HTMLImageElement> = {};
 for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
-const critBurst = await img(`${B}art/ui/battle/crit_burst.png`).catch(() => null);
-view.art = { sheet, bg, cutin, raidBoss, bgs, critBurst };
-
-loadSave();
+view.art = { sheet, bg: await bgP, cutin: {}, raidBoss, bgs, critBurst: await critP };
 // 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)
 watchFit($('#stage'));
 addEventListener('pagehide', () => persist());
 document.addEventListener('visibilitychange', () => document.hidden && persist());
-// 타이틀 키 아트는 먼저 받아 두고 (첫 화면이 빈 바탕으로 뜨지 않게)
-await img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null);
 go('title', {}, false);
 document.getElementById('loading')?.remove();
 
@@ -119,4 +117,4 @@ if (q.get('go')) {
   }
 }
 // 시험·녹화용 손잡이
-Object.assign(window, { __ready: true, __go: go, __b: battleNow, __cfg: CONFIG, __S: () => S, __tick: frame });
+Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __cfg: CONFIG, __S: () => S, __tick: frame });

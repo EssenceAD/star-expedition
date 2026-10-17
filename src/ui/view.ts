@@ -6,6 +6,8 @@ export const view = {
   w: CONFIG.view.wBase as number,
   h: CONFIG.view.h,
   scale: 1,
+  /** 화면 1논리px = 실제 몇 px (보조 캔버스도 이 해상도로 · SPRITE_RES_1017) */
+  dpr: 1,
   ctx: null as unknown as CanvasRenderingContext2D,
   art: null as unknown as Art,
   /** 창 크기가 바뀔 때 (전투가 적 자리를 옮김) */
@@ -21,6 +23,7 @@ export function fitView(stage: HTMLElement, cv: HTMLCanvasElement, iw = innerWid
   stage.style.transform = `translate(-50%, -50%) scale(${k})`;
   cv.style.width = `${w}px`;
   const dpr = Math.min(3, (window.devicePixelRatio || 1) * k);
+  view.dpr = dpr;
   cv.width = Math.round(w * dpr);
   cv.height = Math.round(V.h * dpr);
   view.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

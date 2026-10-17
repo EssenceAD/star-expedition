@@ -1,5 +1,6 @@
 // 전투 화면: HUD(패널·스킬·패널별 Auto·AUTO·배속·DPS·보스·예고) + 결과(별 3개·보상·MVP·DPS 기록·레벨업·합류)
 //  흐름: 행동력 → 파티를 필드에 세우고 (처음이면 대사) → 전투 → 승리 기록 → (장 클리어 대사 → 합류 연출) → 결과 → 다시 / 다음 / 반복 / 모험
+import { battleHeroIds, ensureHeroes } from './assets';
 import { CONFIG } from '../config';
 import { render, renderBg, type Art } from '../battle/render';
 import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
@@ -38,6 +39,8 @@ let talking = false;
 let firstRun = false;
 let dpsOpen = false;
 let paused = false;
+/** 전투 그림(영웅 시트·컷인)을 받는 중 */
+let artWait = false;
 const hud = () => $('#hud');
 
 const BUFF = (u: Unit): [string, string][] =>
@@ -178,6 +181,10 @@ function setup() {
   const keepAuto = b?.auto ?? getPref('auto', false);
   const keepSpeed = b?.speed ?? 1;
   b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
+  // 이 전투 영웅 시트·컷인을 아직 안 받았으면 받을 때까지 전투를 멈춤 (SPRITE_RES §C)
+  const wait = ensureHeroes(battleHeroIds(b.setup));
+  artWait = !!wait;
+  if (wait) void wait.then(() => (artWait = false));
   b.auto = keepAuto;
   b.speed = keepSpeed;
   b.cutIns = flag('cutIn') && !getPref('cutOff', false) ? 'big' : 'off';
@@ -440,7 +447,7 @@ register('battle', {
       idleStep(b, dt);
       return render(ctx, view.art, b, performance.now() / 1000);
     }
-    if (paused) return void render(ctx, view.art, b, performance.now() / 1000);
+    if (paused || artWait) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
@@ -459,3 +466,5 @@ function renderIdle(ctx: CanvasRenderingContext2D, art: Art, dt: number) {
 }
 /** 시험·녹화용 */
 export const battleNow = () => b;
+/** 이 전투 그림을 아직 받는 중인지 (캡처 도구가 기다림) */
+export const battleArtWait = () => artWait;

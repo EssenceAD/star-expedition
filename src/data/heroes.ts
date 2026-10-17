@@ -1,9 +1,9 @@
 // 영웅 36명 — 멤버 영웅 17 (docs/MEMBERS.md 최우선: 개척자 5 + 추가 멤버 11 + 황짐승) · 오리지널 19 (「체크인」 전설 14 · 스토리 5)
-//  그림: 36명 모두 자기 전투 도트 시트 (public/art/px/<id> · docs/SPRITES_1017.md)
+//  그림: 36명 모두 자기 전투 도트 시트 (public/art/px2/<id> · docs/SPRITES_1017.md)
 //  초상화: 개척자 star_<id> · 전설 legend_<key> · 그 외 「체크인」 mc_<직업>_<m|f> (그림 없는 영웅)
 //  능력치 숫자는 CONFIG.jobs × stat(영웅별 배수)
 import { CONFIG } from '../config';
-import { heightOf, type AnimSet, type Sheet } from '../sprite/sheet';
+import { loadParts, type AnimSet } from '../sprite/sheet';
 import { JOBS, type JobId } from './jobs';
 import { pas, sk, type PassiveDef, type SkillDef } from './skills';
 
@@ -381,10 +381,10 @@ export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map
 export const heroOf = (id: string) => HERO_BY_ID[id];
 
 // ───────── 그림 (도트 시트 · 초상화) ─────────
-// 전투 도트: 36명 모두 public/art/px/<id> 8칸 (docs/SPRITES_1017.md) · r0c0~r0c1 대기 · r0c2→r0c3 평타 · r1c0 피격 · r1c1 쓰러짐 · r1c2 승리 · r1c3 스킬
-//  모든 시트는 머리를 48px로 맞춰 저장 → 모든 영웅에 같은 배율(CONFIG.combat.pxScale) = 얼굴 크기가 같고 키는 체격대로
+// 전투 도트: 36명 모두 public/art/px2/<id> 8칸 (SPRITE_RES_1017: 1.5배 해상도) (docs/SPRITES_1017.md) · r0c0~r0c1 대기 · r0c2→r0c3 평타 · r1c0 피격 · r1c1 쓰러짐 · r1c2 승리 · r1c3 스킬
+//  모든 시트는 머리를 72px로 맞춰 저장 → 모든 영웅에 같은 배율(CONFIG.combat.pxScale) = 얼굴 크기가 같고 키는 체격대로
 const px = (id: string): AnimSet => {
-  const f = (...c: string[]) => c.map((k) => `px/${id}:${k}`);
+  const f = (...c: string[]) => c.map((k) => `px2/${id}:${k}`);
   return {
     idle: { frames: f('r0c0', 'r0c1'), fps: 3, loop: true },
     walk: { frames: f('r0c0', 'r0c1'), fps: 6, loop: true },
@@ -412,13 +412,19 @@ export const HD_PORTRAIT = new Set(['aria', 'ayla', 'bube', 'ceres', 'elysia', '
 const MEMBER_ART = new Set(['sermi', 'ichae', 'mochi', 'jaehi']);
 /** 대기 첫 칸 키 (시트 원본 px) — 시트를 불러온 뒤 setPxHeights로 채움 */
 const PX_H: Record<string, number> = {};
-export function setPxHeights(s: Sheet) {
-  for (const h of HEROES) PX_H[h.id] = heightOf(s, `px/${h.id}:r0c0`);
+export async function setPxHeights() {
+  // 칸 정보(_parts.json)만으로 키를 앎 → 그림을 다 받기 전에도 전투 배치·크기가 맞음
+  await Promise.all(HEROES.map(async (h) => {
+    const p = await loadParts(`px2/${h.id}`);
+    if (p?.r0c0) PX_H[h.id] = p.r0c0.h;
+  }));
 }
+/** 이 영웅들의 전투 도트 시트 폴더 */
+export const heroDirs = (ids: string[]) => [...new Set(ids)].map((id) => `px2/${id}`);
 export function artOf(h: HeroDef): HeroArt {
   const anims = (SHEETS[h.id] ??= px(h.id));
   const portrait = h.fiveStar ? `star_${h.id}` : h.origin === 'legend' ? `legend_${h.id}` : MEMBER_ART.has(h.id) ? `member_${h.id}` : `mc_${JOBS[h.job].mc}_${h.gender}`;
   return { anims, h: (PX_H[h.id] ?? CONFIG.combat.pxFallbackH) * CONFIG.combat.pxScale, portrait };
 }
 /** 모든 시트 폴더 이름 (불러오기용) */
-export const sheetDirs = () => HEROES.map((h) => `px/${h.id}`);
+export const sheetDirs = () => HEROES.map((h) => `px2/${h.id}`);

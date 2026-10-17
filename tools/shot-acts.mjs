@@ -37,7 +37,7 @@ const start = (key, lv) =>
       window.__b().auto = true;
     },
     [key, party, lv],
-  );
+  ).then(() => p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 }));
 /** 고정 걸음으로 조건이 맞을 때까지 (최대 sec초) */
 const runUntil = (cond, sec) =>
   p.evaluate(
