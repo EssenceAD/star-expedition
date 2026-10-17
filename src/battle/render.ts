@@ -241,10 +241,11 @@ function tag(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) 
 function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number, key?: string) {
   const { im, own } = bgOf(art, key);
   if (im) {
-    const y0 = -160;
-    const h = LH - y0;
-    const w = (im.width / im.height) * h;
-    const o = -((s * 0.25) % w);
+    // cover (높이 390 꽉 · 가운데) — 정답 화면 battle.jpg와 같은 구도 (UI_KIT_1018) · 걸을 때 옆으로 흐름
+    const y0 = 0;
+    const h = LH;
+    const w = Math.max(W, (im.width / im.height) * h);
+    const o = -((((s * 0.25 + (w - W) / 2) % w) + w) % w);
     ctx.filter = own ? 'none' : (B.region[region] ?? 'none');
     for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), y0, Math.ceil(w) + 1, h);
     ctx.filter = 'none';
