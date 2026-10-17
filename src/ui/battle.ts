@@ -265,6 +265,8 @@ function beginRun(r: Run) {
   }
 }
 
+/** 결과 조건 표시: 됨 = 금색 체크 · 안 됨 = 흐린 X */
+const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${iconText(ok ? 'check' : 'cross')}</i>`;
 function showResult() {
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
@@ -292,12 +294,12 @@ function showResult() {
   const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
   const hasNext = st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
   const show = () => {
-    r.innerHTML = `${emb('승리!', true)}<div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
-      <p class="why">클리어 ${iconText('check')} · 아무도 안 쓰러짐 ${allUp ? iconText('check') : iconText('cross')} · ${bb.setup.starTime}초 안 ${bb.stats.time <= bb.setup.starTime ? iconText('check') : iconText('cross')}<br>
+    r.innerHTML = `${emb('승리!', true)}<div class="rcol"><div class="rstars">${[0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="animation-delay:${0.2 + i * 0.25}s">${iconText('star')}</span>`).join('')}</div>
+      <p class="why band">클리어 ${ck(true)} · 아무도 안 쓰러짐 ${ck(allUp)} · ${bb.setup.starTime}초 안 ${ck(bb.stats.time <= bb.setup.starTime)}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP ${mvp.name} ${shortNum(mvp.dealt)}
       ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl" style="background-image:url(${UI_ART}levelup.png)">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
-      <div class="rw">${items.map(([k, n, v]) => `<div><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
-      ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}`;
+      <div class="rw">${items.map(([k, n, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
+      ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}</div>`;
     r.hidden = false;
     wire(next);
   };
@@ -384,7 +386,7 @@ register('battle', {
   canvas: true,
   enter(_root, p) {
     hud().hidden = false;
-    applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'light');
+    applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'glass');
     $('#bAuto').onclick = () => {
       if (!b) return;
       b.auto = !b.auto;
@@ -423,7 +425,7 @@ register('battle', {
     else begin(p.stage as StageId);
   },
   leave() {
-    applyTheme('light');
+    applyTheme('glass');
     hud().hidden = true;
     hud().classList.remove('raid');
     $('#cv').onpointerdown = null;

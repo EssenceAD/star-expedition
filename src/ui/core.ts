@@ -20,6 +20,10 @@ export const fullbodyUrl = (id: string, set?: string | null) => `${BASE}art/${fu
 /** 영웅 초상화: 고화질 일러스트가 있으면 그것 (메뉴 화면 전부) · 없으면 도트 초상화 */
 /** 스킬 아이콘 (public/art/skills/<영웅>_<0|1|2>.png · 128 · 금테 포함 · docs/ART_UI_1017.md) */
 export const skillIconUrl = (id: string, k: number) => `${BASE}art/skills/${id}_${k}.png`;
+/** UI 그림 (public/art/ui/<폴더>/<이름>.png · HARMONY: 탭·빈 칸·능력치 아이콘) */
+export const uiPic = (path: string, cls = 'up') => `<img class="${cls}" src="${BASE}art/ui/${path}.png" alt="">`;
+/** 탭 = 아이콘 + 글씨 */
+export const tabLabel = (pic: string, text: string) => `${uiPic(pic, 'ti')}<span>${text}</span>`;
 export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -97,10 +101,10 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
   const title = typeof s.title === 'function' ? s.title(p) : s.title;
   const backBtn = s.back === false || id === 'lobby' ? '' : `<button class="btn mini" data-back>${icon('back')}</button>`;
   bar.innerHTML = `${backBtn}<h2>${title}</h2><div class="curs">
-    <span class="cur" title="행동력">${icon('stamina')}<b data-sta></b><button class="plus" data-plus="sta">+</button></span>
-    <span class="cur" title="금화">${icon('gold')}<b data-cur="gold">${fmt(cur('gold'))}</b><button class="plus" data-plus="gold">+</button></span>
-    <span class="cur" title="별가루">${icon('stardust')}<b data-cur="stardust">${fmt(cur('stardust'))}</b><button class="plus" data-plus="stardust">+</button></span>
-    <button class="btn mini" data-ic="mail" title="우편">${icon('mail')}${mailUnread() ? `<em class="badge">${mailUnread()}</em>` : ''}</button><button class="btn mini" data-ic="chat" title="채팅">${icon('chat')}</button></div>`;
+    <span class="cur" title="행동력">${icon('stamina')}<b data-sta></b><button class="plus" data-plus="sta" title="채우기">${uiPic('icons/plus', 'pl')}</button></span>
+    <span class="cur" title="금화">${icon('gold')}<b data-cur="gold">${fmt(cur('gold'))}</b><button class="plus" data-plus="gold" title="상점">${uiPic('icons/plus', 'pl')}</button></span>
+    <span class="cur" title="별가루">${icon('stardust')}<b data-cur="stardust">${fmt(cur('stardust'))}</b><button class="plus" data-plus="stardust" title="상점">${uiPic('icons/plus', 'pl')}</button></span>
+    <button class="medalbtn" data-ic="mail" title="우편">${icon('mail')}${mailUnread() ? `<em class="badge">${mailUnread()}</em>` : ''}</button><button class="medalbtn" data-ic="chat" title="채팅">${icon('chat')}</button></div>`;
   const b = $('[data-back]', bar);
   if (b) b.onclick = () => (typeof s.back === 'function' ? s.back(p) : go('lobby', {}, false));
   $$('[data-plus]', bar).forEach(

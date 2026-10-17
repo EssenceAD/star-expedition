@@ -12,7 +12,7 @@ import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../gam
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, toast } from './core';
+import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast, uiPic } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
@@ -41,26 +41,26 @@ register('hero', {
       const { st, raw } = fullStats(id);
       const list = [...partyIds(), ...HEROES.map((x) => x.id).filter((x) => owned(x) && !partyIds().includes(x))];
       const cap = CONFIG.gear.cap;
-      const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
+      const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="cap xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
       root.innerHTML = `<div class="body">
-        <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}<br><span class="mute">Lv.${S.heroes[x].lv}</span></span></button>`).join('')}</div>
+        <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}" title="${heroOf(x).name} Lv.${S.heroes[x].lv}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}</span></button>`).join('')}</div>
         <div class="fbcol"><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
         <div class="col grow">
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
               <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
               <span class="xs mute">${esc(h.concept)}</span></div></div>
-          <div class="tabs">${[['grow', '성장'], ['skill', '스킬'], ['trans', '초월'], ['ex', '전용 무기'], ['costume', '코스튬'], ['info', '능력·인연']].map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
+          <div class="tabs">${[['grow', '성장', 'hero_growth'], ['skill', '스킬', 'hero_skill'], ['trans', '초월', 'hero_trans'], ['ex', '전용 무기', 'hero_exclusive'], ['costume', '코스튬', 'hero_costume'], ['info', '능력·인연', 'hero_bond']].map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div>
           <div class="panel col grow scroll">${!own ? '<span class="mute">아직 없는 영웅이에요 (영웅 상점)</span>' : tabHtml(tab, id)}</div>
         </div>
         <div class="col eq">
-          <div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k])}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
-            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ''}" data-tab="ex">${icon('exShard')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
-            <div class="col sl"><button class="gi empty" data-treasure>${icon('lock')}</button><span class="xs mute">전용 보물</span></div></div>
+          <div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k], k === 'weapon' ? 'slot_weapon' : k === 'armor' ? 'slot_armor' : 'slot_acc')}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
+            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="ex" title="전용 무기">${hs?.ex ? icon('exShard') : uiPic('icons/slot_exclusive', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
+            <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${uiPic('icons/lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
           <div class="row"><button class="btn mini grow" data-auto ${own ? '' : 'disabled'}>자동 장착</button><button class="btn mini grow" data-off ${own ? '' : 'disabled'}>모두 해제</button></div>
-          <div class="panel col">
-            <div class="kv"><span>체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>방어력</span><b>${fmt(st.def)}</b></div>
-            ${capRow('치명타', 'crit', st.crit)}${capRow('치명 피해', 'critDmg', st.critDmg)}${capRow('공격 속도', 'spd', st.spd)}${capRow('받는 피해 감소', 'dmgCut', st.dmgCut)}
+          <div class="panel col stats scroll">
+            <div class="kv"><span>${icon('hp')}체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>${icon('atk')}공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>${icon('def')}방어력</span><b>${fmt(st.def)}</b></div>
+            ${capRow(`${icon('crit')}치명타`, 'crit', st.crit)}${capRow(`${icon('critDmg')}치명 피해`, 'critDmg', st.critDmg)}${capRow(`${icon('spd')}공격 속도`, 'spd', st.spd)}${capRow(`${icon('def')}받는 피해 감소`, 'dmgCut', st.dmgCut)}
           </div>
         </div></div>`;
       $$('[data-id]', root).forEach((b) => (b.onclick = () => ((id = b.dataset.id!), draw())));
@@ -122,8 +122,9 @@ function tabHtml(tab: string, id: string): string {
     // 성장 길 (B 보강 §1): 레벨 상한 → 각성 1~5 → 초월 1~5 → 만렙
     const HC = CONFIG.hero;
     const steps = [`Lv.${HC.levelCap[0]}`, ...HC.levelCap.slice(1).map((_, i) => `각성${i + 1}`), ...GR.transcend.stones.map((_, i) => `초월${i + 1}`)];
-    const at = hs.awaken + hs.trans.length;
-    const road = `<div class="road">${steps.map((t, i) => `<span class="${i <= at ? 'on' : ''}${i === at ? ' cur' : ''}">${t}</span>`).join('')}<b>만렙 ${levelMax()}</b></div>`;
+    // 칩 줄 대신: 별 5개 + 각성 점 5개 + 초월 (HARMONY §2)
+    const dots = (n: number, on: number) => Array.from({ length: n }, (_, i) => `<i class="${i < on ? 'on' : ''}"></i>`).join('');
+    const road = `<div class="road2" title="${steps.join(` ${iconText('next')} `)}"><span class="stp">${Array.from({ length: 5 }, (_, i) => uiPic('icons/star', `stpic${i < hs.star ? '' : ' off'}`)).join('')}</span><span class="dots">각성 ${dots(5, hs.awaken)}</span><span class="dots">초월 ${dots(5, hs.trans.length)}</span><b>만렙 ${levelMax()}</b></div>`;
     return `${road}<div class="kv"><span>레벨</span><b>${hs.lv} / ${cap} <span class="xs dim">(${fmt(hs.exp)} / ${fmt(expNeed(hs.lv))})</span></b></div>
       <div class="xbar"><i style="width:${Math.min(100, (hs.exp / expNeed(hs.lv)) * 100)}%"></i></div>
       <div class="row"><span class="grow md">${icon('exp')} 경험치 물약 ${S.cur.exp ?? 0}개 <span class="xs dim">(1개 = ${fmt(GR.potionExp)})</span></span><button class="btn mini" data-pot="1">1개</button><button class="btn mini" data-pot="10">10개</button></div>
@@ -198,12 +199,12 @@ register('bag', {
     let tab = (p.tab as string) ?? 'gear';
     let sort: SortKey = 'grade';
     const draw = () => {
-      const tabs = [['gear', '장비'], ['grow', '성장'], ['use', '소모품'], ['rune', '룬'], ['etc', '기타']];
+      const tabs = [['gear', '장비', 'bag_gear'], ['grow', '성장', 'bag_growth'], ['use', '소모품', 'bag_consume'], ['rune', '룬', 'bag_rune'], ['etc', '기타', 'bag_etc']];
       const curs: Record<string, string[]> = { grow: ['exp', 'skillBook', 'awakenStone', 'transStone', 'exShard'], use: ['enh', 'optTicket'], etc: ['tierMat', 'gold', 'stardust'] };
       let body = '';
       if (tab === 'gear') {
-        body = `<div class="row"><span class="xs dim">정렬</span>${(['grade', 'power', 'enh', 'part'] as SortKey[]).map((k) => `<button class="tab${sort === k ? ' on' : ''}" data-sort="${k}">${{ grade: '등급', power: '전투력', enh: '강화', part: '부위' }[k]}</button>`).join('')}<span class="grow"></span>
-          <select data-g class="tab">${CONFIG.gear.grades.map((g, i) => `<option value="${i}">${g.name} 이하</option>`).join('')}</select><button class="btn mini" data-bulk="sell">일괄 판매</button><button class="btn mini" data-bulk="salvage">일괄 분해</button><button class="btn mini" data-craft>제작</button></div>
+        body = `<div class="row"><span class="xs dim">정렬</span>${(['grade', 'power', 'enh', 'part'] as SortKey[]).map((k) => `<button class="tab${sort === k ? ' on' : ''}" data-sort="${k}">${tabLabel(`icons/${{ grade: 'star', power: 'power', enh: 'levelup', part: 'slot_armor' }[k]}`, { grade: '등급', power: '전투력', enh: '강화', part: '부위' }[k])}</button>`).join('')}<span class="grow"></span>
+          <select data-g class="tab">${CONFIG.gear.grades.map((g, i) => `<option value="${i}">${g.name} 이하</option>`).join('')}</select><button class="btn mini" data-bulk="sell">${tabLabel('tabs/sell', '일괄 판매')}</button><button class="btn mini" data-bulk="salvage">${tabLabel('tabs/dismantle', '일괄 분해')}</button><button class="btn mini" data-craft>${tabLabel('tabs/craft', '제작')}</button></div>
           <div class="pk grow scroll">${sortedGear(sort).map((g) => gearCell(g, `data-gear="${g.uid}"`)).join('') || '<span class="mute">장비가 없어요 · 스테이지·장비 소환·제작으로 얻어요</span>'}${'<i class="gi slot"></i>'.repeat(Math.max(0, CONFIG.ui.bagShowMin - sortedGear(sort).length))}</div>`;
       } else if (tab === 'rune') {
         const rs = Object.values(S.items).filter((x): x is Rune => x.kind === 'rune').sort((a, b) => b.grade - a.grade);
@@ -211,7 +212,7 @@ register('bag', {
           <div class="col grow scroll">${rs.map((r) => `<div class="row">${runeCell(r)}<span class="grow xs">${runeText(r)}${r.in != null ? ' · 장비에 꽂힘' : ''}</span></div>`).join('') || '<span class="mute">룬이 없어요 · 보스 스테이지에서 가끔 (탑은 C덩어리)</span>'}</div>`;
       } else body = `<div class="pk grow">${curs[tab].map((k) => `<div class="gi cur-cell">${icon(k)}<b class="xs">${fmt(S.cur[k] ?? 0)}</b><span class="xs mute">${CUR_NAME[k] ?? k}</span></div>`).join('')}</div>`;
       root.innerHTML = `<div class="body"><div class="col grow">
-          <div class="row"><div class="tabs">${tabs.map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div><span class="grow"></span><span class="sm">칸 ${bagUsed()}/${S.bagSize}</span><button class="btn mini" data-expand ${S.bagSize >= CONFIG.gear.bag.max ? 'disabled' : ''}>칸 +${CONFIG.gear.bag.step} ${icon('stardust')}${CONFIG.gear.bag.dust}</button></div>
+          <div class="row"><div class="tabs">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><span class="grow"></span><span class="sm">칸 ${bagUsed()}/${S.bagSize}</span><button class="btn mini" data-expand ${S.bagSize >= CONFIG.gear.bag.max ? 'disabled' : ''}>칸 +${CONFIG.gear.bag.step} ${icon('stardust')}${CONFIG.gear.bag.dust}</button></div>
           ${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $$('[data-sort]', root).forEach((b) => (b.onclick = () => ((sort = b.dataset.sort as SortKey), draw())));
@@ -319,7 +320,7 @@ register('shop', {
     let cat = (p.cat as string) ?? 'special';
     let zone = 'all';
     const draw = () => {
-      const cats = [['special', '스페셜'], ['goods', '재화·소모품'], ['hero', '영웅'], ['costume', '코스튬'], ['summon', '장비 소환'], ['coin', '특수 재화']];
+      const cats = [['special', '스페셜', 'shop_special'], ['goods', '재화·소모품', 'shop_material'], ['hero', '영웅', 'shop_hero'], ['costume', '코스튬', 'shop_costume'], ['summon', '장비 소환', 'shop_summon'], ['coin', '특수 재화', 'shop_exchange']];
       let body = '';
       if (cat === 'special')
         body = `<div class="cards">${CONFIG.shop.packs.map((pk) => `<div class="panel col shopc"><b>${pk.name}</b><span class="xs dim">${Object.entries(pk.give).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ')}</span>${pk.once ? '<span class="xs mute">한 번만</span>' : ''}<button class="btn hi" data-pack="${pk.id}" ${S.shop.packs.includes(pk.id) ? 'disabled' : ''}>${S.shop.packs.includes(pk.id) ? '샀어요' : `${icon('stardust')}${fmt(pk.dust)}`}</button></div>`).join('')}
@@ -342,7 +343,7 @@ register('shop', {
         }).join('')}</div>`;
       else
         body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
-      root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${n}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
+      root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n, pic]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
       $$('[data-zone]', root).forEach((b) => (b.onclick = () => ((zone = b.dataset.zone!), draw())));
       const after = (r: string, m: Record<string, string>) => {

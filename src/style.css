@@ -550,3 +550,94 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
 #wave { display: flex; align-items: center; justify-content: center; width: 170px; height: 36px; padding: 0; background: var(--hud-wave-banner) center no-repeat; background-size: 100% 100%; font-size: var(--fs-base); }
 #wave.drop { animation: waveDrop 0.5s ease-out; }
 @keyframes waveDrop { from { transform: translate(-50%, -40px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+/* ───────── 화면 조화: 크림 판 걷어내고 남색 유리 (docs/HARMONY_1017.md) ─────────
+   색은 테마 「glass」(tokens colorGlass)가 바꿈 · 여기는 판·버튼·탭 모양과 화면별 자리 */
+/* §0 판 = 반투명 남색 + 뒤 그림 흐림 + 금테(panel_navy 테두리만) */
+.panel { background: var(--c-panel); border-image: var(--kit-edge); -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); box-shadow: none; color: var(--c-text); }
+.scr { color: var(--c-text); }
+/* 버튼은 파랑·금 그림 버튼만 (목록 줄·카드는 빼고) */
+.btn { border-image: var(--kit-btn); background: none; box-shadow: none; color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.btn.qrow, .btn.hrow, .btn.hcard, .btn.shopc, .btn.skip { border-image: none; }
+.btn:is([data-sk], [data-coin], [data-g='star']) { border-image: var(--kit-gold); }
+.btn .ti { width: auto; height: 1.5em; margin-right: var(--s-xxs); vertical-align: middle; }
+.panel .btn.mini, .eq .btn.mini { min-width: 64px; }
+/* 탭 = 유리 + 금 선 · 아이콘 + 글씨 · 선택은 금 그림 */
+.tab { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-xxs); border-image: none; border: var(--b-thin) solid var(--c-line); background: var(--c-panel); color: var(--c-text); -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); }
+.tab.on { border-image: var(--kit-tabOn); color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.tab .ti { width: auto; height: 1.6em; flex: none; }
+/* 알림은 화면 위 가운데 (목록·가격을 가리지 않게) */
+.toast { top: 52px; bottom: auto; }
+/* §1 위 재화 바 · 우편/채팅 메달 · 채팅 띠 */
+.cur { border-image: none; border: var(--b-thin) solid var(--c-line); background: var(--c-panel); color: var(--c-text); }
+.cur .plus { width: 20px; height: 20px; padding: 0; border: 0; background: none; }
+.cur .plus .pl { display: block; width: 100%; height: 100%; }
+.medalbtn { position: relative; width: 32px; height: 32px; padding: 0; border: 0; background: none; }
+.medalbtn img.ic.img { width: 100%; height: 100%; vertical-align: top; }
+#ticker { color: var(--c-text); }
+/* §1 로비: 원정대장 판 · 진행 중 목록 · 큰 메달 3 · 아래 메달 11 */
+.lobby .me b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lobby .me .pw { color: var(--c-gold1); font-family: var(--f-num); }
+.qrow { height: 28px; padding: 0 var(--s-xs); border: 0; border-bottom: var(--b-thin) solid color-mix(in srgb, var(--c-gold) 45%, transparent); border-radius: 0; background: none; color: var(--c-text); text-shadow: var(--sh-textBack); }
+.lobby .bigs { gap: var(--s-lg); }
+.medal { position: relative; width: 74px; height: 74px; padding: 0; border: 0; background: none; }
+.medal img.ic.img { width: 100%; height: 100%; vertical-align: top; }
+.medal span { position: absolute; left: 50%; bottom: calc(var(--s-xs) * -1); transform: translateX(-50%); white-space: nowrap; padding: 0 var(--s-sm); border-radius: var(--r-sm); background: linear-gradient(var(--c-gold1), var(--c-gold3)); color: var(--c-ink); font-family: var(--f-menu); font-weight: var(--fw-menu); font-size: var(--fs-xs); }
+.medal.main img.ic.img { filter: drop-shadow(var(--sh-glowHi)); }
+.lobby .dock { justify-content: space-evenly; }
+.dk { width: 62px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.dk img.ic.img { width: 52px; height: 52px; vertical-align: top; }
+.dk span { color: var(--c-white); text-shadow: var(--sh-outlineGold); font-family: var(--f-menu); font-weight: var(--fw-menu); font-size: var(--fs-sm); }
+.dk .badge { top: 0; right: 0; }
+/* §2 영웅 정보: 목록은 초상화 + 이름만(좁게) · 전신은 목록 오른쪽부터 */
+.hlist { width: 58px; }
+.hrow { height: auto; flex-direction: column; justify-content: center; gap: var(--s-xxs); padding: var(--s-xs) 0; border: var(--b-thin) solid var(--c-line); background: var(--c-panel); color: var(--c-text); }
+.hrow .pt.s { width: 44px; height: 44px; }
+.hrow span { max-width: 54px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-xxs); text-align: center; }
+.hrow.on { border-color: var(--c-gold1); }
+.fb { left: 0; transform: scale(1.14); transform-origin: 0 100%; }
+.body > .col > .row.panel .mute { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.road2 { display: flex; align-items: center; gap: var(--s-md); margin-bottom: var(--s-sm); font-size: var(--fs-xs); }
+.road2 .stpic { width: 16px; height: 16px; }
+.road2 .stpic.off { filter: grayscale(1) brightness(0.5); opacity: 0.6; }
+.road2 .dots i { display: inline-block; width: 7px; height: 7px; margin-left: var(--s-xxs); border: var(--b-thin) solid var(--c-gold); border-radius: 50%; vertical-align: middle; }
+.road2 .dots i.on { background: var(--c-gold1); box-shadow: var(--sh-glow); }
+.road2 b { margin-left: auto; color: var(--c-star); font-family: var(--f-num); }
+.skl { padding: var(--s-xs) 0; border-bottom: var(--b-thin) solid color-mix(in srgb, var(--c-gold) 35%, transparent); }
+.skl .si.ski { width: 40px; height: 40px; }
+/* 장비 칸 6개 같은 크기 · 빈 칸은 부위 그림 흐리게 · 이름은 눌렀을 때(title)만 */
+.slots .gi { width: 64px; height: 64px; }
+.gi.empty.pic { border: var(--b-thin) solid var(--c-line); background: var(--c-panelDeep); }
+.gi .slotpic { width: 72%; height: 72%; object-fit: contain; opacity: 0.45; }
+.sl > .xs { display: none; }
+/* 능력치 표: 아이콘 + 이름 · 숫자 오른쪽 · 상한은 숫자 아래 작게 · 넘치면 스크롤 */
+.eq .stats { flex: 1; min-height: 0; overflow-y: auto; }
+.stats .kv { align-items: flex-start; }
+.stats .kv > span img.ic.img { width: 1.4em; height: 1.4em; margin-right: var(--s-xs); }
+.stats .kv b { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.kv .cap { font-family: var(--f-base); font-size: var(--fs-xxs); color: var(--c-textMute); }
+/* §3 상점: 세로 탭 아이콘 + 글씨 */
+.shopcats .tab { height: 40px; justify-content: flex-start; padding: 0 var(--s-sm); }
+.shopcats .tab .ti { height: 28px; }
+/* §4 가방 빈 칸 = 반투명 남색 + 얇은 금선 */
+.gi.slot { border: var(--b-thin) solid color-mix(in srgb, var(--c-gold) 55%, transparent); background: var(--c-panelDeep); opacity: 1; }
+/* §5 결과: 전투 HUD 숨김 · 엠블럼 왼쪽 크게(위 18% · 높이 50%) · 결과는 오른쪽 */
+#hud:has(#result:not([hidden])) :is(#tl, #tr, #dps, #wave, #bar, #stg, #warn, #pausedTag, #boss) { display: none; }
+#result:has(.rcol) > .emb { position: absolute; left: 27%; top: 18%; height: 50%; width: auto; aspect-ratio: 1; transform: translateX(-50%); background-size: contain; }
+#result:has(.rcol) > .emb .fxt { top: 20%; font-size: var(--fs-h2); }
+.rcol { position: absolute; left: 52%; right: var(--s-xl); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-md); }
+.why.band { padding: var(--s-sm) var(--s-lg); border: var(--b-thin) solid var(--c-line); border-radius: var(--r-md); background: var(--c-panel); -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); color: var(--c-text); }
+.ck { font-style: normal; color: var(--c-textMute); }
+.ck.on { color: var(--c-gold1); }
+.rw div.rwc { border-style: solid; background: none; box-shadow: none; color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.rwc.gold { border-image: var(--kit-slot-legend); }
+.rwc.exp { border-image: var(--kit-slot-uncommon); }
+.rwc.stardust { border-image: var(--kit-slot-epic); }
+.rwc.enh { border-image: var(--kit-slot-rare); }
+/* 영웅 정보 탭 6개는 한 줄 · 판 안 작은 판은 줄지 않게 · 결과 보상은 줄바꿈 */
+.body .tabs { flex-wrap: nowrap; gap: var(--s-xxs); }
+.body .tabs .tab { padding: 0 var(--s-xs); font-size: var(--fs-sm); }
+.body .tabs .tab .ti { height: 1.4em; }
+.panel .panel { flex: none; }
+.rcol .rw { flex-wrap: wrap; justify-content: center; }
+.rcol .rw div.rwc { min-width: 76px; }
+.rcol .rw div.rwc img.ic.img { width: 36px; height: 36px; }
