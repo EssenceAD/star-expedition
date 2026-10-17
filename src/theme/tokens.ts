@@ -256,6 +256,8 @@ export const T = {
     duoB: '#58b8ff',
     tagText: '#fff3c4',
     /** 자리표시자 영웅 색 바꾸기 (canvas filter) */
+    /** 영웅별 도트 색 (새 외형에 맞춘 임시 색 · 전용 도트 시트가 오면 지움): 재희아빠 = 밝은 피부·애쉬브라운 · 황짐승 = 구릿빛 */
+    heroTint: { jaehi: 'sepia(0.3) saturate(0.7) brightness(1.18)', hwang: 'sepia(0.5) saturate(1.25) brightness(0.82)' } as Record<string, string>,
     tint: ['hue-rotate(40deg)', 'hue-rotate(110deg)', 'hue-rotate(180deg)', 'hue-rotate(250deg)', 'hue-rotate(310deg)', 'saturate(0.4) brightness(1.15)'],
     /** 장(지역)마다 배경 색 바꾸기 — 그림 1장 돌려 쓰기 (ROADMAP 1단계: 새 그림 금지) */
     region: ['none', 'hue-rotate(70deg) saturate(0.8)', 'sepia(0.5) brightness(0.8)', 'hue-rotate(160deg) saturate(0.6) brightness(1.1)', 'hue-rotate(230deg) brightness(0.6)', 'hue-rotate(140deg)', 'sepia(0.8) saturate(1.4)', 'hue-rotate(-30deg) saturate(1.5) brightness(0.75)', 'saturate(0.5) brightness(1.25)', 'hue-rotate(250deg) brightness(0.45)'],
@@ -275,10 +277,85 @@ export const T = {
 } as const;
 
 /** 아이콘 HTML (2단계: 경로면 <img>) */
+/** 벡터 아이콘 한 벌 (2단계 · 스타일 보드의 선 아이콘 · 글자색을 따라감) — 화면(HTML) 아이콘은 이걸로, 캔버스·title은 iconText(글자) 그대로
+ *  [모양 path(24×24), 채움 여부] */
+export const ICON_SVG: Record<string, [string, boolean?]> = {
+  adventure: ['M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14'],
+  content: ['M4 20 16 8l1-4 4-1-1 4-4 1L4 20zM20 20 8 8 7 4 3 3l1 4 4 1 12 12'],
+  heroes: ['M9 4a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM2 20c0-3.5 3-6 7-6s7 2.5 7 6M16 4.5a3 3 0 0 1 0 6M18 14c2.5.6 4 2.8 4 5.5'],
+  formation: ['M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'],
+  bag: ['M6 8h12l1 13H5zM9 8V6a3 3 0 0 1 6 0v2'],
+  recruit: ['M3 11 12 4l9 7v9H3zM9 20v-5h6v5'],
+  shop: ['M4 9h16l-1-5H5zM5 9v11h14V9M10 20v-6h4v6'],
+  guild: ['M5 3h14v10l-7 8-7-8zM12 7l1.5 3 3 .5-2.2 2 .6 3L12 14l-2.9 1.5.6-3-2.2-2 3-.5z'],
+  ranking: ['M8 4h8v5a4 4 0 0 1-8 0zM8 6H4c0 3 2 4 4 4M16 6h4c0 3-2 4-4 4M12 13v4M8 21h8l-1-4H9z'],
+  mail: ['M3 6h18v12H3zM3 6l9 7 9-7'],
+  mission: ['M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6zM6 3a2 2 0 0 0-2 2v2h2M9 8h7M9 12h7M9 16h4'],
+  settings: ['M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1'],
+  chat: ['M4 5h16v11H9l-5 4z'],
+  back: ['M15 5l-7 7 7 7'],
+  next: ['M9 5l7 7-7 7'],
+  close: ['M6 6l12 12M18 6 6 18'],
+  lock: ['M6 11h12v10H6zM8 11V8a4 4 0 0 1 8 0v3'],
+  check: ['M5 12l5 5 9-10'],
+  cross: ['M6 6l12 12M18 6 6 18'],
+  auto: ['M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5'],
+  repeat: ['M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5'],
+  open: ['M6 9l6 6 6-6'],
+  fold: ['M6 15l6-6 6 6'],
+  skip: ['M5 5l8 7-8 7zM14 5l6 7-6 7'],
+  story: ['M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1zM12 6v14'],
+  battle: ['M4 20 16 8l1-4 4-1-1 4-4 1L4 20zM20 20 8 8 7 4 3 3l1 4 4 1 12 12'],
+  summon: ['M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z'],
+  craft: ['M14 4l6 6-3 3-6-6zM11 7 3 15l3 3 8-8M3 21h7'],
+  booster: ['M12 2c4 3 5 8 3 13H9C7 10 8 5 12 2zM9 15l-3 4h4M15 15l3 4h-4M12 8a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z'],
+  offline: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 3'],
+  join: ['M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z'],
+  friend: ['M8 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM16 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM2 20c0-3 2.5-5.5 6-5.5 1.6 0 3 .5 4 1.4 1-.9 2.4-1.4 4-1.4 3.5 0 6 2.5 6 5.5'],
+  achieve: ['M12 3a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM8.5 14 7 21l5-3 5 3-1.5-7M12 6l1 2.2 2.3.3-1.7 1.6.4 2.3L12 11.3l-2 1.1.4-2.3-1.7-1.6 2.3-.3z'],
+  raid: ['M12 3c3 2 6 2 8 1-1 6-3 11-8 16C7 15 5 10 4 4c2 1 5 1 8-1zM9 10l3 3 3-3'],
+  coop: ['M12 3c3 2 6 2 8 1-1 6-3 11-8 16C7 15 5 10 4 4c2 1 5 1 8-1zM9 10l3 3 3-3'],
+  world: ['M3 20l6-10 3 4 3-6 6 12zM12 4l1 2M16 3l-1 2M8 3l1 2'],
+  worldBoss: ['M3 20l6-10 3 4 3-6 6 12zM12 4l1 2M16 3l-1 2M8 3l1 2'],
+  tower: ['M8 21V8l4-5 4 5v13zM6 21h12M11 12h2M11 16h2'],
+  day: ['M4 6h16v14H4zM4 10h16M8 3v5M16 3v5'],
+  arena: ['M3 9h18M5 9v10M19 9v10M9 9v10M15 9v10M3 19h18M4 9l8-5 8 5'],
+  guildRaid: ['M5 3h14v10l-7 8-7-8zM9 9l3 3 3-3'],
+  weapon: ['M4 20 16 8l1-4 4-1-1 4-4 1L4 20zm0-4 4 4'],
+  armor: ['M12 2 20 5v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z'],
+  acc: ['M12 8a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM9 3h6l-3 5z'],
+  zone_front: ['M12 2 20 5v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z', true],
+  zone_mid: ['M12 2l3 10-3 10-3-10z', true],
+  zone_back: ['M5 3c8 3 8 15 0 18M5 3v18M3 12h16l-3-3m3 3-3 3'],
+  knight: ['M12 2 20 5v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z', true],
+  warrior: ['M4 20 16 8l1-4 4-1-1 4-4 1L4 20zm0-4 4 4'],
+  fighter: ['M6 10V6a2 2 0 0 1 4 0v3-4a2 2 0 0 1 4 0v4-3a2 2 0 0 1 4 0v8c0 4-3 7-7 7s-7-3-7-7v-3a2 2 0 0 1 2-1z'],
+  assassin: ['M12 2l3 10-3 10-3-10zM7 12h10'],
+  archer: ['M5 3c8 3 8 15 0 18M5 3v18M3 12h16l-3-3m3 3-3 3'],
+  engineer: ['M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-1-6h2l1 3 3-1 1 2-2 2 1 3h-2l-1 3h-2l-1-3H7l1-3-2-2 1-2 3 1z'],
+  mage: ['M12 2l2 5 5 .5-4 3.5 1.5 5L12 13l-4.5 3 1.5-5-4-3.5L10 7zM12 13v9'],
+  priest: ['M10 2h4v6h6v4h-6v10h-4V12H4V8h6z', true],
+  druid: ['M12 22V10m0 0C7 10 4 7 4 2c5 0 8 3 8 8zm0 4c5 0 8-3 8-8-5 0-8 3-8 8z'],
+  chest: ['M3 9h18v11H3zM3 9a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4M11 12h2v3h-2z'],
+  warn: ['M12 3 22 20H2zM12 9v5M12 17v.5'],
+  sparkle: ['M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z', true],
+  guildCoin: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 8h8v4l-4 4-4-4z'],
+  arenaCoin: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 16l8-8M8 8l8 8'],
+  towerCoin: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM10 17V9l2-3 2 3v8'],
+  tierMat: ['M12 2 20 8 12 22 4 8zM4 8h16M12 2v20'],
+  exShard: ['M4 20 16 8l1-4 4-1-1 4-4 1L4 20zM14 4l2 2'],
+  treasureShard: ['M7 4h10l-2 5 3 11H6l3-11z'],
+  token: ['M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z'],
+  bossMat: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.5M14.5 10h.5M9 15c2 1 4 1 6 0'],
+  rotate: ['M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5'],
+  sweep: ['M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5'],
+};
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
   if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
+  const sv = ICON_SVG[key];
+  if (sv) return `<svg class="${cls} svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${sv[0]}" fill="${sv[1] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   const v = T.icon[key] ?? '·';
   return /\.(png|svg|webp)$/.test(v) ? `<img class="${cls}" src="${v}" alt="">` : `<span class="${cls}">${v}</span>`;
 }

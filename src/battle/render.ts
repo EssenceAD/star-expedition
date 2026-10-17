@@ -33,7 +33,7 @@ function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) 
 }
 const filterOf = (u: Unit) => {
   const sp = u.hero ?? u.pvp;
-  return sp ? (sp.art.tint >= 0 ? B.tint[sp.art.tint] : 'none') : (B.mobTint[u.mob!.tint] ?? 'none');
+  return sp ? (B.heroTint[sp.def.id] ?? (sp.art.tint >= 0 ? B.tint[sp.art.tint] : 'none')) : (B.mobTint[u.mob!.tint] ?? 'none');
 };
 
 /** 유닛 하나 (도트 프레임 · 앞으로 내딛기 · 잔상 · 피격 번쩍 · 상태 표시) */

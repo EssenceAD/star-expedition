@@ -351,3 +351,5 @@ input.tab { color: var(--c-text); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
 .capline { align-self: flex-start; margin-bottom: var(--s-xs); padding: var(--s-xxs) var(--s-md); background: var(--c-glass); border: var(--b-thin) solid var(--c-line); border-radius: var(--r-md); }
 img.ic.img { width: 1.35em; height: 1.35em; vertical-align: -0.32em; object-fit: contain; }
+svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
+.enhfx { background: radial-gradient(circle, var(--c-bg2), var(--c-panelHi) 75%); }
