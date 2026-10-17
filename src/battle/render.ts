@@ -25,6 +25,8 @@ export interface Art {
   critBurst?: HTMLImageElement | null;
   /** 스킬 이펙트 그림 14종 (public/art/fx · 뒤에서 받음 · ANIM_1017 ②) */
   fx?: FxArt | null;
+  /** UI 키트 바 그림 (머리 위 HP바 · public/art/ui/kit2/bar.png · UI_KIT_1018 §4) */
+  bar?: HTMLImageElement | null;
 }
 /** 이 전투 배경 그림 · 전용 배경이면 지역 색 안 씀 */
 const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[key], own: true } : { im: art.bg, own: false });
@@ -59,11 +61,47 @@ function lungeCurve(p: number) {
   return 1 - (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 }
 
+/** 발밑 그림자 (UI_KIT_1018 §4 필드): 발 y가 타원 한가운데 · 가장자리는 흐리게 — 흐린 타원을 한 번만 그려 두고 늘려 씀 (매 프레임 blur 필터는 느림) */
+let shadowCv: HTMLCanvasElement | null = null;
+export function shadowSprite() {
+  if (shadowCv) return shadowCv;
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 48;
+  const x = c.getContext('2d')!;
+  x.filter = 'blur(5px)';
+  x.fillStyle = B.shadow;
+  x.beginPath();
+  x.ellipse(64, 24, 52, 14, 0, 0, Math.PI * 2);
+  x.fill();
+  return (shadowCv = c);
+}
 function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
-  ctx.fillStyle = B.shadow;
-  ctx.beginPath();
-  ctx.ellipse(x, y + 2, w, w * 0.25, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // 스프라이트 안 타원 반지름 52 → 화면 w
+  const k = w / 52;
+  ctx.drawImage(shadowSprite(), x - 64 * k, y - 24 * k, 128 * k, 48 * k);
+}
+/** 키트 9-slice 그림을 캔버스에 (slice = 원본 px · corner = 화면 px) */
+export function drawNine(ctx: CanvasRenderingContext2D, im: HTMLImageElement, slice: number, x: number, y: number, w: number, h: number, corner: number) {
+  const sw = im.naturalWidth;
+  const sh = im.naturalHeight;
+  const t = Math.max(0.5, Math.min(corner, w / 2, h / 2));
+  const xs = [0, slice, sw - slice, sw];
+  const ys = [0, slice, sh - slice, sh];
+  const X = [x, x + t, x + w - t, x + w];
+  const Y = [y, y + t, y + h - t, y + h];
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++) {
+      if (X[i + 1] <= X[i] || Y[j + 1] <= Y[j]) continue;
+      ctx.drawImage(im, xs[i], ys[j], xs[i + 1] - xs[i], ys[j + 1] - ys[j], X[i], Y[j], X[i + 1] - X[i], Y[j + 1] - Y[j]);
+    }
+}
+/** 키트 바 (틀 + 안쪽 단색 채움 · target_screens.py bar()) */
+export function drawKitBar(ctx: CanvasRenderingContext2D, im: HTMLImageElement | null | undefined, x: number, y: number, w: number, h: number, ratio: number, color: string) {
+  ctx.imageSmoothingEnabled = true;
+  if (im) drawNine(ctx, im, 15, x, y, w, h, h / 2);
+  ctx.fillStyle = color;
+  ctx.fillRect(x + h * 0.32, y + h * 0.26, (w - h * 0.64) * Math.max(0, Math.min(1, ratio)), h * 0.48);
 }
 const filterOf = (u: Unit) => {
   const sp = u.hero ?? u.pvp;
@@ -83,9 +121,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   let alpha = 1;
   const dur = lenOf(def);
   if (def.lunge && u.busy > 0) x += def.lunge * lungeCurve(Math.min(1, u.at / dur));
-  // 걷기: 대기 2칸을 번갈아 + 살짝 들썩임
-  // 걷기 그림이 2칸뿐인 것(몹 등)만 살짝 들썩임 · 영웅은 4칸 걷기 그림 (ANIM_1017)
-  if (as === 'walk' && def.frames.length <= 2) y -= CONFIG.combat.walkBob * Math.abs(Math.sin(u.at * def.fps * Math.PI));
+  // 걷기: 위아래 튐 없음 — 도트 칸만 넘김 (UI_KIT_1018 §4 필드)
   // 몹이 쓰러짐: 지역 몹 = 피격 칸으로 0.4초 동안 가라앉으며 사라짐 · 장 보스 = 비틀거림 칸으로 흔들리며 사라짐 (ANIM_1017 ③)
   if (u.side === 'mob' && u.dead) {
     const MD = CONFIG.combat.mobDie;
@@ -95,7 +131,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
     if (u.mob?.boss) x += Math.sin(u.deadT * 50) * MD.shake;
   }
   if (alpha <= 0) return;
-  shadow(ctx, x + (u.mob?.boss ? 10 : 0), u.y, u.mob?.boss ? 95 : 26 * (H / 100));
+  shadow(ctx, x + (u.mob?.boss ? 10 : 0), u.y, u.mob?.boss ? 95 : Math.max(18, 23 * (H / 100)));
   const k = H / heightOf(art.sheet, ref);
   const fi = frameAt(def, u.at);
   // 그릴 칸: 장 보스 경고 중이면 준비 칸 + 살짝 떨림 · 지역 몹은 맞는 순간 피격 칸
@@ -146,7 +182,8 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   ctx.globalAlpha = 1;
   if (u.dead) return;
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
-  if (sp && (u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
+  // 이름표: 결투장 상대만 (AI 동료 8인 이름표가 서로 겹치던 것 · 머리 위 HP바로 충분)
+  if (sp && u.pvp) tag(ctx, sp.def.name, x, y + 12);
   // 보호막 · 기절 · 침묵 · 화상
   // 보호막이 남아 있는 동안: 그림 1↔2를 shieldLoopSec마다 · 알파 0.7로 몸에 겹침 (그림이 없으면 예전 타원)
   const FA = CONFIG.combat.fxArt;
@@ -167,23 +204,20 @@ export const headHpPref = { always: getPref('hpAlways', false) };
 const ST_ICONS = ['stun', 'silence', 'burn', 'slow', 'atkDown', 'taunt', 'guard', 'atkUp', 'spdUp', 'critUp', 'regen'] as const;
 /** 머리 위 작은 체력 바 (아군 초록 · 적 빨강 · 맞은 뒤 잠깐) + 그 위 상태 아이콘 한 줄 (MOBILE_REF §3-A-1) */
 function headHp(ctx: CanvasRenderingContext2D, u: Unit, x: number, y: number, H: number) {
-  const HH = CONFIG.combat.headHp;
-  const w = Math.max(HH.minW, Math.round(H * HH.wOfH));
-  const top = y - H - (u.mob ? 10 : 6);
-  const show = headHpPref.always || u.hurtT < HH.showSec;
+  // 키트 바 그림 (영웅 44×7 · 몹 40×7 · UI_KIT_1018 §4)
+  const w = u.side === 'hero' ? 44 : 40;
+  const top = y - H - (u.mob ? 10 : 8);
+  const show = headHpPref.always || u.hurtT < CONFIG.combat.headHp.showSec;
   if (show) {
-    ctx.globalAlpha = headHpPref.always ? 1 : Math.min(1, (HH.showSec - u.hurtT) * 3);
-    ctx.fillStyle = B.hpBar;
-    ctx.fillRect(x - w / 2 - 1, top - 1, w + 2, 6);
-    ctx.fillStyle = u.side === 'hero' ? B.hpAlly : has(u, 'slow') ? B.slowBar : B.hpMob;
-    ctx.fillRect(x - w / 2, top, w * (u.hp / u.max), 4);
+    ctx.globalAlpha = headHpPref.always ? 1 : Math.min(1, (CONFIG.combat.headHp.showSec - u.hurtT) * 3);
+    drawKitBar(ctx, view.art?.bar, x - w / 2, top - 3, w, 7, u.hp / u.max, u.side === 'hero' ? T.kit2.hp : has(u, 'slow') ? B.slowBar : T.kit2.mobHp);
     if (u.shield > 0) {
       ctx.fillStyle = B.numShield;
-      ctx.fillRect(x - w / 2, top, Math.min(w, w * (u.shield / u.max)), 1.5);
+      ctx.fillRect(x - w / 2 + 7 * 0.32, top - 3 + 7 * 0.26, (w - 7 * 0.64) * Math.min(1, u.shield / u.max), 1.2);
     }
     ctx.globalAlpha = 1;
   }
-  const marks = ST_ICONS.filter((k) => has(u, k)).slice(0, HH.icons);
+  const marks = ST_ICONS.filter((k) => has(u, k)).slice(0, CONFIG.combat.headHp.icons);
   if (!marks.length) return;
   ctx.textAlign = 'center';
   ctx.font = canvasFont(F.stun, 'bold', false);
@@ -207,10 +241,11 @@ function tag(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) 
 function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number, key?: string) {
   const { im, own } = bgOf(art, key);
   if (im) {
-    const y0 = -160;
-    const h = LH - y0;
-    const w = (im.width / im.height) * h;
-    const o = -((s * 0.25) % w);
+    // cover (높이 390 꽉 · 가운데) — 정답 화면 battle.jpg와 같은 구도 (UI_KIT_1018) · 걸을 때 옆으로 흐름
+    const y0 = 0;
+    const h = LH;
+    const w = Math.max(W, (im.width / im.height) * h);
+    const o = -((((s * 0.25 + (w - W) / 2) % w) + w) % w);
     ctx.filter = own ? 'none' : (B.region[region] ?? 'none');
     for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), y0, Math.ceil(w) + 1, h);
     ctx.filter = 'none';
@@ -221,25 +256,7 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, LH);
   }
-  const gy = GROUND - 30;
-  const road = ctx.createLinearGradient(0, gy, 0, LH);
-  road.addColorStop(0, B.road0);
-  road.addColorStop(0.15, B.road1);
-  road.addColorStop(1, B.road2);
-  ctx.fillStyle = road;
-  ctx.fillRect(0, gy, W, LH - gy);
-  ctx.fillStyle = B.pebble;
-  for (let i = 0; i < 30; i++) {
-    const x = ((((i * 97 - s) % (W + 60)) + W + 60) % (W + 60)) - 30;
-    const y = gy + 24 + ((i * 53) % 80);
-    ctx.fillRect(Math.round(x), Math.round(y), 4 + (i % 3) * 2, 2);
-  }
-  for (let i = 0; i < 18; i++) {
-    const x = ((((i * 131 - s * 1.5) % (W + 80)) + W + 80) % (W + 80)) - 40;
-    const y = LH - 2;
-    ctx.fillStyle = i % 5 === 0 ? B.grass[2] : i % 2 ? B.grass[0] : B.grass[1];
-    for (let j = 0; j < 5; j++) ctx.fillRect(Math.round(x + j * 4), y - 8 - ((j * 7 + i) % 9), 3, 12);
-  }
+  // 땅 위 코드 장식(길 그라데이션·자갈·풀잎)은 그리지 않음 — 배경 그림 그대로 (UI_KIT_1018 §0-1 · 정답 화면 battle.jpg)
 }
 
 // ───────── 이펙트 ─────────
@@ -284,6 +301,20 @@ function drawFx(ctx: CanvasRenderingContext2D, b: Battle, art: Art) {
     ctx.shadowColor = f.color;
     ctx.shadowBlur = 14;
     switch (f.kind) {
+      case 'glow': {
+        // 일반 스킬 시전 준비: 시전자 발밑 빛 (UI_KIT_1018 §4-4)
+        const r = (f.r ?? 30) * (0.7 + 0.5 * Math.min(1, u * 1.6));
+        ctx.globalAlpha = Math.sin(Math.min(1, u) * Math.PI) * 0.9;
+        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, r);
+        g.addColorStop(0, B.white);
+        g.addColorStop(0.35, f.color);
+        g.addColorStop(1, B.clear);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(f.x, f.y, r, r * 0.32, 0, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
       case 'dome': {
         // 궁극기 범위: 바닥에서 솟는 반투명 반구 (속성색) · 처음 0.15초 차오르고 사라짐
         const grow = Math.min(1, u / 0.25);
@@ -560,8 +591,8 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
 }
 
 /** 전투 없이 배경만 (타이틀·로비 뒤) */
-export function renderBg(ctx: CanvasRenderingContext2D, art: Art, scroll: number, W: number, region = 0) {
-  background(ctx, art, scroll, W, region);
+export function renderBg(ctx: CanvasRenderingContext2D, art: Art, scroll: number, W: number, region = 0, key?: string) {
+  background(ctx, art, scroll, W, region, key);
 }
 export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: number) {
   if (b.raid) return renderRaid(ctx, art, b, now);

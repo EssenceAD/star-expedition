@@ -1,4 +1,5 @@
-// 화면 흐름 클릭 시험: 타이틀 → 프롤로그(스킵) → 로비 → 모험 → 1-1 출발 → (대사 스킵) → 전투(AUTO ×2) → 결과 → 다음 → … → 편성 → 영웅 상세
+// 화면 흐름 클릭 시험: 타이틀 → 프롤로그(스킵) → 로비(마을) → 모험 → 1-1 출발 → (대사 스킵) → 전투(AUTO ×2) → 결과 → 다음 → … → 편성 → 영웅 상세
+//  10/18 W.I.N.D 키트(UI_KIT_1018): 팝업 버튼 .kbtn.gold · 로비 메뉴는 간판·아래 메달·≡ 메뉴(menuGo) · 결과 「나가기」 = data-a="exit"/"portal"
 //  node tools/e2e.mjs [out폴더]  (먼저 npm run build · dist/ 를 직접 띄움) · CHROME=<크롬 실행 파일> 로 브라우저 지정
 import { chromium } from 'playwright-core';
 import { execFileSync } from 'node:child_process';
@@ -42,6 +43,14 @@ p.on('requestfailed', (r) => errors.push(`실패 ${r.url()}`));
 let n = 0;
 const shot = async (name) => p.screenshot({ path: `${out}/${String(++n).padStart(2, '0')}_${name}.png` });
 const click = async (sel) => p.locator(sel).first().click();
+/** 로비 ≡ 메뉴 안 화면으로 (친구·랭킹·우편·설정·편성·콘텐츠·길드·상점) */
+const menuGo = async (to) => {
+  await click('[data-menu]');
+  await click(`.kpop [data-to="${to}"]`);
+};
+const okPopup = async () => {
+  while (await p.locator('.modal .kbtn.gold').count()) await click('.modal .kbtn.gold');
+};
 const skipTalk = async () => {
   if (await p.locator('.talk .skip').count()) await click('.talk .skip');
 };
@@ -81,7 +90,7 @@ await playStage('1-1');
 await click('#result [data-a="lobby"]');
 await p.waitForSelector('[data-screen="lobby"]');
 await p.waitForTimeout(400);
-if (await p.locator('.modal').count()) await click('.modal .btn.hi');
+await okPopup();
 await shot('lobby');
 await click('[data-go="adventure"]');
 await p.waitForSelector('[data-screen="adventure"]');
@@ -95,18 +104,20 @@ for (let i = 3; i <= Number(process.env.STAGES ?? 3); i++) {
   await click('#result [data-a="next"]');
   await playStage(`1-${i}`);
 }
-await click('#result [data-a="lobby"]');
+await click('#result [data-a="exit"]');
+await p.waitForSelector('[data-screen="adventure"]');
+await click('[data-back]');
 await p.waitForSelector('[data-screen="lobby"]');
-await click('[data-go="prep"]');
+await okPopup();
+await menuGo('prep');
 await p.waitForSelector('[data-screen="prep"]');
 await click('[data-tab="back"]');
 await click('[data-h="warmnight"]');
 await shot('formation_back_tab');
 await click('[data-back]');
-await click('[data-go="heroes"]');
+await click('.ldock [data-go="heroes"]');
 await p.waitForSelector('[data-screen="heroes"]');
-await click('[data-tab="none"]');
-await shot('heroes_unowned');
+await shot('heroes_list');
 await click('[data-h="hwang"]');
 await shot('hero_hwang');
 // B덩어리: 상점(꾸러미·영웅·소환) → 가방(장비 상세·강화) → 영웅 정보(자동 장착·성장 탭)
@@ -117,7 +128,7 @@ await p.evaluate(() => {
 await click('[data-back]');
 await click('[data-back]');
 await p.waitForSelector('[data-screen="lobby"]');
-await click('[data-go="shop"]');
+await click('.lsign[data-to="shop"]');
 await p.waitForSelector('[data-screen="shop"]');
 await click('[data-pack="starter"]');
 await click('[data-cat="hero"]');
@@ -143,7 +154,7 @@ await p.waitForTimeout(500);
 await shot('shop_summon');
 await click('.gacha [data-ok]');
 await click('[data-back]');
-await click('[data-go="bag"]');
+await click('.ldock [data-go="bag"]');
 await p.waitForSelector('[data-screen="bag"]');
 await shot('bag');
 await click('[data-gear]');
@@ -171,14 +182,18 @@ await shot('enhance_break');
 await click('.enhfx');
 await click('.gp [data-a="close"]');
 await click('[data-back]');
-await click('[data-go="heroes"]');
+await click('.ldock [data-go="heroes"]');
 await click('[data-h="woongs"]');
-await click('[data-auto]');
 await shot('hero_info');
+await click('[data-tab="gear"]');
+await click('[data-auto]');
+await shot('hero_gear');
 await click('[data-tab="skill"]');
 await shot('hero_skill');
-// 코스튬 탭에서 입기 → 전신 그림이 코스튬으로
-await click('[data-tab="costume"]');
+await click('[data-tab="grow"]');
+await shot('hero_grow');
+// 일반 탭 코스튬에서 입기 → 전신 그림이 코스튬으로
+await click('[data-tab="info"]');
 await click('[data-wear="festival"]');
 await p.waitForTimeout(300);
 await shot('hero_costume');
@@ -191,7 +206,7 @@ await p.evaluate(() => {
 await click('[data-back]');
 await click('[data-back]');
 await p.waitForSelector('[data-screen="lobby"]');
-await click('[data-go="adventure"]');
+await click('.lgo');
 await shot('field_map');
 await click('[data-portal="tower"]');
 await p.waitForSelector('[data-screen="portal"]');
@@ -237,16 +252,16 @@ await shot('portal_miles');
 // D덩어리: 미션(받기·바로가기) · 길드(가입·출석·길드 레이드) · 친구 · 랭킹 · 우편 · 채팅 · 설정
 await click('[data-back]');
 await p.waitForSelector('[data-screen="lobby"]');
-if (await p.locator('.modal .btn.hi').count()) await click('.modal .btn.hi');
+await okPopup();
 await shot('lobby_d');
-await click('[data-go="mission"]');
+await click('.ldock [data-go="mission"]');
 await p.waitForSelector('[data-screen="mission"]');
 await shot('mission');
 if (await p.locator('[data-all]:not([disabled])').count()) await click('[data-all]');
 await click('[data-tab="ach"]');
 await shot('mission_ach');
 await click('[data-back]');
-await click('[data-go="guild"]');
+await click('.lsign[data-to="guild"]');
 await click('[data-join="ai1"]');
 await click('[data-att]');
 await shot('guild');
@@ -264,19 +279,22 @@ await p.evaluate(() => {
   b.auto = true;
   b.speed = 2;
 });
-await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 120000 });
+// 길드 레이드는 90초 제한 · 헤드리스 크롬이 ~20fps라 실제로 80~100초 + VICTORY 연출 → 여유 있게 180초
+await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 180000 });
 await shot('graid_result');
-await click('#result [data-a="lobby"]');
+await click('#result [data-a="portal"]');
+await p.waitForSelector('[data-screen="guild"]');
+await click('[data-back]');
 await p.waitForSelector('[data-screen="lobby"]');
-await click('[data-go="friends"]');
+await menuGo('friends');
 await click('[data-add]');
 await click('[data-gift]');
 await shot('friends');
 await click('[data-back]');
-await click('[data-go="ranking"]');
+await menuGo('ranking');
 await shot('ranking');
 await click('[data-back]');
-await click('#topbar [data-ic="mail"]');
+await menuGo('mail');
 await p.waitForSelector('[data-screen="mail"]');
 await shot('mail');
 await click('[data-all]');
@@ -284,7 +302,7 @@ await click('#ticker');
 await shot('chat');
 await click('.modal [data-x]');
 await click('[data-back]');
-await click('[data-go="settings"]');
+await menuGo('settings');
 await p.waitForTimeout(300);
 await shot('settings');
 // 결투장 직접 고르기: 영광의 리그 밴픽 · 최후의 리그 파티 2·3 편성
@@ -297,7 +315,7 @@ await p.evaluate(() => window.__go('prep', { run: { mode: 'arena', arg: 'last', 
 await click('[data-lastform]');
 await click('.lfr [data-h]');
 await shot('last_form');
-await click('.modal .btn.hi');
+await click('.modal .kbtn.gold');
 await br.close();
 srv.close();
 console.log(errors.length ? `오류 ${errors.length}개:\n${errors.join('\n')}` : '오류 없음', `· 사진 ${n}장 → ${out}`);

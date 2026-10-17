@@ -11,12 +11,14 @@ import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../gam
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
-import { icon, iconText, T } from '../theme/tokens';
-import { taglineOf } from '../data/taglines';
+import { icon, iconText } from '../theme/tokens';
 import { gachaShow } from './gacha';
 import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast, uiPic } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
+import { fillCards, heroCard } from './cards';
+import { k9 } from './kit';
+import { kitTabs } from './screens';
 
 const GR = CONFIG.growth;
 const SLOT_NAME: Record<GearSlot, string> = { weapon: '무기', armor: '갑옷', acc1: '장신구 1', acc2: '장신구 2' };
@@ -35,7 +37,9 @@ register('hero', {
   back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : p.shop ? go('shop', { cat: 'hero' }, false) : go('heroes', {}, false)),
   enter(root, p) {
     let id = p.id as string;
-    let tab = (p.tab as string) ?? 'grow';
+    // 탭 4개 (UI_KIT_1018 §7 · AUDIT E2): 일반(소개·능력치·인연·코스튬) · 스킬 · 장비(칸·자동 장착·전용 무기) · 성장(레벨·각성·별·초월) — 한 탭에 한 덩어리
+    const OLD: Record<string, string> = { trans: 'grow', ex: 'gear', costume: 'info' };
+    let tab = OLD[p.tab as string] ?? (p.tab as string) ?? 'info';
     const draw = () => {
       const h = heroOf(id);
       const own = owned(id);
@@ -44,41 +48,41 @@ register('hero', {
       const list = [...partyIds(), ...HEROES.map((x) => x.id).filter((x) => owned(x) && !partyIds().includes(x))];
       const cap = CONFIG.gear.cap;
       const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="cap xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
+      const head = `<div class="row hhead"><div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
+              <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
+              <span class="xs mute fit2 fit" data-min="${CONFIG.ui.fit.desc}">${esc(h.concept)}</span></div></div>`;
+      const stats = `<div class="col stats">
+            <div class="kv"><span>${icon('hp')}체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>${icon('atk')}공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>${icon('def')}방어력</span><b>${fmt(st.def)}</b></div>
+            ${capRow(`${icon('crit')}치명타`, 'crit', st.crit)}${capRow(`${icon('critDmg')}치명 피해`, 'critDmg', st.critDmg)}${capRow(`${icon('spd')}공격 속도`, 'spd', st.spd)}${capRow(`${icon('def')}받는 피해 감소`, 'dmgCut', st.dmgCut)}</div>`;
+      const gear = `<div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k], k === 'weapon' ? 'slot_weapon' : k === 'armor' ? 'slot_armor' : 'slot_acc')}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
+            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-exslot title="전용 무기">${hs?.ex ? icon('exShard') : uiPic('icons/slot_exclusive', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
+            <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${uiPic('icons/lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
+          <div class="row"><button class="btn mini grow" data-auto ${own ? '' : 'disabled'}>자동 장착</button><button class="btn mini grow" data-off ${own ? '' : 'disabled'}>모두 해제</button></div>`;
+      const body = !own ? previewHtml(id) : tab === 'info' ? `${head}${stats}${tabHtml('info', id)}${tabHtml('costume', id)}` : tab === 'gear' ? `${gear}${tabHtml('ex', id)}` : tab === 'grow' ? `${tabHtml('grow', id)}<div class="hsep"></div>${tabHtml('trans', id)}` : tabHtml('skill', id);
       root.innerHTML = `<div class="body">
         <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}" title="${heroOf(x).name} Lv.${S.heroes[x].lv}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}</span><span class="hst">${iconText('star').repeat(S.heroes[x].star ?? 1)}</span><b class="hlv">Lv.${S.heroes[x].lv}</b></button>`).join('')}</div>
         <div class="fbcol"><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
         <div class="col grow">
-          <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
-            <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
-              <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
-              <span class="xs mute fit2 fit" data-min="${CONFIG.ui.fit.desc}">${esc(h.concept)}</span></div></div>
-          <div class="tabs">${[['grow', '성장', 'hero_growth'], ['skill', '스킬', 'hero_skill'], ['trans', '초월', 'hero_trans'], ['ex', '전용 무기', 'hero_exclusive'], ['costume', '코스튬', 'hero_costume'], ['info', '능력·인연', 'hero_bond']].map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div>
-          <div class="panel col grow scroll">${!own ? previewHtml(id) : tabHtml(tab, id)}</div>
-        </div>
-        <div class="col eq">
-          <div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k], k === 'weapon' ? 'slot_weapon' : k === 'armor' ? 'slot_armor' : 'slot_acc')}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
-            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="ex" title="전용 무기">${hs?.ex ? icon('exShard') : uiPic('icons/slot_exclusive', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
-            <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${uiPic('icons/lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
-          <div class="row"><button class="btn mini grow" data-auto ${own ? '' : 'disabled'}>자동 장착</button><button class="btn mini grow" data-off ${own ? '' : 'disabled'}>모두 해제</button></div>
-          <div class="panel col stats scroll">
-            <div class="kv"><span>${icon('hp')}체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>${icon('atk')}공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>${icon('def')}방어력</span><b>${fmt(st.def)}</b></div>
-            ${capRow(`${icon('crit')}치명타`, 'crit', st.crit)}${capRow(`${icon('critDmg')}치명 피해`, 'critDmg', st.critDmg)}${capRow(`${icon('spd')}공격 속도`, 'spd', st.spd)}${capRow(`${icon('def')}받는 피해 감소`, 'dmgCut', st.dmgCut)}
-          </div>
+          ${kitTabs([['info', '일반'], ['skill', '스킬'], ['gear', '장비'], ['grow', '성장']], own ? tab : '', 'data-tab', 80)}
+          <div class="panel col grow scroll htab">${body}</div>
         </div></div>`;
       $$('[data-id]', root).forEach((b) => (b.onclick = () => ((id = b.dataset.id!), draw())));
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
-      $('[data-treasure]', root).onclick = () => comingSoon('전용 보물(영웅 외전에서 해금)', 'C');
+      root.querySelector<HTMLElement>('[data-treasure]')?.addEventListener('click', () => comingSoon('전용 보물(영웅 외전에서 해금)', 'C'));
+      root.querySelector<HTMLElement>('[data-exslot]')?.addEventListener('click', () => root.querySelector('.htab [data-exup], .htab [data-sh]')?.scrollIntoView({ block: 'center' }));
       // 미리보기 영입 → 영입 무대 → 끝나면 이 화면 다시 (이제 가진 영웅)
       const rb = root.querySelector<HTMLElement>('.preview [data-hero]');
       if (rb) rb.onclick = () => recruitShow(id, () => (persist(), syncBar(), draw()));
       if (!own) return;
-      $('[data-auto]', root).onclick = () => {
+      const au = root.querySelector<HTMLElement>('[data-auto]');
+      if (au) au.onclick = () => {
         const n = autoEquip(id);
         persist();
         toast(n ? `${n}칸 바꿨어요` : '더 좋은 장비가 없어요');
         draw();
       };
-      $('[data-off]', root).onclick = () => {
+      const off = root.querySelector<HTMLElement>('[data-off]');
+      if (off) off.onclick = () => {
         unequipAll(id);
         persist();
         draw();
@@ -287,10 +291,8 @@ register('bag', {
 
 /** 영웅 카드 (상점 · 영웅 목록 「미보유」 같은 카드): 큰 그림 · 직업·위치 배지 · 한 줄 소개 · 가격 — 멤버·오리지널 구분 없음 */
 export function heroShopCard(id: string) {
-  const h = heroOf(id);
-  const j = JOBS[h.job];
-  // 오른쪽 위 직업 아이콘 원 (직업색 · MOBILE_REF §3-C)
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><i class="jobc" style="--jc:${T.battle.jobColor[h.job]}" title="${j.name}">${icon(h.job)}</i><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><span class="one fit" data-min="${CONFIG.ui.fit.desc}">${esc(taglineOf(id, h.title))}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
+  // 카드 1종 (UI_KIT_1018 §7 · 상점은 100 폭) + 아래 금 버튼 (값)
+  return `<div class="shc" data-h="${id}">${heroCard(id, { w: 100, star: 1 })}<button class="kbtn gold" data-hero="${id}" style="width:100px;height:30px;${k9('btn_gold', 14)}"><span>${icon('stardust')} ${fmt(heroPrice(id))}</span></button></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
@@ -358,6 +360,7 @@ register('shop', {
       else
         body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n, pic]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
+      fillCards(root);
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
       $$('[data-job]', root).forEach((b) => (b.onclick = () => ((job = b.dataset.job!), draw())));
       const zs = root.querySelector<HTMLSelectElement>('[data-zsel]');

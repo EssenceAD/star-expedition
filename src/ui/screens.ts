@@ -6,49 +6,54 @@ import { CONFIG } from '../config';
 import { activeBonds, BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
-import { heroStock } from '../game/shop';
-import { heroShopCard } from './screensB';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
-import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/account';
-import { freeSummonLeft } from '../game/gear';
-import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
+import { accNeed, boostLeft, buyBooster, stageCost, staMax, stamina } from '../game/account';
+import { hasCostume } from '../game/costume';
+import { mailUnread } from '../game/social';
+import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
-import { lobbyLifeStart, lobbyLifeTick } from './lobbyLife';
+import { lobbyLifeStart, lobbyLifeStop, lobbyLifeTick, town } from './lobbyLife';
 import { attendPopup, dailyText, missionBadge } from './screensD';
 import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
 import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
-import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
-import { icon } from '../theme/tokens';
+import { PARTY_MAX, partyIds, persist, S } from '../game/state';
+import { icon, iconArt, svgIcon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
+import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, modal, openChatWindow, playTalk, register, rewardRow, starsHtml, syncBar, toast } from './core';
+import { setBackdrop, view } from './view';
+import { k9, kit9, kitPart } from './kit';
+import { fillCards, heroCard } from './cards';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
 const zoneOf = (id: string): Zone => JOBS[heroOf(id).job].zone;
 const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분` : sec >= 60 ? `${Math.floor(sec / 60)}분 ${Math.floor(sec % 60)}초` : `${Math.ceil(sec)}초`);
-/** 영웅 카드 (세로 · 왼쪽 위 위치 문장 · 오른쪽 위 레벨 · 이름 띠) */
-const card = (id: string, extra = '', cls = '') => {
-  const h = heroOf(id);
-  const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn">${icon(`zone_${zoneOf(id)}`)}</span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
-};
-const zoneTabs = (on: string, withUnowned = false) =>
-  `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
+/** 영웅 카드 = 카드 1종 (UI_KIT_1018 §7 · ui/cards.ts) · 편성은 72 폭 · 편성에 든 영웅은 체크 · 없는 영웅은 자물쇠 */
+const card = (id: string, extra = '', cls = '') => heroCard(id, { w: 72, attrs: `data-h="${id}"`, cls, extra: `${cls.includes('in') ? kitPart('check', 22, 23, 'cchk') : ''}${owned(id) ? '' : kitPart('lock', 16, 24, 'clock')}${extra}` });
+const zoneTabs = (on: string, withUnowned = false) => kitTabs([['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]] as [string, string]), ...(withUnowned ? [['none', '미보유'] as [string, string]] : [])], on, 'data-tab', 60);
 
-// ───────── 타이틀 ─────────
+// ───────── 타이틀 (docs/UI_KIT_1018.md §3 · target_1018/title.jpg) ─────────
+//  키 아트 cover · 로고(그림) 가로 380 · 위 SAFE+4 · 「바람의 원정대」 Hahmlet 19 · 「화면을 눌러 시작」 1.6초 깜빡 · 오른쪽 아래 버전 · 하늘에 별 12개 반짝
+//  어디를 눌러도 시작 (처음부터는 설정 안으로)
 register('title', {
   enter(root) {
     root.id = 'title';
-    root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>${fxt('별의 원정대')}</b><i>(가제) · 1단계 시스템 시험판</i></div>
-      <button class="btn hi big" data-go>원정 출발</button>
-      <p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
-      <div class="row"><button class="btn mini" data-reset>처음부터</button></div>
-      <div class="ver">v${__APP_VERSION__}</div>`;
+    root.dataset.go = '';
+    const T = `${import.meta.env.BASE_URL}art/ui/title/`;
+    setBackdrop(`${T}key_art.jpg`);
+    const stars = Array.from({ length: 12 }, () => `<i class="tw" style="left:${(4 + Math.random() * 92).toFixed(1)}%;top:${(3 + Math.random() * 42).toFixed(1)}%;animation-delay:-${(Math.random() * 2.4).toFixed(2)}s;animation-duration:${(1.6 + Math.random() * 1.6).toFixed(2)}s"></i>`).join('');
+    root.innerHTML = `<div class="tt-art" style="background-image:url(${T}key_art.jpg)"></div>${stars}
+      <img class="tt-logo" src="${T}logo.png" alt="W.I.N.D — Wayfarers of the Infinite Night's Dawn" draggable="false">
+      <h1 class="tt-sub th">바람의 원정대</h1>
+      <p class="tt-tap tx">화면을 눌러 시작</p>
+      <span class="tt-ver tx">v${__APP_VERSION__}</span>`;
     a2hsBanner(root);
-    $('[data-go]', root).onclick = async () => {
+    root.onclick = async (e) => {
+      if ((e.target as HTMLElement).closest('.a2hs')) return;
+      root.onclick = null;
       goFullscreen();
       const { initAudioEngine } = await import('../core/audio/engine');
       initAudioEngine();
@@ -56,16 +61,6 @@ register('title', {
       if (!S.prologue) go('battle', { stage: { c: 1, s: 1, d: 0 }, first: true });
       else go('lobby');
     };
-    $('[data-reset]', root).onclick = () =>
-      modal('처음부터 할까요?', '<p class="dim">이 기기에 저장된 원정대 기록이 모두 지워져요.</p>', [
-        ['그만두기', null],
-        ['처음부터', () => {
-          setSave(newSave());
-          persist();
-          refresh();
-          toast('새 원정대를 꾸렸어요');
-        }, true],
-      ]);
   },
 });
 
@@ -85,47 +80,97 @@ export function teamBand(extra = '') {
   return `<div class="tband"><div class="row"><span class="tl">팀 레벨</span><b class="lv">${S.acc.lv}</b><div class="xbar grow"><i style="width:${p}%"></i><em>${Math.floor(p)}%</em></div>${extra}</div><div class="buffs">${buffChips() || '<span class="xs mute">켜진 버프 없음</span>'}</div></div>`;
 }
 
-// ───────── 로비 (원정대 거점 = 여관 · 킹스레이드 0-2 배치) ─────────
+// ───────── 로비 = 쿼터뷰 마을 (UI_KIT_1018 §6 · target_1018/lobby.jpg) ─────────
+//  건물 이름판(sign 84×30 · Hahmlet 10) 누르면 그 화면 · 영웅 2~3명이 길을 걷고 말풍선 (lobbyLife.ts · data/lobbyLines.ts)
+//  왼쪽 위 plate(이름 Lv) · 오른쪽 위 재화 pill 2 + ≡ · 왼쪽 진행 중 2줄(row) · 아래 medal 4(영웅·가방·임무·도감) + 오른쪽 아래 btn_gold 「출격」
+//  한 화면 버튼 = medal 4 + 출격 + ≡ = 6 (≤ 7 · AUDIT I1) · 나머지 메뉴는 건물이나 ≡ 안
+const SIGNS: [string, number, number, string][] = [
+  ['길드', 430, 92, 'guild'], ['출격', 300, 150, 'adventure'], ['영웅', 170, 210, 'heroes'], ['상점', 560, 190, 'shop'], ['대장간', 660, 120, 'bag'],
+  // 그림 위 빈 건물 (지붕 위): 원형 경기장 = 결투장 · 보라 문 = 레이드 · 책 탑 = 도서관(스토리 다시 보기)
+  ['결투장', 138, 128, 'portal:arena'], ['레이드', 742, 206, 'portal:raid'], ['도서관', 572, 66, 'library'],
+];
+const MENU: [string, string, string][] = [['편성', 'prep', 'formation'], ['콘텐츠', 'portal', 'content'], ['업적', 'mission:ach', 'achieve'], ['친구', 'friends', 'friend'], ['길드', 'guild', 'guild'], ['랭킹', 'ranking', 'ranking'], ['우편', 'mail', 'mail'], ['채팅', 'chat', 'chat'], ['상점', 'shop', 'shop'], ['설정', 'settings', 'settings']];
+const medal = (label: string, attr: string, ic: string, badge = '') => `<button class="lmed" ${attr}>${kitPart('medal', 50, 50)}<i class="lic">${svgIcon(ic)}</i><span class="tx">${label}</span>${badge ? `<em class="lbadge" style="background-image:var(--kit2-badge)"><b class="tx">${badge}</b></em>` : ''}</button>`;
+function placeSigns(root: HTMLElement) {
+  $$('.lsign', root).forEach((el) => {
+    const p = town(+el.dataset.x!, +el.dataset.y!);
+    el.style.left = `${p.x - 42}px`;
+    el.style.top = `${p.y - 15}px`;
+  });
+}
+/** 도서관: 지나온 장 대사 다시 보기 */
+function library() {
+  const seen = CHAPTERS.filter((c) => S.seen[`${c.n}:intro`] || S.seen[`${c.n}:clear`]);
+  const m = modal('도서관', seen.length ? `<p>지나온 이야기를 다시 읽어요.</p><div class="krow lib">${seen.map((c) => `<button class="kbtn navy" data-ch="${c.n}" style="${k9('btn_navy', 14)}"><span>${c.n}장 ${esc(c.name)}</span></button>`).join('')}</div>` : '<p>아직 지나온 이야기가 없어요. 1장을 시작해 봐요!</p>', [['닫기', null, true]]);
+  $$('[data-ch]', m).forEach((b) => (b.onclick = () => {
+    const c = CHAPTERS[+b.dataset.ch! - 1];
+    m.remove();
+    playTalk([...(c.intro ?? []), ...(S.seen[`${c.n}:preBoss`] ? (c.preBoss ?? []) : []), ...(S.seen[`${c.n}:clear`] ? (c.clear ?? []) : [])], () => {});
+  }));
+}
+/** 도감: 모은 영웅·코스튬 · 업적 바로가기 */
+function codex() {
+  const heroes = HEROES.filter((h) => owned(h.id)).length;
+  const costumes = Object.keys(CONFIG.costume).filter((k) => HEROES.some((h) => hasCostume(k, h.id))).length;
+  modal('도감', `<div class="kvs"><div class="kv"><span>영웅</span><b>${heroes} / ${HEROES.length}</b></div><div class="kv"><span>코스튬</span><b>${costumes} / ${Object.keys(CONFIG.costume).length}</b></div><div class="kv"><span>이정표</span><b>${S.miles.length} / ${MILESTONES.length}</b></div></div>`, [['업적 보기', () => go('mission', { tab: 'ach' })], ['영웅 보기', () => go('heroes'), true]]);
+}
+/** ≡ 메뉴: 건물에 없는 메뉴를 한곳에 */
+function lobbyMenu() {
+  const m = modal('메뉴', `<div class="lmenu">${MENU.map(([n, to, ic]) => `<button class="lmi" data-to="${to}">${kitPart('medal', 40, 40)}<i class="lic">${svgIcon(ic)}</i><span class="tx">${n}</span></button>`).join('')}</div>`, [['닫기', null]], { w: 440 });
+  $$('[data-to]', m).forEach((b) => (b.onclick = () => {
+    const to = b.dataset.to!;
+    m.remove();
+    if (to === 'chat') return openChatWindow();
+    if (to.startsWith('mission:')) return go('mission', { tab: to.split(':')[1] });
+    go(to as never);
+  }));
+}
 register('lobby', {
-  title: '원정대 여관',
   enter(root) {
-    root.classList.add('lobby');
+    root.classList.add('lobby2');
     const ns = nextStage();
-    const lead = partyIds()[0] ?? 'woongs';
+    const sta = stamina();
     root.innerHTML = `
-      <div class="me panel"><div class="pt" style="background-image:url(${heroPortrait(lead)})"></div><div class="col grow"><b>${S.titles.on ? `<span class="chip on">${esc(S.titles.on)}</span> ` : ''}${esc(S.acc.name)} <span class="gold">Lv.${S.acc.lv}</span></b>
-        ${teamBand(`<span class="xs pwr">${icon('power')} <b class="pw">${fmt(partyPower())}</b></span>`)}</div></div>
-      <div class="quest panel col">
-        <b class="sm">${icon('mission')} 진행 중</b>
-        <button class="btn qrow" data-next>${icon('adventure')} 다음: ${stageName(ns)} ${CHAPTERS[ns.c - 1].name}</button>
-        <button class="btn qrow" data-mis="d">${icon('mission')} 일일 미션 ${dailyText()}${missionBadge() ? ` <em class="badge">${missionBadge()}</em>` : ''}</button>
-        <button class="btn qrow" data-portal="miles">${icon('star')} 이정표 ${S.miles.length}/${MILESTONES.length}${milesReady().length ? ` <em class="badge">${milesReady().length}</em>` : ''}</button>
-        <span class="sm b">${icon('star')} 이벤트</span>
-        <button class="btn qrow" data-mis="ev">${CONFIG.social.event.name} ${eventLeft() ? `남은 ${eventLeft()}일` : '(끝)'}</button>
+      ${SIGNS.map(([n, x, y, to]) => `<button class="lsign" data-x="${x}" data-y="${y}" data-to="${to}"${to.includes(':') || to === 'library' ? '' : ` data-go="${to}"`}>${kit9('sign', 84, 30, 15, '', '', `<span class="th">${n}</span>`)}</button>`).join('')}
+      ${kit9('plate', 170, 34, 14, 'lplate', '', `<span class="tx nm">${esc(S.acc.name)}</span><span class="tx lv">Lv.${S.acc.lv}</span><span class="tx st" data-sta>${sta}/${staMax()}</span>`)}
+      <div class="lcur">${[['stardust', '별가루'], ['gold', '골드']].map(([k, n]) => kit9('pill', 112, 24, 12, 'lpill', '', `<span class="tx k">${n}</span><b class="tx v" data-cur="${k}">${fmt(S.cur[k] ?? 0)}</b>`)).join('')}</div>
+      <button class="lmenu-btn" data-menu title="메뉴">${kitPart('badge', 30, 30)}<i class="lic">${svgIcon('menu')}</i>${mailUnread() ? `<em class="lbadge" style="background-image:var(--kit2-badge)"><b class="tx">${mailUnread()}</b></em>` : ''}</button>
+      <div class="lrows">
+        <button class="lrow" data-next style="${k9('row', 10)}"><span class="tx">다음: ${stageName(ns)} ${esc(CHAPTERS[ns.c - 1].name)}</span></button>
+        <button class="lrow" data-mis="d" style="${k9('row', 10)}"><span class="tx">일일 미션 ${dailyText()}${missionBadge() ? ` · 받을 것 ${missionBadge()}` : ''}</span></button>
       </div>
-      <div class="bigs">
-        <button class="medal" data-portal="world">${icon('world')}<span>월드 보스</span></button>
-        <button class="medal" data-portal="raid">${icon('raid')}<span>레이드</span></button>
-        <button class="medal main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
-      </div>
-      <div class="dock">
-        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['mission', '미션', 'mission'], ['mission:ach', '업적', 'achieve'], ['friends', '친구', 'friend'], ['shop', '상점', 'shop'], ['guild', '길드', 'guild'], ['ranking', '랭킹', 'ranking'], ['settings', '설정', 'settings']]
-          .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : to.includes(':') ? `data-mis="${to.split(':')[1]}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : to === 'mission' && missionBadge() ? `<em class="badge">${missionBadge()}</em>` : ''}</button>`)
-          .join('')}
-      </div>`;
-    $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never)));
+      <div class="ldock">${medal('영웅', 'data-go="heroes"', 'heroes')}${medal('가방', 'data-go="bag"', 'bag')}${medal('임무', 'data-go="mission"', 'mission', missionBadge() ? String(missionBadge()) : '')}${medal('도감', 'data-codex', 'story')}</div>
+      <button class="lgo" data-go="adventure" style="${k9('btn_gold', 20)}"><span class="th">출격</span></button>`;
+    placeSigns(root);
+    $$<HTMLElement>('[data-to]', root).forEach((b) => (b.onclick = () => {
+      const to = b.dataset.to!;
+      if (to === 'library') return library();
+      if (to.startsWith('portal:')) return go('portal', { tab: to.split(':')[1] });
+      go(to as never);
+    }));
+    $$<HTMLElement>('.ldock [data-go], .lgo', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never)));
     $('[data-next]', root).onclick = () => go('prep', { stage: ns });
-    $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
-    $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
-    $$('[data-soon]', root).forEach((b) => (b.onclick = () => comingSoon(...(b.dataset.soon!.split('|') as [string, string]))));
+    $('[data-mis]', root).onclick = () => go('mission', { tab: 'd' });
+    $('[data-codex]', root).onclick = codex;
+    $('[data-menu]', root).onclick = lobbyMenu;
+    setBackdrop(`${import.meta.env.BASE_URL}art/ui/bg/lobby_town.jpg`);
+    view.onResize.push(relayoutLobby);
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
-    lobbyLifeStart();
+    lobbyLifeStart(root);
     // 로비가 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },
+  leave() {
+    lobbyLifeStop();
+    view.onResize = view.onResize.filter((f) => f !== relayoutLobby);
+  },
   tick: (dt) => lobbyLifeTick(dt),
 });
+const relayoutLobby = () => {
+  const r = document.querySelector<HTMLElement>('.lobby2');
+  if (r) placeSigns(r);
+};
 let offlineChecked = false;
 /** 로비에 처음 들어올 때 한 번: 방치 보상 */
 function offlinePopup() {
@@ -134,8 +179,9 @@ function offlinePopup() {
   const o = computeOffline();
   if (!o) return;
   const r = o.reward;
-  modal(`${icon('offline')} 그동안 원정대는…`, `<p class="dim">${fmtTime(o.away)} 동안 ${stageName(o.stage)}에서 사냥했어요${o.away > o.seconds ? ` (최대 ${CONFIG.offline.maxHours}시간까지)` : ''}.</p>
-    <div class="rw row">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="panel col">${icon(k as string)}<span class="xs">${k === 'exp' ? '영웅 경험치' : CUR_NAME[k as string]}</span><b class="gold">+${fmt(v as number)}</b></div>`).join('')}</div>`, [
+  // 보상 = 등급 받침 줄 (팝업 1종 · 예전엔 결과 화면 CSS가 섞여 글씨 40px · 가로 스크롤이 나던 화면 · AUDIT_1018 B1)
+  modal('그동안 원정대는…', `<p>${fmtTime(o.away)} 동안 ${stageName(o.stage)}에서 사냥했어요${o.away > o.seconds ? ` (최대 ${CONFIG.offline.maxHours}시간까지)` : ''}.</p>
+    ${rewardRow(([['gold', r.gold], ['exp', r.exp], ['enh', r.enh]] as [string, number][]).filter(([, v]) => v).map(([k, v]) => [iconArt(k) ?? '', k === 'enh' ? 'rare' : 'common', `+${fmt(v)}`, k === 'exp' ? '영웅 경험치' : CUR_NAME[k]]))}`, [
     ['모두 받기', () => {
       const ups = claimOffline(o);
       persist();
@@ -249,7 +295,8 @@ function lastForm(done: () => void) {
     const bench = HEROES.filter((h) => owned(h.id) && !partyIds().includes(h.id)).sort((a, b) => heroPower(b.id) - heroPower(a.id));
     $('[data-lf]', m).innerHTML = `<div class="row">${ps.map((p, i) => `<button class="panel col lfp${i === at ? ' on' : ''}" data-at="${i}"><b class="sm">파티 ${i + 2}</b><div class="row">${[0, 1, 2, 3].map((k) => (p[k] ? `<div class="pt s" data-rm="${p[k]}" title="${esc(heroOf(p[k]).name)}" style="background-image:url(${heroPortrait(p[k])})"></div>` : '<div class="pt s empty"></div>')).join('')}</div></button>`).join('')}</div>
       <span class="xs mute">파티 1은 지금 편성 파티 · 파티를 고르고 아래 영웅을 눌러 넣어요 (넣은 영웅을 다시 누르면 빠짐) · 4명까지</span>
-      <div class="roster scroll lfr">${bench.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ps.flat().includes(h.id) ? 'in' : '')).join('') || '<span class="mute">파티 밖 영웅이 없어요</span>'}</div>`;
+      <div class="roster scroll lfr">${bench.map((h) => card(h.id, '', ps.flat().includes(h.id) ? 'in' : '')).join('') || '<span class="mute">파티 밖 영웅이 없어요</span>'}</div>`;
+    fillCards(m);
     $$('[data-at]', m).forEach((b) => (b.onclick = () => ((at = +b.dataset.at!), draw())));
     $$('.lfr [data-h]', m).forEach(
       (b) =>
@@ -288,7 +335,7 @@ register('prep', {
       root.innerHTML = `<div class="body">
           <div class="col grow">
             ${zoneTabs(tab)}
-            <div class="roster grow scroll">${mine.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ids.includes(h.id) ? 'in' : '')).join('')}${notMine.map((h) => card(h.id, `<span class="lk">${icon('lock')}</span>`).replace('data-h=', 'data-lk=')).join('')}</div>
+            <div class="roster grow scroll">${mine.map((h) => card(h.id, '', ids.includes(h.id) ? 'in' : '')).join('')}${notMine.map((h) => card(h.id).replace('data-h=', 'data-lk=')).join('')}</div>
             <span class="xs mute">카드를 눌러 넣고 빼요 (최대 ${PARTY_MAX}명) · 위치(전방·중앙·후방)는 직업으로 정해지고 전투에서 그 순서로 서요 · 길게 누르면 영웅 정보</span>
           </div>
           <div class="col side">
@@ -321,6 +368,7 @@ register('prep', {
             </div>` : ''}
           </div>
         </div>`;
+      fillCards(root);
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $$('[data-h]', root).forEach((b) => {
         const id = b.dataset.h!;
@@ -380,20 +428,29 @@ register('prep', {
   },
 });
 
-// ───────── 영웅 목록 (정보 화면은 screensB.ts) ─────────
+// ───────── 영웅 목록 (UI_KIT_1018 §7 · target_1018/heroes.jpg) — 정보 화면은 screensB.ts ─────────
+//  위: back 30 · title_ribbon 160×34 「영웅」 · 탭 tab_on/off 68×26 × 5 (전체·전사·궁수·마법사·사제) · 카드 92×190 (x = SAFE+8 + k·101, y 78) · 아래로 스크롤
+//  없는 영웅은 가진 영웅 뒤에 흐리게(자물쇠) · 누르면 미리보기
+const CLASS_TABS: [string, string, string[]][] = [['all', '전체', []], ['warrior', '전사', ['knight', 'warrior', 'fighter', 'assassin']], ['archer', '궁수', ['archer', 'engineer']], ['mage', '마법사', ['mage']], ['priest', '사제', ['priest', 'druid']]];
+export const kitTabs = (tabs: [string, string][], on: string, attr = 'data-tab', w = 68) =>
+  `<div class="ktabs">${tabs.map(([k, n]) => `<button class="ktab${k === on ? ' on' : ''}" ${attr}="${k}" style="width:${w}px;${k9(k === on ? 'tab_on' : 'tab_off', 12)}"><span class="tx">${n}</span></button>`).join('')}</div>`;
 register('heroes', {
-  title: () => `${icon('heroes')} 영웅 (${HEROES.filter((h) => owned(h.id)).length} / ${HEROES.length})`,
   enter(root) {
     let tab = 'all';
+    root.classList.add('kscr');
     const draw = () => {
-      const list = HEROES.filter((h) => (tab === 'all' || zoneOf(h.id) === tab) && owned(h.id));
-      // 미보유: 상점과 같은 카드 · 같은 섞인 순서 (B 보강 §3)
-      const unowned = `<div class="cards hcards grow scroll">${heroStock().map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
-      root.innerHTML = `<div class="body"><div class="col grow">${zoneTabs(tab, true)}${tab === 'none' ? unowned : `<div class="roster grow scroll">${list
-        .map((h) => card(h.id, owned(h.id) ? `<span class="xs gold">${fmt(heroPower(h.id))}</span>` : `<span class="xs mute">${h.joinChapter ? `${h.joinChapter}장 클리어` : '영웅 상점 (B)'}</span>`))
-        .join('') || '<span class="mute">없어요</span>'}</div>`}</div></div>`;
+      const jobs = CLASS_TABS.find(([k]) => k === tab)![2];
+      const fits = (id: string) => !jobs.length || jobs.includes(heroOf(id).job);
+      const mine = HEROES.filter((h) => owned(h.id) && fits(h.id)).sort((a, b) => (S.heroes[b.id].star ?? 1) - (S.heroes[a.id].star ?? 1) || heroPower(b.id) - heroPower(a.id));
+      const rest = HEROES.filter((h) => !owned(h.id) && fits(h.id));
+      root.innerHTML = `<div class="kbg" style="background-image:url(${import.meta.env.BASE_URL}art/ui/bg/lobby_town.jpg)"></div>
+        <button class="kback" data-back title="뒤로">${kitPart('back', 30, 30)}</button>
+        ${kit9('title_ribbon', 160, 34, 16, 'kttl', '', `<span class="th">영웅</span><small class="tx">${HEROES.filter((h) => owned(h.id)).length}/${HEROES.length}</small>`)}
+        ${kitTabs(CLASS_TABS.map(([k, n]) => [k, n]), tab)}
+        <div class="hgrid">${[...mine, ...rest].map((h) => heroCard(h.id, { attrs: `data-h="${h.id}"`, extra: owned(h.id) ? `<span class="tx clv">Lv.${S.heroes[h.id].lv}</span>` : kitPart('lock', 20, 30, 'clock') })).join('') || '<span class="tx">없어요</span>'}</div>`;
+      fillCards(root);
+      $('[data-back]', root).onclick = () => go('lobby', {}, false);
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
-      $$('[data-hero]', root).forEach((b) => (b.onclick = (e) => (e.stopPropagation(), go('shop', { cat: 'hero' }))));
       $$('[data-h]', root).forEach((b) => (b.onclick = () => go('hero', { id: b.dataset.h })));
     };
     draw();

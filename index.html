@@ -7,48 +7,36 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="별의 원정대" />
+<meta name="apple-mobile-web-app-title" content="WIND" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icons/icon-192.png" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-<title>별의 원정대 (가제)</title>
+<title>W.I.N.D · 바람의 원정대</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@700;800;900&family=Noto+Serif+KR:wght@600;700&family=Luckiest+Guy&family=Cinzel:wght@600;700&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800&family=Hahmlet:wght@800&family=Luckiest+Guy&display=swap" />
 <link rel="stylesheet" href="/src/style.css" />
+<link rel="stylesheet" href="/src/wind.css" />
 </head>
 <body>
+<div id="bd"></div>
 <div id="stage">
   <canvas id="cv"></canvas>
   <div id="hud" hidden>
-    <div id="tl">
-      <button id="bAuto" class="rb" aria-pressed="false" title="자동 전투"><span>자동</span></button>
-      <button id="bSpeed" class="rb" title="배속"><span>×1</span></button>
-    </div>
-    <div id="stg"></div>
-    <div id="tr">
-      <button id="bPause" class="rb" aria-pressed="false" title="일시정지"></button>
-      <button id="bQuit" class="rb" title="포기"></button>
-    </div>
-    <div id="pausedTag" hidden>일시정지</div>
-    <div id="boss" hidden>
-      <div class="bp"></div>
-      <div class="bi">
-        <div class="bn"><b id="bName">보스</b><span id="bPct">100%</span></div>
-        <div class="bh"><i id="bHp"></i><em id="bHpN"></em></div>
-        <div class="bs"><span>누적 피해 <b id="bDmg">0</b></span><span>남은 시간 <b id="bTime">3:00</b></span></div>
-      </div>
-    </div>
-    <div id="raidHud" hidden><div id="rParts"></div><div class="gg"><span>그로기</span><div class="bh"><i id="rGg"></i></div><em id="rDown"></em></div></div>
-    <button id="bDodge" hidden>줄 바꾸기</button>
-    <div id="wave">WAVE 1</div>
-    <div id="clock"></div>
+    <button id="bAuto" class="hb" aria-pressed="false" title="자동 전투"><span class="tx">자동</span></button>
+    <button id="bSpeed" class="hb" title="배속"><span class="tx">×1</span></button>
+    <div id="strip"><span class="tx" id="stripT"></span></div>
+    <button id="bPause" title="일시정지"></button>
+    <div id="boss" hidden><i class="bp"></i><span class="tx bn" id="bName">보스</span><span class="tx bpct" id="bPct">100%</span><div class="bbar"></div></div>
+    <div id="raidHud" hidden><div id="rParts"></div><div class="gg"><span class="tx">그로기</span><div class="ggb"></div><em class="tx" id="rDown"></em></div></div>
+    <button id="bDodge" hidden><span class="tx">줄 바꾸기</span></button>
     <div id="warn" hidden></div>
-    <div id="dps"><div id="dpsL"><div class="dh dtabs"><button data-dt="dealt">피해</button><button data-dt="healed">회복</button><button data-dt="taken">받은 피해</button></div><div class="rows"></div></div><button id="bDps" title="피해 판 접기"></button></div>
+    <div id="dps"><button id="bDps" title="피해량"><span class="tx">피해량</span></button><div id="dpsL"><div class="dh dtabs"><button data-dt="dealt">피해</button><button data-dt="healed">회복</button><button data-dt="taken">받은 피해</button></div><div class="rows"></div></div></div>
     <div id="pvpHud" hidden></div>
     <button id="bEmote" hidden title="감정 표현"></button>
     <div id="emoPop" hidden></div>
     <div id="bar"></div>
+    <div id="cue"></div>
     <div id="result" hidden></div>
   </div>
   <div id="ui"></div>

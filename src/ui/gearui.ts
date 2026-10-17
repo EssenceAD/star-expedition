@@ -13,6 +13,10 @@ const PART_IC: Record<string, string> = { weapon: 'weapon', armor: 'armor', acc:
 export const gradeKey = (g: number) => G.grades[g]?.key ?? 'common';
 /** 아이템 그림 (부위·등급별 · config gear.art · have=false면 기호) */
 const artOf = (g: Gear) => (G.art.have ? `<i class="art" style="background-image:url(${import.meta.env.BASE_URL}art/${G.art.dir}/${G.types.art[g.type ?? ''] ?? g.part}_${gradeKey(g.grade)}.png)"></i>` : `<i class="art">${icon(PART_IC[g.part])}</i>`);
+/** 키트 받침용: 장비·룬 그림 주소 · 등급 → 받침 색 (일반·고급 = common · 희귀 = rare · 영웅 = epic · 전설 이상 = legend) */
+export const gearArtUrl = (g: Gear) => `${import.meta.env.BASE_URL}art/${G.art.dir}/${G.types.art[g.type ?? ''] ?? g.part}_${gradeKey(g.grade)}.png`;
+export const runeArtUrl = (r: Rune) => `${import.meta.env.BASE_URL}art/${G.art.dir}/rune_${Math.min(4, r.grade)}.png`;
+export const socketRarity = (grade: number) => (grade >= 4 ? 'legend' : grade === 3 ? 'epic' : grade === 2 ? 'rare' : 'common') as 'common' | 'rare' | 'epic' | 'legend';
 /** 장비 칸: 등급 테두리 · 강화 구간 빛(eb1~5) · 모서리 큰 +N · 티어 · 별 */
 export const gearCell = (g: Gear | null, attrs = '', label = '', pic = '') =>
   g
