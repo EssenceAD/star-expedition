@@ -3,7 +3,6 @@ import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
 import { heroDirs, HEROES, setPxHeights } from './data/heroes';
-import { MOB_KINDS } from './data/mobs';
 import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state';
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
@@ -48,11 +47,9 @@ fitView(stage, cv);
 await loadFlags();
 const B = import.meta.env.BASE_URL;
 // ───────── 그림 (SPRITE_RES_1017 §C: 처음엔 꼭 필요한 것만) ─────────
-// 꼭 필요한 것: 몬스터 시트 · 전투 기본 배경 · 치명타 별 · 타이틀 그림 · 로비에 걸어 다닐 영웅 + 지금 편성 · 영웅 키(칸 정보만)
-//  나머지 영웅 시트는 로비 뜬 뒤 뒤에서 · 컷인은 그 영웅이 나오는 전투 전에 · 레이드 보스 그림·콘텐츠 배경은 뒤에서
+// 꼭 필요한 것: 전투 기본 배경 · 치명타 별 · 타이틀 그림 · 로비에 걸어 다닐 영웅 + 지금 편성 · 영웅 키(칸 정보만)
+//  몹·보스 시트와 지역 배경은 그 전투 전에(ensureBattleArt) · 나머지 영웅 시트는 로비 뜬 뒤 뒤에서 · 컷인은 그 영웅이 나오는 전투 전에 · 레이드 보스 그림·콘텐츠 배경은 뒤에서
 loadSave();
-const mobDirs = new Set<string>();
-for (const m of Object.values(MOB_KINDS)) for (const d of Object.values(m.anims)) for (const f of d!.frames) mobDirs.add(f.split(':')[0]);
 const firstHeroes = [...new Set([...partyIds(), ...Object.keys(S.heroes)])].slice(0, Math.max(CONFIG.ui.lobbyLife.walkers, PARTY_MAX));
 const sheet: Art['sheet'] = { img: {}, cell: {}, base: {} };
 const bar = document.querySelector<HTMLElement>('#loading .ld-bar i');
@@ -83,7 +80,6 @@ const stall = setInterval(() => {
 }, 1000);
 if (bar) bar.classList.add('real');
 track(setPxHeights());
-track(loadInto(sheet, [...mobDirs]));
 track(loadInto(sheet, heroDirs(firstHeroes)));
 const bgP = track(img(`${B}art/bg.jpg`).catch(() => null));
 const critP = track(img(`${B}art/ui/battle/crit_burst.png`).catch(() => null));

@@ -2,7 +2,7 @@
 import { CONFIG } from '../config';
 import { activeBonds } from '../data/bonds';
 import { artOf, heroOf, HEROES } from '../data/heroes';
-import { CHAPTER_MOBS, MOB_KINDS, PATTERNS, type MobKind } from '../data/mobs';
+import { CHAPTER_MOBS, MOB_KINDS, MOB_ROW, PATTERNS, regionBoss, regionMob, type MobKind } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
@@ -74,8 +74,11 @@ export function mobsAt(p: number, waves: string, chapter: number, o: { hp?: numb
   const cm = CHAPTER_MOBS[(chapter - 1) % CHAPTER_MOBS.length];
   return waves.split('|').map((w) =>
     [...w].map((ch): MobSpec => {
-      const kind = MOB_KINDS[KIND[ch]];
-      const boss = kind.id === 'golem';
+      const base = MOB_KINDS[KIND[ch]];
+      const boss = base.id === 'golem';
+      // 지역 그림 (ANIM_1017 ③): 장의 지역 몹 3종 · 장 보스 — 그림 자체가 지역 색이라 색 바꾸기 없음
+      const region = CHAPTERS[(chapter - 1) % CHAPTERS.length].region;
+      const kind = { ...base, anims: boss ? regionBoss(region) : regionMob(region, MOB_ROW[base.id as 'slime']) };
       const bm = boss ? C.boss : { hp: 1, atk: 1, def: 1 };
       return {
         kind, boss, name: boss ? (o.boss ?? cm.boss) : cm.names[kind.id as 'slime'],
@@ -83,7 +86,7 @@ export function mobsAt(p: number, waves: string, chapter: number, o: { hp?: numb
         atk: Math.round(C.mob.atk * kind.atk * bm.atk * g * (o.atk ?? 1)),
         def: Math.round(C.mob.def * kind.def * bm.def * g),
         rate: kind.rate,
-        tint: (chapter - 1) % T.battle.mobTint.length,
+        tint: 0,
         patterns: boss ? (o.patterns ?? cm.patterns.map((k) => PATTERNS[k])) : undefined,
         portrait: boss ? 'boss_golem' : undefined,
       };
@@ -101,7 +104,7 @@ export function buildHeroes(s: Save = S): HeroSpec[] {
 }
 export function buildStage(st: StageId, s: Save = S): BattleSetup {
   return {
-    heroes: buildHeroes(s), waves: buildMobs(st), limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime,
+    heroes: buildHeroes(s), waves: buildMobs(st), limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime, bg: `region_${CHAPTERS[st.c - 1].region}`,
     bonds: activeBonds(partyIds(s)), region: (st.c - 1) % T.battle.region.length, title: `${CHAPTERS[st.c - 1].name} ${stageName(st)}`,
   };
 }

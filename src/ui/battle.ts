@@ -1,6 +1,6 @@
 // 전투 화면: HUD(패널·스킬·패널별 Auto·AUTO·배속·DPS·보스·예고) + 결과(별 3개·보상·MVP·DPS 기록·레벨업·합류)
 //  흐름: 행동력 → 파티를 필드에 세우고 (처음이면 대사) → 전투 → 승리 기록 → (장 클리어 대사 → 합류 연출) → 결과 → 다시 / 다음 / 반복 / 모험
-import { battleHeroIds, ensureHeroes } from './assets';
+import { ensureBattleArt } from './assets';
 import { CONFIG } from '../config';
 import { headHpPref, render, renderBg, type Art } from '../battle/render';
 import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
@@ -207,7 +207,7 @@ function setup() {
   const keepSpeed = b?.speed ?? 1;
   b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
   // 이 전투 영웅 시트·컷인을 아직 안 받았으면 받을 때까지 전투를 멈춤 (SPRITE_RES §C)
-  const wait = ensureHeroes(battleHeroIds(b.setup));
+  const wait = ensureBattleArt(b.setup);
   artWait = !!wait;
   if (wait) void wait.then(() => (artWait = false));
   b.auto = keepAuto;

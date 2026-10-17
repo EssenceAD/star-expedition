@@ -427,6 +427,14 @@
 - 크기 = 대상 키 × `centerK/bottomK`(최소 px) · 전체 진하기 `fxArt.alpha` 0.85 · 시험 손잡이 `__cast(영웅, 스킬)` · `__fxReady()`
 - 도구: `tools/gif-scene.mjs shield`
 
+## 2-Y. ANIM ③ 지역 배경 · 지역 몹 · 장 보스 (v0.11.0 · docs/ANIM_1017.md ③)
+- 스토리 전투 `setup.bg = region_<지역>` (`CHAPTERS[].region`) → 전용 배경이라 지역 색 바꾸기 안 씀
+- `mobsAt()`: 장의 지역으로 `regionMob(region, row)`(mobs2 · c0·c1 대기 · c2→c3 공격 hit · c4 피격/쓰러짐) · 보스 `regionBoss(region)`(bosses2) · `tint: 0` — 콘텐츠(토벌·던전·탑)도 장 지역 그림
+- 장 보스: 경고 시작 때 `Unit.prep = BOSS_PREP[패턴].cell`(slam·quake r0c2 · beam·focus r1c0 · roar r1c2) → render가 그 칸 + 살짝 떨림 · 터질 때 skill1(r0c3)/skill2(r1c1)/skill3(r1c2) · 쓰러짐 r1c3 → 흔들리며 사라짐(`combat.mobDie.bossSec`)
+- 지역 몹: 맞는 순간(번쩍 > `mobDie.hurtFlash`) c4 · 죽으면 c4로 0.4초 가라앉음 · 평타 시간은 예전과 같음(7fps · hit 1)
+- 로딩: 처음엔 몹 시트 안 받음 · `ensureBattleArt(setup)` = 영웅 시트·컷인 + 그 전투 몹·보스 시트 + 지역 배경을 전투 전에
+- 도구: `tools/gif-scene.mjs boss3 · forest`
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

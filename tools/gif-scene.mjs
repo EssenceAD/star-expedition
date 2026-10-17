@@ -87,6 +87,21 @@ if (scene === 'win') {
     setTimeout(() => b.heroes.forEach((h) => h.shield > 0 && (h.shield = 1)), 3400);
   });
   secs = 6;
+} else if (scene === 'boss3') {
+  // 3장 보스: 경고(준비 칸 + 떨림) → 타격 (ANIM_1017 ③)
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 32);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 3, s: 10, d: 0 } }); window.__b().auto = true; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  // 보스가 다 걸어 들어올 때까지 → 다음 패턴을 0.6초 뒤로 당김 (경고 → 타격을 바로 보려고)
+  console.log('ff', await fast("b.mobs.some((m) => m.mob?.boss && !m.dead && m.x <= m.tx + 1)", 200));
+  await p.evaluate(() => { const b = window.__b(); b.pat.left = 0.6; b.cutIns = 'off'; });
+  secs = 5;
+} else if (scene === 'forest') {
+  // 숲 동굴 1-2: 숲 배경 + 지역 몹 3종 (걸어 들어가 싸움)
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 8);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 2, d: 0 } }); window.__b().auto = true; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  secs = 7;
 } else if (scene === 'arena') {
   await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 30);
   await p.evaluate(() => window.__go('portal', { tab: 'arena' }));
