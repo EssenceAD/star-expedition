@@ -96,7 +96,7 @@ export const byZone = (ids: string[]) => [...ids].sort((a, b) => ZONES.indexOf(J
 export function buildHeroes(s: Save = S): HeroSpec[] {
   return byZone(partyIds(s)).map((id) => {
     const def = heroOf(id);
-    return { def, art: artOf(def), zone: JOBS[def.job].zone, lv: s.heroes[id].lv, st: statsOf(id, s) };
+    return { def, art: artOf(def), zone: JOBS[def.job].zone, lv: s.heroes[id].lv, star: s.heroes[id].star, st: statsOf(id, s) };
   });
 }
 export function buildStage(st: StageId, s: Save = S): BattleSetup {

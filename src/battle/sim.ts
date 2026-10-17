@@ -143,6 +143,8 @@ export interface Battle {
   stop: number;
   shake: number;
   flash: number;
+  /** 결투장 감정 표현 (머리 위 · ui.arenaShow.emoteSec초) */
+  emotes: { uid: number; key: string; t: number }[];
   /** 마지막 일격: 흰 번쩍 남은 초 · 느리게 남은 초 (MOBILE_REF §3-A-7) */
   white: number;
   slowT: number;
@@ -233,7 +235,7 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
   });
   const b: Battle = {
     setup, w: o.w ?? CONFIG.view.wBase, t: 0, phase: 'walk', why: '', wave: -1, walkLeft: K.walkSec * (1 - Math.max(0, ...setup.bonds.map((x) => x.walkCut ?? 0))), scroll: 0, heroes, mobs: [], nums: [], fx: [], parts: [], cut: null, says: [],
-    stop: 0, shake: 0, flash: 0, white: 0, slowT: 0, auto: false, speed: 1, cutIns: 'big', pat: { i: 0, left: 0, warn: 0, text: '' }, stats: { dealt: 0, taken: 0, healed: 0, skills: 0, time: 0, bossDealt: 0 }, queue: [], sounds: [],
+    stop: 0, shake: 0, flash: 0, white: 0, slowT: 0, emotes: [], auto: false, speed: 1, cutIns: 'big', pat: { i: 0, left: 0, warn: 0, text: '' }, stats: { dealt: 0, taken: 0, healed: 0, skills: 0, time: 0, bossDealt: 0 }, queue: [], sounds: [],
   };
   if (setup.arena) b.walkLeft = 0.5;
   applyMods(b);
@@ -669,6 +671,8 @@ export function step(b: Battle, dtReal: number) {
   b.flash = Math.max(0, b.flash - dtReal * 3);
   for (const n of b.nums) n.t += dtReal;
   b.nums = b.nums.filter((n) => n.t < K.nums.life);
+  for (const e of b.emotes) e.t += dtReal;
+  b.emotes = b.emotes.filter((e) => e.t < CONFIG.ui.arenaShow.emoteSec);
   for (const s of b.says) s.t += dtReal;
   b.says = b.says.filter((s) => s.t < s.dur);
   for (const f of b.fx) f.t += dt;

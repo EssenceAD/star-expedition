@@ -366,6 +366,8 @@ export const CONFIG = {
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */
   ui: {
+    /** 결투장 연출 (MOBILE_REF §3-B): VS 입장 초 · VS 박히는 때 · 카운트다운 숫자 · 숫자 하나 초 · 감정 표현 보이는 초 · 상대 AI 감정 간격(초)·확률 · 상대 승률 범위(%) · 상대 리그 순위 최대 */
+    arenaShow: { vsSec: 1.5, vsHitSec: 0.45, count: 3, countSec: 0.7, emoteSec: 2, aiEvery: [6, 14] as number[], aiChance: 0.5, aiRate: [42, 76] as number[], aiRankMax: 300 },
     /** 전투 남은 시간이 이 초 이하면 빨갛게 (MOBILE_REF §3-A-3) */
     clockLowSec: 30,
     /** 승리 별 3개: 첫 별까지(초) · 별 사이(초) */

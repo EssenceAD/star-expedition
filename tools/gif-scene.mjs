@@ -56,8 +56,9 @@ if (scene === 'win') {
 } else if (scene === 'arena') {
   await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 30);
   await p.evaluate(() => window.__go('portal', { tab: 'arena' }));
+  await p.evaluate(() => document.querySelectorAll('.modal').forEach((m) => m.remove()));
   await p.waitForTimeout(500);
-  secs = 6.5;
+  secs = 7.5;
 }
 const vid = mkdtempSync(join(tmpdir(), 'scene-'));
 const cdp = await p.context().newCDPSession(p);
@@ -69,8 +70,15 @@ cdp.on('Page.screencastFrame', ({ data, metadata, sessionId }) => {
 await play();
 await p.waitForTimeout(150);
 await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: size.width, maxHeight: size.height });
-if (scene === 'arena') await p.evaluate(() => document.querySelector('[data-arena], [data-fight], .scr [data-go-arena]')?.click());
-await p.waitForTimeout(secs * 1000);
+if (scene === 'arena') {
+  // 결투장 승리의 리그 첫 상대 → VS 입장 → 3·2·1 → 전투 · 중간에 😊 감정 표현
+  await p.evaluate(() => window.__go('battle', { run: { mode: 'arena', arg: 'victory', sub: 0 } }));
+  await p.waitForTimeout(4700);
+  await p.click('#bEmote');
+  await p.waitForTimeout(250);
+  await p.click('#emoPop [data-emo="emo_smile"]');
+  await p.waitForTimeout(secs * 1000 - 4950);
+} else await p.waitForTimeout(secs * 1000);
 await cdp.send('Page.stopScreencast');
 let list = '';
 frames.forEach(([data, ts], i) => {

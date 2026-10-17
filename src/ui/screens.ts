@@ -16,7 +16,7 @@ import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTO
 import { runTitle } from './screensC';
 import { lobbyLifeStart, lobbyLifeTick } from './lobbyLife';
 import { attendPopup, dailyText, missionBadge } from './screensD';
-import { eventLeft } from '../game/missions';
+import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
 import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
@@ -69,6 +69,22 @@ register('title', {
   },
 });
 
+/** 지금 켜진 버프 (팀 레벨 띠 아래 아이콘 줄): 부스터 · 출석 보너스 · 이벤트 · 인연 */
+function buffChips() {
+  const bl = boostLeft();
+  const out: string[] = [];
+  if (bl) out.push(`<span class="chip on" title="부스터: 전리품 2배">${icon('booster')} ${fmtTime(bl)}</span>`);
+  if (!attendToday()) out.push(`<span class="chip on" title="오늘 출석 보상을 받았어요">${icon('check')} 출석</span>`);
+  if (eventLeft()) out.push(`<span class="chip on" title="${esc(CONFIG.social.event.name)}">${icon('star')} 이벤트</span>`);
+  for (const x of activeBonds(partyIds())) out.push(`<span class="chip on" title="인연: ${x.members.map((m) => heroOf(m).name).join(' · ')}">${icon('heroes')} ${esc(x.name)}</span>`);
+  return out.join('');
+}
+/** 「팀 레벨」 띠 (로비·편성 · MOBILE_REF §3-C-3): 원정대 레벨 · 경험치 % 막대 · 켜진 버프 */
+export function teamBand(extra = '') {
+  const p = Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100);
+  return `<div class="tband"><div class="row"><span class="tl">팀 레벨</span><b class="lv">${S.acc.lv}</b><div class="xbar grow"><i style="width:${p}%"></i><em>${Math.floor(p)}%</em></div>${extra}</div><div class="buffs">${buffChips() || '<span class="xs mute">켜진 버프 없음</span>'}</div></div>`;
+}
+
 // ───────── 로비 (원정대 거점 = 여관 · 킹스레이드 0-2 배치) ─────────
 register('lobby', {
   title: '원정대 여관',
@@ -76,11 +92,9 @@ register('lobby', {
     root.classList.add('lobby');
     const ns = nextStage();
     const lead = partyIds()[0] ?? 'woongs';
-    const bl = boostLeft();
     root.innerHTML = `
       <div class="me panel"><div class="pt" style="background-image:url(${heroPortrait(lead)})"></div><div class="col grow"><b>${S.titles.on ? `<span class="chip on">${esc(S.titles.on)}</span> ` : ''}${esc(S.acc.name)} <span class="gold">Lv.${S.acc.lv}</span></b>
-        <div class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></div>
-        <span class="xs dim">${bl ? `${icon('booster')} 부스터 ${fmtTime(bl)}` : `${icon('power')} <b class="pw">${fmt(partyPower())}</b>`}</span></div></div>
+        ${teamBand(`<span class="xs pwr">${icon('power')} <b class="pw">${fmt(partyPower())}</b></span>`)}</div></div>
       <div class="quest panel col">
         <b class="sm">${icon('mission')} 진행 중</b>
         <button class="btn qrow" data-next>${icon('adventure')} 다음: ${stageName(ns)} ${CHAPTERS[ns.c - 1].name}</button>
@@ -88,7 +102,6 @@ register('lobby', {
         <button class="btn qrow" data-portal="miles">${icon('star')} 이정표 ${S.miles.length}/${MILESTONES.length}${milesReady().length ? ` <em class="badge">${milesReady().length}</em>` : ''}</button>
         <span class="sm b">${icon('star')} 이벤트</span>
         <button class="btn qrow" data-mis="ev">${CONFIG.social.event.name} ${eventLeft() ? `남은 ${eventLeft()}일` : '(끝)'}</button>
-        <div class="bondl">${activeBonds(partyIds()).map((x) => `<span class="chip on">${x.name}</span>`).join('')}</div>
       </div>
       <div class="bigs">
         <button class="medal" data-portal="world">${icon('world')}<span>월드 보스</span></button>
@@ -280,6 +293,7 @@ register('prep', {
           </div>
           <div class="col side">
             <div class="panel col">
+              ${teamBand()}
               <div class="party">${[0, 1, 2, 3].map((i) => {
                 const id = byZone(ids)[i];
                 return id ? `<div class="pcard" data-out="${id}"><div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="xs">${ZONE_NAME[zoneOf(id)]}</span><b class="xs">${heroOf(id).name}</b></div>` : '<div class="pcard empty"><span class="xs mute">비어 있음</span></div>';

@@ -3,7 +3,7 @@
 import { CONFIG } from '../config';
 import { BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
-import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
+import { JOB_IDS, JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { descPassive, descSkill } from '../data/skills';
 import { autoEquip, bagUsed, fitsHero, typeName, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
@@ -11,7 +11,7 @@ import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../gam
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
-import { icon, iconText } from '../theme/tokens';
+import { icon, iconText, T } from '../theme/tokens';
 import { taglineOf } from '../data/taglines';
 import { gachaShow } from './gacha';
 import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast, uiPic } from './core';
@@ -45,7 +45,7 @@ register('hero', {
       const cap = CONFIG.gear.cap;
       const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="cap xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
       root.innerHTML = `<div class="body">
-        <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}" title="${heroOf(x).name} Lv.${S.heroes[x].lv}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}</span></button>`).join('')}</div>
+        <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}" title="${heroOf(x).name} Lv.${S.heroes[x].lv}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}</span><span class="hst">${iconText('star').repeat(S.heroes[x].star ?? 1)}</span><b class="hlv">Lv.${S.heroes[x].lv}</b></button>`).join('')}</div>
         <div class="fbcol"><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
         <div class="col grow">
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
@@ -289,7 +289,8 @@ register('bag', {
 export function heroShopCard(id: string) {
   const h = heroOf(id);
   const j = JOBS[h.job];
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><span class="one fit" data-min="${CONFIG.ui.fit.desc}">${esc(taglineOf(id, h.title))}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
+  // 오른쪽 위 직업 아이콘 원 (직업색 · MOBILE_REF §3-C)
+  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><i class="jobc" style="--jc:${T.battle.jobColor[h.job]}" title="${j.name}">${icon(h.job)}</i><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><span class="one fit" data-min="${CONFIG.ui.fit.desc}">${esc(taglineOf(id, h.title))}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
@@ -331,6 +332,7 @@ register('shop', {
   enter(root, p) {
     let cat = (p.cat as string) ?? 'special';
     let zone = 'all';
+    let job = 'all';
     const draw = () => {
       const cats = [['special', '스페셜', 'shop_special'], ['goods', '재화·소모품', 'shop_material'], ['hero', '영웅', 'shop_hero'], ['costume', '코스튬', 'shop_costume'], ['summon', '장비 소환', 'shop_summon'], ['coin', '특수 재화', 'shop_exchange']];
       let body = '';
@@ -340,9 +342,9 @@ register('shop', {
       else if (cat === 'goods')
         body = `<div class="cards goods">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><span class="gpic">${icon(Object.keys(it.give)[0])}</span><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
       else if (cat === 'hero') {
-        const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone));
+        const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone)).filter((h) => job === 'all' || heroOf(h.id).job === job);
         rollTrack(S);
-        body = `<div class="xs dim capline">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+        body = `<div class="xs dim capline">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="row jobbar"><div class="tabs grow jobs">${[['all', '전체'], ...JOB_IDS.map((k) => [k, JOBS[k].name])].map(([k, n]) => `<button class="tab${job === k ? ' on' : ''}" data-job="${k}">${n}</button>`).join('')}</div><select class="tab" data-zsel>${[['all', '전체 보기'], ...ZONES.map((z) => [z, `${ZONE_NAME[z]}만`])].map(([k, n]) => `<option value="${k}" ${zone === k ? 'selected' : ''}>${n}</option>`).join('')}</select></div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
       } else if (cat === 'summon') {
         const sm = CONFIG.gear.summon;
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>
@@ -357,7 +359,9 @@ register('shop', {
         body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n, pic]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
-      $$('[data-zone]', root).forEach((b) => (b.onclick = () => ((zone = b.dataset.zone!), draw())));
+      $$('[data-job]', root).forEach((b) => (b.onclick = () => ((job = b.dataset.job!), draw())));
+      const zs = root.querySelector<HTMLSelectElement>('[data-zsel]');
+      if (zs) zs.onchange = () => ((zone = zs.value), draw());
       const after = (r: string, m: Record<string, string>) => {
         persist();
         syncBar();

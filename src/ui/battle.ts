@@ -21,6 +21,7 @@ import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
 import { view } from './view';
+import { aiEmote, countdown, emote, pvpHudHtml, resetAiEmote, syncPvpHud, vsIntro } from './arena';
 
 const C = CONFIG.story;
 /** 승리·패배 엠블럼 (public/art/ui · 리본은 비어 있음 → 글자는 금박 글씨로 얹음) */
@@ -37,6 +38,8 @@ let series = { wins: 0, losses: 0 };
 let shown = false;
 /** 전투 전 대사 중 (파티가 필드에 선 채로 · 진행 멈춤) */
 let talking = false;
+/** 결투장 VS 입장·카운트다운 중 (전투 멈춤) */
+let intro = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
 /** DPS 판: 펼침(기억함) · 탭 피해·회복·받은 피해 (MOBILE_REF §3-A-4) */
@@ -131,6 +134,7 @@ function syncHud() {
   w.hidden = !bb.pat.text || bb.phase === 'win' || bb.phase === 'lose';
   const wt = `${iconText('warn')} ${bb.pat.text}`;
   if (bb.pat.text && w.textContent !== wt) w.textContent = wt;
+  if (run?.mode === 'arena') syncPvpHud(bb, $('#pvpHud'));
   // 남은 시간 (WAVE 판 옆 · 30초 남으면 빨강 · 보스 HUD가 뜨면 그쪽에 있음)
   const ck = $('#clock');
   ck.hidden = showBoss || !!bb.raid;
@@ -220,6 +224,17 @@ function setup() {
   buildBar();
   buildRaid();
   dpsLabel();
+  // 결투장: 팀 전체 체력 줄 · 감정 표현 버튼 (MOBILE_REF §3-B)
+  const pvp = run?.mode === 'arena';
+  hud().classList.toggle('pvp', pvp);
+  $('#pvpHud').hidden = !pvp;
+  $('#bEmote').hidden = !pvp;
+  $('#emoPop').hidden = true;
+  if (pvp) {
+    $('#pvpHud').innerHTML = pvpHudHtml(b, run!);
+    syncPvpHud(b, $('#pvpHud'));
+  }
+  resetAiEmote();
   $('#result').hidden = true;
   shown = false;
   const boss = b.setup.waves.flat().find((m) => m.boss);
@@ -243,6 +258,8 @@ function showRunResult() {
         $('#result').hidden = true;
         b = null;
         setup();
+        intro = true;
+        countdown(() => (intro = false));
       };
       return;
     }
@@ -292,6 +309,10 @@ function beginRun(r: Run) {
   $('#result').hidden = true;
   b = null;
   setup();
+  if (r.mode === 'arena') {
+    intro = true;
+    vsIntro(b!, r, () => countdown(() => (intro = false)));
+  }
   if (r.mode === 'side') {
     const id = String(r.arg);
     const h = heroOf(id);
@@ -446,6 +467,14 @@ register('battle', {
     };
     $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => (t.onclick = () => ((dpsTab = t.dataset.dt as typeof dpsTab), dpsLabel())));
     $('#cv').onpointerdown = () => b?.raid && b.phase === 'fight' && raidDodge(b);
+    // 😊 감정 표현 (결투장 · 빠른 채팅과 같은 묶음 4개)
+    $('#bEmote').textContent = iconText('emote');
+    $('#emoPop').innerHTML = CONFIG.social.quick.emotes.map((k) => `<button data-emo="${k}">${icon(k)}</button>`).join('');
+    $('#bEmote').onclick = () => ($('#emoPop').hidden = !$('#emoPop').hidden);
+    $$<HTMLButtonElement>('#emoPop [data-emo]').forEach((x) => (x.onclick = () => {
+      if (b) emote(b, 'hero', x.dataset.emo!);
+      $('#emoPop').hidden = true;
+    }));
     // 포기: 멈추고 확인 창 (양피지 패널)
     $('#bQuit').onclick = () => {
       if (!b || (b.phase !== 'fight' && b.phase !== 'walk')) return;
@@ -468,7 +497,9 @@ register('battle', {
   leave() {
     applyTheme('glass');
     hud().hidden = true;
-    hud().classList.remove('raid');
+    hud().classList.remove('raid', 'pvp');
+    document.querySelectorAll('#stage > .vs, #stage > .cdown').forEach((e) => e.remove());
+    intro = false;
     $('#cv').onpointerdown = null;
     $('#result').hidden = true;
     b = null;
@@ -477,12 +508,13 @@ register('battle', {
   tick(dt) {
     const ctx = view.ctx;
     if (!b) return void renderIdle(ctx, view.art, dt);
-    if (talking) {
+    if (talking || intro) {
       idleStep(b, dt);
       return render(ctx, view.art, b, performance.now() / 1000);
     }
     if (paused || artWait) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
+    if (run?.mode === 'arena') aiEmote(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
       shown = true;
@@ -501,4 +533,4 @@ function renderIdle(ctx: CanvasRenderingContext2D, art: Art, dt: number) {
 /** 시험·녹화용 */
 export const battleNow = () => b;
 /** 이 전투 그림을 아직 받는 중인지 (캡처 도구가 기다림) */
-export const battleArtWait = () => artWait;
+export const battleArtWait = () => artWait || intro;
