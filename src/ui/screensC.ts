@@ -10,7 +10,7 @@ import { owned } from '../game/heroes';
 import { cleared } from '../game/stage';
 import { persist, S } from '../game/state';
 import { icon } from '../theme/tokens';
-import { $$, esc, fmt, go, heroPortrait, register, syncBar, tabLabel, toast } from './core';
+import { $$, esc, fmt, go, heroPortrait, medal, register, syncBar, tabLabel, toast } from './core';
 
 const CC = CONFIG.content;
 const TABS: [string, string, string][] = [
@@ -38,23 +38,23 @@ register('portal', {
       } else if (tab === 'tower') {
         const f = S.tower.best + 1;
         body = `<p class="sm dim">층마다 강해져요 (×${CC.tower.grow}) · ${CC.tower.bossEvery}층마다 보스 · 처음 깬 층은 별가루 · ${CC.tower.runeEvery}층마다 룬 · 탑 코인 · 주간 최고 층은 랭킹(D)</p>
-          <div class="kv"><span>최고 층</span><b>${S.tower.best}층</b></div><div class="kv"><span>이번 주 최고</span><b>${S.tower.weekBest}층</b></div>
-          <div class="row"><button class="btn hi big" data-run='${JSON.stringify({ mode: 'tower', arg: f })}'>${f}층 도전</button>${S.tower.best ? `<button class="btn" data-run='${JSON.stringify({ mode: 'tower', arg: S.tower.best })}'>${S.tower.best}층 다시</button>` : ''}</div>`;
+          <div class="panel col tower"><div class="tstat"><div><small>최고 층</small><b>${S.tower.best}층</b></div><div><small>이번 주</small><b>${S.tower.weekBest}층</b></div></div>
+          <div class="row"><button class="btn hi big" data-run='${JSON.stringify({ mode: 'tower', arg: f })}'>${f}층 도전</button>${S.tower.best ? `<button class="btn" data-run='${JSON.stringify({ mode: 'tower', arg: S.tower.best })}'>${S.tower.best}층 다시</button>` : ''}</div></div>`;
       } else if (tab === 'day') {
         const k = dayKind();
-        body = `<p class="sm dim">오늘은 <b class="gold">${DAY_NAME[k]}</b> 던전 · 하루 ${CC.day.tries}번 (남은 ${triesText({ mode: 'day', arg: 1 })}) · 월·목 경험치 물약 / 화·금 금화 / 수·토 강화석 / 일 모두</p>
-          <div class="cards">${Array.from({ length: CC.day.levels }, (_, i) => `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'day', arg: i + 1 })}'><b>${i + 1}단계</b><span class="xs dim">추천 레벨 ${Math.round(1 + (i + 1) * CC.day.step * CONFIG.story.recLv)}</span></button>`).join('')}</div>`;
+        body = `<p class="sm dim">${(k === 'all' ? ['exp', 'gold', 'enh'] : [k]).map((x) => icon(x)).join('')} 오늘은 <b class="gold">${DAY_NAME[k]}</b> 던전 · 하루 ${CC.day.tries}번 (남은 ${triesText({ mode: 'day', arg: 1 })}) · 월·목 경험치 물약 / 화·금 금화 / 수·토 강화석 / 일 모두</p>
+          <div class="cards days">${Array.from({ length: CC.day.levels }, (_, i) => `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'day', arg: i + 1 })}'><b class="hn">${i + 1}단계</b><span class="xs dim">추천 Lv.${Math.round(1 + (i + 1) * CC.day.step * CONFIG.story.recLv)}</span>${(k === 'all' ? ['exp', 'gold', 'enh'] : [k]).map((x) => icon(x)).join('')}</button>`).join('')}</div>`;
       } else if (tab === 'raid') {
         body = `<p class="sm dim">협동 레이드 8인 = 내 파티 4 + AI 동료 4 (길드원은 D덩어리) · 하루 ${CC.raid.tries}번 (남은 ${triesText({ mode: 'raid', arg: 0 })}) · <b class="gold">티어 재료</b> · 영웅 등급 이상 장비</p>
-          <div class="panel col"><b>심연 드래곤 「잿날개」</b><span class="xs dim">광선 · 포효(침묵) · 내려찍기 · 저격 · 제한 ${CC.raid.limit}초</span></div>
+          <div class="panel row raidcard"><div class="thumb" style="background-image:url(${import.meta.env.BASE_URL}art/${CONFIG.raidArena.art.intact})"></div><div class="col grow"><b class="hn">심연 드래곤 「잿날개」</b><span class="xs dim">광선 · 포효(침묵) · 내려찍기 · 저격 · 제한 ${CC.raid.limit}초</span></div></div>
           <button class="btn hi big" data-run='${JSON.stringify({ mode: 'raid', arg: 0 })}'>레이드 도전</button>`;
       } else if (tab === 'world') {
         const wb = worldBoss();
         const board = worldBoard().slice(0, 8);
         body = `<p class="sm dim">전 서버 공용 체력 (1단계는 이 기기 + AI 원정대 기여) · 하루 ${CC.world.tries}번 (남은 ${triesText({ mode: 'world', arg: 0 })}) · 한 판 ${CC.world.sec}초 · 준 피해만큼 보상 · 주간 랭킹으로 랭커 칭호(D)</p>
           <div class="panel col"><b>${esc(wb.name)}</b>${bar(wb.hp, wb.max)}<span class="xs dim">남은 체력 ${fmt(wb.hp)} / ${fmt(wb.max)} · 내 이번 주 피해 ${fmt(wb.my)}</span></div>
-          <div class="panel col">${board.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div>
-          <button class="btn hi big" data-run='${JSON.stringify({ mode: 'world', arg: 0 })}'>월드 보스 도전</button>`;
+          <button class="btn hi big" data-run='${JSON.stringify({ mode: 'world', arg: 0 })}'>월드 보스 도전</button>
+          <div class="panel col board">${board.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${medal(i)} ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div>`;
       } else if (tab === 'arena') {
         const opps = arenaOpps();
         body = `<div class="tabs">${(['victory', 'glory', 'last'] as League[]).map((l) => `<button class="tab${league === l ? ' on' : ''}" data-league="${l}">${LEAGUE_NAME[l]}</button>`).join('')}</div>
@@ -65,9 +65,9 @@ register('portal', {
       } else if (tab === 'side') {
         const mine = HEROES.filter((h) => owned(h.id));
         body = `<p class="sm dim">영웅을 골라 외전(${CC.side.acts}막)을 봐요 · 끝까지 깨면 <b class="gold">전용 보물</b> 해금(공격력 +${CONFIG.treasure.atkPct * 100}%) + 그 영웅 전용 무기 조각 ${CC.side.shards} · 대사는 자리표시자</p>
-          <div class="cards">${mine.map((h) => {
+          <div class="cards sides">${mine.map((h) => {
             const n = S.side[h.id] ?? 0;
-            return `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'side', arg: h.id, sub: Math.min(CC.side.acts, n + 1) })}'><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div><b class="sm">${h.name}</b><span class="xs ${S.treasure[h.id] ? 'gold' : 'dim'}">${S.treasure[h.id] ? '보물 해금' : `${n}/${CC.side.acts}막`}</span></button>`;
+            return `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'side', arg: h.id, sub: Math.min(CC.side.acts, n + 1) })}'><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div><b class="hn fit" data-min="${CONFIG.ui.fit.desc}">${h.name}</b><span class="xs ${S.treasure[h.id] ? 'gold' : 'dim'}">${S.treasure[h.id] ? '보물 해금' : `진행 ${n}/${CC.side.acts}막`}</span></button>`;
           }).join('')}</div>`;
       } else if (tab === 'miles') {
         const ready = milesReady();

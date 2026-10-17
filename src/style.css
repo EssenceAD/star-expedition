@@ -833,3 +833,66 @@ input, select, textarea { font-family: inherit; }
 .rtable b { text-align: right; color: var(--c-text); font-weight: var(--fw-normal); }
 .rtable b .ck svg.ic.svg { width: 1em; height: 1em; vertical-align: -0.15em; }
 .rtable em { grid-column: 1 / 3; font-style: normal; color: var(--c-gold1); text-align: center; }
+/* ───────── 첫 플레이 피드백 ③ 메뉴 화면 (docs/PLAYTEST_1017.md §5~§8) ───────── */
+/* §5 도전의 탑: 판 안에 최고 층 / 이번 주 표 + 도전 버튼 */
+.panel.tower { gap: var(--s-md); align-items: center; }
+.tstat { display: flex; gap: var(--s-xxl); }
+.tstat > div { display: flex; flex-direction: column; align-items: center; }
+.tstat small { font-size: var(--fs-sm); color: var(--c-textDim); }
+.tstat b { font-family: var(--f-num); font-size: var(--fs-h2); color: var(--c-gold1); }
+/* 요일 던전: 칸 안에 단계(Hahmlet) / 추천 레벨 두 줄 + 오늘 재료 아이콘 · 칸 높이 늘림 */
+.cards.days { grid-template-columns: repeat(5, 1fr); }
+.cards.days .shopc { min-height: 92px; justify-content: center; gap: var(--s-xxs); padding: var(--s-md) var(--s-xs); }
+.cards.days .shopc .hn { font-size: var(--fs-lg); }
+.cards.days .shopc img.ic.img { width: 22px; height: 22px; }
+/* 레이드: 보스 썸네일 · 판은 640 · 버튼 360 (공통 0-5) */
+.raidcard { gap: var(--s-md); align-items: center; }
+.raidcard .thumb { width: 72px; height: 72px; flex: none; border-radius: var(--r-md); background: var(--c-panelDeep) center 20%/cover no-repeat; border: var(--b-thin) solid var(--c-gold2); }
+/* 월드 보스: 도전 버튼이 늘 보이게(순위 위) · 순위 표 높이 줄임 */
+.panel.board { max-height: 132px; overflow-y: auto; flex: none; }
+.panel.board .kv { font-size: var(--fs-sm); }
+/* 영웅 외전: 카드형 4열 (초상화 위 + 이름 + 진행) · 남색 판 */
+.cards.sides { grid-template-columns: repeat(4, 1fr); }
+.cards.sides .shopc { padding: var(--s-sm); gap: var(--s-xs); overflow: hidden; }
+.cards.sides .shopc .pt { width: 100%; height: 76px; border-radius: var(--r-md); background-size: cover; background-position: center 18%; }
+.cards.sides .shopc .hn { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; font-size: var(--fs-lg); }
+/* 순위 메달 1~3 금·은·동 */
+.rk { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; margin-right: var(--s-xs); border-radius: 50%; font-style: normal; font-family: var(--f-num); font-size: var(--fs-xs); color: var(--c-text); }
+.rk.r1, .rk.r2, .rk.r3 { color: var(--c-ink); text-shadow: none; box-shadow: var(--sh-glow); }
+.rk.r1 { background: radial-gradient(circle at 35% 30%, var(--c-gold0), var(--c-rank1)); }
+.rk.r2 { background: radial-gradient(circle at 35% 30%, var(--c-white), var(--c-rank2)); }
+.rk.r3 { background: radial-gradient(circle at 35% 30%, var(--c-gold0), var(--c-rank3)); }
+.kv.rank { align-items: center; padding: var(--s-xxs) 0; }
+.kv.rank > span { display: inline-flex; align-items: center; gap: var(--s-xs); }
+.kv.rank .hn { font-size: var(--fs-md); }
+/* §6 편성: 고른 영웅 = 금 그라데이션 테두리 + 오른쪽 위 금 체크 + 살짝 밝게 */
+.hcard.in { border-color: var(--c-gold1); filter: brightness(1.08); }
+.hcard.in::after { border: var(--b-thick) solid transparent; border-image: linear-gradient(160deg, var(--c-gold0), var(--c-gold1) 40%, var(--c-gold4)) 1; }
+.hcard.in::before { content: ''; position: absolute; z-index: 2; right: var(--s-xs); top: calc(var(--s-xl) + var(--s-xs)); width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--c-gold0), var(--c-gold3)); box-shadow: var(--sh-glow); }
+.hcard.in .lv::after { content: ''; position: absolute; z-index: 3; right: calc(var(--s-xs) + 7px); top: calc(var(--s-xl) + var(--s-sm) + 1px); width: 5px; height: 9px; border: solid var(--c-ink); border-width: 0 var(--b-base) var(--b-base) 0; transform: rotate(45deg); }
+/* §7 친구: 한 줄 = 초상화 · 이름(Hahmlet 15) · 칭호 알약 · 버튼 */
+.frow { align-items: center; gap: var(--s-md); flex: none; }
+.frow .pt.s { width: 40px; height: 40px; }
+.frow .hn { font-size: calc(var(--fs-lg) + var(--s-xxs)); display: flex; align-items: center; gap: var(--s-sm); }
+/* §8 모험: 둥근 메달 노드(깬 곳 금 · 지금 파랑 빛 · 잠김 회색) + 아래 별 3개 */
+.fmap-in .node { width: 40px; height: 40px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: var(--b-thick) solid var(--c-gold2); background: radial-gradient(circle at 40% 30%, var(--c-panelHi), var(--c-panelDeep)); box-shadow: var(--sh-drop); }
+.fmap-in .node b { font-family: var(--f-num); font-size: var(--fs-xs); color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.fmap-in .node .stars { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: var(--fs-xxs); line-height: 1; }
+.fmap-in .node.done { border-color: var(--c-gold1); background: radial-gradient(circle at 40% 30%, var(--c-gold0), var(--c-gold3)); }
+.fmap-in .node.done b { color: var(--c-ink); text-shadow: none; }
+.fmap-in .node.now { border-color: var(--c-nodeNow); box-shadow: 0 0 0 var(--b-base) var(--c-nodeNow), var(--sh-glowHi); animation: nodeNow 1.6s ease-in-out infinite; }
+@keyframes nodeNow { 50% { filter: brightness(1.25); } }
+.fmap-in .node.off { opacity: 1; filter: grayscale(1) brightness(0.6); background: radial-gradient(circle at 40% 30%, var(--c-panelHi), var(--c-panelDeep)); }
+.fmap-in .node.boss { width: 48px; height: 48px; }
+.fmap-in .node.sel { outline: var(--b-base) solid var(--c-white); outline-offset: var(--b-base); }
+/* 오른쪽 스테이지 판: 값 오른쪽 정렬 · 몬스터 칩 = 얼굴 + 이름 */
+.side .kv b { text-align: right; }
+.chip.mob { gap: var(--s-xs); padding-left: var(--s-xxs); }
+.chip.mob i { width: 18px; height: 18px; flex: none; border-radius: 50%; background: var(--c-panelDeep) center 15%/180% no-repeat; }
+/* 위 1장~10장 탭은 띠 안 · 잠긴 장도 알약 */
+.scr[data-screen="adventure"] .body > .col > .tabs:first-child { padding: var(--s-xs); border-radius: var(--r-pill); background: var(--c-panel); -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); }
+.tab:disabled { opacity: 0.55; filter: grayscale(0.6); }
+/* 스크롤 목록 안 카드 묶음은 줄지 않게 (영웅 외전 카드가 납작해지던 것) */
+.scroll > .cards { flex: none; grid-auto-rows: max-content; }
+.cards.sides .shopc { min-height: 128px; }
+.shopcats { width: 166px; }

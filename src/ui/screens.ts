@@ -141,7 +141,9 @@ function fieldMap(c: number, d: number, sel: StageId) {
     ${NODES.map(([x, y], i) => {
       const id = { c, s: i + 1, d };
       const open = unlocked(id);
-      return `<button class="node${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}${open ? '' : ' off'}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}><b>${open ? `${c}-${i + 1}` : icon('lock')}</b>${starsHtml(starsAt(id))}</button>`;
+      // 둥근 메달: 깬 곳 금 · 지금 갈 곳 파랑 빛 · 잠김 회색 자물쇠 · 아래 별 3개 (PLAYTEST §8)
+      const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
+      return `<button class="node ${st}${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}><b>${open ? `${c}-${i + 1}` : icon('lock')}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
     }).join('')}
     ${here ? `<div class="me-pin" style="left:${NODES[here - 1][0]}%;top:${NODES[here - 1][1] - 12}%"><div class="pt s" style="background-image:url(${heroPortrait(lead)})"></div></div>` : ''}
     </div><div class="gates"><button class="btn mini" data-portal="hunt">${icon('battle')} 토벌</button><button class="btn mini" data-portal="dungeon">${icon('bag')} 상급 던전</button><button class="btn mini" data-portal="tower">${icon('tower')} 도전의 탑</button></div>
@@ -163,7 +165,8 @@ register('adventure', {
       const chOpen = unlocked({ c, s: 1, d });
       const rec = S.stages[`${sel.c}-${sel.s}-${sel.d}`];
       const mobs = buildMobs(sel);
-      const names = [...new Set(mobs.flat().map((m) => m.name))];
+      // 몬스터 칩 = 얼굴(대기 첫 칸 그림) + 이름
+      const faces = [...new Map(mobs.flat().map((m) => [m.name, m.kind.anims.idle!.frames[0].replace(':', '/') + '.png'])).entries()];
       const rl = recLevel(sel);
       const myLv = Math.round(partyIds().reduce((a, id) => a + S.heroes[id].lv, 0) / Math.max(1, partyIds().length));
       root.innerHTML = `<div class="body">
@@ -172,14 +175,14 @@ register('adventure', {
             <div class="row"><b class="grow">${c}장 · ${ch.name}${ch.waves ? '' : ' <span class="xs mute">(자리표시자)</span>'}</b>
               <div class="tabs">${C.diffName.map((n, i) => `<button class="tab${i === d ? ' on' : ''}" data-d="${i}" ${diffOpen(c, i) ? '' : 'disabled'}>${diffOpen(c, i) ? '' : icon('lock')}${n}</button>`).join('')}</div></div>
             ${chOpen ? fieldMap(c, d, sel) : `<div class="panel mute">이전 장을 깨면 열려요</div>`}
-            <div class="xs mute">${ch.star} · 장을 깨면 별이 하나 다시 켜지고 지역 전설 영웅이 합류해요</div>
+            <div class="xs mute note">${ch.star} · 장을 깨면 별이 하나 다시 켜지고 지역 전설 영웅이 합류해요</div>
           </div>
           <div class="panel col side">
             <b class="b">${stageName(sel)}${isBoss(sel) ? ` · ${CHAPTER_MOBS[c - 1].boss}` : ''}</b>
             <div class="kv"><span>추천 레벨</span><b class="${myLv >= rl ? 'good' : 'bad'}">${rl} (내 평균 ${myLv})</b></div>
             <div class="kv"><span>행동력</span><b>${icon('stamina')} ${stageCost(d)}</b></div>
             <div class="kv"><span>웨이브</span><b>${mobs.length}</b></div>
-            <div class="mobs">${names.map((n) => `<span class="chip">${esc(n)}</span>`).join('')}</div>
+            <div class="mobs">${faces.map(([n, f]) => `<span class="chip mob"><i style="background-image:url(${import.meta.env.BASE_URL}art/${f})"></i>${esc(n)}</span>`).join('')}</div>
             <div class="kv"><span>별</span>${starsHtml(rec?.stars ?? 0)}</div>
             ${rec ? `<div class="kv"><span>최고 기록</span><b>${rec.bestTime}초 · 초당 ${fmt(rec.bestDps)}</b></div><div class="kv"><span>그때 MVP</span><b>${rec.mvp ? heroOf(rec.mvp).name : '-'}</b></div>` : ''}
             <div class="grow"></div>

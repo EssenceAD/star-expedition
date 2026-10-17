@@ -32,7 +32,7 @@ await p.evaluate(() => {
   const S = window.__S();
   S.prologue = true;
   for (const c of [1, 2, 3]) S.seen[`${c}:intro`] = S.seen[`${c}:preBoss`] = true;
-  for (let s = 1; s <= 10; s++) S.stages[`1-${s}-0`] = { stars: 3, best: 60 };
+  for (let s = 1; s <= 4; s++) S.stages[`1-${s}-0`] = { stars: 3, bestTime: 60, bestDps: 1200, mvp: 'woongs' };
   for (const id of Object.keys(S.heroes)) S.heroes[id].lv = 30;
 });
 await go('lobby', {}, 900);
