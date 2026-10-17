@@ -584,6 +584,8 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
         u.pending.push({
           at: at0 + at,
           fn: () => {
+            // 스킬3 발동 칸: 화면 흔들림 4px (ANIM_1017 타격감)
+            if (i === 2) b.shake = Math.max(b.shake, K.shake.ult);
             for (const m of foeTargets(b, u, e.to)) {
               hitFx(b, u, s, m, k);
               damage(b, u, m, e.m * lvM, { crit: e.crit, skill: true, st: e.st });
@@ -762,7 +764,8 @@ export function step(b: Battle, dtReal: number) {
     if (h.cd > 0) continue;
     const t = frontMob(b);
     if (!t || !arrived(t)) continue;
-    h.cd = h.rate;
+    // 평타 그림이 예전(attackBeat초)보다 길어진 만큼 쿨다운에서 뺌 → 공격 간격(밸런스)은 그대로 (ANIM_1017)
+    h.cd = Math.max(0, h.rate - Math.max(0, durOf(h.anims, 'attack') - K.attackBeat));
     play(h, 'attack');
     const ranged = CONFIG.jobs[h.hero!.def.job].ranged;
     const color = elemColor(h.hero!.def.elem);

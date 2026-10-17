@@ -381,17 +381,21 @@ export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map
 export const heroOf = (id: string) => HERO_BY_ID[id];
 
 // ───────── 그림 (도트 시트 · 초상화) ─────────
-// 전투 도트: 36명 모두 public/art/px2/<id> 8칸 (SPRITE_RES_1017: 1.5배 해상도) (docs/SPRITES_1017.md) · r0c0~r0c1 대기 · r0c2→r0c3 평타 · r1c0 피격 · r1c1 쓰러짐 · r1c2 승리 · r1c3 스킬
+// 전투 도트: 36명 모두 public/art/px2/<id> (docs/ANIM_1017.md) · 새 16칸 m1r1 숨쉬기 · m1r0 걷기 · m2r0 평타(준비→휘두름→타격→회수) · m2r1 스킬(기 모으기→큰 준비→발동→마무리)
+//  기존 8칸은 r1c0 피격 · r1c1 쓰러짐 · r1c2 승리만 씀 · 칸마다 보이는 초는 CONFIG.combat.anim
 //  모든 시트는 머리를 72px로 맞춰 저장 → 모든 영웅에 같은 배율(CONFIG.combat.pxScale) = 얼굴 크기가 같고 키는 체격대로
 const px = (id: string): AnimSet => {
   const f = (...c: string[]) => c.map((k) => `px2/${id}:${k}`);
+  const A = CONFIG.combat.anim;
+  const four = (row: string) => f(`${row}c0`, `${row}c1`, `${row}c2`, `${row}c3`);
+  const skill = (speed: number, lunge: number) => ({ frames: four('m2r1'), fps: 1, loop: false, hit: [2], lunge, durs: A.skill.map((d) => d / speed) });
   return {
-    idle: { frames: f('r0c0', 'r0c1'), fps: 3, loop: true },
-    walk: { frames: f('r0c0', 'r0c1'), fps: 6, loop: true },
-    attack: { frames: f('r0c2', 'r0c3', 'r0c3'), fps: 6.5, loop: false, hit: [1], lunge: 10 },
-    skill1: { frames: f('r0c2', 'r1c3', 'r1c3'), fps: 6, loop: false, hit: [1], lunge: 20 },
-    skill2: { frames: f('r0c2', 'r1c3', 'r1c3'), fps: 6, loop: false, hit: [1], lunge: 30 },
-    skill3: { frames: f('r0c2', 'r1c3', 'r1c3', 'r1c3'), fps: 6, loop: false, hit: [1], lunge: 40 },
+    idle: { frames: four('m1r1'), fps: 1, loop: true, durs: four('m1r1').map(() => A.idle) },
+    walk: { frames: four('m1r0'), fps: 1, loop: true, durs: four('m1r0').map(() => A.walk) },
+    attack: { frames: four('m2r0'), fps: 1, loop: false, hit: [2], lunge: 10, durs: A.attack },
+    skill1: skill(A.skill1Speed, 20),
+    skill2: skill(1, 30),
+    skill3: skill(A.skill3Speed, 40),
     hurt: { frames: f('r1c0'), fps: 4, loop: false },
     down: { frames: f('r1c1'), fps: 1, loop: false },
     win: { frames: f('r1c2'), fps: 1, loop: false },

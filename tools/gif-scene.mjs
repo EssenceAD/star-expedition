@@ -1,6 +1,7 @@
 // 연출 GIF (docs/MOBILE_REF_1017.md 확인용): CDP 화면 스트림(실제 시각) → ffmpeg 팔레트 GIF (15fps)
 //  node tools/gif-scene.mjs <장면> [out.gif]  (먼저 npm run build · W=844 H=390 · ffmpeg 필요)
 //  장면: win = 마지막 일격(흰 번쩍·느리게) → 승리 별 3개 「쾅」 + 금빛 햇살 · arena = 결투장 VS 입장 → 3·2·1 → 전투 시작
+//   heroes = 웅스·고느끼·콩선생 걷기 → 평타 → 스킬 (1-2 · 싸움 시작 때 마나 가득 · ANIM_1017)
 //  ?rec=1로 앞부분을 빨리 감고, 녹화 중에는 페이지 안에서 매 프레임 __tick(1/60)
 import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
@@ -53,6 +54,23 @@ if (scene === 'win') {
   // 마지막 적 하나 · 체력 조금 남을 때까지 빨리 감기
   console.log('ff', await fast("b.phase === 'fight' && b.wave === b.setup.waves.length - 1 && b.mobs.filter((m) => !m.dead).length === 1", 240));
   secs = 7;
+} else if (scene === 'heroes') {
+  await party(['woongs', 'gonu', 'walwal'], 20);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 2, d: 0 } }); window.__b().auto = false; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  // 싸움 시작 직전까지 빨리 감기 → 걷기부터 녹화 · 싸움이 시작되면 마나 가득 + AUTO (스킬)
+  await fast("b.phase === 'walk' || b.t > 0.2", 5);
+  await p.evaluate(() => {
+    const iv = setInterval(() => {
+      const b = window.__b();
+      if (!b) return clearInterval(iv);
+      if (b.phase === 'fight') {
+        clearInterval(iv);
+        setTimeout(() => { for (const h of b.heroes) h.mana = 100; b.auto = true; }, 1500);
+      }
+    }, 50);
+  });
+  secs = 8;
 } else if (scene === 'arena') {
   await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 30);
   await p.evaluate(() => window.__go('portal', { tab: 'arena' }));

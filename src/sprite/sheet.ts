@@ -5,7 +5,7 @@
 export type Act = 'idle' | 'walk' | 'attack' | 'skill1' | 'skill2' | 'skill3' | 'hurt' | 'down' | 'win';
 export const ACTS: Act[] = ['idle', 'walk', 'attack', 'skill1', 'skill2', 'skill3', 'hurt', 'down', 'win'];
 
-export interface Cell { x: number; y: number; w: number; h: number; cw: number; ch: number; /** 몸 기준 x (칸 기준 · tools/cut-cells.mjs가 프레임끼리 맞춘 값) */ ax?: number }
+export interface Cell { x: number; y: number; w: number; h: number; cw: number; ch: number; /** 몸 기준 x (칸 기준 · tools/cut-cells.mjs가 프레임끼리 맞춘 값) */ ax?: number; /** 발 기준선 (칸 안 y · 이펙트가 발밑으로 튀어나와도 안 뜨게 · ANIM_1017) */ by?: number }
 export interface Sheet {
   /** 시트 묶음 이름 → 칸 이름 → 그림 */
   img: Record<string, HTMLImageElement>;
@@ -22,6 +22,8 @@ export interface AnimDef {
   hit?: number[];
   /** 앞으로 내딛는 거리(논리 px) — 프레임 진행에 맞춰 */
   lunge?: number;
+  /** 칸마다 보이는 초 (있으면 fps 대신 · ANIM_1017 권장 타이밍) */
+  durs?: number[];
 }
 export type AnimSet = Partial<Record<Act, AnimDef>>;
 /** 없는 동작 대신 */
@@ -41,15 +43,30 @@ export function animOf(set: AnimSet, a: Act): { def: AnimDef; as: Act } {
   for (const f of FALLBACK[a]) if (set[f]) return { def: set[f]!, as: f };
   return { def: set.idle!, as: 'idle' };
 }
-export const durOf = (set: AnimSet, a: Act) => {
-  const { def } = animOf(set, a);
-  return def.frames.length / def.fps;
-};
+/** 칸 하나 길이(초) */
+const durAt = (def: AnimDef, i: number) => def.durs?.[i] ?? 1 / def.fps;
+/** 한 바퀴 길이(초) */
+export const lenOf = (def: AnimDef) => (def.durs ? def.durs.reduce((a, d) => a + d, 0) : def.frames.length / def.fps);
+export const durOf = (set: AnimSet, a: Act) => lenOf(animOf(set, a).def);
+/** 맞히는 때 (hit 칸이 시작하는 순간 · 칸 시간이 없으면 칸 가운데) */
 export const hitTimes = (set: AnimSet, a: Act) => {
   const { def } = animOf(set, a);
-  return (def.hit ?? [Math.floor(def.frames.length / 2)]).map((i) => (i + 0.5) / def.fps);
+  return (def.hit ?? [Math.floor(def.frames.length / 2)]).map((i) => {
+    let t = 0;
+    for (let j = 0; j < i; j++) t += durAt(def, j);
+    return def.durs ? t + 0.01 : t + 0.5 / def.fps;
+  });
 };
 export function frameAt(def: AnimDef, t: number): number {
+  if (def.durs) {
+    const len = lenOf(def);
+    let u = def.loop ? ((t % len) + len) % len : t;
+    for (let i = 0; i < def.frames.length; i++) {
+      if (u < def.durs[i]) return i;
+      u -= def.durs[i];
+    }
+    return def.loop ? 0 : def.frames.length - 1;
+  }
   const i = Math.floor(t * def.fps);
   return def.loop ? i % def.frames.length : Math.min(def.frames.length - 1, i);
 }
@@ -123,7 +140,7 @@ export function drawFrame(ctx: CanvasRenderingContext2D, s: Sheet, key: string, 
   const c = s.cell[key];
   if (!im || !c) return;
   const [d, name] = key.split(':');
-  const base = s.base[`${d}:${name.split('c')[0]}`] ?? c.ch;
+  const base = c.by ?? s.base[`${d}:${name.split('c')[0]}`] ?? c.ch;
   ctx.save();
   ctx.globalAlpha *= alpha;
   // 줄일 땐 늘 부드럽게 (도트가 계단지지 않게) · 1.5배 넘게 키울 때만 픽셀 그대로 (SPRITE_RES_1017 §A)

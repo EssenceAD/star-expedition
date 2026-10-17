@@ -17,9 +17,13 @@ export const CONFIG = {
     /** 받는 피해 감소 = 방어 / (방어 + defK × 때린 쪽 공격) — 숫자 크기가 자라도 같은 비율 */
     defK: 3,
     defMax: 0.4,
-    hitstop: { hit: 0.035, crit: 0.07, kill: 0.09 },
+    /** 예전 평타 그림 길이(초) — 새 동작이 더 길어도 공격 간격은 이 기준 그대로 */
+    attackBeat: 0.46,
+    /** 히트스톱(초): hit 칸 60ms (ANIM_1017) · 치명타 · 처치 */
+    hitstop: { hit: 0.06, crit: 0.07, kill: 0.09 },
     knock: { hit: 5, crit: 10, kill: 18 },
-    shake: { crit: 3, boss: 7, smash: 9, meteor: 5, bossKill: 12 },
+    /** 흔들림 px (초당 30씩 줄어듦 → 4px ≈ 120ms): 치명타·스킬3 = 4 (ANIM_1017) */
+    shake: { crit: 4, ult: 4, boss: 7, smash: 9, meteor: 5, bossKill: 12 },
     /** 마나: 평타 맞힐 때 · 맞을 때 · 1초마다 · 시작 */
     mana: { hit: 10, skillHit: 2, hurt: 4, regen: 4, max: 100, start: 30 },
     cutInSlow: 0.15,
@@ -55,6 +59,8 @@ export const CONFIG = {
     bossSlot: [180, 258] as [number, number],
     /** 피해 숫자: 대상 위 가로로 흩뿌리는 폭(±) · 줄 수 · 줄 높이 · 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) · 이보다 위(보스 바)에는 안 놓음 */
     /** 피해 숫자 · 일반 크기 배율 · 외곽선 두께(일반·치명타 px) · 치명타 커졌다 작아지는 시간 · 폭발 그림 크기(글자 폭 배) (docs/BATTLE_HUD_1017.md §4) */
+    /** 영웅 동작 칸 시간(초 · ANIM_1017): 숨쉬기 · 걷기 칸마다 · 평타 4칸 · 스킬 4칸 · 스킬1은 0.8배 · 스킬3은 0.7배 속도 */
+    anim: { idle: 0.17, walk: 0.11, attack: [0.2, 0.06, 0.16, 0.15] as number[], skill: [0.3, 0.12, 0.38, 0.3] as number[], skill1Speed: 0.8, skill3Speed: 0.7 },
     /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
     headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4 },
     /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */
