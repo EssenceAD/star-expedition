@@ -1,125 +1,100 @@
-// 로비 마을 (docs/UI_KIT_1018.md §6 · target_1018/lobby.jpg): 쿼터뷰 마을 그림(ui/bg/lobby_town.jpg)을 캔버스에 cover로 깔고
-//  영웅 2~3명이 광장 길 위를 천천히 걷는다(전투 도트 걷기 · 대기 칸 키 64) · 6~10초마다 한 명이 말풍선(dialog 9-slice · 9px 갈색) 2.5초
-//  좌표는 마을 그림 기준 논리 px(844×390) → town()으로 화면 좌표 (창이 더 넓으면 그림이 커지고 위아래가 잘림)
+// 로비가 살아 있는 느낌 (docs/DENSITY_1017.md §3): 마을 그림(lobby.jpg)을 캔버스에 깔고 · 파티·가진 영웅 도트가 광장을 걸어 다니고 · 가끔 말풍선 · 반짝이
+import { CONFIG } from '../config';
 import { artOf, heroOf } from '../data/heroes';
-import { lobbyLine } from '../data/lobbyLines';
 import { partyIds, S } from '../game/state';
 import { animOf, drawFrame, frameAt, heightOf } from '../sprite/sheet';
-import { k9 } from './kit';
-import { shadowSprite } from '../battle/render';
+import { canvasFont, T } from '../theme/tokens';
 import { view } from './view';
 
-const TOWN = `${import.meta.env.BASE_URL}art/ui/bg/lobby_town.jpg`;
-/** 걸을 수 있는 길 위 점 (마을 그림 기준 · 아래 메뉴·출격 버튼·이름판을 피함) */
-const PATH: [number, number][] = [[352, 252], [420, 236], [492, 262], [560, 248], [612, 276], [470, 298], [392, 304], [332, 282], [538, 316], [598, 318], [452, 272]];
-const WALKERS = 3;
-const HGT = 64;
-const SPEED = 20;
-const SAY = { every: [6, 10] as [number, number], sec: 2.5 };
-interface Walker { id: string; x: number; y: number; tx: number; ty: number; at: number; wait: number; face: number }
+const L = CONFIG.ui.lobbyLife;
+const B = T.battle;
+interface Walker { id: string; x: number; y: number; to: number; at: number; wait: number; face: number; say: string; sayT: number }
 let img: HTMLImageElement | null = null;
 let walkers: Walker[] = [];
-let sayT = 0;
-let bubble: HTMLElement | null = null;
-let bubbleOf: { w: Walker; t: number } | null = null;
+let sparks: { x: number; y: number; t: number; dur: number }[] = [];
 
-/** 마을 그림 좌표 → 화면 논리 좌표 (cover) */
-export function town(x: number, y: number) {
-  const k = Math.max(view.w / 844, 1);
-  return { x: (view.w - 844 * k) / 2 + x * k, y: (390 - 390 * k) / 2 + y * k, k };
-}
-const pick = (o?: Walker) => {
-  const free = PATH.filter(([x, y]) => !walkers.some((w) => w !== o && Math.hypot(w.tx - x, w.ty - y) < 60));
-  return (free.length ? free : PATH)[Math.floor(Math.random() * (free.length || PATH.length))];
-};
-/** 로비에 들어올 때: 걸어 다닐 영웅(파티 먼저 · 가진 영웅으로 채움) · 말풍선 자리 */
-export function lobbyLifeStart(root: HTMLElement) {
+/** 로비에 들어올 때: 걸어 다닐 영웅 고르기 (파티 먼저 · 가진 영웅으로 채움) */
+export function lobbyLifeStart() {
   if (!img) {
     img = new Image();
-    img.src = TOWN;
+    img.src = `${import.meta.env.BASE_URL}art/screens/lobby.jpg`;
   }
-  const ids = [...new Set([...partyIds(), ...Object.keys(S.heroes)])].slice(0, WALKERS);
-  walkers = [];
-  for (const [i, id] of ids.entries()) {
-    const [x, y] = PATH[(i * 4 + 1) % PATH.length];
-    const w: Walker = { id, x, y, tx: x, ty: y, at: Math.random() * 2, wait: 0.5 + i * 1.2, face: i % 2 ? -1 : 1 };
-    walkers.push(w);
-  }
-  sayT = 1.2;
-  bubble = document.createElement('div');
-  bubble.className = 'lsay';
-  bubble.style.cssText = k9('dialog', 8);
-  bubble.innerHTML = '<span></span>';
-  bubble.hidden = true;
-  root.append(bubble);
-  bubbleOf = null;
+  const owned = [...new Set([...partyIds(), ...Object.keys(S.heroes)])].slice(0, L.walkers);
+  walkers = owned.map((id, i) => {
+    const x = view.w * (L.xMin + ((L.xMax - L.xMin) * (i + 0.5)) / owned.length);
+    return { id, x, y: L.y + (i % 2) * L.yStep, to: x, at: Math.random() * 2, wait: 1 + Math.random() * 3, face: i % 2 ? -1 : 1, say: '', sayT: 0 };
+  });
+  sparks = [];
 }
-/** 매 프레임: 마을 그림 → 걷는 영웅(그림자 + 도트) → 말풍선 자리 */
+/** 매 프레임: 마을 그림 → 반짝이 → 걷는 영웅 → 말풍선 */
 export function lobbyLifeTick(dt: number) {
   const ctx = view.ctx;
   const W = view.w;
   const H = view.h;
   if (img?.complete && img.naturalWidth) {
     const k = Math.max(W / img.naturalWidth, H / img.naturalHeight);
-    ctx.imageSmoothingEnabled = true;
     ctx.drawImage(img, (W - img.naturalWidth * k) / 2, (H - img.naturalHeight * k) / 2, img.naturalWidth * k, img.naturalHeight * k);
   }
+  // 반짝이 (분수·창가 근처)
+  if (Math.random() < dt * L.sparkPerSec) sparks.push({ x: W * (0.3 + Math.random() * 0.45), y: H * (0.25 + Math.random() * 0.45), t: 0, dur: 0.9 + Math.random() * 0.6 });
+  for (const p of sparks) {
+    p.t += dt;
+    const a = Math.sin((p.t / p.dur) * Math.PI);
+    const r = 2 + a * 4;
+    ctx.fillStyle = `${B.flash}${0.85 * a})`;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - r * 2);
+    ctx.lineTo(p.x + r * 0.5, p.y);
+    ctx.lineTo(p.x, p.y + r * 2);
+    ctx.lineTo(p.x - r * 0.5, p.y);
+    ctx.closePath();
+    ctx.fill();
+  }
+  sparks = sparks.filter((p) => p.t < p.dur);
   const sheet = view.art?.sheet;
   if (!sheet) return;
-  // 말풍선: 6~10초마다 한 명 · 2.5초
-  sayT -= dt;
-  if (sayT <= 0 && walkers.length) {
-    sayT = SAY.every[0] + Math.random() * (SAY.every[1] - SAY.every[0]);
-    const w = walkers[Math.floor(Math.random() * walkers.length)];
-    const line = lobbyLine(w.id) || heroOf(w.id).title;
-    if (bubble) {
-      bubble.querySelector('span')!.textContent = line;
-      bubble.hidden = false;
-      bubble.classList.remove('pop');
-      void bubble.offsetWidth;
-      bubble.classList.add('pop');
-    }
-    bubbleOf = { w, t: SAY.sec };
-  }
   for (const w of [...walkers].sort((a, b) => a.y - b.y)) {
     w.at += dt;
-    const dx = w.tx - w.x;
-    const dy = w.ty - w.y;
-    const d = Math.hypot(dx, dy);
-    const moving = d > 1.5;
+    const moving = Math.abs(w.to - w.x) > 2;
     if (moving) {
-      const s = Math.min(d, SPEED * dt);
-      w.x += (dx / d) * s;
-      w.y += (dy / d) * s;
-      if (Math.abs(dx) > 0.5) w.face = dx > 0 ? 1 : -1;
+      const step = Math.sign(w.to - w.x) * Math.min(Math.abs(w.to - w.x), L.speed * dt);
+      w.x += step;
+      w.face = step > 0 ? 1 : -1;
     } else if ((w.wait -= dt) <= 0) {
-      [w.tx, w.ty] = pick(w);
+      // 다른 영웅과 minGap 넘게 떨어진 곳으로 (몇 번 골라 보고 안 되면 마지막 자리)
+      const pick = () => W * (L.xMin + Math.random() * (L.xMax - L.xMin));
+      let to = pick();
+      for (let k = 0; k < 8 && walkers.some((o) => o !== w && (Math.abs(o.x - to) < L.minGap || Math.abs(o.to - to) < L.minGap)); k++) to = pick();
+      w.to = to;
       w.wait = 2 + Math.random() * 4;
+      if (Math.random() < L.sayChance) {
+        const h = heroOf(w.id);
+        w.say = h.voice?.[Math.floor(Math.random() * h.voice.length)] ?? `${h.title}…`;
+        w.sayT = L.sayDur;
+      }
     }
     const art = artOf(heroOf(w.id));
     const { def } = animOf(art.anims, moving ? 'walk' : 'idle');
     const ref = art.anims.idle!.frames[0];
     if (!sheet.img[ref]) continue;
-    const p = town(w.x, w.y);
-    const k = (HGT * p.k) / heightOf(sheet, ref);
-    // 발밑 그림자 (발이 가운데 · 미리 그린 흐린 타원)
-    const sk = (15 * p.k) / 52;
-    ctx.drawImage(shadowSprite(), p.x - 64 * sk, p.y - 24 * sk, 128 * sk, 48 * sk);
-    drawFrame(ctx, sheet, def.frames[frameAt(def, w.at)], p.x, p.y, k, w.face);
-  }
-  if (bubbleOf && bubble) {
-    bubbleOf.t -= dt;
-    if (bubbleOf.t <= 0) ((bubble.hidden = true), (bubbleOf = null));
-    else {
-      const p = town(bubbleOf.w.x, bubbleOf.w.y);
-      // 머리 위 (발 y − 98 · 정답 화면 lobby.jpg)
-      bubble.style.left = `${p.x}px`;
-      bubble.style.top = `${p.y - 98 * p.k}px`;
+    const k = (art.h / heightOf(sheet, ref)) * L.scale;
+    ctx.fillStyle = B.shadow;
+    ctx.beginPath();
+    ctx.ellipse(w.x, w.y + 2, 16, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    drawFrame(ctx, sheet, def.frames[frameAt(def, w.at)], w.x, w.y, k, w.face);
+    if (w.sayT > 0) {
+      w.sayT -= dt;
+      ctx.font = canvasFont(T.font.canvas.tag + 1, 'bold', false);
+      ctx.textAlign = 'center';
+      const tw = Math.min(180, ctx.measureText(w.say).width) + 12;
+      const by = w.y - art.h * L.scale - 14;
+      ctx.globalAlpha = Math.min(1, w.sayT * 3);
+      ctx.fillStyle = B.sayBg;
+      ctx.fillRect(w.x - tw / 2, by - 14, tw, 18);
+      ctx.fillStyle = B.sayText;
+      ctx.fillText(w.say, w.x, by, 180);
+      ctx.globalAlpha = 1;
     }
   }
-}
-export function lobbyLifeStop() {
-  bubble?.remove();
-  bubble = null;
-  bubbleOf = null;
 }

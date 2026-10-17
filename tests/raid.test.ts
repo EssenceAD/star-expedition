@@ -94,8 +94,7 @@ describe('보스 전장', () => {
   it('AUTO로도 끝까지: Lv20 레이드 승리 · 부위 모두 파괴 / 월드 보스 Lv30 부위 모두 파괴', () => {
     const b = raidAt(20);
     b.auto = true;
-    // 실제 시간 300초 안 (게임 제한 시간 150초가 승패를 가름 · 협공·페이즈 연출 동안 게임 시간이 느려져 200초로는 모자랐음 — 10/18 main에서도 실패하던 것)
-    run(b, 300);
+    run(b, 200);
     expect(b.phase).toBe('win');
     expect(b.raid!.parts.every((p) => p.broken)).toBe(true);
     expect(b.raid!.dodges.auto).toBeGreaterThan(0);

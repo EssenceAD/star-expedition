@@ -111,15 +111,3 @@ describe('외전 대사 초안 (세르미뉴·이치애·딸기망고모찌·재
     }
   });
 });
-
-describe('로비 마을 말풍선 (UI_KIT_1018 §6)', () => {
-  it('영웅마다 5줄 · 말풍선 한 줄에 들어가게 짧게(14자 이하) · 모든 영웅', async () => {
-    const { LOBBY_LINES } = await import('../src/data/lobbyLines');
-    expect(Object.keys(LOBBY_LINES).sort()).toEqual(HEROES.map((h) => h.id).sort());
-    for (const [id, ls] of Object.entries(LOBBY_LINES)) {
-      expect(ls.length, id).toBe(5);
-      expect(new Set(ls).size, id).toBe(5);
-      for (const l of ls) expect([...l].length, `${id}: ${l}`).toBeLessThanOrEqual(14);
-    }
-  });
-});

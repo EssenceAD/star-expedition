@@ -3,33 +3,32 @@
 import { ensureBattleArt } from './assets';
 import { CONFIG } from '../config';
 import { headHpPref, render, renderBg, type Art } from '../battle/render';
-import { bossOf, canCast, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
+import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
 import { heroOf } from '../data/heroes';
+import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
 import { stageCost, useStamina } from '../game/account';
 import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
-import { buildStage, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
+import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
-import { applyTheme, icon, iconArt, iconText, svgIcon, T } from '../theme/tokens';
+import { applyTheme, icon, iconText, T } from '../theme/tokens';
 import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, skillIconUrl, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
-import { gearArtUrl, runeArtUrl, socketRarity } from './gearui';
-import { gearName } from '../game/gear';
-import { accNeed } from '../game/account';
-import { expNeed } from '../game/heroes';
-import type { Gear, Rune } from '../game/state';
+import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
-import { setBackdrop, view } from './view';
-import { kit9, kitBar, kitPart, kitSocket, setBar, titleUrl, type Rarity } from './kit';
-import { bustUrl, fullUrl } from './bust';
+import { view } from './view';
 import { aiEmote, countdown, emote, pvpHudHtml, resetAiEmote, syncPvpHud, vsIntro } from './arena';
 
 const C = CONFIG.story;
+/** 승리·패배 엠블럼 (public/art/ui · 리본은 비어 있음 → 글자는 금박 글씨로 얹음) */
 const UI_ART = `${import.meta.env.BASE_URL}art/ui/`;
+/** 승리·패배 엠블럼 · stars를 주면 엠블럼 위로 별 3개가 하나씩 「쾅」 + 뒤에서 금빛 햇살이 돎 (MOBILE_REF §3-A-5) */
+const emb = (text: string, win: boolean, stars?: number) =>
+  `<div class="emb${stars !== undefined ? ' starred' : ''}" style="background-image:url(${UI_ART}${win ? 'victory' : 'defeat'}.png)">${stars !== undefined ? `<i class="rays"></i><div class="stars3">${[0, 1, 2].map((i) => `<img class="${i < stars ? 'on' : ''}" style="--i:${i}" src="${UI_ART}icons/star.png" alt="">`).join('')}</div>` : ''}${fxt(text, win ? '' : 'lose')}</div>`;
 let b: Battle | null = null;
 let st: StageId = { c: 1, s: 1, d: 0 };
 /** 콘텐츠 전투 (없으면 스토리) */
@@ -44,8 +43,7 @@ let intro = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
 /** DPS 판: 펼침(기억함) · 탭 피해·회복·받은 피해 (MOBILE_REF §3-A-4) */
-// 기본 접힘 (UI_KIT_1018 §4) · 예전 설정(펼침 기억)은 새 키로 한 번 초기화
-let dpsOpen = getPref('dpsOpen1018', false);
+let dpsOpen = getPref('dpsOpen', true);
 let dpsTab: 'dealt' | 'healed' | 'taken' = 'dealt';
 const DPS_HEAD = { dealt: '피해량', healed: '회복량', taken: '받은 피해' } as const;
 let paused = false;
@@ -53,64 +51,81 @@ let paused = false;
 let artWait = false;
 const hud = () => $('#hud');
 
-// ───────── 아래 영웅 4칸 (UI_KIT_1018 §4 · target_1018/battle.jpg) ─────────
-//  칸 너비 203 · 칸 안 좌표: 상반신(틀 없음 · x+33 중심 · 아래 붙임) · nameplate x+68 y302 126×18 · HP bar y321 126×9 · MP y330 126×7 · socket 40 ×3 x+68+j·43 y339
-const SLOT = 203;
+const BUFF = (u: Unit): [string, string][] =>
+  ([
+    [u.shield > 0, 'shield', '보호막'], [has(u, 'guard'), 'guard', '받는 피해 감소'], [has(u, 'taunt'), 'taunt', '도발'], [has(u, 'regen'), 'regen', '회복'], [has(u, 'atkUp'), 'atkUp', '공격력 증가'],
+    [has(u, 'spdUp'), 'spdUp', '공격 속도 증가'], [has(u, 'critUp'), 'critUp', '치명타 증가'], [has(u, 'atkDown'), 'atkDown', '공격력 감소'], [has(u, 'stun'), 'stun', '기절'], [has(u, 'silence'), 'silence', '침묵'], [has(u, 'slow'), 'slow', '둔화'], [has(u, 'burn'), 'burn', '화상'],
+  ] as [boolean, string, string][]).filter((x) => x[0]).map(([, k, t]) => [iconText(k), t]);
+
 function buildBar() {
   const bar = $('#bar');
   bar.innerHTML = b!.heroes
     .filter((u) => !u.ai)
     .map((u, i) => {
       const h = u.hero!.def;
-      return `<div class="hc" data-h="${i}" style="left:${i * SLOT}px"><img class="bust" data-bust="${h.id}" alt="" draggable="false">
-      ${kit9('nameplate', 126, 18, 9, 'np', '', `<span class="tx nm">${esc(h.name)}</span><span class="tx lv">Lv.${u.hero!.lv}</span>`)}
-      ${kitBar(126, 9, u.hp / u.max, T.kit2.hp, 'bar', 'hp')}${kitBar(126, 7, u.mana / 100, T.kit2.mp, 'bar', 'mp')}
-      ${h.skills.map((s, k) => `<button class="sk" data-s="${k}" style="left:${68 + k * 43}px" title="${esc(s.name)} · ${esc(descSkill(s))} (마나 ${s.cost} · ${s.cd}초)">${kitSocket(skillIconUrl(h.id, k), 40, null, '', '<b class="tx"></b>')}</button>`).join('')}</div>`;
+      return `<div class="hc" data-h="${i}"><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div>
+      <div class="nm">${h.name}<small>${JOBS[h.job].name} Lv.${u.hero!.lv}</small></div>
+      <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
+      <div class="bf"></div>
+      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background-image:url(${skillIconUrl(h.id, k)})"><em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"></button></div></div>`;
     })
     .join('');
   $$('.hc', bar).forEach((c) => {
     const u = b!.heroes[+c.dataset.h!];
     $$<HTMLButtonElement>('button[data-s]', c).forEach((btn) => (btn.onclick = () => requestSkill(b!, u, +btn.dataset.s!)));
-    const im = $<HTMLImageElement>('.bust', c);
-    void bustUrl(im.dataset.bust!).then((url) => (im.src = url)).catch(() => {});
+    const au = $('.au', c);
+    au.onclick = () => {
+      u.autoOn = !u.autoOn;
+      au.setAttribute('aria-pressed', String(u.autoOn));
+    };
   });
 }
-const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+
 function syncHud() {
   const bb = b!;
-  if ($('#bAuto').getAttribute('aria-pressed') !== String(bb.auto)) $('#bAuto').setAttribute('aria-pressed', String(bb.auto));
-  if ($('#bSpeed span').textContent !== `×${bb.speed}`) speedLabel();
   $$('.hc', $('#bar')).forEach((c) => {
     const u = bb.heroes[+c.dataset.h!];
     c.classList.toggle('dead', u.dead);
-    setBar($('.hp', c), u.hp / u.max);
-    setBar($('.mp', c), u.mana / 100);
+    $('.hp i', c).style.width = `${(u.hp / u.max) * 100}%`;
+    $('.hp s', c).style.width = `${Math.min(100, (u.shield / u.max) * 100)}%`;
+    $('.mp i', c).style.width = `${u.mana}%`;
+    const bf = BUFF(u).map(([i, t]) => `<span title="${t}">${i}</span>`).join('');
+    const el = $('.bf', c);
+    if (el.innerHTML !== bf) el.innerHTML = bf;
     $$<HTMLButtonElement>('button[data-s]', c).forEach((btn) => {
       const i = +btn.dataset.s!;
-      const cd = u.scd[i];
       btn.classList.toggle('ok', canCast(bb, u, i));
-      // 마나 부족 (쿨타임 아님): 채도 낮춤 · 쿨타임: 창 위 알파 0.55 검정 + 남은 초 (UI_KIT_1018 §4)
-      btn.classList.toggle('nomana', cd <= 0 && u.mana < u.hero!.def.skills[i].cost);
+      // 마나 부족 (쿨타임 아님): 채도 30% + 파란 자물쇠 점 (PLAYTEST §2)
+      btn.classList.toggle('nomana', u.scd[i] <= 0 && u.mana < u.hero!.def.skills[i].cost);
+      const cd = u.scd[i];
       btn.classList.toggle('cd', cd > 0);
-      const t = cd > 0 ? String(Math.ceil(cd)) : '';
-      const el = btn.querySelector('b')!;
-      if (el.textContent !== t) el.textContent = t;
+      // 쿨타임 남은 비율 → 남색 원을 시계방향으로 걷어냄 (BATTLE_HUD §5)
+      btn.style.setProperty('--cd', cd > 0 ? String(cd / u.hero!.def.skills[i].cd) : '0');
+      btn.querySelector('b')!.textContent = cd > 0 ? String(Math.ceil(cd)) : '';
     });
   });
   const boss = bossOf(bb);
   const showBoss = !!boss && bb.phase !== 'walk';
   $('#boss').hidden = !showBoss;
+  $('#wave').hidden = showBoss;
   const waves = bb.setup.waves.length;
-  const wave = bb.wave < 0 ? 1 : Math.min(bb.wave + 1 + (bb.phase === 'walk' ? 1 : 0), waves);
+  const waveT = bb.wave < 0 ? `WAVE 1 / ${waves}` : `WAVE ${Math.min(bb.wave + 1 + (bb.phase === 'walk' ? 1 : 0), waves)} / ${waves}`;
+  // 웨이브가 바뀌면 판이 위에서 내려옴
+  if (!showBoss && $('#wave').textContent !== waveT) {
+    const el = $('#wave');
+    el.textContent = waveT;
+    el.classList.remove('drop');
+    void el.offsetWidth;
+    el.classList.add('drop');
+  }
   const left = Math.max(0, bb.setup.limit - bb.stats.time);
-  // 가운데 띠: 「숲 동굴 1-2 · WAVE 1/2 · 2:41」 (30초 남으면 시간만 빨강)
-  const st = `${esc(bb.setup.title)}<i>·</i>${bb.raid ? '' : `WAVE ${wave}/${waves}<i>·</i>`}<b class="${left <= CONFIG.ui.clockLowSec ? 'low' : ''}">${mmss(left)}</b>`;
-  const se = $('#stripT');
-  if (se.innerHTML !== st) se.innerHTML = st;
   if (showBoss) {
     $('#bName').textContent = boss!.name;
     $('#bPct').textContent = `${Math.ceil((boss!.hp / boss!.max) * 100)}%`;
-    setBar($('#boss .kbar'), boss!.hp / boss!.max);
+    $('#bHp').style.width = `${(boss!.hp / boss!.max) * 100}%`;
+    $('#bHpN').textContent = `${shortNum(boss!.hp)} / ${shortNum(boss!.max)}`;
+    $('#bDmg').textContent = shortNum(bb.stats.bossDealt);
+    $('#bTime').textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
   }
   // 보스 전장은 보스가 나올 때 생김 → 그때 HUD를 바꿈
   if (!!bb.raid !== hud().classList.contains('raid')) (buildRaid(), dpsLabel());
@@ -120,11 +135,18 @@ function syncHud() {
   const wt = `${iconText('warn')} ${bb.pat.text}`;
   if (bb.pat.text && w.textContent !== wt) w.textContent = wt;
   if (run?.mode === 'arena') syncPvpHud(bb, $('#pvpHud'));
+  // 남은 시간 (WAVE 판 옆 · 30초 남으면 빨강 · 보스 HUD가 뜨면 그쪽에 있음)
+  const ck = $('#clock');
+  ck.hidden = showBoss || !!bb.raid;
+  const ct = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
+  if (ck.textContent !== ct) ck.textContent = ct;
+  ck.classList.toggle('low', left <= CONFIG.ui.clockLowSec);
   if (dpsOpen) {
     const sorted = [...bb.heroes].sort((a, c) => c[dpsTab] - a[dpsTab]).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
     const top = Math.max(1, sorted[0][dpsTab]);
-    // 한 줄 = 이름 · 값 · 아래 얇은 직업색 막대 (글씨 1종 · UI_KIT_1018 §4)
-    const rows = sorted.map((u) => `<div class="dr"><span class="tx nm">${esc(u.name)}</span><span class="tx v">${shortNum(u[dpsTab])}</span><i class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background-color:${T.battle.jobColor[u.hero!.def.job]}"></i></i></div>`).join('');
+    const t = Math.max(1, bb.stats.time);
+    // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 값 (BATTLE_HUD §3)
+    const rows = sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u[dpsTab])}</b><div class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i><small>${shortNum(u[dpsTab] / t)}/초</small></div></div>`).join('');
     const el = $('#dpsL .rows');
     if (el.innerHTML !== rows) el.innerHTML = rows;
   }
@@ -137,8 +159,7 @@ function buildRaid() {
   $('#raidHud').hidden = !r;
   $('#bDodge').hidden = !r;
   if (!r) return;
-  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false"><span class="tx">${esc(p.name)}</span>${kitBar(90, 8, 1, T.kit2.mobHp)}</button>`).join('');
-  $('#raidHud .ggb').innerHTML = kitBar(150, 9, 0, T.kit2.mp);
+  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false"><span>${esc(p.name)}</span><div class="bh"><i></i></div></button>`).join('');
   $$<HTMLButtonElement>('#rParts button').forEach((btn) => (btn.onclick = () => {
     const rr = b?.raid;
     if (!rr) return;
@@ -151,29 +172,14 @@ function speedLabel() {
   $('#bSpeed span').textContent = `×${b!.speed}`;
   $('#bSpeed').classList.toggle('fast', b!.speed > 1);
 }
-let pauseMenu: HTMLElement | null = null;
 function setPaused(on: boolean) {
   paused = on;
   $('#bPause').setAttribute('aria-pressed', String(on));
-  if (!on && pauseMenu) (pauseMenu.remove(), (pauseMenu = null));
-}
-/** 일시정지 메뉴 (팝업 1종): 계속하기 · 포기하기 (포기 버튼은 여기 안으로 · UI_KIT_1018 §4) */
-function openPause() {
-  if (!b || pauseMenu) return;
-  const canQuit = b.phase === 'fight' || b.phase === 'walk';
-  setPaused(true);
-  pauseMenu = modal('일시정지', `<p>${esc(b.setup.title)} · ${mmss(b.stats.time)} 진행 중</p>${canQuit ? '<p class="dim">포기하면 이 전투는 패배로 끝나요.</p>' : ''}`, [
-    ...(canQuit ? ([['포기하기', () => {
-      pauseMenu = null;
-      setPaused(false);
-      if (b && (b.phase === 'fight' || b.phase === 'walk')) ((b.phase = 'lose'), (b.why = 'wipe'));
-    }]] as [string, () => void][]) : []),
-    ['계속하기', () => ((pauseMenu = null), setPaused(false)), true],
-  ]);
-  pauseMenu.dataset.pause = '';
+  $('#pausedTag').hidden = !on;
 }
 function dpsLabel() {
   $('#dps').classList.toggle('open', dpsOpen);
+  $('#bDps').textContent = iconText(dpsOpen ? 'fold' : 'open');
   $('#bDps').title = dpsOpen ? '피해 판 접기' : '피해 판 펼치기';
   $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => {
     t.classList.toggle('on', t.dataset.dt === dpsTab);
@@ -188,98 +194,11 @@ function syncRaid(bb: Battle) {
     const p = r.parts[+btn.dataset.p!];
     btn.classList.toggle('broken', p.broken);
     btn.setAttribute('aria-pressed', String(+btn.dataset.p! === auto && !p.broken));
-    setBar($('.kbar', btn), p.hp / p.max);
+    $('i', btn).style.width = `${(p.hp / p.max) * 100}%`;
   });
-  setBar($('#raidHud .ggb .kbar'), r.downT > 0 ? 1 : r.groggy / r.gMax);
+  $('#rGg').style.width = `${r.downT > 0 ? 100 : (r.groggy / r.gMax) * 100}%`;
   $('#rDown').textContent = r.downT > 0 ? `다운 ${Math.ceil(r.downT)}초` : '';
   $('#bDodge').classList.toggle('hot', r.warnLane != null);
-}
-
-// ───────── 연출 (UI_KIT_1018 §4 연출 순서): BATTLE → (보스 등장 카드) → … → VICTORY / DEFEAT → 결과 ─────────
-/** 연출 타이머: 전투 화면 tick(dt)이 줄여 감 (녹화 모드에서도 장면 시간 그대로 · 화면을 떠나면 버림) */
-let cueTimers: { left: number; fn: () => void }[] = [];
-const after = (sec: number, fn: () => void) => cueTimers.push({ left: sec, fn });
-function cueTimersTick(dt: number) {
-  if (!cueTimers.length) return;
-  for (const t of cueTimers) t.left -= dt;
-  const due = cueTimers.filter((t) => t.left <= 0);
-  cueTimers = cueTimers.filter((t) => t.left > 0);
-  for (const t of due) t.fn();
-}
-/** 빛살 (캔버스로 한 번 그려 둠 · 16줄 · 흐림) */
-let raysUrl = '';
-function rays() {
-  if (raysUrl) return raysUrl;
-  const W = 844;
-  const H = 390;
-  const c = document.createElement('canvas');
-  c.width = W * 2;
-  c.height = H * 2;
-  const x = c.getContext('2d')!;
-  x.scale(2, 2);
-  x.filter = 'blur(6px)';
-  x.fillStyle = T.kit2.ray;
-  const [cx, cy] = [422, 170];
-  for (let k = 0; k < 16; k++) {
-    const a = (k * Math.PI) / 8;
-    x.beginPath();
-    x.moveTo(cx, cy);
-    x.lineTo(cx + Math.cos(a - 0.07) * 900, cy + Math.sin(a - 0.07) * 900);
-    x.lineTo(cx + Math.cos(a + 0.07) * 900, cy + Math.sin(a + 0.07) * 900);
-    x.fill();
-  }
-  return (raysUrl = c.toDataURL('image/png'));
-}
-/** 그림 글씨 한 번 (어둡게 + 빛살 + 가운데 (422,170) · 0.15초 커짐 → 유지 → 0.15초 사라짐) */
-function cueWord(name: 'word_battle' | 'word_victory' | 'word_defeat', w: number, sec: number): Promise<void> {
-  const el = document.createElement('div');
-  el.className = `cue word ${name}`;
-  el.style.setProperty('--cue', `${sec}s`);
-  el.innerHTML = `<img class="rays" src="${rays()}" alt=""><img class="wd" src="${titleUrl(`${name}.png`)}" alt="" style="width:${w}px;left:calc(50% - ${w / 2}px)">`;
-  $('#cue').append(el);
-  after(Math.max(0, sec - 0.15), () => el.classList.add('out'));
-  return new Promise((ok) => after(sec, () => (el.remove(), ok())));
-}
-/** 보스 등장 카드: 검은 화면 0.6 + 보스 전신(오른쪽) + 리본 「BOSS」 + 이름 · 1.5초 · 누르면 넘김 */
-let bossCard: { el: HTMLElement; end: () => void } | null = null;
-function bossIntro(boss: Unit): Promise<void> {
-  return new Promise((ok) => {
-    const cell = boss.anims.idle!.frames[0];
-    const [dir, key] = cell.split(':');
-    const el = document.createElement('div');
-    el.className = 'cue boss';
-    el.innerHTML = `<img class="bfull" src="${import.meta.env.BASE_URL}art/${dir}/${key}.png" alt="">
-      ${kit9('ribbon', 210, 40, 20, 'brib', '', '<span class="th">BOSS</span>')}<b class="th bname">${esc(boss.name)}</b><span class="tx bskip">눌러서 넘기기</span>`;
-    $('#cue').append(el);
-    let done = false;
-    const end = () => {
-      if (done) return;
-      done = true;
-      bossCard = null;
-      el.classList.add('out');
-      after(0.2, () => (el.remove(), ok()));
-    };
-    bossCard = { el, end };
-    el.onclick = end;
-    after(1.5, end);
-  });
-}
-/** 연출이 화면을 잡고 있는 동안 전투 진행 멈춤 */
-let cueBattle = false;
-let cueBossWave = -1;
-function cueTick(bb: Battle) {
-  if (!cueBattle && !talking && !intro && !artWait) {
-    cueBattle = true;
-    void cueWord('word_battle', 360, 0.9);
-  }
-  const bw = bb.wave;
-  if (bw >= 0 && bw !== cueBossWave && bb.phase === 'fight' && run?.mode !== 'arena') {
-    cueBossWave = bw;
-    const boss = bb.mobs.find((m) => m.mob?.boss);
-    if (boss) {
-      void bossIntro(boss);
-    }
-  }
 }
 
 function setup() {
@@ -297,12 +216,11 @@ function setup() {
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
   speedLabel();
   setPaused(false);
-  setBackdrop(`${import.meta.env.BASE_URL}art/${b.setup.bg ? `bgs/${b.setup.bg}` : 'bg'}.jpg`);
-  cueBattle = false;
-  bossCard = null;
-  cueBossWave = -1;
-  cueTimers = [];
-  $('#cue').innerHTML = '';
+  $('#stg').textContent = b.setup.title;
+  // 스테이지 이름은 시작할 때 다시 보여 줌 (보스 전장에선 2초 뒤 사라짐)
+  $('#stg').classList.remove('show');
+  void $('#stg').offsetWidth;
+  $('#stg').classList.add('show');
   buildBar();
   buildRaid();
   dpsLabel();
@@ -320,88 +238,29 @@ function setup() {
   $('#result').hidden = true;
   shown = false;
   const boss = b.setup.waves.flat().find((m) => m.boss);
-  $('#boss').innerHTML = `${boss?.portrait ? kitSocket(portraitUrl(boss.portrait), 30, null, 'bp') : ''}<span class="tx bn" id="bName">보스</span><span class="tx bpct" id="bPct">100%</span>${kitBar(300, 14, 1, T.kit2.mobHp, 'bar_thick')}`;
+  if (boss?.portrait) $('#boss .bp').style.backgroundImage = `url(${portraitUrl(boss.portrait)})`;
 }
 
-// ───────── 결과 화면 1종 (UI_KIT_1018 §5 · target_1018/result.jpg) — 스토리·콘텐츠·레이드·결투장 같은 화면 ─────────
-//  배경 = 전투 배경 흐림 6px + 어둡게 0.68 · 위 strip 「원정대 레벨」 + bar_thick · 영웅 전신 4명(높이 190, 발 y 256, x = 257 + i·110) + LEVEL UP 그림
-//  · 영웅 아래 Lv / EXP +n / bar_thick 96×12 + % · 전리품 loot_band(122,306,600×62) + 등급 받침 42 하나씩 반짝 · 오른쪽 medal 56 ×3 · 왼쪽 아래 medal 48 「통계」
-interface ResultView {
-  win: boolean;
-  heroes: { id: string; gain: number; up: boolean }[];
-  loot: { url: string; rarity: Rarity; n: string; title: string }[];
-  /** 전리품이 없을 때 띠 안 한 줄 */
-  hint?: string;
-  stats: [string, string][];
-  lines?: string[];
-  /** 오른쪽 medal 3개: [글, data-a, 아이콘, 못 누름] */
-  buttons: [string, string, string, boolean?][];
-}
-const medalBtn = (size: number, label: string, a: string, ic: string, off = false) =>
-  `<button class="rmed" data-a="${a}" ${off ? 'disabled' : ''} style="width:${size}px;height:${size}px">${kitPart('medal', size, size)}<i class="ric">${svgIcon(ic)}</i><span class="tx">${label}</span></button>`;
-function resultScreen(v: ResultView, onAct: (a: string) => void) {
-  const r = $('#result');
-  const acc = Math.min(1, S.acc.exp / accNeed(S.acc.lv));
-  const hs = v.heroes.slice(0, 4);
-  const cx = (i: number) => 422 + (i - (hs.length - 1) / 2) * 110;
-  const n = v.loot.length;
-  const step = Math.min(50, 236 / Math.max(1, n));
-  const sz = Math.min(42, step - 4);
-  r.innerHTML = `<div class="rin">
-    ${kit9('strip', 320, 30, 15, 'rtop', '', `<span class="tx">원정대 레벨 ${S.acc.lv}</span>`)}${kitBar(180, 14, acc, T.kit2.party, 'bar_thick', 'racc')}
-    ${hs.map((h, i) => {
-      const hv = S.heroes[h.id];
-      const ratio = hv ? Math.min(1, hv.exp / expNeed(hv.lv)) : 0;
-      return `<div class="rh" style="left:${cx(i)}px"><img class="rfb" data-full="${h.id}" alt="">${h.up ? `<img class="rlu" src="${titleUrl('word_levelup.png')}" alt="LEVEL UP" style="--i:${i}">` : ''}
-        <span class="tx rlv">Lv.${hv?.lv ?? 1}</span>${h.gain ? `<span class="tx rex">EXP +${fmt(h.gain)}</span>` : ''}${kitBar(96, 12, ratio, T.kit2.exp, 'bar_thick', 'rxb', `<b class="tx">${Math.floor(ratio * 100)}%</b>`)}</div>`;
-    }).join('')}
-    <div class="rloot">${kitPart('loot_band', 600, 62)}<span class="tx rlt">전리품</span>
-      ${n ? v.loot.map((it, j) => `<div class="rit" style="left:${300 - (n * step) / 2 + j * step + (step - sz) / 2}px;--i:${j}" title="${esc(it.title)}">${kitSocket(it.url, sz, it.rarity, '', it.n ? `<b class="tx">${it.n}</b>` : '')}</div>`).join('') : `<span class="tx rnone">${esc(v.hint || '전리품 없음')}</span>`}</div>
-  </div>
-  <div class="rbtns">${v.buttons.map(([l, a, ic, off]) => medalBtn(56, l, a, ic, off)).join('')}</div>
-  <div class="rstat">${medalBtn(48, '통계', 'stats', 'stats')}</div>`;
-  r.hidden = false;
-  r.classList.toggle('lose', !v.win);
-  $$<HTMLImageElement>('img[data-full]', r).forEach((im) => void fullUrl(im.dataset.full!, 190).then((u) => (im.src = u)).catch(() => {}));
-  $$<HTMLButtonElement>('#result [data-a]').forEach((btn) => {
-    btn.onclick = () => {
-      if (btn.dataset.a === 'stats') return void modal('통계', `<div class="kvs">${v.stats.map(([k, x]) => `<div class="kv"><span>${k}</span><b>${x}</b></div>`).join('')}${(v.lines ?? []).map((l) => `<p class="xs">${esc(l)}</p>`).join('')}</div>`, [['닫기', null, true]]);
-      onAct(btn.dataset.a!);
-    };
-  });
-}
-/** 영웅 칸 (내 파티만 · AI 동료 빼고) */
-const partyView = (bb: Battle, gain = 0, ups: string[] = []) => bb.heroes.filter((u) => !u.ai).map((u) => ({ id: u.hero!.def.id, gain, up: ups.includes(u.hero!.def.id) }));
-/** 재화·장비·룬 → 전리품 받침 */
-function lootOf(items: [string, number][], gear: Gear[], runes: Rune[]): ResultView['loot'] {
-  const cur = items.filter(([, v]) => v > 0).map(([k, v]) => ({ url: iconArt(k) ?? `${UI_ART}icons/star.png`, rarity: (k === 'stardust' ? 'epic' : k === 'enh' ? 'rare' : 'common') as Rarity, n: `+${shortNum(v)}`, title: `${CUR_NAME[k] ?? k} +${fmt(v)}` }));
-  return [...gear.map((g) => ({ url: gearArtUrl(g), rarity: socketRarity(g.grade), n: '', title: gearName(g) })), ...runes.map((x) => ({ url: runeArtUrl(x), rarity: socketRarity(x.grade), n: '', title: '룬' })), ...cur];
-}
-/** 콘텐츠 결과 (토벌·던전·탑·요일·레이드·월드 보스·결투장·외전) — 같은 결과 화면 */
+/** 콘텐츠 결과 (토벌·던전·탑·요일·레이드·월드 보스·결투장·외전) */
 function showRunResult() {
   const bb = b!;
   const r = run!;
   let win = bb.phase === 'win';
-  const go2 = (a: string) => {
-    if (a === 'portal') (r.mode === 'graid' ? go('guild', { tab: 'raid' }, false) : go('portal', { tab: r.mode }, false));
-    else if (a === 'again') beginRun(r);
-    else if (a === 'nextrun' && nextFloor) beginRun(nextFloor);
-  };
   // 최후의 리그: 3판 중 2판 — 아직 안 끝났으면 다음 판
   if (r.mode === 'arena' && r.arg === 'last') {
     series[win ? 'wins' : 'losses']++;
     if (series.wins < 2 && series.losses < 2) {
       const leg = (r.leg ?? 0) + 1;
-      resultScreen({ win, heroes: partyView(bb), loot: [], hint: `최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}`, stats: [['이번 판', win ? '승리' : '패배'], ['시간', `${Math.floor(bb.stats.time)}초`]], buttons: [['다음 판', 'leg', 'next'], ['다시하기', 'again', 'repeat', true], ['나가기', 'portal', 'back']] }, (a) => {
-        if (a === 'leg') {
-          run = { ...r, leg };
-          $('#result').hidden = true;
-          b = null;
-          setup();
-          intro = true;
-          countdown(() => (intro = false));
-        } else go2(a);
-      });
+      $('#result').innerHTML = `${emb(win ? '이번 판 승리' : '이번 판 패배', win)}<p class="why">최후의 리그 ${series.wins}승 ${series.losses}패 · 다음은 파티 ${leg + 1}</p><div class="row"><button class="btn hi" data-a="leg">다음 판 ${icon('next')}</button></div>`;
+      $('#result').hidden = false;
+      $('#result [data-a="leg"]').onclick = () => {
+        run = { ...r, leg };
+        $('#result').hidden = true;
+        b = null;
+        setup();
+        intro = true;
+        countdown(() => (intro = false));
+      };
       return;
     }
     win = series.wins >= 2;
@@ -410,17 +269,32 @@ function showRunResult() {
   const o = finishRun(r, { win: win && !scoreRun, dealt: scoreRun ? bb.stats.bossDealt : bb.stats.dealt, heroes: bb.heroes.filter((u) => !u.ai).map((u) => u.hero!.def.id) });
   persist();
   const mvp = mvpOf(bb);
-  const nextFloor: Run | null = r.mode === 'tower' && win ? { ...r, arg: +r.arg + 1 } : r.mode === 'side' && win && (r.sub ?? 0) < CONFIG.content.side.acts ? { ...r, sub: (r.sub ?? 1) + 1 } : null;
+  const head = scoreRun ? '결과' : win ? '승리!' : bb.why === 'time' ? '시간 초과' : '패배…';
+  const nextFloor = r.mode === 'tower' && win ? { ...r, arg: +r.arg + 1 } : r.mode === 'side' && win && (r.sub ?? 0) < CONFIG.content.side.acts ? { ...r, sub: (r.sub ?? 1) + 1 } : null;
   const left = triesText(r);
   const rs = raidSummary(bb);
-  const stats: [string, string][] = [['콘텐츠', MODE_NAME[r.mode]], ['결과', scoreRun ? '기록' : win ? '승리' : bb.why === 'time' ? '시간 초과' : '패배'], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['초당', shortNum(partyDps(bb))], ['MVP', esc(mvp.name)]];
+  // 결과 표 (남색 판 안 항목: 값 2열 · PLAYTEST §3·§4) — 부위는 아이콘 + ✓/✕
+  const rows: [string, string][] = [['콘텐츠', MODE_NAME[r.mode]], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['초당', shortNum(partyDps(bb))], ['MVP', `<b class="hn">${esc(mvp.name)}</b>`]];
   if (rs) {
-    stats.push(['페이즈', `${rs.phase}페이즈까지`], ['회피', `직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}`]);
-    for (const p of rs.parts) stats.push([esc(p.name), p.broken ? `파괴 · ${esc(p.top)}` : '남음']);
+    rows.push(['페이즈', `${rs.phase}페이즈까지`], ['회피', `직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}`]);
+    for (const p of rs.parts) rows.push([`${icon('target')} ${esc(p.name)}`, p.broken ? `${ck(true)} ${esc(p.top)}` : ck(false)]);
   }
-  if (left) stats.push(['남은 도전', left]);
-  resultScreen({ win: win || scoreRun, heroes: partyView(bb), loot: lootOf(o.items, o.gear, o.runes), hint: o.lines[0] || (win ? '전리품 없음' : '이번엔 보상이 없어요'), stats, lines: o.lines,
-    buttons: [[nextFloor ? (r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막') : '다음 전투', 'nextrun', 'next', !nextFloor], [`다시하기${left ? ` (${left})` : ''}`, 'again', 'repeat', !!lockOf(r)], ['나가기', 'portal', 'back']] }, go2);
+  const table = `<div class="rtable">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}${o.lines.map((l) => `<em>${esc(l)}</em>`).join('')}</div>`;
+  $('#result').innerHTML = `${emb(head, win || scoreRun)}<div class="rcol">
+    ${table}
+    <div class="rw">${o.items.map(([k, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${CUR_NAME[k] ?? k}<b>+${fmt(v)}</b></div>`).join('')}${o.gear.map((g) => gearCell(g)).join('')}${o.runes.map((x) => runeCell(x)).join('')}</div>
+    <div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="portal">${icon('content')} 콘텐츠</button><button class="btn" data-a="again" ${lockOf(r) ? 'disabled' : ''}>다시${left ? ` (${left})` : ''}</button>${nextFloor ? `<button class="btn hi" data-a="nextrun">${r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막'} ${icon('next')}</button>` : ''}</div></div>`;
+  $('#result').hidden = false;
+  $$('#result [data-a]').forEach(
+    (btn) =>
+      (btn.onclick = () => {
+        const a = btn.dataset.a;
+        if (a === 'lobby') go('lobby', {}, false);
+        else if (a === 'portal') (r.mode === 'graid' ? go('guild', { tab: 'raid' }, false) : go('portal', { tab: r.mode }, false));
+        else if (a === 'again') beginRun(r);
+        else if (a === 'nextrun' && nextFloor) beginRun(nextFloor);
+      }),
+  );
 }
 /** 콘텐츠 전투 시작: 도전 수 쓰고 → 파티를 세우고 → (외전 대사) → 전투 */
 function beginRun(r: Run) {
@@ -450,6 +324,8 @@ function beginRun(r: Run) {
   }
 }
 
+/** 결과 조건 표시: 됨 = 금색 체크 · 안 됨 = 흐린 X */
+const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${icon(ok ? 'check' : 'cross')}</i>`;
 function showResult() {
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
@@ -457,21 +333,13 @@ function showResult() {
   if (run) return showRunResult();
   const bb = b!;
   const win = bb.phase === 'win';
+  const r = $('#result');
   const mvp = mvpOf(bb);
-  const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
-  // 다음 스테이지가 열렸는지는 이번 판 기록(recordClear) 뒤에 봄
-  const hasNext = () => st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
-  const act = (a: string) => {
-    if (a === 'again') begin(st);
-    else if (a === 'next' && hasNext()) begin(next);
-    else if (a === 'exit') go('adventure', { c: st.c, d: st.d, s: st.s }, false);
-    else if (a === 'lobby') go('lobby', {}, false);
-    else if (a === 'form') go('prep', { stage: st }, false);
-  };
   if (!win) {
-    resultScreen({ win, heroes: partyView(bb), loot: [], hint: `${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 레벨을 올리거나 편성을 바꿔 봐요`,
-      stats: [['결과', bb.why === 'time' ? '시간 초과' : '패배'], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['MVP', esc(mvp.name)], ['추천', '반복 전투·방치 보상으로 경험치 모으기']],
-      buttons: [['편성', 'form', 'formation'], [`다시하기 ${stageCost(st.d)}`, 'again', 'repeat'], firstRun ? ['나가기', 'lobby', 'back'] : ['나가기', 'exit', 'back']] }, act);
+    r.innerHTML = `${emb(bb.why === 'time' ? '시간 초과' : '패배…', false)}<p class="why">${bb.wave >= bb.setup.waves.length - 1 && bossOf(bb) ? '보스' : `웨이브 ${bb.wave + 1}`}에서 멈췄어요 · 영웅 레벨을 올리거나 편성을 바꿔 봐요<br>추천: 반복 전투·방치 보상으로 경험치 모으기</p>
+      <div class="row"><button class="btn" data-a="form">${icon('formation')} 편성</button><button class="btn hi" data-a="again">다시 하기 ${icon('stamina')}${stageCost(st.d)}</button>${firstRun ? '' : `<button class="btn" data-a="adv">${icon('adventure')} 모험</button>`}</div>`;
+    r.hidden = false;
+    wire();
     return;
   }
   const stars = starsOf(bb);
@@ -479,13 +347,22 @@ function showResult() {
   const res = recordClear(st, { stars, time: bb.stats.time, dps, mvp: mvp.hero!.def.id });
   persist();
   const allUp = bb.heroes.every((h) => !h.dead);
-  const items: [string, number][] = [['gold', res.got.gold], ['exp', res.got.exp], ['stardust', res.got.stardust], ['enh', res.got.enh]];
-  const ok = (x: boolean) => (x ? '달성' : '-');
-  const show = () =>
-    resultScreen({ win, heroes: partyView(bb, res.got.exp, res.got.ups), loot: lootOf(items, res.got.gear, res.got.runes),
-      stats: [['별', `${iconText('star').repeat(stars)}${iconText('starOff').repeat(3 - stars)}`], ['클리어', ok(true)], ['아무도 안 쓰러짐', ok(allUp)], [`${bb.setup.starTime}초 안`, ok(bb.stats.time <= bb.setup.starTime)], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['초당', `${shortNum(dps)}${res.newBest ? ' (최고 기록!)' : ''}`], ['MVP', `${esc(mvp.name)} ${shortNum(mvp.dealt)}`]],
-      lines: [...(res.got.chest ? ['따뜻한밤이 숨은 상자를 찾았어요 (금화 더)'] : []), ...(res.joined ? [`${heroOf(res.joined).name} 합류!`] : [])],
-      buttons: firstRun ? [['다음 전투', 'lobby', 'next'], ['다시하기', 'again', 'repeat'], ['나가기', 'lobby', 'back']] : [['다음 전투', 'next', 'next', !hasNext()], [`다시하기 ${stageCost(st.d)}`, 'again', 'repeat'], ['나가기', 'exit', 'back']] }, act);
+  const items: [string, string, number][] = [['gold', CUR_NAME.gold, res.got.gold], ['exp', '영웅 경험치', res.got.exp]];
+  if (res.got.stardust) items.push(['stardust', CUR_NAME.stardust, res.got.stardust]);
+  if (res.got.enh) items.push(['enh', CUR_NAME.enh, res.got.enh]);
+  const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
+  const hasNext = st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
+  const show = () => {
+    r.innerHTML = `${emb('승리!', true, stars)}<div class="rcol"><p class="why band">클리어 ${ck(true)} · 아무도 안 쓰러짐 ${ck(allUp)} · ${bb.setup.starTime}초 안 ${ck(bb.stats.time <= bb.setup.starTime)}<br>
+      시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP <b class="hn">${mvp.name}</b> ${shortNum(mvp.dealt)}
+      ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl" style="background-image:url(${UI_ART}levelup.png)">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
+      <div class="rw">${items.map(([k, n, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
+      ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}</div>`;
+    r.hidden = false;
+    // 별이 박힐 때마다 「쾅」
+    for (let i = 0; i < stars; i++) setTimeout(() => combatSynth('block', 0.8 + i * 0.2), (CONFIG.ui.winStars.delay + i * CONFIG.ui.winStars.gap) * 1000 + 250);
+    wire(next);
+  };
   const joined = () => (res.joined ? joinShow(res.joined, show) : show());
   if (firstRun) {
     S.prologue = true;
@@ -497,6 +374,7 @@ function showResult() {
     playTalk(CHAPTERS[st.c - 1].clear!.filter(([who]) => who !== res.joined), joined);
   } else joined();
 }
+const REPEAT_N = 10;
 /** 합류 연출 (STAR_PLAN_v2 §1-9): 큰 초상 + 대사 + 「합류!」 */
 function joinShow(id: string, done: () => void) {
   const h = heroOf(id);
@@ -509,6 +387,24 @@ function joinShow(id: string, done: () => void) {
     el.remove();
     done();
   };
+}
+function wire(next?: StageId) {
+  $$('#result [data-a]').forEach((btn) => {
+    btn.onclick = () => {
+      const a = btn.dataset.a;
+      if (a === 'again') begin(st);
+      else if (a === 'next' && next) begin(next);
+      else if (a === 'adv') go('adventure', { c: st.c, d: st.d, s: st.s }, false);
+      else if (a === 'lobby') go('lobby', {}, false);
+      else if (a === 'form') go('prep', { stage: st }, false);
+      else if (a === 'repeat') {
+        const h = repeatBattle(st, REPEAT_N);
+        if (!h) return toast('행동력이 모자라요');
+        persist();
+        toast(repeatText(h));
+      }
+    };
+  });
 }
 export const repeatText = (h: NonNullable<ReturnType<typeof repeatBattle>>) =>
   `반복 전투 ${h.runs}판: 금화 +${fmt(h.gold)} · 경험치 +${fmt(h.exp)}${h.enh ? ` · 강화석 +${h.enh}` : ''}${h.gear ? ` · 장비 ${h.gear}개` : ''}${h.ups.length ? ` · 레벨 업 ${h.ups.map((id) => heroOf(id).name).join('·')}` : ''}${h.accUp ? ' · 원정대 레벨 업!' : ''}`;
@@ -563,10 +459,10 @@ register('battle', {
       b.speed = sp[(sp.indexOf(b.speed) + 1) % sp.length];
       speedLabel();
     };
-    $('#bPause').onclick = () => (paused ? setPaused(false) : openPause());
+    $('#bPause').onclick = () => setPaused(!paused);
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
-      setPref('dpsOpen1018', dpsOpen);
+      setPref('dpsOpen', dpsOpen);
       dpsLabel();
     };
     $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => (t.onclick = () => ((dpsTab = t.dataset.dt as typeof dpsTab), dpsLabel())));
@@ -579,6 +475,19 @@ register('battle', {
       if (b) emote(b, 'hero', x.dataset.emo!);
       $('#emoPop').hidden = true;
     }));
+    // 포기: 멈추고 확인 창 (양피지 패널)
+    $('#bQuit').onclick = () => {
+      if (!b || (b.phase !== 'fight' && b.phase !== 'walk')) return;
+      const was = paused;
+      setPaused(true);
+      modal(`${icon('warn')} 전투를 포기할까요?`, '<p class="dim">이 전투는 패배로 끝나요.</p>', [
+        ['계속 싸우기', () => setPaused(was)],
+        ['포기하기', () => {
+          setPaused(false);
+          if (b && (b.phase === 'fight' || b.phase === 'walk')) ((b.phase = 'lose'), (b.why = 'wipe'));
+        }, true],
+      ]);
+    };
     view.onResize.push(onResize);
     firstRun = !!p.first;
     talking = false;
@@ -591,10 +500,6 @@ register('battle', {
     hud().classList.remove('raid', 'pvp');
     document.querySelectorAll('#stage > .vs, #stage > .cdown').forEach((e) => e.remove());
     intro = false;
-    setPaused(false);
-    bossCard?.end();
-    cueTimers = [];
-    $('#cue').innerHTML = '';
     $('#cv').onpointerdown = null;
     $('#result').hidden = true;
     b = null;
@@ -602,28 +507,18 @@ register('battle', {
   },
   tick(dt) {
     const ctx = view.ctx;
-    cueTimersTick(dt);
     if (!b) return void renderIdle(ctx, view.art, dt);
-    // 결과 화면 뒤는 전투 배경만 (흐림·어둡게는 #result가 · UI_KIT_1018 §5)
-    if (!$('#result').hidden) return void renderBg(ctx, view.art, b.scroll, b.w, b.setup.region, b.setup.bg);
     if (talking || intro) {
       idleStep(b, dt);
       return render(ctx, view.art, b, performance.now() / 1000);
     }
-    cueTick(b);
-    if (paused || artWait || bossCard) return void render(ctx, view.art, b, performance.now() / 1000);
+    if (paused || artWait) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
-    // 끝: 마지막 일격 슬로우 뒤 VICTORY(가로 470) / DEFEAT 그림 글씨 + 빛살 1.2초 → 결과 화면 (UI_KIT_1018 §4-5)
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
       shown = true;
-      const me = b;
-      const win = b.phase === 'win';
-      after(win ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose, () => {
-        if (b !== me) return;
-        void cueWord(win ? 'word_victory' : 'word_defeat', 470, 1.2).then(() => b === me && showResult());
-      });
+      setTimeout(showResult, (b.phase === 'win' ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose) * 1000);
     }
     syncHud();
     // 컷인 동안엔 HUD를 내려 컷인이 맨 위로 (보스 체력 바는 남김 · POLISH_1017 ③-2)

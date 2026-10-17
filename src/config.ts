@@ -1,12 +1,13 @@
 // 모든 숫자는 여기 한 곳 (ROADMAP §0 1단계 원칙) — 밸런스는 tests/balance.test.ts · tools/econ.mjs 로 확인
 //  전투 공식은 「체크인」 전투(combat/field.ts · CONFIG.combat): 치명 15% ×2 · 받는 피해 × (1 − 방어/(방어+K)) 최대 40% · 히트스톱/넉백/흔들림
 export const CONFIG = {
-  /** 논리 화면: 기준 844×390 · 더 넓은 창만 너비가 wMax까지 · 더 높은 창은 위아래에 배경 (UI_KIT_1018 §0-4) · 안전 여백 최소 safe */
-  view: { h: 390, wMin: 844, wMax: 960, wBase: 844, ground: 254, safe: 16 },
+  /** 논리 화면: 높이 고정 · 너비는 창 비율에 맞춰 (화면 꽉 채우기) */
+  view: { h: 390, wMin: 640, wMax: 960, wBase: 844, ground: 254 },
   combat: {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
-    pxScale: 0.28,
+    pxScale: 26 / 72,
     pxFallbackH: 390,
+    walkBob: 3,
     /** 움직임 (SPRITE_RES §D): 대기 숨쉬기 세로 배율 폭·주기(초) · 피격 번쩍 최대 밝기 더함·사라지는 속도(1/초 → 0.08초) · 내딛기 들어가는 몫(나머지는 돌아옴) */
     breathe: { amp: 0.012, sec: 1.6 },
     hitFlash: { max: 0.5, bright: 1.2, fade: 12.5 },
@@ -27,9 +28,6 @@ export const CONFIG = {
     mana: { hit: 10, skillHit: 2, hurt: 4, regen: 4, max: 100, start: 30 },
     cutInSlow: 0.15,
     cutInSec: 0.6,
-    /** 궁극기 (UI_KIT_1018 §4 연출 3·4): 컷인 동안 게임 시간 정지 → 컷인 끝 히트스톱(초) → 발동 · 일반 스킬은 컷인 없이 시전자 발밑 빛(초) → 발동 */
-    ultHitstop: 0.2,
-    preCast: 0.3,
     /** 제한 시간(초) · 별 3개 시간 */
     limit: 180,
     starTime: 120,
@@ -51,14 +49,14 @@ export const CONFIG = {
     /** 사제 AUTO: 체력 이 비율 아래인 아군이 있으면 회복 */
     autoHealAt: 0.65,
     /** 위치 3구역 (킹스레이드 문법: 직업마다 고정) — 파티를 전방 → 중앙 → 후방 순으로 세워 이 4자리에 (화면 왼쪽 기준 x · 발 y) · 대각선으로 엇갈려 안 가림 */
-    places: [[350, 290], [282, 272], [214, 294], [150, 274]] as [number, number][],
+    places: [[440, 272], [372, 226], [292, 272], [222, 226]] as [number, number][],
     /** 레이드 8인 자리 (내 4 + AI 4, 내 파티가 앞) */
     places8: [[480, 272], [440, 230], [395, 272], [355, 230], [295, 272], [255, 230], [210, 272], [170, 230]] as [number, number][],
     /** 같은 구역이 비면 생기는 틈 (구역이 바뀔 때마다 이만큼 더 뒤로) */
-    zoneGap: 0,
+    zoneGap: 18,
     /** 적 자리 (화면 오른쪽 끝에서 뺀 x · 발 y) */
-    mobSlots: [[284, 288], [204, 274], [132, 296], [244, 296]] as [number, number][],
-    bossSlot: [190, 290] as [number, number],
+    mobSlots: [[292, 230], [238, 272], [184, 230], [130, 272]] as [number, number][],
+    bossSlot: [180, 258] as [number, number],
     /** 피해 숫자: 대상 위 가로로 흩뿌리는 폭(±) · 줄 수 · 줄 높이 · 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) · 이보다 위(보스 바)에는 안 놓음 */
     /** 피해 숫자 · 일반 크기 배율 · 외곽선 두께(일반·치명타 px) · 치명타 커졌다 작아지는 시간 · 폭발 그림 크기(글자 폭 배) (docs/BATTLE_HUD_1017.md §4) */
     /** 영웅 동작 칸 시간(초 · ANIM_1017): 숨쉬기 · 걷기 칸마다 · 평타 4칸 · 스킬 4칸 · 다단 히트 c1·c2 · 스킬1·3 속도 배수 (POLISH_1017 ②: 1 — 0.8·0.7배에 컷인 0.6초가 더해져 2초 넘게 멈춰 보이던 것) */
@@ -393,7 +391,7 @@ export const CONFIG = {
     /** 콘텐츠 전투 배경 (전투 제목 앞부분 = 콘텐츠 이름 → public/art/bgs/<값>.jpg) · 스토리는 bg.jpg */
     battleBg: { '도전의 탑': 'tower', 레이드: 'raid', '월드 보스': 'raid', '길드 레이드': 'raid', 결투장: 'arena', '상급 던전': 'dungeon', '토벌 전투': 'dungeon', '요일 던전': 'daily' } as Record<string, string>,
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
-    screenBg: { guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
+    screenBg: { title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
