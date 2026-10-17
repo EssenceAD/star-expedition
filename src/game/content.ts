@@ -275,6 +275,7 @@ export function finishRun(r: Run, res: { win: boolean; dealt: number; heroes: st
     o.lines.push(`이번 판 피해 ${Math.round(res.dealt).toLocaleString('ko-KR')} · 이번 주 누적 순위 ${rk.rank}위 / ${rk.total}명 (상위 ${Math.max(1, Math.round(rk.pct * 100))}%)`);
     return o;
   }
+  if (r.mode === 'raid') s.raidBest = Math.max(s.raidBest ?? 0, res.dealt);
   if (!res.win) {
     if (r.mode === 'arena') arenaResult(r, false, s, o, now);
     return o;

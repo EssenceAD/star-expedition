@@ -1104,3 +1104,16 @@ input, select, textarea { font-family: inherit; }
 .sk button.cd b { color: var(--c-white); text-shadow: var(--sh-cdNum); }
 #dpsL .dh.dtabs button { color: var(--c-textSoft); opacity: 1; text-shadow: var(--sh-outlineSm); }
 #dpsL .dh.dtabs button.on { color: var(--c-ink); background: var(--c-gold1); text-shadow: none; }
+/* ───────── 메뉴 자잘한 것 (docs/POLISH_1017.md ④) ───────── */
+/* 레이드·월드 보스 카드: 보스 그림 크게 · 패턴 · 기록 · 도전 */
+.bosscard { gap: var(--s-lg); align-items: stretch; max-width: 640px; align-self: center; width: 100%; }
+.bosscard .bimg { flex: none; width: 200px; min-height: 190px; border-radius: var(--r-md); border: var(--b-thin) solid var(--c-gold2); background: var(--c-panelDeep) center 30%/contain no-repeat; }
+.bosscard .pats { flex-wrap: wrap; gap: var(--s-xs); }
+.bosscard .rec { display: flex; gap: var(--s-lg); padding: var(--s-xs) var(--s-md); border-radius: var(--r-md); background: var(--c-panelDeep); }
+.bosscard .rec span { display: flex; flex-direction: column; }
+.bosscard .rec small { font-size: var(--fs-xxs); color: var(--c-textSoft); }
+.bosscard .rec b { font-family: var(--f-num); font-weight: var(--fw-num); font-size: var(--fs-md); color: var(--c-gold1); }
+.bosscard .btn.big { align-self: flex-start; margin-top: auto; }
+/* 영웅 정보: 왼쪽 목록 밑에 반투명 남색 판 (전신 그림 위에 맨 얼굴로 얹히지 않게) */
+.body > .hlist { padding: var(--s-xs); border-radius: var(--r-md); background: var(--c-panelDeep); border: var(--b-thin) solid var(--c-line); -webkit-backdrop-filter: var(--fx-glass); backdrop-filter: var(--fx-glass); }
+.fbcol .fb { left: 62%; }

@@ -23,6 +23,14 @@ const goRun = (r: Run) => {
 };
 const bar = (v: number, max: number) => `<div class="xbar big"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i></div>`;
 
+/** 레이드·월드 보스 카드: 보스 그림(anim1 r0c0) 크게 · 패턴 아이콘 · 기록 · 도전 버튼 */
+function bossCard(dir: 'raidboss' | 'worldboss', name: string, sub: string, pats: [string, string][], rec: [string, string][], btn: string, extra = '') {
+  return `<div class="panel row bosscard"><div class="bimg" style="background-image:url(${import.meta.env.BASE_URL}art/${dir}/anim1/r0c0.png)"></div>
+    <div class="col grow"><b class="hn">${name}</b><span class="xs dim">${sub}</span>${extra}
+      <div class="row pats">${pats.map(([ic, t]) => `<span class="chip">${icon(ic)} ${t}</span>`).join('')}</div>
+      <div class="rec">${rec.map(([k, v]) => `<span><small>${k}</small><b>${v}</b></span>`).join('')}</div>${btn}</div></div>`;
+}
+
 register('portal', {
   title: `${icon('content')} 콘텐츠`,
   enter(root, p) {
@@ -45,15 +53,14 @@ register('portal', {
         body = `<p class="sm dim">${(k === 'all' ? ['exp', 'gold', 'enh'] : [k]).map((x) => icon(x)).join('')} 오늘은 <b class="gold">${DAY_NAME[k]}</b> 던전 · 하루 ${CC.day.tries}번 (남은 ${triesText({ mode: 'day', arg: 1 })}) · 월·목 경험치 물약 / 화·금 금화 / 수·토 강화석 / 일 모두</p>
           <div class="cards days">${Array.from({ length: CC.day.levels }, (_, i) => `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'day', arg: i + 1 })}'><b class="hn">${i + 1}단계</b><span class="xs dim">추천 Lv.${Math.round(1 + (i + 1) * CC.day.step * CONFIG.story.recLv)}</span>${(k === 'all' ? ['exp', 'gold', 'enh'] : [k]).map((x) => icon(x)).join('')}</button>`).join('')}</div>`;
       } else if (tab === 'raid') {
+        // 보스 그림 크게 + 패턴 아이콘 + 지난 기록 (빈 아래 채우기 · POLISH_1017 ④-2)
         body = `<p class="sm dim">협동 레이드 8인 = 내 파티 4 + AI 동료 4 (길드원은 D덩어리) · 하루 ${CC.raid.tries}번 (남은 ${triesText({ mode: 'raid', arg: 0 })}) · <b class="gold">티어 재료</b> · 영웅 등급 이상 장비</p>
-          <div class="panel row raidcard"><div class="thumb" style="background-image:url(${import.meta.env.BASE_URL}art/${CONFIG.raidArena.art.intact})"></div><div class="col grow"><b class="hn">심연 드래곤 「잿날개」</b><span class="xs dim">광선 · 포효(침묵) · 내려찍기 · 저격 · 제한 ${CC.raid.limit}초</span></div></div>
-          <button class="btn hi big" data-run='${JSON.stringify({ mode: 'raid', arg: 0 })}'>레이드 도전</button>`;
+          ${bossCard('raidboss', '심연 드래곤 「잿날개」', `제한 ${CC.raid.limit}초 · 8인`, [['sk_bolt', '광선'], ['warn', '포효 (침묵)'], ['sk_smash', '내려찍기'], ['sk_eye', '저격']], [['최고 피해', S.raidBest ? fmt(Math.round(S.raidBest)) : '-'], ['클리어', `${S.wins.raid ?? 0}번`]], `<button class="btn hi big" data-run='${JSON.stringify({ mode: 'raid', arg: 0 })}'>레이드 도전</button>`)}`;
       } else if (tab === 'world') {
         const wb = worldBoss();
         const board = worldBoard().slice(0, 8);
         body = `<p class="sm dim">전 서버 공용 체력 (1단계는 이 기기 + AI 원정대 기여) · 하루 ${CC.world.tries}번 (남은 ${triesText({ mode: 'world', arg: 0 })}) · 한 판 ${CC.world.sec}초 · 준 피해만큼 보상 · 주간 랭킹으로 랭커 칭호(D)</p>
-          <div class="panel col"><b>${esc(wb.name)}</b>${bar(wb.hp, wb.max)}<span class="xs dim">남은 체력 ${fmt(wb.hp)} / ${fmt(wb.max)} · 내 이번 주 피해 ${fmt(wb.my)}</span></div>
-          <button class="btn hi big" data-run='${JSON.stringify({ mode: 'world', arg: 0 })}'>월드 보스 도전</button>
+          ${bossCard('worldboss', esc(wb.name), `${CC.world.sec}초 동안 피해 주기`, [['sk_bolt', '광선'], ['warn', '포효'], ['sk_smash', '내려찍기']], [['남은 체력', `${fmt(wb.hp)} / ${fmt(wb.max)}`], ['이번 주 내 피해', fmt(wb.my)], ['한 판 최고', fmt(S.world.best)]], `<button class="btn hi big" data-run='${JSON.stringify({ mode: 'world', arg: 0 })}'>월드 보스 도전</button>`, bar(wb.hp, wb.max))}
           <div class="panel col board">${board.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${medal(i)} ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div>`;
       } else if (tab === 'arena') {
         const opps = arenaOpps();
