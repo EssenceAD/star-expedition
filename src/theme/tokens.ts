@@ -270,10 +270,6 @@ export const T = {
     duoA: '#ffb347',
     duoB: '#58b8ff',
     tagText: '#fff3c4',
-    /** 자리표시자 영웅 색 바꾸기 (canvas filter) */
-    /** 영웅별 도트 색 (새 외형에 맞춘 임시 색 · 전용 도트 시트가 오면 지움): 재희아빠 = 밝은 피부·애쉬브라운 · 황짐승 = 구릿빛 */
-    heroTint: { jaehi: 'sepia(0.3) saturate(0.7) brightness(1.18)', hwang: 'sepia(0.5) saturate(1.25) brightness(0.82)' } as Record<string, string>,
-    tint: ['hue-rotate(40deg)', 'hue-rotate(110deg)', 'hue-rotate(180deg)', 'hue-rotate(250deg)', 'hue-rotate(310deg)', 'saturate(0.4) brightness(1.15)'],
     /** 장(지역)마다 배경 색 바꾸기 — 그림 1장 돌려 쓰기 (ROADMAP 1단계: 새 그림 금지) */
     region: ['none', 'hue-rotate(70deg) saturate(0.8)', 'sepia(0.5) brightness(0.8)', 'hue-rotate(160deg) saturate(0.6) brightness(1.1)', 'hue-rotate(230deg) brightness(0.6)', 'hue-rotate(140deg)', 'sepia(0.8) saturate(1.4)', 'hue-rotate(-30deg) saturate(1.5) brightness(0.75)', 'saturate(0.5) brightness(1.25)', 'hue-rotate(250deg) brightness(0.45)'],
     /** 적 색 바꾸기 (장마다 같은 몬스터 그림을 다르게) */

@@ -379,7 +379,7 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 .emb.lv { width: 120px; height: 110px; }
 .emb.lv .fxt { top: 16%; font-size: var(--fs-base); }
 #loading { position: fixed; inset: 0; z-index: 98; display: flex; align-items: center; justify-content: center; gap: var(--s-xl); background: radial-gradient(circle at 70% 40%, var(--c-bg2), var(--c-bg)); color: var(--c-text); font-family: var(--f-base); }
-#loading .ld-fb { width: 240px; height: 360px; background: center bottom/contain no-repeat; }
+#loading .ld-fb { width: 360px; height: 360px; background: center bottom/contain no-repeat; }
 #loading .ld-tx { max-width: 360px; display: flex; flex-direction: column; gap: var(--s-sm); }
 #loading .ld-tx b { font-family: var(--f-title); font-weight: var(--fw-title); font-size: var(--fs-h2); }
 #loading .ld-bar { height: 6px; border-radius: var(--r-sm); background: var(--c-panelDeep); overflow: hidden; }
@@ -388,7 +388,7 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 .emb.lv.inl { display: inline-flex; vertical-align: middle; width: 90px; height: 80px; }
 .join .jframe { width: 170px; height: 160px; flex: none; background: center/contain no-repeat; display: flex; align-items: center; justify-content: center; animation: rcIn 0.5s ease-out; }
 .join .jface { width: 104px; height: 104px; border-radius: 50%; background: center 15%/cover no-repeat; }
-.join .jfb { width: 200px; height: 300px; flex: none; background: center bottom/contain no-repeat; animation: rcIn 0.6s 0.2s ease-out both; }
+.join .jfb { width: 300px; height: 300px; flex: none; background: center bottom/contain no-repeat; animation: rcIn 0.6s 0.2s ease-out both; }
 /* 타이틀 키 아트(17명): 로고는 위 빈 하늘에, 버튼은 아래로 — 얼굴을 가리지 않게 */
 #title { justify-content: flex-end; padding-top: var(--s-md); padding-bottom: var(--s-xl); }
 #title .logo { margin-bottom: auto; }
@@ -437,11 +437,14 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 .shopc.hero .chip { background: var(--c-cardShade); color: var(--c-white); border-color: var(--c-gold); }
 /* 코스튬 카드 */
 .costumes { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); grid-auto-rows: max-content; align-content: start; }
-.fbc { height: 196px; background-color: transparent; background-image: inherit; }
+.fbc { height: 196px; background-color: transparent; background-image: inherit; background-size: 230%; background-position: center 3%; }
 /* 영웅 정보 전신: 화면 높이 가깝게 (발은 아래 UI에 살짝 가려져도 됨) */
 .fbcol { width: 176px; margin: calc(var(--s-md) * -1) calc(var(--s-md) * -1) calc(var(--s-xl) * -1); }
-.fb { transform: scale(1.14); transform-origin: 50% 100%; }
-.recruit .rc-fb { align-self: flex-end; width: 300px; height: 98%; }
+/* 전신 그림은 900×900 정사각 (docs/SIZE_1017.md) → 그림 상자도 정사각 · 좌우로 넘치는 부분은 옆 패널 뒤로 (글을 가리지 않게) */
+.fbcol { position: relative; }
+.fb { position: absolute; left: 50%; bottom: 0; height: 100%; width: auto; aspect-ratio: 1; transform: translateX(-50%) scale(1.14); transform-origin: 50% 100%; pointer-events: none; }
+.fbcol .chip, .body > .hlist, .fbcol ~ .col { position: relative; z-index: 1; }
+.recruit .rc-fb { align-self: flex-end; width: auto; height: 98%; aspect-ratio: 1; }
 /* 아이콘 크게 (1.2~1.4배) */
 .dk { width: 72px; height: 64px; }
 .dk .ic { font-size: var(--fs-h2); }

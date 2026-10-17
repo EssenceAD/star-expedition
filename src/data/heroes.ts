@@ -1,8 +1,9 @@
 // 영웅 36명 — 멤버 영웅 17 (docs/MEMBERS.md 최우선: 개척자 5 + 추가 멤버 11 + 황짐승) · 오리지널 19 (「체크인」 전설 14 · 스토리 5)
-//  그림: 개척자 5명은 자기 도트 시트 · 나머지는 직업별 자리표시자 시트 + 색 바꾸기(T.battle.tint) + 이름표 (ROADMAP §0)
+//  그림: 36명 모두 자기 전투 도트 시트 (public/art/px/<id> · docs/SPRITES_1017.md)
 //  초상화: 개척자 star_<id> · 전설 legend_<key> · 그 외 「체크인」 mc_<직업>_<m|f> (그림 없는 영웅)
 //  능력치 숫자는 CONFIG.jobs × stat(영웅별 배수)
-import type { AnimSet } from '../sprite/sheet';
+import { CONFIG } from '../config';
+import { heightOf, type AnimSet, type Sheet } from '../sprite/sheet';
 import { JOBS, type JobId } from './jobs';
 import { pas, sk, type PassiveDef, type SkillDef } from './skills';
 
@@ -380,51 +381,44 @@ export const HERO_BY_ID: Record<string, HeroDef> = Object.fromEntries(HEROES.map
 export const heroOf = (id: string) => HERO_BY_ID[id];
 
 // ───────── 그림 (도트 시트 · 초상화) ─────────
-const row = (sheet: string, r: number, n: number, from = 0) => Array.from({ length: n }, (_, i) => `${sheet}:r${r}c${from + i}`);
-/** 대기 + 평타만 있는 개척자 시트 */
-const basic = (sheet: string): AnimSet => ({
-  idle: { frames: row(sheet, 0, 6), fps: 8, loop: true },
-  attack: { frames: row(sheet, 1, 6), fps: 13, loop: false, hit: [3], lunge: 8 },
-});
-const SHEETS: Record<string, AnimSet> = {
-  woongs: {
-    idle: { frames: row('w1', 0, 6), fps: 8, loop: true },
-    walk: { frames: row('w1', 1, 6), fps: 11, loop: true },
-    attack: { frames: row('w1', 2, 6), fps: 15, loop: false, hit: [3], lunge: 14 },
-    hurt: { frames: row('w1', 3, 2), fps: 8, loop: false },
-    down: { frames: row('w1', 3, 4, 2), fps: 7, loop: false },
-    skill1: { frames: row('w2', 0, 6), fps: 12, loop: false, hit: [2, 4], lunge: 20 },
-    skill2: { frames: row('w2', 1, 6), fps: 10, loop: false, hit: [4], lunge: 30 },
-    skill3: { frames: row('w2', 2, 6), fps: 12, loop: false, hit: [3], lunge: 60 },
-    win: { frames: row('w2', 3, 6), fps: 8, loop: false },
-  },
-  ikamolly: basic('ikamolly'),
-  walwal: basic('walwal'),
-  warmnight: basic('warmnight'),
-  gonu: basic('gonu'),
+// 전투 도트: 36명 모두 public/art/px/<id> 8칸 (docs/SPRITES_1017.md) · r0c0~r0c1 대기 · r0c2→r0c3 평타 · r1c0 피격 · r1c1 쓰러짐 · r1c2 승리 · r1c3 스킬
+//  모든 시트는 머리를 48px로 맞춰 저장 → 모든 영웅에 같은 배율(CONFIG.combat.pxScale) = 얼굴 크기가 같고 키는 체격대로
+const px = (id: string): AnimSet => {
+  const f = (...c: string[]) => c.map((k) => `px/${id}:${k}`);
+  return {
+    idle: { frames: f('r0c0', 'r0c1'), fps: 3, loop: true },
+    walk: { frames: f('r0c0', 'r0c1'), fps: 6, loop: true },
+    attack: { frames: f('r0c2', 'r0c3', 'r0c3'), fps: 6.5, loop: false, hit: [1], lunge: 10 },
+    skill1: { frames: f('r0c2', 'r1c3', 'r1c3'), fps: 6, loop: false, hit: [1], lunge: 20 },
+    skill2: { frames: f('r0c2', 'r1c3', 'r1c3'), fps: 6, loop: false, hit: [1], lunge: 30 },
+    skill3: { frames: f('r0c2', 'r1c3', 'r1c3', 'r1c3'), fps: 6, loop: false, hit: [1], lunge: 40 },
+    hurt: { frames: f('r1c0'), fps: 4, loop: false },
+    down: { frames: f('r1c1'), fps: 1, loop: false },
+    win: { frames: f('r1c2'), fps: 1, loop: false },
+  };
 };
+const SHEETS: Record<string, AnimSet> = {};
 /** 컷인 일러스트가 있는 영웅 (public/art/cutin/<id>.png) — 없으면 초상화 확대 */
 export const CUTIN_ART = new Set(['aria', 'ayla', 'bube', 'ceres', 'elysia', 'gonu', 'grom', 'haeung', 'hwang', 'ichae', 'ikamolly', 'jaehi', 'jin', 'kkangto', 'kleine', 'leon', 'luna', 'mochi', 'momo2', 'moss', 'noel', 'nyx', 'panda', 'ryuka', 'scarlet', 'sermi', 'shinya', 'sylas', 'vael', 'veronica', 'vivian', 'walwal', 'warmnight', 'woongs', 'yeonhwa', 'yuwol']);
-/** 화면 키 (논리 px) */
-const HEIGHT: Record<string, number> = { woongs: 108, ikamolly: 104, walwal: 100, warmnight: 104, gonu: 100 };
 export interface HeroArt {
   anims: AnimSet;
+  /** 화면 키 (논리 px) = 대기 첫 칸 키 × CONFIG.combat.pxScale */
   h: number;
-  /** 자리표시자면 색 바꾸기 번호 (T.battle.tint) · 개척자는 -1 */
-  tint: number;
-  placeholder: boolean;
   portrait: string;
 }
-const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 /** 고화질 일러스트 초상화 (public/art/portraits_hd/<id>.png · 512 · 투명 · docs/ART_DONE_1017_2.md) — 메뉴 화면·컷인은 이걸, 전투에서 움직이는 캐릭터만 도트 */
 export const HD_PORTRAIT = new Set(['aria', 'ayla', 'bube', 'ceres', 'elysia', 'gonu', 'grom', 'haeung', 'hwang', 'ichae', 'ikamolly', 'jaehi', 'jin', 'kkangto', 'kleine', 'leon', 'luna', 'mochi', 'momo2', 'moss', 'noel', 'nyx', 'panda', 'ryuka', 'scarlet', 'sermi', 'shinya', 'sylas', 'vael', 'veronica', 'vivian', 'walwal', 'warmnight', 'woongs', 'yeonhwa', 'yuwol']);
 /** 멤버 영웅 초상화가 그려진 것 (public/art/portraits/member_<id>.png · ChatGPT로 뽑음) — 없는 멤버는 직업 기본 초상화 */
 const MEMBER_ART = new Set(['sermi', 'ichae', 'mochi', 'jaehi']);
-export function artOf(h: HeroDef, tints: number): HeroArt {
-  const own = SHEETS[h.id];
-  const base = own ? h.id : JOBS[h.job].sheet;
+/** 대기 첫 칸 키 (시트 원본 px) — 시트를 불러온 뒤 setPxHeights로 채움 */
+const PX_H: Record<string, number> = {};
+export function setPxHeights(s: Sheet) {
+  for (const h of HEROES) PX_H[h.id] = heightOf(s, `px/${h.id}:r0c0`);
+}
+export function artOf(h: HeroDef): HeroArt {
+  const anims = (SHEETS[h.id] ??= px(h.id));
   const portrait = h.fiveStar ? `star_${h.id}` : h.origin === 'legend' ? `legend_${h.id}` : MEMBER_ART.has(h.id) ? `member_${h.id}` : `mc_${JOBS[h.job].mc}_${h.gender}`;
-  return { anims: SHEETS[base], h: HEIGHT[base], tint: own ? -1 : hash(h.id) % tints, placeholder: !own, portrait };
+  return { anims, h: (PX_H[h.id] ?? CONFIG.combat.pxFallbackH) * CONFIG.combat.pxScale, portrait };
 }
 /** 모든 시트 폴더 이름 (불러오기용) */
-export const sheetDirs = () => [...new Set(Object.values(SHEETS).flatMap((a) => Object.values(a).flatMap((d) => d!.frames.map((f) => f.split(':')[0]))))];
+export const sheetDirs = () => HEROES.map((h) => `px/${h.id}`);

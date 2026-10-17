@@ -69,24 +69,22 @@ export function lobbyLifeTick(dt: number) {
         w.sayT = L.sayDur;
       }
     }
-    const art = artOf(heroOf(w.id), B.tint.length);
+    const art = artOf(heroOf(w.id));
     const { def } = animOf(art.anims, moving ? 'walk' : 'idle');
     const ref = art.anims.idle!.frames[0];
     if (!sheet.img[ref]) continue;
-    const k = L.h / heightOf(sheet, ref);
+    const k = (art.h / heightOf(sheet, ref)) * L.scale;
     ctx.fillStyle = B.shadow;
     ctx.beginPath();
     ctx.ellipse(w.x, w.y + 2, 16, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.filter = B.heroTint[w.id] ?? (art.tint >= 0 ? B.tint[art.tint] : 'none');
     drawFrame(ctx, sheet, def.frames[frameAt(def, w.at)], w.x, w.y, k, w.face);
-    ctx.filter = 'none';
     if (w.sayT > 0) {
       w.sayT -= dt;
       ctx.font = canvasFont(T.font.canvas.tag + 1, 'bold', false);
       ctx.textAlign = 'center';
       const tw = Math.min(180, ctx.measureText(w.say).width) + 12;
-      const by = w.y - L.h - 14;
+      const by = w.y - art.h * L.scale - 14;
       ctx.globalAlpha = Math.min(1, w.sayT * 3);
       ctx.fillStyle = B.sayBg;
       ctx.fillRect(w.x - tw / 2, by - 14, tw, 18);

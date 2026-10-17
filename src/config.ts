@@ -4,6 +4,10 @@ export const CONFIG = {
   /** 논리 화면: 높이 고정 · 너비는 창 비율에 맞춰 (화면 꽉 채우기) */
   view: { h: 390, wMin: 640, wMax: 960, wBase: 844, ground: 254 },
   combat: {
+    /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
+    pxScale: 26 / 48,
+    pxFallbackH: 260,
+    walkBob: 3,
     critChance: 0.15,
     critMult: 2,
     /** 받는 피해 감소 = 방어 / (방어 + defK × 때린 쪽 공격) — 숫자 크기가 자라도 같은 비율 */
@@ -356,6 +360,6 @@ export const CONFIG = {
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
     /** 로비 걸어 다니는 영웅 (DENSITY §3): 몇 명 · 발 y · 줄 간격 · 키 · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
-    lobbyLife: { walkers: 5, y: 300, yStep: 14, h: 64, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    lobbyLife: { walkers: 5, y: 300, yStep: 14, scale: 0.45, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;

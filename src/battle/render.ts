@@ -37,7 +37,7 @@ function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) 
 }
 const filterOf = (u: Unit) => {
   const sp = u.hero ?? u.pvp;
-  return sp ? (B.heroTint[sp.def.id] ?? (sp.art.tint >= 0 ? B.tint[sp.art.tint] : 'none')) : (B.mobTint[u.mob!.tint] ?? 'none');
+  return sp ? 'none' : (B.mobTint[u.mob!.tint] ?? 'none');
 };
 
 /** 유닛 하나 (도트 프레임 · 앞으로 내딛기 · 잔상 · 피격 번쩍 · 상태 표시) */
@@ -53,6 +53,8 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   let alpha = 1;
   const dur = def.frames.length / def.fps;
   if (def.lunge && u.busy > 0) x += def.lunge * Math.sin(Math.min(1, u.at / dur) * Math.PI);
+  // 걷기: 대기 2칸을 번갈아 + 살짝 들썩임
+  if (as === 'walk') y -= CONFIG.combat.walkBob * Math.abs(Math.sin(u.at * def.fps * Math.PI));
   if (u.side === 'mob' && u.dead) {
     alpha = Math.max(0, 1 - u.deadT * 1.8);
     y += u.deadT * 24;
@@ -103,7 +105,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   ctx.globalAlpha = 1;
   if (u.dead) return;
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
-  if (sp && (sp.art.placeholder || u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
+  if (sp && (u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
   // 보호막 · 기절 · 침묵 · 화상
   if (u.shield > 0) {
     ctx.strokeStyle = B.shield;
