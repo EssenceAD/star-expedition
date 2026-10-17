@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { BONDS } from '../src/data/bonds';
 import { artOf, HEROES, heroOf } from '../src/data/heroes';
+import { TAGLINE } from '../src/data/taglines';
 import { JOB_IDS } from '../src/data/jobs';
 import { CHAPTER_MOBS } from '../src/data/mobs';
 import { descPassive, descSkill } from '../src/data/skills';
@@ -46,6 +47,13 @@ describe('데이터', () => {
       for (const k of [0, 1, 2]) expect(existsSync(`public/art/skills/${h.id}_${k}.png`), `${h.id} 스킬 아이콘 ${k}`).toBe(true);
       expect(existsSync(`public/art/portraits/${a.portrait}.png`), `${h.id} → ${a.portrait}`).toBe(true);
     }
+  });
+  it('영웅 카드 한 줄 소개: 36명 모두 있고 카드 한 줄에 맞는 길이 (docs/TAGLINE_1017.md)', () => {
+    for (const h of HEROES) {
+      expect(TAGLINE[h.id], h.id).toBeTruthy();
+      expect(TAGLINE[h.id].length, h.id).toBeLessThanOrEqual(18);
+    }
+    expect(Object.keys(TAGLINE).length).toBe(HEROES.length);
   });
   it('인연 멤버가 모두 있는 영웅', () => {
     for (const b of BONDS) for (const m of b.members) expect(heroOf(m), `${b.id} ${m}`).toBeTruthy();
