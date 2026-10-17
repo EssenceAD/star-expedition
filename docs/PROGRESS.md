@@ -291,6 +291,14 @@
 - 코스튬 「별빛 축제」 별가루 800 → 1,200 (`CONFIG.costume.festival.dust` · 주 상한 3,600 기준 주 2~3벌)
 - 전투 도트는 px/ 최신 그대로 (황짐승·재희아빠 시트 갱신은 그림 쪽 커밋)
 
+## 2-I. UI 키트 · 스킬 아이콘 (v0.9.4 · docs/UI_POLISH_1017.md §5·6 · docs/ART_UI_1017.md)
+- UI 키트(`public/art/ui/kit`)를 `border-image`로: 토큰 `T.kit`(파일·9-slice·화면 두께)·`T.kitImg` → `applyTheme`가 `--kit-*`·`--kimg-*` 변수로 · CSS는 맨 아래 「UI 키트」 묶음
+  - 패널 = 양피지 · DPS판·편성 파티 칸 = 남색 · `.btn.hi` = 파랑 · 구매·영입·각성·소환·코스튬 = 금 · 탭/선택 탭 · 재화 캡슐 · 장비 칸 등급별 · 뒤로 버튼 · 전투 영웅 칸 = HUD 판(초상화 왼쪽 세로) · HP/마나 바 양끝 장식
+  - 테두리 두께는 그림 칸 안쪽으로 겹쳐 그려서 배치·여백은 그대로 (두께 = `T.kit`의 세 번째 값)
+- 스킬 아이콘 108개 `public/art/skills/<id>_<0|1|2>.png` → 전투 스킬 버튼(둥글게) · 영웅 정보 「스킬」 탭 (`skillIconUrl`) · tests/data.test.ts에서 파일 확인
+- 아직 안 쓴 키트: `skill_ring.png`(가운데가 막혀 있어 아이콘 위에 덮으면 가려짐 → 아이콘 자체 금테로 대신) · `btn_close.png`(닫기 버튼 자리가 아직 없음)
+- 황짐승: 같은 파일 이름 교체 → 코드 그대로 · 서비스 워커 없음 · GitHub Pages 캐시(10분) 뒤 새 그림
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

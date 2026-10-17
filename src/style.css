@@ -476,3 +476,34 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
 #title.artbg { background-image: var(--scr-art); background-position: center; background-size: cover; }
 /* 편성: 아직 없는 영웅 (흐리게 · 자물쇠 · docs/SCREENS_1017.md) */
 .roster .hcard > .lk { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: var(--fs-xxl); color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+/* ───────── UI 키트 그림 테두리 (docs/ART_UI_1017.md · UI_POLISH_1017 §5) ─────────
+   border-image 두께는 그림 칸 안쪽으로 겹쳐 그려서 배치는 그대로 · 원래 선 테두리는 그림에 가려짐 */
+.panel { border-image: var(--kit-panel); box-shadow: none; }
+#dpsL, .party .pcard { border-style: solid; border-image: var(--kit-navy); }
+.party .pcard, .party .pcard .xs { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.btn.hi { border-image: var(--kit-btn); box-shadow: none; }
+.btn:is([data-buy], [data-hero], [data-pack], [data-sum], [data-cbuy], [data-exup], [data-g='awaken']) { border-image: var(--kit-gold); box-shadow: none; color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.tab { border-image: var(--kit-tab); }
+.tab.on { border-image: var(--kit-tabOn); color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.cur { border-style: solid; border-image: var(--kit-capsule); }
+.gi.g-common { border-image: var(--kit-slot-common); }
+.gi.g-uncommon { border-image: var(--kit-slot-uncommon); }
+.gi.g-rare { border-image: var(--kit-slot-rare); }
+.gi.g-epic { border-image: var(--kit-slot-epic); }
+.gi.g-legend { border-image: var(--kit-slot-legend); }
+.btn[data-back] { width: 34px; height: 34px; padding: 0; border: 0; background: var(--kimg-back) center/contain no-repeat; box-shadow: none; }
+.btn[data-back] > * { visibility: hidden; }
+/* 전투 아래 영웅 칸: HUD 판 그림 (왼쪽 네모 = 초상화) · 초상화는 세로로 꽉 */
+.hc { background: var(--kimg-hud) left top no-repeat; background-size: 100% 100%; border-color: transparent; box-shadow: none; }
+.hc .pt { grid-row: 1 / 5; width: auto; height: auto; border: 0; border-radius: var(--r-sm); background-position: center 15%; }
+.hc .sk { grid-column: 2; }
+.hc .hp, .hc .mp { height: 6px; padding: 0 var(--s-sm); border-style: solid; border-width: 0; background-clip: content-box; }
+.hc .hp { border-image: var(--kit-hp); }
+.hc .mp { border-image: var(--kit-mp); }
+/* 스킬 아이콘 (금테 포함 · 둥글게) */
+.sk button { justify-self: center; width: auto; aspect-ratio: 1; border: 0; border-radius: 50%; background: var(--c-btn) center/cover no-repeat; }
+.sk button b { border-radius: 50%; }
+.skl .si.ski { border: 0; border-radius: 50%; background-color: transparent; background-size: cover; }
+/* 남색 그림 판 위 글씨는 밝게 */
+#dpsL, .hc .nm { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+.hc .nm small { color: var(--c-gold1); }

@@ -15,7 +15,7 @@ import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } f
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
 import { persist, S } from '../game/state';
 import { applyTheme, elemColor, icon, iconText } from '../theme/tokens';
-import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, toast, CUR_NAME } from './core';
+import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, skillIconUrl, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
@@ -55,7 +55,7 @@ function buildBar() {
       <div class="nm">${h.name}<small>${JOBS[h.job].name} Lv.${u.hero!.lv}</small></div>
       <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
       <div class="bf"></div>
-      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background:radial-gradient(circle at 50% 40%, color-mix(in srgb, ${elemColor(s.elem)} 40%, transparent), var(--c-btn) 72%)">${icon(s.icon)}<em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동">A</button></div></div>`;
+      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background-image:url(${skillIconUrl(h.id, k)})"><em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동">A</button></div></div>`;
     })
     .join('');
   $$('.hc', bar).forEach((c) => {
