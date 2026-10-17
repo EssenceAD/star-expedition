@@ -67,6 +67,8 @@ view.art = { sheet, bg, cutin, raidBoss, bgs };
 loadSave();
 addEventListener('pagehide', () => persist());
 document.addEventListener('visibilitychange', () => document.hidden && persist());
+// 타이틀 키 아트는 먼저 받아 두고 (첫 화면이 빈 바탕으로 뜨지 않게)
+await img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null);
 go('title', {}, false);
 document.getElementById('loading')?.remove();
 
