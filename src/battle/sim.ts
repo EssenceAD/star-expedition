@@ -662,7 +662,7 @@ export function step(b: Battle, dtReal: number) {
 
   for (const u of [...b.heroes, ...b.mobs]) {
     u.at += dt * (has(u, 'slow') ? K.slowRate : 1);
-    u.flash = Math.max(0, u.flash - dt * 5);
+    u.flash = Math.max(0, u.flash - dt * K.hitFlash.fade);
     u.knock *= Math.pow(0.0005, dt);
     u.trail = Math.max(0, u.trail - dt);
     for (const k of Object.keys(u.st) as StatusKey[]) u.st[k]!.t = Math.max(0, u.st[k]!.t - dt);

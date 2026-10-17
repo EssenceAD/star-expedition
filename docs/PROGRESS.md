@@ -277,7 +277,7 @@
 - 내가 정한 것: 메뉴 화면 배경은 따로 그림이 없어 로비 마을을 흐리게 · 걸어 다니는 영웅 = 파티 먼저 5명 · 편성 화면은 가진 영웅이 적으면 빈 곳이 남음(데이터대로)
 
 ## 2-G. 전투 도트 36명 · 전신 정사각 (v0.9.2 · docs/SPRITES_1017.md · docs/SIZE_1017.md)
-- 전투 도트: 36명 모두 `public/art/px/<id>` 8칸 시트 (`data/heroes.ts` `px()`) · 직업 자리표시자 시트·색 바꾸기(`T.battle.tint/heroTint`)·`JOBS.sheet`·영웅별 키(HEIGHT) 없앰
+- 전투 도트: 36명 모두 `public/art/px/<id>` 8칸 시트 (v0.10.0부터 `px2/` · 2-O 참고) (`data/heroes.ts` `px()`) · 직업 자리표시자 시트·색 바꾸기(`T.battle.tint/heroTint`)·`JOBS.sheet`·영웅별 키(HEIGHT) 없앰
   - 대기 r0c0↔r0c1 · 걷기 = 대기 2칸 + 들썩임(`CONFIG.combat.walkBob`) · 평타 r0c2→r0c3(맞힘 r0c3) · 스킬 r0c2→r1c3 · 피격 r1c0 · 쓰러짐 r1c1(유지) · 승리 r1c2
   - 배율 하나: `CONFIG.combat.pxScale` = 26/48 (시트 머리 48px → 화면 26px) · 화면 키 = 대기 첫 칸 키 × 배율 (`setPxHeights`가 시트 불러온 뒤 채움) · 로비 걷는 영웅은 그 × `CONFIG.ui.lobbyLife.scale`
   - 동작 캡처: `node tools/shot-acts.mjs out/acts woongs,gonu,kleine,grom` (대기·공격·피격·승리·패배 · `?rec=1` 고정 걸음)
@@ -340,6 +340,13 @@
 - 카드 설명 줄 = `taglineOf(id, h.title)` (`src/data/taglines.ts` · 기획 쪽 작성 · 문구 수정은 이 파일만) — 쓰는 곳은 `heroShopCard`(상점 영웅 · 영웅 목록 「미보유」 탭) 하나
 - 영웅 목록·편성의 보유 영웅 카드(`card()`)는 원래 설명 줄 없이 이름·직업만 → 바꿀 것 없음 · 긴 소개(concept)는 영웅 정보 이름 판·영입 화면 그대로
 - 테스트: 36명 모두 소개가 있고 18자 이하 (tests/data.test.ts)
+
+## 2-O. 전투 도트 해상도 (v0.10.0 · docs/SPRITE_RES_1017.md · 덩어리 ⓪)
+- 그리기: 보조 캔버스(`off` 유닛 · `bossCv` 레이드 보스)를 `view.dpr` 해상도로 (`auxReady` · 안은 논리 px · 붙일 땐 논리 크기 지정) · `drawFrame`은 1.5배 미만이면 늘 부드럽게
+- 도트: `public/art/px2/<id>` (머리 72px · 1.5배) · `CONFIG.combat.pxScale = 26/72` → 화면 크기 그대로 · `px/` 지움
+- 불러오기 (`ui/assets.ts`): 처음엔 몬스터·기본 배경·치명타 별·타이틀·로비 걸을 영웅+편성 시트·영웅 키(`_parts.json`만) · 전투 전 `ensureHeroes`로 그 전투 영웅 시트·컷인을 받을 때까지 전투 멈춤(`artWait`) · 로비 뜬 뒤 나머지 시트를 3개씩(`CONFIG.ui.preloadAtOnce`) · 로딩 막대 = 실제 받은 비율
+- 움직임: 대기 숨쉬기(`CONFIG.combat.breathe`) · 피격 = 밝게(`hitFlash` 최대 0.5 · 0.08초) · 내딛기 들어갈 때 ease-out / 돌아올 때 ease-in-out(`lungeIn`)
+- 첫 로딩(20Mbps 제한 · 웹폰트 제외 · `node tools/load-time.mjs 20 2`): 29.2초 · 53.8MB · 그림 355장 → 5.6초 · 13MB · 73장
 
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)

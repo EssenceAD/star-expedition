@@ -5,9 +5,13 @@ export const CONFIG = {
   view: { h: 390, wMin: 640, wMax: 960, wBase: 844, ground: 254 },
   combat: {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
-    pxScale: 26 / 48,
-    pxFallbackH: 260,
+    pxScale: 26 / 72,
+    pxFallbackH: 390,
     walkBob: 3,
+    /** 움직임 (SPRITE_RES §D): 대기 숨쉬기 세로 배율 폭·주기(초) · 피격 번쩍 최대 밝기 더함·사라지는 속도(1/초 → 0.08초) · 내딛기 들어가는 몫(나머지는 돌아옴) */
+    breathe: { amp: 0.012, sec: 1.6 },
+    hitFlash: { max: 0.5, bright: 1.2, fade: 12.5 },
+    lungeIn: 0.35,
     critChance: 0.15,
     critMult: 2,
     /** 받는 피해 감소 = 방어 / (방어 + defK × 때린 쪽 공격) — 숫자 크기가 자라도 같은 비율 */
@@ -362,6 +366,8 @@ export const CONFIG = {
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
     /** 로비 걸어 다니는 영웅 (DENSITY §3 · FONT_FINAL2 §1 1.4배): 몇 명 · 발 y · 줄 간격 · 크기(전투 배율 대비) · 서로 떨어질 최소 간격(px) · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
     lobbyLife: { walkers: 5, y: 300, yStep: 18, scale: 0.63, minGap: 78, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], toastSec: 1.5,
+    /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
+    preloadAtOnce: 3,
     /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */
     fit: { step: 0.5, name: 13, desc: 10 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;

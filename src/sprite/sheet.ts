@@ -62,6 +62,37 @@ const loadImg = (src: string) =>
     i.src = src;
   });
 
+/** 시트 칸 정보만 (_parts.json · 작아서 먼저 다 받아 둠) */
+const partsCache: Record<string, Promise<Record<string, Cell> | null>> = {};
+export function loadParts(dir: string) {
+  return (partsCache[dir] ??= fetch(`${import.meta.env.BASE_URL}art/${dir}/_parts.json`)
+    .then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? (r.json() as Promise<Record<string, Cell>>) : null))
+    .catch(() => null));
+}
+/** 이미 있는 Sheet에 시트 묶음을 더 불러 넣음 (이미 있으면 건너뜀) — 필요한 영웅만 그때그때 (SPRITE_RES_1017 §C) */
+const loading: Record<string, Promise<void>> = {};
+export function loadInto(s: Sheet, dirs: string[]) {
+  const B = import.meta.env.BASE_URL;
+  return Promise.all(
+    dirs.map((d) =>
+      (loading[d] ??= (async () => {
+        const meta = await loadParts(d);
+        if (!meta) return;
+        const keys = Object.keys(meta);
+        const ims = await Promise.all(keys.map((k) => loadImg(`${B}art/${d}/${k}.png`).catch(() => null)));
+        keys.forEach((k, i) => {
+          if (!ims[i]) return;
+          s.img[`${d}:${k}`] = ims[i]!;
+          s.cell[`${d}:${k}`] = meta[k];
+          const row = `${d}:${k.split('c')[0]}`;
+          s.base[row] = Math.max(s.base[row] ?? 0, meta[k].y + meta[k].h);
+        });
+      })()),
+    ),
+  ).then(() => undefined);
+}
+/** 시트 묶음을 다 불러 넣었는지 */
+export const hasSheet = (s: Sheet, dir: string) => Object.keys(s.cell).some((k) => k.startsWith(`${dir}:`));
 /** public/art/<dir>/ 의 칸 그림들 (여러 시트 묶음을 한 Sheet로) */
 export async function loadSheets(dirs: string[]): Promise<Sheet> {
   const s: Sheet = { img: {}, cell: {}, base: {} };
@@ -95,7 +126,8 @@ export function drawFrame(ctx: CanvasRenderingContext2D, s: Sheet, key: string, 
   const base = s.base[`${d}:${name.split('c')[0]}`] ?? c.ch;
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.imageSmoothingEnabled = k < 0.9;
+  // 줄일 땐 늘 부드럽게 (도트가 계단지지 않게) · 1.5배 넘게 키울 때만 픽셀 그대로 (SPRITE_RES_1017 §A)
+  ctx.imageSmoothingEnabled = k < 1.5;
   ctx.imageSmoothingQuality = 'high';
   ctx.translate(fx, fy);
   ctx.scale(face * k, k);

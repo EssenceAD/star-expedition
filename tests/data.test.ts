@@ -43,7 +43,7 @@ describe('데이터', () => {
     for (const h of HEROES) {
       const a = artOf(h);
       for (const d of Object.values(a.anims)) for (const f of d!.frames) expect(existsSync(`public/art/${f.replace(':', '/')}.png`), f).toBe(true);
-      expect(existsSync(`public/art/px/${h.id}/_parts.json`), h.id).toBe(true);
+      expect(existsSync(`public/art/px2/${h.id}/_parts.json`), h.id).toBe(true);
       for (const k of [0, 1, 2]) expect(existsSync(`public/art/skills/${h.id}_${k}.png`), `${h.id} 스킬 아이콘 ${k}`).toBe(true);
       expect(existsSync(`public/art/portraits/${a.portrait}.png`), `${h.id} → ${a.portrait}`).toBe(true);
     }
