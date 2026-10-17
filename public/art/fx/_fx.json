@@ -1,0 +1,338 @@
+{
+ "slash": {
+  "frames": 4,
+  "size": [
+   [
+    319,
+    343
+   ],
+   [
+    392,
+    343
+   ],
+   [
+    364,
+    343
+   ],
+   [
+    344,
+    343
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ },
+ "smash": {
+  "frames": 4,
+  "size": [
+   [
+    287,
+    366
+   ],
+   [
+    384,
+    366
+   ],
+   [
+    401,
+    366
+   ],
+   [
+    347,
+    366
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "pierce": {
+  "frames": 4,
+  "size": [
+   [
+    327,
+    374
+   ],
+   [
+    393,
+    374
+   ],
+   [
+    388,
+    374
+   ],
+   [
+    311,
+    374
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ },
+ "bolt": {
+  "frames": 4,
+  "size": [
+   [
+    259,
+    335
+   ],
+   [
+    385,
+    335
+   ],
+   [
+    450,
+    335
+   ],
+   [
+    325,
+    335
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ },
+ "burst": {
+  "frames": 4,
+  "size": [
+   [
+    287,
+    368
+   ],
+   [
+    388,
+    368
+   ],
+   [
+    389,
+    368
+   ],
+   [
+    355,
+    368
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ },
+ "meteor": {
+  "frames": 4,
+  "size": [
+   [
+    310,
+    342
+   ],
+   [
+    369,
+    342
+   ],
+   [
+    362,
+    342
+   ],
+   [
+    379,
+    342
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "ring": {
+  "frames": 4,
+  "size": [
+   [
+    281,
+    358
+   ],
+   [
+    330,
+    358
+   ],
+   [
+    313,
+    358
+   ],
+   [
+    306,
+    358
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "pillar": {
+  "frames": 4,
+  "size": [
+   [
+    312,
+    462
+   ],
+   [
+    278,
+    462
+   ],
+   [
+    349,
+    462
+   ],
+   [
+    290,
+    462
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "heal": {
+  "frames": 4,
+  "size": [
+   [
+    315,
+    412
+   ],
+   [
+    263,
+    412
+   ],
+   [
+    334,
+    412
+   ],
+   [
+    316,
+    412
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "shield": {
+  "frames": 4,
+  "size": [
+   [
+    302,
+    407
+   ],
+   [
+    307,
+    407
+   ],
+   [
+    312,
+    407
+   ],
+   [
+    307,
+    407
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "hit": {
+  "frames": 4,
+  "size": [
+   [
+    296,
+    310
+   ],
+   [
+    359,
+    310
+   ],
+   [
+    422,
+    310
+   ],
+   [
+    342,
+    310
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ },
+ "crit": {
+  "frames": 4,
+  "size": [
+   [
+    338,
+    399
+   ],
+   [
+    366,
+    399
+   ],
+   [
+    373,
+    399
+   ],
+   [
+    342,
+    399
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ },
+ "buff": {
+  "frames": 4,
+  "size": [
+   [
+    285,
+    550
+   ],
+   [
+    286,
+    550
+   ],
+   [
+    301,
+    550
+   ],
+   [
+    286,
+    550
+   ]
+  ],
+  "anchor": "bottom",
+  "blend": "lighter",
+  "tint": true
+ },
+ "stun": {
+  "frames": 4,
+  "size": [
+   [
+    274,
+    319
+   ],
+   [
+    310,
+    319
+   ],
+   [
+    274,
+    319
+   ],
+   [
+    300,
+    319
+   ]
+  ],
+  "anchor": "center",
+  "blend": "lighter",
+  "tint": true
+ }
+}
