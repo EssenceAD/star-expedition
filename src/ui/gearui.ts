@@ -6,7 +6,7 @@ import {
 } from '../game/gear';
 import { addCur, persist, S, type Gear, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
-import { $, $$, fmt, syncBar, toast } from './core';
+import { $, $$, fmt, fxt, syncBar, toast } from './core';
 
 const G = CONFIG.gear;
 const PART_IC: Record<string, string> = { weapon: 'weapon', armor: 'armor', acc: 'acc' };
@@ -31,7 +31,7 @@ function enhShow(host: HTMLElement, g: Gear, r: string, before: { enh: number; b
   const el = document.createElement('div');
   el.className = `enhfx${up ? ' up' : ' no'}${brk ? ' brk' : ''}`;
   el.innerHTML = `<div class="stagec">${gearCell(g, 'data-big')}<span class="ham">${icon('sk_hammer')}</span><span class="ray"></span></div>
-    <div class="res">${up ? `<b class="num">+${g.enh}</b><span class="lab">${brk ? `구간 돌파! 강화 구간 ${enhBand(g.enh)}` : r === 'great' ? '대성공!' : '강화 성공!'}</span>` : `<b class="numf">${r === 'drop' ? `+${g.enh}` : '실패'}</b><span class="lab">${r === 'drop' ? '한 단계 내려갔어요' : '다음 확률이 올라요'}</span>`}
+    <div class="res">${up ? `<b class="num">${fxt(`+${g.enh}`)}</b><span class="lab">${brk ? `구간 돌파! 강화 구간 ${enhBand(g.enh)}` : r === 'great' ? '대성공!' : '강화 성공!'}</span>` : `<b class="numf">${r === 'drop' ? `+${g.enh}` : '실패'}</b><span class="lab">${r === 'drop' ? '한 단계 내려갔어요' : '다음 확률이 올라요'}</span>`}
     ${up ? `<div class="cmp">${Object.keys(after).map((k) => `<span>${STAT_NAME[k]} ${fmt(before.base[k])} ${iconText('next')} <b>${fmt(after[k])}</b></span>`).join('')}</div>` : ''}<span class="xs mute">눌러서 닫기</span></div>`;
   host.append(el);
   el.onclick = () => el.remove();

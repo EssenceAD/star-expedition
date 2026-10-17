@@ -230,6 +230,14 @@
 - 게임 적용(tokens.ts)은 형철 승인 뒤
 - Claude in Chrome: 이 클라우드 세션에서는 연결 불가 (크롬 도구 없음) → 형철 PC에서 세션을 열어야 그림을 뽑을 수 있음
 
+## 2-A. 2단계 시작 — 스타일 D + 글씨 T7 적용 (v0.8.0)
+- 형철 확정: 스타일 D 「밝은 원정」(크림·아이보리 양피지 + 금 테두리 · 하늘색/주황 강조 · 남색은 글자·얇은 선) + 글씨 T7 「금박 서사 + 타격 숫자」(docs/style/type_board2.png)
+  - 제목 Hahmlet 900 · 메뉴 Gowun Batang 700 · 영웅 이름 Hahmlet 800 · 숫자 Luckiest Guy · 본문 IBM Plex Sans KR (Google Fonts · OFL · index.html)
+- 구조: tokens.ts `color`(밝은) / `colorDark`(어두운 예외) · `applyTheme(mode)` · 꾸밈 글씨 `fxt()`(뒤 겹 얇은 갈색 선 + 금빛 번짐 · 앞 겹 금 그라데이션) · 캔버스 `canvasFace()` · 전투 숫자 그림자 선
+- 어두운 예외: `CONFIG.ui.darkModes` = 탑·레이드·월드 보스·길드 레이드 전투 (밤 이벤트는 이벤트가 생기면 추가)
+- 내가 정한 것: 작은 제목(상단 바·창 제목·웨이브)은 Hahmlet(이름 글씨)로 · 바탕 그림 위 작은 글씨에 아이보리 받침 · 금박 선 굵기 3px
+- 그림(기획 쪽 Claude가 main에 올림 · docs/ART_DONE_1017*.md): 아이템 15종·레이드 보스 전/후·멤버 초상화 연결됨 → 이어서 고화질 초상화 36명·장비 모양 시스템·보스 바램 수정
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
