@@ -18,6 +18,8 @@ export const portraitUrl = (key: string) => `${BASE}art/portraits/${key}.png`;
 /** 전신 일러스트 (영입·영웅 정보·로딩 · 입은 코스튬이 있으면 코스튬) */
 export const fullbodyUrl = (id: string, set?: string | null) => `${BASE}art/${fullbodyPath(id, S, set)}`;
 /** 영웅 초상화: 고화질 일러스트가 있으면 그것 (메뉴 화면 전부) · 없으면 도트 초상화 */
+/** 스킬 아이콘 (public/art/skills/<영웅>_<0|1|2>.png · 128 · 금테 포함 · docs/ART_UI_1017.md) */
+export const skillIconUrl = (id: string, k: number) => `${BASE}art/skills/${id}_${k}.png`;
 export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);

@@ -12,7 +12,7 @@ import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../gam
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, syncBar, toast } from './core';
+import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
@@ -136,7 +136,7 @@ function tabHtml(tab: string, id: string): string {
       ${h.skills.map((s, i) => {
         const lv = hs.skill[i];
         const c = lv < GR.skill.max ? skillCost(lv) : null;
-        return `<div class="skl"><div class="si">${icon(s.icon)}</div><div class="col grow"><b class="sm">${s.name} Lv.${lv} <span class="xs mute">마나 ${s.cost} · ${s.cd}초</span></b><span class="xs dim">${descSkill(s, 1 + GR.skill.perLv * (lv - 1))}</span></div><button class="btn mini" data-sk="${i}" ${c ? '' : 'disabled'}>${c ? `올리기 ${cost([['skillBook', c.books], ['gold', c.gold]])}` : '최대'}</button></div>`;
+        return `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="sm">${s.name} Lv.${lv} <span class="xs mute">마나 ${s.cost} · ${s.cd}초</span></b><span class="xs dim">${descSkill(s, 1 + GR.skill.perLv * (lv - 1))}</span></div><button class="btn mini" data-sk="${i}" ${c ? '' : 'disabled'}>${c ? `올리기 ${cost([['skillBook', c.books], ['gold', c.gold]])}` : '최대'}</button></div>`;
       }).join('')}`;
   if (tab === 'trans') {
     const can = canTranscend(id);

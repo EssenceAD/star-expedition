@@ -170,6 +170,26 @@ export const T = {
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
   radius: { sm: '3px', md: '8px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
   border: { thin: '1px', base: '2px', thick: '3px', stroke: '3px' },
+  /** UI 키트 그림 테두리 (public/art/ui/kit · docs/ART_UI_1017.md) — [파일, 9-slice(위 오른 아래 왼 · 원본 px), 화면 테두리 두께]
+   *  border-image로 그림 (테두리 두께는 그림 칸 안쪽으로 겹쳐 그려서 배치·여백은 그대로) · CSS에서 var(--kit-이름) */
+  kit: {
+    panel: ['panel_parchment', '70', '14px'],
+    navy: ['panel_navy', '40', '14px'],
+    btn: ['btn_blue', '0 70', '0 18px'],
+    gold: ['btn_gold', '0 70', '0 18px'],
+    tab: ['tab', '0 50', '0 14px'],
+    tabOn: ['tab_on', '0 50', '0 14px'],
+    capsule: ['capsule', '0 50', '0 16px'],
+    hp: ['bar_hp', '0 50', '0 6px', 'nofill'],
+    mp: ['bar_mp', '0 50', '0 6px', 'nofill'],
+    'slot-common': ['slot_common', '40', '15px'],
+    'slot-uncommon': ['slot_uncommon', '40', '15px'],
+    'slot-rare': ['slot_rare', '40', '15px'],
+    'slot-epic': ['slot_epic', '40', '15px'],
+    'slot-legend': ['slot_legend', '40', '15px'],
+  } as Record<string, [string, string, string, string?]>,
+  /** UI 키트 통째 그림 (background-image · var(--kimg-이름)) */
+  kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
   shadow: {
     glow: '0 0 10px rgba(242,200,106,0.55)',
     glowHi: '0 0 14px rgba(255,210,100,0.7)',
@@ -401,5 +421,8 @@ export function applyTheme(m: Mode = 'light', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.space)) set(`--s-${k}`, v);
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
+  const kit = (f: string) => `url("${new URL(`${import.meta.env.BASE_URL}art/ui/kit/${f}.png`, location.href).href}")`;
+  for (const [k, [f, slice, w, nofill]] of Object.entries(T.kit)) set(`--kit-${k}`, `${kit(f)} ${slice}${nofill ? '' : ' fill'} / ${w} / 0 stretch`);
+  for (const [k, f] of Object.entries(T.kitImg)) set(`--kimg-${k}`, kit(f));
   for (const [k, v] of Object.entries(T.shadow)) set(`--sh-${k}`, m === 'light' ? (T.shadowLight[k] ?? v) : v);
 }
