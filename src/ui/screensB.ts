@@ -5,7 +5,7 @@ import { BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { descPassive, descSkill } from '../data/skills';
-import { autoEquip, bagUsed, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
+import { autoEquip, bagUsed, fitsHero, typeName, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
 import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../game/heroes';
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
@@ -81,8 +81,8 @@ register('hero', {
           (b.onclick = () => {
             const slot = b.dataset.slot as GearSlot;
             const cur = gearOf(S.heroes[id].gear[slot]);
-            const cands = sortedGear('power').filter((g) => g.part === SLOT_PART[slot] && g.uid !== cur?.uid);
-            const m = modal(`${SLOT_NAME[slot]} 고르기`, `${cur ? `<div class="row">${gearCell(cur, 'data-detail')}<span class="grow sm">지금: ${PART_NAME[cur.part]} · 전투력 ${fmt(gearPower(cur))}</span><button class="btn mini" data-un>빼기</button></div>` : ''}<div class="pk">${cands.map((g) => gearCell(g, `data-g="${g.uid}"`)).join('') || '<span class="xs mute">맞는 장비가 없어요</span>'}</div>`, [['닫기', null]]);
+            const cands = sortedGear('power').filter((g) => g.part === SLOT_PART[slot] && g.uid !== cur?.uid && fitsHero(g, id));
+            const m = modal(`${SLOT_NAME[slot]} 고르기`, `${cur ? `<div class="row">${gearCell(cur, 'data-detail')}<span class="grow sm">지금: ${typeName(cur)} · 전투력 ${fmt(gearPower(cur))}</span><button class="btn mini" data-un>빼기</button></div>` : ''}<div class="pk">${cands.map((g) => gearCell(g, `data-g="${g.uid}"`)).join('') || `<span class="xs mute">맞는 장비가 없어요${slot === 'weapon' ? ` (${heroOf(id).name}은(는) ${CONFIG.gear.types.name[CONFIG.gear.types.weaponOf[heroOf(id).job]]}만)` : ''}</span>`}</div>`, [['닫기', null]]);
             const closeM = () => m.remove();
             $$('[data-g]', m).forEach(
               (x) =>
@@ -283,7 +283,7 @@ register('shop', {
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone));
         rollTrack(S);
-        body = `<div class="xs dim">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+        body = `<div class="xs dim capline">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
       } else if (cat === 'summon') {
         const sm = CONFIG.gear.summon;
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>

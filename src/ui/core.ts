@@ -2,7 +2,7 @@
 //  화면 흐름은 FLOW 표 하나 → tests/flow.test.ts 가 탭 수(로비에서 1탭/3탭 이내)를 확인하고 docs/FLOW.md 흐름도를 만든다
 //  상단 바(STAR_PLAN_v2 §1-8): ← 뒤로 + 화면 이름 / 행동력·금화·별가루 [+] / 우편·채팅 — 모든 화면 같은 자리 (타이틀·전투 빼고)
 import { CONFIG } from '../config';
-import { heroOf, artOf } from '../data/heroes';
+import { artOf, HD_PORTRAIT, heroOf } from '../data/heroes';
 import { SPEAKER, type Line } from '../data/story';
 import * as cloud from '../core/net/cloud';
 import { aiLine, mailUnread, pushChat } from '../game/social';
@@ -14,7 +14,8 @@ export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNo
 export const $$ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => [...root.querySelectorAll(s)] as E[];
 const BASE = import.meta.env.BASE_URL;
 export const portraitUrl = (key: string) => `${BASE}art/portraits/${key}.png`;
-export const heroPortrait = (id: string) => portraitUrl(artOf(heroOf(id), T.battle.tint.length).portrait);
+/** 영웅 초상화: 고화질 일러스트가 있으면 그것 (메뉴 화면 전부) · 없으면 도트 초상화 */
+export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id), T.battle.tint.length).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 

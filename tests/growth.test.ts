@@ -73,7 +73,7 @@ describe('장비', () => {
   });
   it('룬: 칸에 꽂으면 능력에 더해짐 · 3개 합성 → 다음 등급', () => {
     const s = rich();
-    const g = put(s, makeGear('weapon', 3, 0, s, seeded(7)));
+    const g = put(s, makeGear('weapon', 3, 0, s, seeded(7), 'greatsword'));
     expect(g.runes.length).toBe(CONFIG.gear.grades[3].runes);
     for (let i = 0; i < 3; i++) {
       const r = makeRune(0, s, seeded(10 + i));
@@ -99,7 +99,7 @@ describe('장비', () => {
   });
   it('장착·자동 장착·모두 해제 · 장비를 끼면 전투력이 오름', () => {
     const s = rich();
-    for (const part of ['weapon', 'armor', 'acc', 'acc'] as const) put(s, makeGear(part, 2, 5, s, seeded(11)));
+    for (const part of ['weapon', 'armor', 'acc', 'acc'] as const) put(s, makeGear(part, 2, 5, s, seeded(11), part === 'weapon' ? 'greatsword' : undefined));
     const p0 = heroPower('woongs', s);
     expect(autoEquip('woongs', s)).toBe(4);
     expect(heroPower('woongs', s)).toBeGreaterThan(p0);
@@ -124,6 +124,37 @@ describe('장비', () => {
     expect((summon(11, 0, s, seeded(16), 0) as Gear[]).length).toBe(11);
     expect(s.cur.stardust).toBe(dust - CONFIG.gear.summon.ten);
     expect((craft('weapon', 0, s, seeded(17)) as Gear).grade).toBe(CONFIG.gear.craft.grade);
+  });
+  it('장비 모양: 무기는 직업 전용 · 갑옷 계열이 맞으면 능력 + · 이름·그림이 모양을 따름', async () => {
+    const { armorMatch, fitsHero, gearName } = await import('../src/game/gear');
+    const s = rich();
+    const bow = put(s, makeGear('weapon', 2, 0, s, seeded(30), 'bow'));
+    expect(fitsHero(bow, 'woongs')).toBe(false); // 웅스 = 전사 (대검)
+    expect(equip('woongs', 'weapon', bow, s)).toBe(false);
+    expect(fitsHero(bow, 'warmnight')).toBe(true); // 따뜻한밤 = 궁수
+    expect(gearName(bow)).toContain('활');
+    const plate = put(s, makeGear('armor', 2, 0, s, seeded(31), 'plate'));
+    const robe = put(s, makeGear('armor', 2, 0, s, seeded(31), 'robe'));
+    expect(armorMatch(plate, 'woongs')).toBe(true);
+    expect(armorMatch(robe, 'woongs')).toBe(false);
+    equip('woongs', 'armor', robe, s);
+    const hpRobe = fullStats('woongs', s).st.hp;
+    equip('woongs', 'armor', plate, s);
+    expect(fullStats('woongs', s).st.hp).toBeGreaterThan(hpRobe);
+    // 새 장비는 대부분 파티 직업에 맞음
+    const fit = Array.from({ length: 200 }, (_, i) => makeGear('weapon', 0, 0, s, seeded(100 + i))).filter((g) => s.party.some((id) => fitsHero(g, id))).length;
+    expect(fit).toBeGreaterThan(120);
+  });
+  it('옛 저장(v6) 장비에 모양을 채움 · 낀 무기는 낀 영웅 직업에 맞게', async () => {
+    const { migrate } = await import('../src/game/state');
+    const s = rich();
+    const g = put(s, makeGear('weapon', 1, 0, s, seeded(40)));
+    delete g.type;
+    g.by = 'ikamolly';
+    s.heroes.ikamolly.gear.weapon = g.uid;
+    const m = migrate({ ...JSON.parse(JSON.stringify(s)), version: 6 });
+    expect((m.items[g.uid] as Gear).type).toBe('staff');
+    expect(m.version).toBe(7);
   });
   it('소프트캡: 치명타는 상한에서 멈추고, 넘친 만큼을 알려 줌', () => {
     const s = rich();

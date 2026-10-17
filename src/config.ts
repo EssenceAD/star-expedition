@@ -193,6 +193,18 @@ export const CONFIG = {
     summon: { one: 150, ten: 1500, freePerDay: 1, weights: [0, 50, 35, 12, 3] as number[] },
     /** 제작: 부위 고르기 · 등급 확정(희귀) · 강화석 · 금화 */
     craft: { grade: 2, stones: 30, gold: 20000 },
+    /** 장비 모양(종류) (docs/ART_DONE_1017_2.md §3 · 킹스레이드처럼 직업마다 무기 모양이 다름)
+     *  무기 = 직업 전용(다른 직업은 못 낌) · 갑옷 = 계열이 맞으면 기본 능력 +armorMatch · 장신구 = 아무나
+     *  드롭·소환·제작 때 partyBias 확률로 파티 영웅 직업에 맞춰 나옴 · 그림 = items/<art[type]>_<등급>.png */
+    types: {
+      weaponOf: { knight: 'sword', warrior: 'greatsword', fighter: 'gauntlet', assassin: 'dagger', archer: 'bow', engineer: 'gun', mage: 'staff', priest: 'scepter', druid: 'naturestaff' } as Record<string, string>,
+      armorOf: { knight: 'plate', warrior: 'plate', fighter: 'plate', assassin: 'leather', archer: 'leather', engineer: 'leather', druid: 'leather', mage: 'robe', priest: 'robe' } as Record<string, string>,
+      acc: ['ring', 'necklace', 'earring'] as string[],
+      name: { sword: '한손검', greatsword: '대검', gauntlet: '건틀릿', dagger: '쌍단검', bow: '활', gun: '기계 총', staff: '마법 지팡이', scepter: '성구 홀', naturestaff: '자연 지팡이', plate: '판금 갑옷', leather: '가죽 갑옷', robe: '로브', ring: '반지', necklace: '목걸이', earring: '귀걸이' } as Record<string, string>,
+      art: { sword: 'weapon', greatsword: 'w_greatsword', gauntlet: 'w_gauntlet', dagger: 'w_dagger', bow: 'w_bow', gun: 'w_gun', staff: 'w_staff', scepter: 'w_scepter', naturestaff: 'w_naturestaff', plate: 'armor', leather: 'a_leather', robe: 'a_robe', ring: 'acc', necklace: 'acc_necklace', earring: 'acc_earring' } as Record<string, string>,
+      partyBias: 0.7,
+      armorMatch: 0.1,
+    },
     /** 아이템 그림 (B 보강 §2: 부위·등급별 · public/art/<dir>/<부위>_<등급>.png · ChatGPT로 뽑음) — have=false면 기호 */
     art: { have: true as boolean, dir: 'items' },
     /** 가방 칸 · 확장(별가루) */
@@ -273,7 +285,10 @@ export const CONFIG = {
    */
   raidArena: {
     /** 보스: 화면 키(논리 px) · 가운데 x (너비 비율) · 발 y */
-    bossH: 400, bossX: 0.75, bossY: 330,
+    bossH: 335, bossX: 0.75, bossY: 342,
+    /** 맞을 때 하얀 번쩍임: 이 값보다 클 때만 · 최대 진하기 */
+    flashMin: 0.5,
+    flashMax: 0.22,
     /** 두 줄 발 y · 파티 A(내 파티) x · 파티 B(AI·뒤쪽) x — 줄은 처음에 A 위 / B 아래 */
     lanes: [218, 280] as number[],
     aX: [372, 330, 288, 246] as number[],

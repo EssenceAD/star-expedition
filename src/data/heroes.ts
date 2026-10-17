@@ -39,6 +39,7 @@ export const HEROES: HeroDef[] = [
   // ───────── 창립 멤버 13명 ─────────
   {
     id: 'hwang', name: '황짐승', gender: 'm', job: 'druid', title: '야성의 여관 주인', concept: '평소 느긋한 사장님, 전투 시 짐승 변신. 어깨의 숲 정령 「코드」', origin: 'founder', elem: 'beast', exWeapon: '숲의 계약서',
+    look: '구릿빛 피부 · 멋진 수염 (형철 본인) · 느긋한 사장님 인상 · 어깨 위 숲 정령 「코드」',
     passive: pas('야성 해방', { k: 'lowHp', s: 'spd', v: 0.35, at: 0.3 }),
     skills: [
       sk(0, '짐승의 발톱', 'claw', 'beast', 'slash', { k: 'dmg', to: 'front', m: 1.6, n: 2 }),
@@ -110,7 +111,8 @@ export const HEROES: HeroDef[] = [
     ],
   },
   {
-    id: 'woongs', name: '웅스', gender: 'm', job: 'warrior', title: '첫 번째 칼날', concept: '「체크인」 다섯 별. 양손 대검, 사냥·강화 진심, 온천 사랑. 삼총사 막내', origin: 'founder', elem: 'ember', fiveStar: true, stat: { hp: 1.1 },
+    id: 'woongs', name: '웅스', gender: 'm', job: 'warrior', title: '첫 번째 칼날', concept: '「체크인」 다섯 별. 양손 대검, 사냥·강화 진심, 온천 사랑. 삼총사 막내', origin: 'founder', elem: 'ember', fiveStar: true,
+    look: '날씬한 체형 · 동그란 안경 · 장궁 · 허리에 등불 (형철 10/17 다시 그림)', stat: { hp: 1.1 },
     passive: pas('투지', { k: 'lowHp', s: 'atk', v: 0.25, at: 0.5 }),
     skills: [
       sk(0, '회오리 베기', 'slash', 'ember', 'slash', { k: 'dmg', to: 'all', m: 1.4, n: 2 }),
@@ -363,7 +365,7 @@ export const HEROES: HeroDef[] = [
   },
   {
     id: 'jaehi', name: '재희아빠', gender: 'm', job: 'warrior', title: '세상에서 제일 바쁜 아빠', concept: '귀엽고 다소 산만하지만 속은 진국. 재희 얘기를 자주 하고 동료를 가족처럼 챙김', origin: 'member', elem: 'earth', stat: { hp: 1.08 },
-    look: '둥글둥글 순한 인상 · 부스스한 머리 · 큼직한 갑옷 가슴에 아이가 그린 듯한 삐뚤빼뚤 별 패치 · 허리에 작은 인형 고리 · 큰 양손 망치',
+    look: '밝은 피부 · 웨이브 애쉬브라운 머리 · 차분한 미소 (형철 10/17: 웅스와 확실히 다르게) · 큼직한 갑옷 가슴에 아이가 그린 듯한 삐뚤빼뚤 별 패치 · 허리에 작은 인형 고리 · 큰 양손 망치',
     voice: ['앗 잠깐만용~ 이거 먼저 하구!', '우리 팀 다치면 아빠 화난다아~?', '…괜찮아. 내가 지킬게.'],
     passive: pas('아빠 왔다!', { k: 'teamLowGuard', v: 0.12 }),
     skills: [
@@ -413,6 +415,8 @@ export interface HeroArt {
   portrait: string;
 }
 const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+/** 고화질 일러스트 초상화 (public/art/portraits_hd/<id>.png · 512 · 투명 · docs/ART_DONE_1017_2.md) — 메뉴 화면·컷인은 이걸, 전투에서 움직이는 캐릭터만 도트 */
+export const HD_PORTRAIT = new Set(['aria', 'ayla', 'bube', 'ceres', 'elysia', 'gonu', 'grom', 'haeung', 'hwang', 'ichae', 'ikamolly', 'jaehi', 'jin', 'kkangto', 'kleine', 'leon', 'luna', 'mochi', 'momo2', 'moss', 'noel', 'nyx', 'panda', 'ryuka', 'scarlet', 'sermi', 'shinya', 'sylas', 'vael', 'veronica', 'vivian', 'walwal', 'warmnight', 'woongs', 'yeonhwa', 'yuwol']);
 /** 멤버 영웅 초상화가 그려진 것 (public/art/portraits/member_<id>.png · ChatGPT로 뽑음) — 없는 멤버는 직업 기본 초상화 */
 const MEMBER_ART = new Set(['sermi', 'ichae', 'mochi', 'jaehi']);
 export function artOf(h: HeroDef, tints: number): HeroArt {

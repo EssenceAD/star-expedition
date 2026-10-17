@@ -47,7 +47,7 @@ button { font-family: inherit; cursor: pointer; }
 .tab { height: 26px; min-width: 30px; padding: 0 var(--s-md); border-radius: var(--r-cutSm); border: var(--b-thin) solid var(--c-line); background: var(--c-panelDeep); color: var(--c-textDim); font-size: var(--fs-md); font-weight: var(--fw-bold); }
 .tab.on { border-color: var(--c-gold); color: var(--c-star); background: var(--c-panelHi); }
 .tab:disabled { opacity: 0.4; }
-.pt { width: 46px; height: 46px; flex: none; border: var(--b-base) solid var(--c-gold2); border-radius: var(--r-cutSm); background: var(--c-panelDeep) center/cover no-repeat; image-rendering: pixelated; }
+.pt { width: 46px; height: 46px; flex: none; border: var(--b-base) solid var(--c-gold2); border-radius: var(--r-cutSm); background: var(--c-panelHi) center 12%/cover no-repeat; }
 .pt.s { width: 32px; height: 32px; }
 .pt.l { width: 72px; height: 72px; }
 .toast { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); padding: var(--s-sm) var(--s-lg); background: var(--c-veil2); border: var(--b-thin) solid var(--c-gold2); border-radius: var(--r-md); font-size: var(--fs-base); font-weight: var(--fw-bold); z-index: 30; pointer-events: none; animation: toast 2.2s forwards; }
@@ -349,3 +349,5 @@ input.tab { color: var(--c-text); }
 .logo small, .logo i { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
+.capline { align-self: flex-start; margin-bottom: var(--s-xs); padding: var(--s-xxs) var(--s-md); background: var(--c-glass); border: var(--b-thin) solid var(--c-line); border-radius: var(--r-md); }
+img.ic.img { width: 1.35em; height: 1.35em; vertical-align: -0.32em; object-fit: contain; }

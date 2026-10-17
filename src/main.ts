@@ -2,7 +2,7 @@
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
-import { CUTIN_ART, HEROES, sheetDirs } from './data/heroes';
+import { CUTIN_ART, HD_PORTRAIT, HEROES, sheetDirs } from './data/heroes';
 import { MOB_KINDS } from './data/mobs';
 import { loadSave, persist, S } from './game/state';
 import { loadSheets } from './sprite/sheet';
@@ -40,27 +40,17 @@ for (const m of Object.values(MOB_KINDS)) for (const d of Object.values(m.anims)
 const sheet = await loadSheets([...dirs]);
 const bg = await img(`${B}art/bg.jpg`).catch(() => null);
 const cutin: Art['cutin'] = {};
-// 컷인 일러스트가 있으면 그것, 없으면 초상화를 크게 (처음 쓸 때 만든다)
-const port = (h: (typeof HEROES)[number]) => (h.fiveStar ? `star_${h.id}` : null);
+// 컷인 일러스트가 있으면 그것, 없으면 고화질 초상화 (처음 쓸 때 받음)
 for (const h of HEROES) {
   const own = CUTIN_ART.has(h.id) ? await img(`${B}art/cutin/${h.id}.png`).catch(() => null) : null;
   if (own) {
     cutin[h.id] = own;
     continue;
   }
-  const key = port(h) ?? (h.origin === 'legend' ? `legend_${h.id}` : null);
-  if (!key) continue;
-  img(`${B}art/portraits/${key}.png`)
-    .then((p) => {
-      const c = document.createElement('canvas');
-      c.width = p.width * 4;
-      c.height = p.height * 4;
-      const x = c.getContext('2d')!;
-      x.imageSmoothingEnabled = false;
-      x.drawImage(p, 0, 0, c.width, c.height);
-      cutin[h.id] = c;
-    })
-    .catch(() => {});
+  if (HD_PORTRAIT.has(h.id))
+    img(`${B}art/portraits_hd/${h.id}.png`)
+      .then((p) => (cutin[h.id] = p))
+      .catch(() => {});
 }
 const RB = CONFIG.raidArena.art;
 const raidBoss = RB.have ? { intact: await img(`${B}art/${RB.intact}`).catch(() => null), broken: await img(`${B}art/${RB.broken}`).catch(() => null) } : undefined;
