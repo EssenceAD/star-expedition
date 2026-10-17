@@ -403,7 +403,7 @@ const SHEETS: Record<string, AnimSet> = {
   gonu: basic('gonu'),
 };
 /** 컷인 일러스트가 있는 영웅 (public/art/cutin/<id>.png) — 없으면 초상화 확대 */
-export const CUTIN_ART = new Set(['woongs', 'jaehi']);
+export const CUTIN_ART = new Set(['aria', 'ayla', 'bube', 'ceres', 'elysia', 'gonu', 'grom', 'haeung', 'hwang', 'ichae', 'ikamolly', 'jaehi', 'jin', 'kkangto', 'kleine', 'leon', 'luna', 'mochi', 'momo2', 'moss', 'noel', 'nyx', 'panda', 'ryuka', 'scarlet', 'sermi', 'shinya', 'sylas', 'vael', 'veronica', 'vivian', 'walwal', 'warmnight', 'woongs', 'yeonhwa', 'yuwol']);
 /** 화면 키 (논리 px) */
 const HEIGHT: Record<string, number> = { woongs: 108, ikamolly: 104, walwal: 100, warmnight: 104, gonu: 100 };
 export interface HeroArt {
