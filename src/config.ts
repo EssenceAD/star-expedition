@@ -221,7 +221,7 @@ export const CONFIG = {
   treasure: { slots: 1, atkPct: 0.08 },
   /** 코스튬 (docs/ART_DONE_1017_3.md §3): 묶음마다 그림 폴더 · 별가루 값 · 입을 수 있는 영웅 — 영웅 정보·영입·로딩의 전신 그림이 바뀜 (전투 도트는 그대로) */
   costume: {
-    festival: { name: '별빛 축제', dir: 'costume_festival', dust: 800, heroes: ['woongs', 'gonu', 'walwal', 'ikamolly', 'warmnight', 'hwang', 'kleine', 'sermi', 'jaehi', 'mochi', 'ichae', 'kkangto'] },
+    festival: { name: '별빛 축제', dir: 'costume_festival', dust: 1200, heroes: ['woongs', 'gonu', 'walwal', 'ikamolly', 'warmnight', 'hwang', 'kleine', 'sermi', 'jaehi', 'mochi', 'ichae', 'kkangto'] },
   } as Record<string, { name: string; dir: string; dust: number; heroes: string[] }>,
   /** 상점 (현금 결제 없음): 영웅 값(별가루) · 재화·소모품 금화 값 · 꾸러미 */
   shop: {
@@ -353,8 +353,8 @@ export const CONFIG = {
     darkModes: ['tower', 'raid', 'world', 'graid'] as string[],
     /** 콘텐츠 전투 배경 (전투 제목 앞부분 = 콘텐츠 이름 → public/art/bgs/<값>.jpg) · 스토리는 bg.jpg */
     battleBg: { '도전의 탑': 'tower', 레이드: 'raid', '월드 보스': 'raid', '길드 레이드': 'raid', 결투장: 'arena', '상급 던전': 'dungeon', '토벌 전투': 'dungeon', '요일 던전': 'daily' } as Record<string, string>,
-    /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
-    screenBg: { title: 'title', guild: 'guild', adventure: 'map', heroes: 'lobby', hero: 'lobby', prep: 'lobby', shop: 'lobby', bag: 'lobby', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
+    /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
+    screenBg: { title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
