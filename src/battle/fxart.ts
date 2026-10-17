@@ -41,7 +41,9 @@ const fcx = fc.getContext('2d')!;
 export function drawFxImg(ctx: CanvasRenderingContext2D, A: FxArt | null | undefined, name: string, i: number, x: number, y: number, h: number, color: string, alpha = 1): boolean {
   const im = A?.img[name]?.[i];
   if (!im || !im.naturalWidth) return false;
-  const w = (im.naturalWidth / im.naturalHeight) * h;
+  const FA = CONFIG.combat.fxArt;
+  // 회복 기둥은 대상 몸통 폭 정도로 좁게 (영웅 둘을 덮던 것 · POLISH_1017 ①)
+  const w = (im.naturalWidth / im.naturalHeight) * h * (name === 'heal' ? FA.healW : 1);
   const top = A!.meta[name].anchor === 'bottom' ? y - h : y - h / 2;
   // 화면 해상도(dpr)로 보조 캔버스에 그림 + 속성색 multiply
   const d = view.dpr;
@@ -56,7 +58,7 @@ export function drawFxImg(ctx: CanvasRenderingContext2D, A: FxArt | null | undef
   fcx.globalCompositeOperation = 'source-over';
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha = alpha * CONFIG.combat.fxArt.alpha;
+  ctx.globalAlpha = alpha * (FA.soft[name] ?? FA.alpha);
   ctx.shadowBlur = 0;
   ctx.drawImage(fc, x - w / 2, top, w, h);
   ctx.restore();

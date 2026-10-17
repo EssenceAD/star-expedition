@@ -100,6 +100,8 @@ export interface Fx {
   seq?: number[];
   /** 그림 높이 (논리 px) */
   h?: number;
+  /** 이 이펙트가 붙은 대상 (한 대상 위 동시 개수 상한 · POLISH_1017 ①) */
+  on?: number;
   x: number;
   y: number;
   x2?: number;
@@ -408,8 +410,8 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
     left -= s;
   }
   // 보호막이 이번에 깨지면: 깨짐 그림(3)
-  if (dmg > left && to.shield <= 0 && !to.dead) b.fx.push({ kind: 'shield', img: 'shield', seq: [3], h: fxH(to, true), x: to.x, y: to.y, color: T.battle.fxShield, t: 0, dur: K.fxArt.frameSec * 3 });
-  if (crit && by.side === 'hero') b.fx.push({ kind: 'burst', img: 'crit', h: fxH(to) * 1.2, x: to.x, y: to.y - to.h * 0.55, color: T.battle.burstCrit, t: 0, dur: K.fxArt.frameSec * 4 });
+  if (dmg > left && to.shield <= 0 && !to.dead) pushFx(b, { kind: 'shield', img: 'shield', on: to.uid, seq: [3], h: fxH(to, true), x: to.x, y: to.y, color: T.battle.fxShield, t: 0, dur: K.fxArt.frameSec * 3 });
+  if (crit && by.side === 'hero') pushFx(b, { kind: 'burst', img: 'crit', on: to.uid, h: fxH(to), x: to.x, y: to.y - to.h * 0.55, color: T.battle.burstCrit, t: 0, dur: K.fxArt.frameSec * 4 });
   to.hp = Math.max(0, to.hp - left);
   to.taken += dmg;
   to.flash = 1;
@@ -522,10 +524,18 @@ const foeTargets = (b: Battle, u: Unit, to: string): Unit[] => {
   return [line.sort((a, c) => (to === 'back' ? a.x - c.x : c.x - a.x))[0]];
 };
 /** 이펙트 그림 크기: 몸통 가운데 것 · 발밑에서 솟는 것 (대상 키에 맞춤) */
-const fxH = (m: Unit, bottom = false) => Math.min(K.fxArt.maxH, Math.max(bottom ? K.fxArt.minBottom : K.fxArt.minCenter, m.h * (bottom ? K.fxArt.bottomK : K.fxArt.centerK)));
+const fxH = (m: Unit, bottom = false) => Math.min(K.fxArt.maxH, m.h * K.fxArt.maxOfH, Math.max(bottom ? K.fxArt.minBottom : K.fxArt.minCenter, m.h * (bottom ? K.fxArt.bottomK : K.fxArt.centerK)));
+/** 그림 이펙트 넣기: 한 대상 위엔 최대 fxArt.perTarget개 — 넘치면 가장 오래된 것부터 빨리 꺼짐 */
+function pushFx(b: Battle, f: Fx) {
+  if (f.img && f.on !== undefined) {
+    const same = b.fx.filter((x) => x.img && x.on === f.on && x.t < x.dur - K.fxArt.fadeFast);
+    for (const x of same.slice(0, Math.max(0, same.length - K.fxArt.perTarget + 1))) x.t = Math.max(x.t, x.dur - K.fxArt.fadeFast);
+  }
+  b.fx.push(f);
+}
 function hitFx(b: Battle, u: Unit, s: SkillDef, m: Unit, k: number) {
   const color = elemColor(s.elem);
-  const fx = (f: Omit<Fx, 't'>) => b.fx.push({ ...f, t: 0 });
+  const fx = (f: Omit<Fx, 't'>) => pushFx(b, { ...f, on: m.uid, t: 0 });
   const y = m.y - m.h * 0.55;
   switch (s.vfx) {
     case 'slash':
@@ -554,12 +564,14 @@ function hitFx(b: Battle, u: Unit, s: SkillDef, m: Unit, k: number) {
       fx({ kind: 'burst', img: 'burst', h: fxH(m), x: m.x, y, color, dur: 0.5, r: 60 });
   }
 }
-function allyFx(b: Battle, s: SkillDef, t: Unit, e: Eff) {
+function allyFx(b: Battle, s: SkillDef, t: Unit, e: Eff, by?: Unit) {
   const color = elemColor(s.elem);
   const kind: FxKind = e.k === 'shield' || s.vfx === 'shield' ? 'shield' : e.k === 'regen' || s.vfx === 'heal' ? 'heal' : e.k === 'taunt' ? 'ring' : 'pillar';
   // 그림: 보호막 = 걸림(0→1) · 회복 · 도발 = 고리 · 버프 = 빛 기둥(buff) · 나머지 기둥 (모두 발밑)
   const img = kind === 'shield' ? 'shield' : kind === 'heal' ? 'heal' : kind === 'ring' ? 'ring' : e.k === 'buff' ? 'buff' : 'pillar';
-  b.fx.push({ kind, img, seq: img === 'shield' ? [0, 1] : undefined, h: fxH(t, true), x: t.x, y: kind === 'ring' ? t.y : kind === 'pillar' ? t.y : t.y - t.h * 0.5, color: img === 'shield' ? T.battle.fxShield : color, t: 0, dur: 0.85, r: kind === 'ring' ? 110 : kind === 'pillar' ? 24 : 50 });
+  // 시전자 자신에게 거는 기둥·회복·버프·고리는 스킬 그림(m2r1c2)에 이미 효과가 있어서 그림 이펙트를 뺌 (보호막은 남김 · POLISH_1017 ①)
+  const self = by === t && img !== 'shield';
+  pushFx(b, { kind, img: self ? undefined : img, on: t.uid, seq: img === 'shield' ? [0, 1] : undefined, h: fxH(t, true), x: t.x, y: kind === 'ring' ? t.y : kind === 'pillar' ? t.y : t.y - t.h * 0.5, color: img === 'shield' ? T.battle.fxShield : color, t: 0, dur: 0.85, r: kind === 'ring' ? 110 : kind === 'pillar' ? 24 : 50 });
 }
 function cast(b: Battle, u: Unit, i: number, manual = false) {
   const h = specOf(u)!;
@@ -617,7 +629,7 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
         const atk = effAtk(u);
         if (e.k === 'taunt') {
           addSt(u, 'taunt', e.dur);
-          allyFx(b, s, u, e);
+          allyFx(b, s, u, e, u);
           return;
         }
         for (const t of allyTargets(b, u, e.to)) {
@@ -626,7 +638,7 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
           else if (e.k === 'shield') t.shield += Math.round(atk * e.m * lvM);
           else if (e.k === 'buff') addSt(t, e.s, e.dur, e.v);
           else if (e.k === 'mana') t.mana = Math.min(K.mana.max, t.mana + e.v);
-          allyFx(b, s, t, e);
+          allyFx(b, s, t, e, u);
         }
       },
     });
@@ -792,8 +804,8 @@ export function step(b: Battle, dtReal: number) {
           if (t.dead) return;
           const ty = t.y - t.h * 0.55;
           // 평타: 원거리 = 날아가는 bolt · 근접 = hit (속성색 · ANIM_1017 ②)
-          if (ranged) b.fx.push({ kind: 'bolt', img: 'bolt', h: fxH(t) * 0.6, x: h.x + 26, y: h.y - h.h * 0.62, x2: t.x, y2: ty, color, t: 0, dur: K.fxArt.boltTravel + K.fxArt.frameSec * 2 });
-          else b.fx.push({ kind: 'slash', img: 'hit', h: fxH(t), x: t.x, y: ty, color, t: 0, dur: 0.32, r: 1 });
+          if (ranged) pushFx(b, { kind: 'bolt', img: 'bolt', on: t.uid, h: fxH(t) * 0.6, x: h.x + 26, y: h.y - h.h * 0.62, x2: t.x, y2: ty, color, t: 0, dur: K.fxArt.boltTravel + K.fxArt.frameSec * 2 });
+          else pushFx(b, { kind: 'slash', img: 'hit', on: t.uid, h: fxH(t), x: t.x, y: ty, color, t: 0, dur: 0.32, r: 1 });
           damage(b, h, t, 1);
         },
       });

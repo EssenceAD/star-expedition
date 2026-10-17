@@ -71,6 +71,19 @@ if (scene === 'win') {
     }, 50);
   });
   secs = 8;
+} else if (scene === 'triple') {
+  // 스킬 3개가 한꺼번에 (POLISH_1017 ① 하얗게 타는지 비교) · 웅스 3번 · 콩선생 2번(보호막) · 이카몰리 3번 · 컷인 끔
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 12);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 10, d: 0 } }); window.__b().auto = false; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  await fast("b.phase === 'fight' && b.mobs.some((m) => !m.dead && m.x <= m.tx + 1)", 40);
+  await p.evaluate(() => {
+    const b = window.__b();
+    b.cutIns = 'off';
+    const at = (id) => b.heroes.findIndex((h) => h.hero.def.id === id);
+    setTimeout(() => { window.__cast(at('woongs'), 2); window.__cast(at('walwal'), 1); window.__cast(at('ikamolly'), 2); window.__cast(at('walwal'), 2); }, 300);
+  });
+  secs = 2.6;
 } else if (scene === 'shield') {
   // 콩선생 보호막: 걸림(0→1) → 유지(1↔2) → 깨짐(3)
   await party(['woongs', 'walwal'], 25);
