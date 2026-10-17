@@ -37,10 +37,26 @@ function rollOpt(grade: number, rnd: () => number, not: string[] = []) {
   const v = (o.min + (o.max - o.min) * rnd()) * (0.8 + G.grades[grade].mult * 0.2);
   return { k, v: Math.round(v * 1000) / 1000 };
 }
-export function makeGear(part: Part, grade: number, ilv: number, s: Save = S, rnd: () => number = Math.random): Gear {
+// ───────── 모양(종류) ─────────
+const TY = G.types;
+const jobOf = (id: string) => heroOf(id)?.job ?? 'knight';
+/** 이 영웅이 낄 수 있는 모양인가 (무기만 직업 전용) */
+export const fitsHero = (g: Gear, id: string) => g.part !== 'weapon' || !g.type || g.type === TY.weaponOf[jobOf(id)];
+/** 갑옷 계열이 맞으면 기본 능력 보너스 */
+export const armorMatch = (g: Gear, id: string) => g.part === 'armor' && g.type === TY.armorOf[jobOf(id)];
+export const typeName = (g: Gear) => (g.type ? TY.name[g.type] : undefined) ?? PART_NAME[g.part];
+/** 새 장비 모양: partyBias 확률로 파티 영웅 하나의 직업에 맞춤 · 아니면 그 부위 모양 중 아무거나 */
+export function rollType(part: Part, s: Save, rnd: () => number): string {
+  if (part === 'acc') return pick(TY.acc, rnd);
+  const table = part === 'weapon' ? TY.weaponOf : TY.armorOf;
+  const party = s.party.filter((id) => s.heroes[id]);
+  if (party.length && rnd() < TY.partyBias) return table[jobOf(pick(party, rnd))];
+  return pick([...new Set(Object.values(table))], rnd);
+}
+export function makeGear(part: Part, grade: number, ilv: number, s: Save = S, rnd: () => number = Math.random, type?: string): Gear {
   const opts: Gear['opts'] = [];
   for (let i = 0; i < G.grades[grade].opts; i++) opts.push(rollOpt(grade, rnd, opts.map((o) => o.k)));
-  return { uid: s.nextUid++, kind: 'gear', part, grade, ilv: Math.max(0, Math.round(ilv)), star: 1, tier: 1, enh: 0, pity: 0, starPity: 0, opts, runes: Array(G.grades[grade].runes).fill(null), lock: false, by: null };
+  return { uid: s.nextUid++, kind: 'gear', part, type: type ?? rollType(part, s, rnd), grade, ilv: Math.max(0, Math.round(ilv)), star: 1, tier: 1, enh: 0, pity: 0, starPity: 0, opts, runes: Array(G.grades[grade].runes).fill(null), lock: false, by: null };
 }
 export function makeRune(grade: number, s: Save = S, rnd: () => number = Math.random): Rune {
   return { uid: s.nextUid++, kind: 'rune', grade, stat: pick(R.kinds, rnd), lock: false, in: null };
@@ -76,7 +92,7 @@ export const gearPower = (g: Gear) => {
   return Math.round((b.atk ?? 0) * CONFIG.power.atkW + (b.hp ?? 0) * CONFIG.power.hpW + (b.def ?? 0) * CONFIG.power.defW) + g.opts.length * 50 * (g.grade + 1);
 };
 export const optText = (o: { k: string; v: number }) => `${G.opts[o.k]?.name ?? o.k} +${(o.v * 100).toFixed(1)}%`;
-export const gearName = (g: Gear) => `${gradeName(g.grade)} ${PART_NAME[g.part]}`;
+export const gearName = (g: Gear) => `${gradeName(g.grade)} ${typeName(g)}`;
 
 // ───────── 강화 (긴 사다리 +0~+max · 구간마다 외형 · 파괴 없음 · B 보강 §1) ─────────
 const E = G.enhance;
@@ -264,7 +280,7 @@ export function craft(part: Part, ilv: number, s: Save = S, rnd: () => number = 
 // ───────── 장착 ─────────
 export const slotOf = (g: Gear, s: Save = S): GearSlot | null => (g.by ? (GEAR_SLOTS.find((k) => s.heroes[g.by!]?.gear[k] === g.uid) ?? null) : null);
 export function equip(id: string, slot: GearSlot, g: Gear, s: Save = S): boolean {
-  if (SLOT_PART[slot] !== g.part || !s.heroes[id]) return false;
+  if (SLOT_PART[slot] !== g.part || !s.heroes[id] || !fitsHero(g, id)) return false;
   if (g.by) unequip(g.by, slotOf(g, s)!, s);
   unequip(id, slot, s);
   s.heroes[id].gear[slot] = g.uid;
@@ -284,8 +300,8 @@ export function autoEquip(id: string, s: Save = S): number {
   for (const slot of GEAR_SLOTS) {
     const cur = gearOf(s.heroes[id].gear[slot], s);
     const best = Object.values(s.items)
-      .filter((x): x is Gear => x.kind === 'gear' && x.part === SLOT_PART[slot] && !x.by)
-      .sort((a, b) => gearPower(b) - gearPower(a))[0];
+      .filter((x): x is Gear => x.kind === 'gear' && x.part === SLOT_PART[slot] && !x.by && fitsHero(x, id))
+      .sort((a, b) => gearPower(b) * (armorMatch(b, id) ? 1 + TY.armorMatch : 1) - gearPower(a) * (armorMatch(a, id) ? 1 + TY.armorMatch : 1))[0];
     if (best && (!cur || gearPower(best) > gearPower(cur))) {
       equip(id, slot, best, s);
       n++;

@@ -12,14 +12,14 @@ const G = CONFIG.gear;
 const PART_IC: Record<string, string> = { weapon: 'weapon', armor: 'armor', acc: 'acc' };
 export const gradeKey = (g: number) => G.grades[g]?.key ?? 'common';
 /** 아이템 그림 (부위·등급별 · config gear.art · have=false면 기호) */
-const artOf = (g: Gear) => (G.art.have ? `<i class="art" style="background-image:url(${import.meta.env.BASE_URL}art/${G.art.dir}/${g.part}_${gradeKey(g.grade)}.png)"></i>` : `<i class="art">${icon(PART_IC[g.part])}</i>`);
+const artOf = (g: Gear) => (G.art.have ? `<i class="art" style="background-image:url(${import.meta.env.BASE_URL}art/${G.art.dir}/${G.types.art[g.type ?? ''] ?? g.part}_${gradeKey(g.grade)}.png)"></i>` : `<i class="art">${icon(PART_IC[g.part])}</i>`);
 /** 장비 칸: 등급 테두리 · 강화 구간 빛(eb1~5) · 모서리 큰 +N · 티어 · 별 */
 export const gearCell = (g: Gear | null, attrs = '', label = '') =>
   g
     ? `<button class="gi g-${gradeKey(g.grade)} eb${enhBand(g.enh)}${g.lock ? ' locked' : ''}" ${attrs} title="${gearName(g)} +${g.enh}"><span class="t">T${g.tier}</span>${artOf(g)}${g.enh ? `<span class="e">+${g.enh}</span>` : ''}<span class="st">${iconText('star').repeat(g.star)}</span>${g.by ? `<span class="by">${heroOf(g.by).name.slice(0, 2)}</span>` : ''}${g.lock ? `<span class="lk">${icon('lock')}</span>` : ''}</button>`
     : `<button class="gi empty" ${attrs}><span class="xs good">장착 가능</span><span class="xs mute">${label}</span></button>`;
 export const runeCell = (r: Rune | null, attrs = '') =>
-  r ? `<button class="gi rune r${r.grade}" ${attrs} title="${RUNE_GRADE[r.grade]} 룬">${icon('rune')}<span class="st">${RUNE_GRADE[r.grade]}</span></button>` : `<button class="gi empty" ${attrs}><span class="xs mute">룬 칸</span></button>`;
+  r ? `<button class="gi rune r${r.grade}" ${attrs} title="${RUNE_GRADE[r.grade]} 룬">${G.art.have ? `<i class="art" style="background-image:url(${import.meta.env.BASE_URL}art/${G.art.dir}/rune_${Math.min(4, r.grade)}.png)"></i>` : icon('rune')}<span class="st">${RUNE_GRADE[r.grade]}</span></button>` : `<button class="gi empty" ${attrs}><span class="xs mute">룬 칸</span></button>`;
 const runeText = (r: Rune) => `${RUNE_GRADE[r.grade]} 룬 · ${G.opts[r.stat]?.name ?? r.stat} +${(runeValue(r) * 100).toFixed(1)}%`;
 
 const STAT_NAME: Record<string, string> = { atk: '공격력', hp: '체력', def: '방어력' };

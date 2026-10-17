@@ -350,3 +350,4 @@ input.tab { color: var(--c-text); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
 .dim, .mute, .why { text-shadow: var(--sh-textBack); }
 .capline { align-self: flex-start; margin-bottom: var(--s-xs); padding: var(--s-xxs) var(--s-md); background: var(--c-glass); border: var(--b-thin) solid var(--c-line); border-radius: var(--r-md); }
+img.ic.img { width: 1.35em; height: 1.35em; vertical-align: -0.32em; object-fit: contain; }

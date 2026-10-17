@@ -5,7 +5,7 @@ import { BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { descPassive, descSkill } from '../data/skills';
-import { autoEquip, bagUsed, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
+import { autoEquip, bagUsed, fitsHero, typeName, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
 import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../game/heroes';
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
@@ -81,8 +81,8 @@ register('hero', {
           (b.onclick = () => {
             const slot = b.dataset.slot as GearSlot;
             const cur = gearOf(S.heroes[id].gear[slot]);
-            const cands = sortedGear('power').filter((g) => g.part === SLOT_PART[slot] && g.uid !== cur?.uid);
-            const m = modal(`${SLOT_NAME[slot]} 고르기`, `${cur ? `<div class="row">${gearCell(cur, 'data-detail')}<span class="grow sm">지금: ${PART_NAME[cur.part]} · 전투력 ${fmt(gearPower(cur))}</span><button class="btn mini" data-un>빼기</button></div>` : ''}<div class="pk">${cands.map((g) => gearCell(g, `data-g="${g.uid}"`)).join('') || '<span class="xs mute">맞는 장비가 없어요</span>'}</div>`, [['닫기', null]]);
+            const cands = sortedGear('power').filter((g) => g.part === SLOT_PART[slot] && g.uid !== cur?.uid && fitsHero(g, id));
+            const m = modal(`${SLOT_NAME[slot]} 고르기`, `${cur ? `<div class="row">${gearCell(cur, 'data-detail')}<span class="grow sm">지금: ${typeName(cur)} · 전투력 ${fmt(gearPower(cur))}</span><button class="btn mini" data-un>빼기</button></div>` : ''}<div class="pk">${cands.map((g) => gearCell(g, `data-g="${g.uid}"`)).join('') || `<span class="xs mute">맞는 장비가 없어요${slot === 'weapon' ? ` (${heroOf(id).name}은(는) ${CONFIG.gear.types.name[CONFIG.gear.types.weaponOf[heroOf(id).job]]}만)` : ''}</span>`}</div>`, [['닫기', null]]);
             const closeM = () => m.remove();
             $$('[data-g]', m).forEach(
               (x) =>

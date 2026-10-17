@@ -275,7 +275,10 @@ export const T = {
 } as const;
 
 /** 아이콘 HTML (2단계: 경로면 <img>) */
+/** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
+export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
+  if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
   const v = T.icon[key] ?? '·';
   return /\.(png|svg|webp)$/.test(v) ? `<img class="${cls}" src="${v}" alt="">` : `<span class="${cls}">${v}</span>`;
 }

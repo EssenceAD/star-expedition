@@ -1,7 +1,7 @@
 // 영웅 능력치 · 레벨 · 전투력 — 레벨 × 별 × (장비 기본 + 옵션·룬·초월·전용 무기 비율) · 소프트캡 (STAR_PLAN_v2 §2)
 import { CONFIG } from '../config';
 import { heroOf } from '../data/heroes';
-import { gearOf, gearStats } from './gear';
+import { armorMatch, gearOf, gearStats } from './gear';
 import { exAtk, traitsOf } from './growth';
 import { GEAR_SLOTS, newHero, S, type Save } from './state';
 
@@ -58,7 +58,9 @@ export function fullStats(id: string, s: Save = S): { st: Stats; raw: RawCaps } 
     const g = gearOf(h.gear[k], s);
     if (!g) continue;
     const gs = gearStats(g, s);
-    for (const [a, v] of Object.entries(gs.flat)) flat[a] = (flat[a] ?? 0) + v;
+    // 갑옷 계열이 직업과 맞으면 기본 능력 + (판금=전방 · 가죽=중앙·궁수 · 로브=마법사·사제)
+    const m = armorMatch(g, id) ? 1 + CONFIG.gear.types.armorMatch : 1;
+    for (const [a, v] of Object.entries(gs.flat)) flat[a] = (flat[a] ?? 0) + Math.round(v * m);
     for (const [a, v] of Object.entries(gs.pct)) addP(a, v);
   }
   for (const t of traitsOf(id, s)) addP(t.k === 'atk' ? 'atkPct' : t.k === 'hp' ? 'hpPct' : t.k === 'def' ? 'defPct' : t.k, t.v);

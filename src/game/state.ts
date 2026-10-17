@@ -6,6 +6,7 @@
 //  → v6 = §4 D (기록 세기(미션·업적) · 받은 미션 · 출석·이벤트 · 길드 · 친구 · 칭호 · 우편 · 채팅 · 클라우드)
 import { CONFIG } from '../config';
 import { getPref, setPref } from '../core/save';
+import { HERO_BY_ID } from '../data/heroes';
 
 export type GearSlot = 'weapon' | 'armor' | 'acc1' | 'acc2';
 export const GEAR_SLOTS: GearSlot[] = ['weapon', 'armor', 'acc1', 'acc2'];
@@ -29,6 +30,8 @@ export interface Gear {
   uid: number;
   kind: 'gear';
   part: 'weapon' | 'armor' | 'acc';
+  /** 모양(종류) — 무기: 직업별 9종 · 갑옷: 판금/가죽/로브 · 장신구: 반지/목걸이/귀걸이 (docs/ART_DONE_1017_2.md §3) · 옛 저장은 불러올 때 채움 */
+  type?: string;
   grade: number;
   /** 장비 레벨 (나온 스테이지 강함) */
   ilv: number;
@@ -80,7 +83,7 @@ export interface ChatLine {
   ch: 'world' | 'guild';
 }
 export interface SaveV6 {
-  version: 6;
+  version: 6 | 7;
   createdAt: number;
   savedAt: number;
   /** 마지막으로 본 시각 (방치 보상 계산) */
@@ -145,7 +148,7 @@ export interface SaveV6 {
   cloud: { pushedAt: number };
 }
 export type Save = SaveV6;
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const newHero = (): HeroSave => ({ lv: 1, exp: 0, awaken: 0, star: 1, skill: [1, 1, 1], trans: [], ex: 0, gear: { weapon: null, armor: null, acc1: null, acc2: null } });
 export const PARTY_MAX = 4;
 
@@ -154,7 +157,7 @@ export function newSave(now = Date.now()): Save {
   const heroes: Record<string, HeroSave> = {};
   for (const id of CONFIG.start.heroes) heroes[id] = newHero();
   return {
-    version: 6, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
+    version: 7, createdAt: now, savedAt: now, lastSeen: now, prologue: false,
     acc: { name: CONFIG.start.name, lv: 1, exp: 0 }, sta: { n: CONFIG.stamina.base, at: now }, boostUntil: 0,
     cur: { gold: CONFIG.start.gold, stardust: CONFIG.start.stardust },
     heroes, party: [...CONFIG.start.party], stages: {}, seen: {},
@@ -177,7 +180,7 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.pilot = { clears: Number(d.clears) || 0, best };
     return s;
   }
-  if (d.version >= 2 && d.version <= 6) {
+  if (d.version >= 2 && d.version <= 7) {
     const base = newSave(now);
     const s = { ...base, ...(d as unknown as Save) };
     s.cur = { ...base.cur, ...s.cur };
@@ -201,13 +204,24 @@ export function migrate(raw: unknown, now = Date.now()): Save {
     s.exShards ??= {};
     // v4 → v5: 콘텐츠 칸
     for (const k of ['daily', 'tower', 'world', 'arena', 'side', 'treasure', 'miles', 'wins', 'track', 'claimed', 'attend', 'guild', 'friends', 'titles', 'mail', 'chat', 'cloud'] as const) (s as unknown as Record<string, unknown>)[k] ??= structuredClone(base[k]);
-    s.version = 6;
+    // v6 → v7: 장비 모양(종류) — 낀 장비는 낀 영웅 직업에 맞게 · 안 낀 것은 파티 직업 중에서
+    for (const it of Object.values(s.items)) if (it.kind === 'gear' && !it.type) it.type = typeFor(it, s);
+    s.version = 7;
     if (!Array.isArray(s.party) || !s.party.length) s.party = [...base.party];
     s.party = s.party.filter((id) => s.heroes[id]).slice(0, PARTY_MAX);
     return s;
   }
   // 미래 버전 (다른 기기에서 새 버전으로 저장) — 덮어쓰지 않게 그대로 둔다
   return d as unknown as Save;
+}
+
+/** 옛 장비 모양 정하기 (migrate 전용 · gear.ts 와 같은 표) */
+function typeFor(g: Gear, s: Save): string {
+  const T = CONFIG.gear.types;
+  const ids = g.by ? [g.by] : s.party.length ? s.party : Object.keys(s.heroes);
+  const id = ids[g.uid % ids.length];
+  const job = (id && HERO_BY_ID[id]?.job) || 'knight';
+  return g.part === 'weapon' ? T.weaponOf[job] : g.part === 'armor' ? T.armorOf[job] : T.acc[g.uid % T.acc.length];
 }
 
 /** 지금 저장 (게임 전체가 이것 하나를 쓴다) */
