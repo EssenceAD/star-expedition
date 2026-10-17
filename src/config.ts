@@ -361,6 +361,6 @@ export const CONFIG = {
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
     /** 로비 걸어 다니는 영웅 (DENSITY §3): 몇 명 · 발 y · 줄 간격 · 키 · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
-    lobbyLife: { walkers: 5, y: 300, yStep: 14, scale: 0.45, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    lobbyLife: { walkers: 5, y: 300, yStep: 14, scale: 0.45, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], toastSec: 1.5, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;

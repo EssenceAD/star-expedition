@@ -132,12 +132,12 @@ function tabHtml(tab: string, id: string): string {
       <div class="row"><span class="grow md">별 ${hs.star}/5 <span class="xs dim">별마다 능력 +${pct(GR.star.stat)}${sc ? ` · ${cost([['stardust', sc.dust], ['gold', sc.gold]])}` : ''}</span></span><button class="btn mini" data-g="star" ${sc ? '' : 'disabled'}>별 올리기</button></div>`;
   }
   if (tab === 'skill')
-    return `<div class="md">${icon('skillBook')} 스킬북 ${S.cur.skillBook ?? 0}권 · 레벨마다 피해·회복·보호막 +${pct(GR.skill.perLv)}</div>
+    return `<div class="md skhead">${icon('skillBook')} 스킬북 ${S.cur.skillBook ?? 0}권 · 레벨마다 피해·회복·보호막 +${pct(GR.skill.perLv)}</div>
       <div class="panel col"><b class="sm">패시브 · ${h.passive.name}</b><span class="xs dim">${descPassive(h.passive)}</span></div>
       ${h.skills.map((s, i) => {
         const lv = hs.skill[i];
         const c = lv < GR.skill.max ? skillCost(lv) : null;
-        return `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="sm">${s.name} Lv.${lv} <span class="xs mute">마나 ${s.cost} · ${s.cd}초</span></b><span class="xs dim">${descSkill(s, 1 + GR.skill.perLv * (lv - 1))}</span></div><button class="btn mini" data-sk="${i}" ${c ? '' : 'disabled'}>${c ? `올리기 ${cost([['skillBook', c.books], ['gold', c.gold]])}` : '최대'}</button></div>`;
+        return `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="skn">${s.name} <span class="lvn">Lv.${lv}</span></b><span class="skm">마나 <i>${s.cost}</i> · <i>${s.cd}</i>초</span><span class="skd">${descSkill(s, 1 + GR.skill.perLv * (lv - 1))}</span></div><button class="btn mini" data-sk="${i}" ${c ? '' : 'disabled'}>${c ? `올리기 ${cost([['skillBook', c.books], ['gold', c.gold]])}` : '최대'}</button></div>`;
       }).join('')}`;
   if (tab === 'trans') {
     const can = canTranscend(id);
@@ -203,7 +203,7 @@ register('bag', {
       const curs: Record<string, string[]> = { grow: ['exp', 'skillBook', 'awakenStone', 'transStone', 'exShard'], use: ['enh', 'optTicket'], etc: ['tierMat', 'gold', 'stardust'] };
       let body = '';
       if (tab === 'gear') {
-        body = `<div class="row"><span class="xs dim">정렬</span>${(['grade', 'power', 'enh', 'part'] as SortKey[]).map((k) => `<button class="tab${sort === k ? ' on' : ''}" data-sort="${k}">${tabLabel(`icons/${{ grade: 'star', power: 'power', enh: 'levelup', part: 'slot_armor' }[k]}`, { grade: '등급', power: '전투력', enh: '강화', part: '부위' }[k])}</button>`).join('')}<span class="grow"></span>
+        body = `<div class="row">${(['grade', 'power', 'enh', 'part'] as SortKey[]).map((k) => `<button class="tab${sort === k ? ' on' : ''}" data-sort="${k}">${tabLabel(`icons/${{ grade: 'star', power: 'power', enh: 'levelup', part: 'slot_armor' }[k]}`, { grade: '등급', power: '전투력', enh: '강화', part: '부위' }[k])}</button>`).join('')}<span class="grow"></span>
           <select data-g class="tab">${CONFIG.gear.grades.map((g, i) => `<option value="${i}">${g.name} 이하</option>`).join('')}</select><button class="btn mini" data-bulk="sell">${tabLabel('tabs/sell', '일괄 판매')}</button><button class="btn mini" data-bulk="salvage">${tabLabel('tabs/dismantle', '일괄 분해')}</button><button class="btn mini" data-craft>${tabLabel('tabs/craft', '제작')}</button></div>
           <div class="pk grow scroll">${sortedGear(sort).map((g) => gearCell(g, `data-gear="${g.uid}"`)).join('') || '<span class="mute">장비가 없어요 · 스테이지·장비 소환·제작으로 얻어요</span>'}${'<i class="gi slot"></i>'.repeat(Math.max(0, CONFIG.ui.bagShowMin - sortedGear(sort).length))}</div>`;
       } else if (tab === 'rune') {
@@ -277,7 +277,7 @@ register('bag', {
 export function heroShopCard(id: string) {
   const h = heroOf(id);
   const j = JOBS[h.job];
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${j.name}</span></div><b>${esc(h.name)}</b><span class="xs dim one">${esc(h.title)} — ${esc(h.concept.split('.')[0])}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div>`;
+  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b>${esc(h.name)}</b><span class="xs dim one">${esc(h.title)} — ${esc(h.concept.split('.')[0])}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */

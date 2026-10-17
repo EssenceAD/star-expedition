@@ -91,8 +91,8 @@ export const T = {
     gold: '#e8c46a',
     gold2: '#c99a3b',
     text: '#f6ecd6',
-    textDim: '#e6d8b8',
-    textMute: '#b9ab8c',
+    textDim: 'rgba(246,236,214,0.85)',
+    textMute: 'rgba(246,236,214,0.7)',
     textSoft: '#f6ecd6',
     accent: '#e8c46a',
     btn: 'rgba(28,40,74,0.85)',
@@ -105,6 +105,9 @@ export const T = {
     hiLine: 'rgba(255,243,196,0.06)',
     panelGrain: 'rgba(255,255,255,0.02)',
     /** 크림은 작은 곳에만 (영웅 카드 이름 띠 · 확인 창) */
+    /** 빈 보석 점 (각성·초월) */
+    gemDark0: '#41538a',
+    gemDark1: '#121a34',
     cream: '#f6ecd6',
     creamInk: '#5b3a1e',
   } as Record<string, string>,
@@ -184,24 +187,25 @@ export const T = {
   /** 속성 색 (스킬 이펙트 · 영웅 상징색 · 데이터는 키로만 부른다) */
   elem: { fire: '#ff6b3d', ice: '#8fe3ff', holy: '#fff3a8', light: '#ffd36b', nature: '#9dffb0', wind: '#8fd0ff', shadow: '#c79bff', steel: '#ffffff', ember: '#ffa040', pink: '#ff8ac8', earth: '#ff7a3d', gold: '#ffe08a', wave: '#5fa8ff', blood: '#ff4a6a', beast: '#c8a060' },
   font: {
-    /** 글씨 T7 「금박 서사 + 타격 숫자」 (형철 10/17 확정 · docs/style/type_board2.png): 본문 IBM Plex Sans KR · 제목 Hahmlet 900 · 메뉴 Gowun Batang 700 · 영웅 이름 Hahmlet 800 · 숫자 Luckiest Guy (모두 OFL · index.html에서 Google Fonts) */
-    base: '"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif',
+    /** 글씨 (모두 OFL · index.html에서 Google Fonts) — T7(10/17) 뒤 FONT_FINAL_1017로 바꿈 */
+    /** 글씨 3종 (FONT_FINAL_1017 §1): 본문·버튼·탭 = Noto Serif KR 600 · 제목·이름 = Hahmlet · 숫자 = Cinzel (IBM Plex는 폴백만) */
+    base: '"Noto Serif KR", "Hahmlet", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", serif',
     title: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
-    menu: '"Gowun Batang", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
+    menu: '"Noto Serif KR", "Hahmlet", "IBM Plex Sans KR", serif',
     hero: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
     /** 전투 피해 숫자 (캔버스 · 타격감) */
     num: '"Luckiest Guy", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
     /** 메뉴·재화·능력치 숫자 (UI_POLISH §1 · HARMONY §0) — 한글은 Hahmlet */
     numUi: '"Cinzel", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
     /** 꾸밈 글씨 굵기 */
-    face: { title: '900', menu: '700', hero: '800', num: '600' },
-    size: { xxs: '8px', xs: '9px', sm: '10px', md: '11px', base: '12px', lg: '13px', xl: '15px', xxl: '18px', h2: '24px', h1: '40px', logo: '54px' },
-    weight: { normal: '500', bold: '700', black: '700' },
+    face: { title: '900', menu: '600', hero: '700', num: '600' },
+    size: { xxs: '8px', xs: '9px', sm: '12px', md: '12px', base: '12px', lg: '14px', xl: '14px', xxl: '17px', h2: '20px', h1: '40px', logo: '54px' },
+    weight: { normal: '600', bold: '700', black: '700' },
     /** 캔버스 글자 크기 (px 숫자) */
     canvas: { num: 20, numBig: 26, numCrit: 34, critLabel: 13, cutName: 38, cutHero: 15, stun: 13, tag: 10 },
   },
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
-  radius: { sm: '3px', md: '8px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
+  radius: { sm: '3px', md: '8px', pill: '999px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
   border: { thin: '1px', base: '2px', thick: '3px', stroke: '3px' },
   /** 유리 판 뒤 흐림 */
   fx: { glass: 'blur(6px)' } as Record<string, string>,
@@ -212,10 +216,10 @@ export const T = {
     navy: ['panel_navy', '40', '14px'],
     /** 유리 판 금테 (가운데 비움 → 반투명 남색이 보임) */
     edge: ['panel_navy', '40', '12px', 'nofill'],
-    btn: ['btn_blue', '0 70', '0 18px'],
-    gold: ['btn_gold', '0 70', '0 18px'],
+    btn: ['btn_blue', '0 70', '0 12px'],
+    gold: ['btn_gold', '0 70', '0 12px'],
     tab: ['tab', '0 50', '0 14px'],
-    tabOn: ['tab_on', '0 50', '0 14px'],
+    tabOn: ['tab_on', '0 50', '0 9px'],
     capsule: ['capsule', '0 50', '0 16px'],
     hp: ['bar_hp', '0 50', '0 6px', 'nofill'],
     mp: ['bar_mp', '0 50', '0 6px', 'nofill'],
@@ -257,6 +261,9 @@ export const T = {
     fxDrop: '0 2px 0 #3a2a14, 0 0 14px rgba(255,200,90,0.55), 0 4px 8px rgba(30,20,0,0.3)',
     /** 바탕 그림 위 작은 글씨 받침 (어두운 화면) */
     textBack: '0 1px 1px #000000',
+    /** 남색 판 위 글씨 그림자 · 제목(크림 + 진갈색 외곽선 + 아래 그림자) (FONT_FINAL §1) */
+    navyText: '0 1px 2px rgba(10,16,32,0.8)',
+    titleText: '-1px -1px 0 #3a2410, 1px -1px 0 #3a2410, -1px 1px 0 #3a2410, 1px 1px 0 #3a2410, 0 2px 3px rgba(10,16,32,0.8)',
     /** 흰 글씨 + 금 외곽선 (로비 메달 이름 · HARMONY §1) */
     outlineGold: '-1px -1px 0 #7a4f12, 1px -1px 0 #7a4f12, -1px 1px 0 #7a4f12, 1px 1px 0 #7a4f12, 0 2px 2px rgba(0,0,0,0.45)',
     enhBurst: '0 0 30px rgba(255,210,100,0.95), 0 4px 0 #6a3a00',
