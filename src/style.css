@@ -1087,3 +1087,20 @@ input, select, textarea { font-family: inherit; }
 .gcard .gem img { width: 46px; height: 46px; }
 .gcard .gface { display: flex; justify-content: center; gap: var(--s-xxs); }
 .gcard .gface .pt.s { width: 34px; height: 34px; border-radius: 50%; }
+/* ───────── 전투 UI 겹침·잘림 (docs/POLISH_1017.md ③) ───────── */
+/* 1 DPS 탭: 판 위 장식 아래로 */
+#dpsL .dh.dtabs { margin: var(--s-xs) 0 var(--s-sm); }
+#dpsL { padding-top: calc(var(--s-xxl) + var(--s-xl) + var(--s-lg)); }
+/* 2 컷인 동안엔 HUD를 숨겨 컷인이 맨 위 (보스 체력 바·아래 영웅 카드는 남김) */
+#hud > * { transition: opacity 0.12s; }
+#hud.cutin :is(#dps, #tl, #tr, #wave, #clock, #stg, #warn, #pvpHud, #bEmote, #emoPop, #bDodge, #raidHud) { opacity: 0; pointer-events: none; }
+/* 4 보스전: 스테이지 이름은 보스 체력 바와 겹쳐서 숨김 */
+#hud:has(#boss:not([hidden])) #stg { display: none; }
+/* 5 영웅 카드 이름 줄을 금테 안쪽으로 */
+.hc .nm { margin-top: var(--s-xs); }
+/* 7 쿨다운: 그림이 보이게 어둡게만 · 숫자는 가운데 흰 글씨 + 검은 외곽선 */
+.sk button.cd { filter: brightness(0.45); }
+.sk button.cd::before { opacity: 0.35; }
+.sk button.cd b { color: var(--c-white); text-shadow: var(--sh-cdNum); }
+#dpsL .dh.dtabs button { color: var(--c-textSoft); opacity: 1; text-shadow: var(--sh-outlineSm); }
+#dpsL .dh.dtabs button.on { color: var(--c-ink); background: var(--c-gold1); text-shadow: none; }

@@ -454,6 +454,16 @@
 - 다단 히트(eff.n > 1): `c0 → (c1 c2)×n → c3` · `combat.anim.multiHit` [0.07, 0.16] · hit = 각 c2 → 타격 시점이 그림과 맞음
 - 평타: 0.57초 한 번 → 대기 (측정 확인)
 
+## 2-AC. POLISH ③ 전투 UI 겹침·잘림 7개 (v0.11.4 · docs/POLISH_1017.md ③)
+1. DPS 탭 `.dh.dtabs`: 판 장식 아래(패딩 늘림) · 안 고른 탭 밝은 글씨 + 외곽선 · 고른 탭 금색
+2. 컷인 중 `#hud.cutin` → DPS·좌우 버튼·WAVE·남은 시간·경고·결투장 줄 등 투명 (보스 체력 바·아래 영웅 카드는 남김)
+3. 컷인 스킬 이름: 오른쪽 여백 `combat.cutText.right` 40 · 폭이 화면 `maxW` 50%를 넘으면 글씨 줄임 · 들어오는 미끄럼 160→60
+4. 보스 HUD가 보이면 `#stg` 숨김
+5. `.hc .nm` 위 여백
+6. 영웅 자리 `combat.places` 간격 넓힘 (뒷줄은 이미 y 226으로 엇갈림)
+7. 쿨다운: `brightness(0.45)`만(흑백 제거) · 덮개 그림 0.35 · 숫자 흰 글씨 + 검은 외곽선 `--sh-cdNum`
+- 도구: `tools/gif-scene.mjs bosshud`
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

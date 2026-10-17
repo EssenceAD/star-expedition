@@ -84,6 +84,14 @@ if (scene === 'win') {
     setTimeout(() => { window.__cast(at('woongs'), 2); window.__cast(at('walwal'), 1); window.__cast(at('ikamolly'), 2); window.__cast(at('walwal'), 2); }, 300);
   });
   secs = 2.6;
+} else if (scene === 'bosshud') {
+  // 보스전 HUD + 컷인 (POLISH_1017 ③): 1-10 보스 앞 · 콩선생 3번 스킬 컷인
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 14);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 10, d: 0 } }); window.__b().auto = true; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  await fast("b.mobs.some((m) => m.mob?.boss && !m.dead && m.x <= m.tx + 1)", 120);
+  await p.evaluate(() => { const b = window.__b(); const wi = b.heroes.findIndex((h) => h.hero.def.id === 'walwal'); b.cutIns = 'big'; setTimeout(() => window.__cast(wi, 2), 1200); });
+  secs = 3;
 } else if (scene === 'shield') {
   // 콩선생 보호막: 걸림(0→1) → 유지(1↔2) → 깨짐(3)
   await party(['woongs', 'walwal'], 25);

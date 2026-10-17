@@ -521,6 +521,8 @@ register('battle', {
       setTimeout(showResult, (b.phase === 'win' ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose) * 1000);
     }
     syncHud();
+    // 컷인 동안엔 HUD를 내려 컷인이 맨 위로 (보스 체력 바는 남김 · POLISH_1017 ③-2)
+    hud().classList.toggle('cutin', !!b.cut);
     render(ctx, view.art, b, performance.now() / 1000);
   },
 });

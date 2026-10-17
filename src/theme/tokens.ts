@@ -266,6 +266,8 @@ export const T = {
   /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
   hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
   shadow: {
+    /** 쿨다운 숫자 검은 외곽선 (POLISH_1017 ③-7) */
+    cdNum: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 -2px 0 #000, -2px 0 0 #000, 2px 0 0 #000, 0 2px 0 #000',
     /** 채팅 입력 중 나머지 화면 가리기 (MOBILE_REF §2) */
     kbVeil: '0 0 0 2000px rgba(10,8,24,0.86)',
     glow: '0 0 10px rgba(242,200,106,0.55)',
