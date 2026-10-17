@@ -204,6 +204,32 @@ export function modal(title: string, html: string, buttons: [string, (() => void
   return m;
 }
 /** 꾸밈 글씨 (T3): 뒤 겹 = 굵은 남색 선 + 그림자 · 앞 겹 = 금 그라데이션 — 큰 제목·승리·합류·강화 숫자 */
+/** 글씨 자동 축소 (FONT_FINAL2 §2): .fit 글씨가 칸(1줄 또는 줄 수 고정)을 넘치면 data-min까지 조금씩 줄임 · 줄 수는 늘리지 않음 */
+export function fitText(root: ParentNode = document) {
+  const F = CONFIG.ui.fit;
+  for (const el of $$('.fit', root)) {
+    el.style.fontSize = '';
+    if (!el.clientWidth) continue;
+    const min = Number(el.dataset.min ?? F.desc);
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while ((el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) && size > min) {
+      size = Math.max(min, size - F.step);
+      el.style.fontSize = `${size}px`;
+    }
+  }
+}
+/** 화면이 바뀔 때마다 (DOM이 바뀐 다음 프레임에) 한 번 */
+export function watchFit(root: HTMLElement) {
+  let queued = false;
+  const run = () => {
+    queued = false;
+    fitText(root);
+  };
+  new MutationObserver(() => {
+    if (!queued) ((queued = true), requestAnimationFrame(run));
+  }).observe(root, { childList: true, subtree: true });
+  void document.fonts?.ready.then(run);
+}
 export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t="${esc(text)}"><span>${esc(text)}</span></span>`;
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 

@@ -360,7 +360,9 @@ export const CONFIG = {
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
-    /** 로비 걸어 다니는 영웅 (DENSITY §3): 몇 명 · 발 y · 줄 간격 · 키 · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
-    lobbyLife: { walkers: 5, y: 300, yStep: 14, scale: 0.45, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], toastSec: 1.5, resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    /** 로비 걸어 다니는 영웅 (DENSITY §3 · FONT_FINAL2 §1 1.4배): 몇 명 · 발 y · 줄 간격 · 크기(전투 배율 대비) · 서로 떨어질 최소 간격(px) · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
+    lobbyLife: { walkers: 5, y: 300, yStep: 18, scale: 0.63, minGap: 78, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0.35, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], toastSec: 1.5,
+    /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */
+    fit: { step: 0.5, name: 13, desc: 10 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;

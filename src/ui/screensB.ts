@@ -49,7 +49,7 @@ register('hero', {
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
               <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
-              <span class="xs mute">${esc(h.concept)}</span></div></div>
+              <span class="xs mute fit2 fit" data-min="${CONFIG.ui.fit.desc}">${esc(h.concept)}</span></div></div>
           <div class="tabs">${[['grow', '성장', 'hero_growth'], ['skill', '스킬', 'hero_skill'], ['trans', '초월', 'hero_trans'], ['ex', '전용 무기', 'hero_exclusive'], ['costume', '코스튬', 'hero_costume'], ['info', '능력·인연', 'hero_bond']].map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div>
           <div class="panel col grow scroll">${!own ? '<span class="mute">아직 없는 영웅이에요 (영웅 상점)</span>' : tabHtml(tab, id)}</div>
         </div>
@@ -137,7 +137,7 @@ function tabHtml(tab: string, id: string): string {
       ${h.skills.map((s, i) => {
         const lv = hs.skill[i];
         const c = lv < GR.skill.max ? skillCost(lv) : null;
-        return `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="skn">${s.name} <span class="lvn">Lv.${lv}</span></b><span class="skm">마나 <i>${s.cost}</i> · <i>${s.cd}</i>초</span><span class="skd">${descSkill(s, 1 + GR.skill.perLv * (lv - 1))}</span></div><button class="btn mini" data-sk="${i}" ${c ? '' : 'disabled'}>${c ? `올리기 ${cost([['skillBook', c.books], ['gold', c.gold]])}` : '최대'}</button></div>`;
+        return `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="skn fit" data-min="${CONFIG.ui.fit.desc}">${s.name} <span class="lvn">Lv.${lv}</span><span class="skm">마나 <i>${s.cost}</i> · <i>${s.cd}</i>초</span></b><span class="skd fit" data-min="${CONFIG.ui.fit.desc}">${descSkill(s, 1 + GR.skill.perLv * (lv - 1))}</span></div><button class="btn mini" data-sk="${i}" ${c ? '' : 'disabled'}>${c ? `올리기 ${cost([['skillBook', c.books], ['gold', c.gold]])}` : '최대'}</button></div>`;
       }).join('')}`;
   if (tab === 'trans') {
     const can = canTranscend(id);
@@ -277,7 +277,7 @@ register('bag', {
 export function heroShopCard(id: string) {
   const h = heroOf(id);
   const j = JOBS[h.job];
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b>${esc(h.name)}</b><span class="xs dim one">${esc(h.title)} — ${esc(h.concept.split('.')[0])}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div>`;
+  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><span class="one fit" data-min="${CONFIG.ui.fit.desc}">${esc(h.title)} — ${esc(h.concept.split('.')[0])}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */

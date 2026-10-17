@@ -106,8 +106,16 @@ export const T = {
     panelGrain: 'rgba(255,255,255,0.02)',
     /** 크림은 작은 곳에만 (영웅 카드 이름 띠 · 확인 창) */
     /** 빈 보석 점 (각성·초월) */
-    gemDark0: '#41538a',
-    gemDark1: '#121a34',
+    /** 각성·초월 보석 점 (FONT_FINAL2 §4): 찬 칸 금 보석 · 빈 칸 어두운 남색 */
+    gemOn0: '#ffe9a6',
+    gemOn1: '#c99a3b',
+    gemOff: '#1d2a4c',
+    gemFacet: '#3d5590',
+    /** 탭 알약 (FONT_FINAL2 §3): 남색 반투명 · 선택 = 금 그라데이션 */
+    pill: 'rgba(20,30,58,0.7)',
+    pillOn0: '#f3d27a',
+    pillOn1: '#b8862e',
+    pillOnInk: '#2a1a08',
     cream: '#f6ecd6',
     creamInk: '#5b3a1e',
   } as Record<string, string>,
@@ -263,6 +271,9 @@ export const T = {
     textBack: '0 1px 1px #000000',
     /** 남색 판 위 글씨 그림자 · 제목(크림 + 진갈색 외곽선 + 아래 그림자) (FONT_FINAL §1) */
     navyText: '0 1px 2px rgba(10,16,32,0.8)',
+    gemGlow: '0 0 5px rgba(255,214,120,0.85)',
+    /** 「승리!」 진갈색 외곽선 2px (FONT_FINAL2 §5) */
+    winText: '-2px -2px 0 #3a2410, 2px -2px 0 #3a2410, -2px 2px 0 #3a2410, 2px 2px 0 #3a2410, 0 -2px 0 #3a2410, 0 2px 0 #3a2410, -2px 0 0 #3a2410, 2px 0 0 #3a2410, 0 4px 4px rgba(0,0,0,0.5)',
     titleText: '-1px -1px 0 #3a2410, 1px -1px 0 #3a2410, -1px 1px 0 #3a2410, 1px 1px 0 #3a2410, 0 2px 3px rgba(10,16,32,0.8)',
     /** 흰 글씨 + 금 외곽선 (로비 메달 이름 · HARMONY §1) */
     outlineGold: '-1px -1px 0 #7a4f12, 1px -1px 0 #7a4f12, -1px 1px 0 #7a4f12, 1px 1px 0 #7a4f12, 0 2px 2px rgba(0,0,0,0.45)',
