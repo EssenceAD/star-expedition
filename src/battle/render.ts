@@ -88,14 +88,24 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   // 걷기: 대기 2칸을 번갈아 + 살짝 들썩임
   // 걷기 그림이 2칸뿐인 것(몹 등)만 살짝 들썩임 · 영웅은 4칸 걷기 그림 (ANIM_1017)
   if (as === 'walk' && def.frames.length <= 2) y -= CONFIG.combat.walkBob * Math.abs(Math.sin(u.at * def.fps * Math.PI));
+  // 몹이 쓰러짐: 지역 몹 = 피격 칸으로 0.4초 동안 가라앉으며 사라짐 · 장 보스 = 비틀거림 칸으로 흔들리며 사라짐 (ANIM_1017 ③)
   if (u.side === 'mob' && u.dead) {
-    alpha = Math.max(0, 1 - u.deadT * 1.8);
-    y += u.deadT * 24;
+    const MD = CONFIG.combat.mobDie;
+    const sec = u.mob?.boss ? MD.bossSec : MD.sec;
+    alpha = Math.max(0, 1 - u.deadT / sec);
+    y += Math.min(1, u.deadT / sec) * MD.sink;
+    if (u.mob?.boss) x += Math.sin(u.deadT * 50) * MD.shake;
   }
   if (alpha <= 0) return;
   shadow(ctx, x + (u.mob?.boss ? 10 : 0), u.y, u.mob?.boss ? 95 : 26 * (H / 100));
   const k = H / heightOf(art.sheet, ref);
   const fi = frameAt(def, u.at);
+  // 그릴 칸: 장 보스 경고 중이면 준비 칸 + 살짝 떨림 · 지역 몹은 맞는 순간 피격 칸
+  let cell = def.frames[fi];
+  if (u.prep && !u.dead) {
+    cell = `${ref.split(':')[0]}:${u.prep}`;
+    x += Math.sin(now * 45) * CONFIG.combat.mobDie.shake * 0.5;
+  } else if (u.mob && !u.mob.boss && !u.dead && as === 'idle' && u.flash > CONFIG.combat.mobDie.hurtFlash && u.anims.hurt) cell = u.anims.hurt.frames[0];
   const filter = filterOf(u);
   // 잔상: 스킬 중 지난 프레임 2~3장을 색 입혀 뒤에
   if (u.trail > 0 && as !== 'idle') {
@@ -117,7 +127,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   const HF = CONFIG.combat.hitFlash;
   const fl = Math.min(HF.max, u.flash);
   ox.filter = fl > 0.02 ? `${filter === 'none' ? '' : filter} brightness(${1 + HF.bright * fl})`.trim() : filter;
-  drawFrame(ox, art.sheet, def.frames[fi], AX, AY, k, face);
+  drawFrame(ox, art.sheet, cell, AX, AY, k, face);
   ox.filter = 'none';
   ctx.globalAlpha = u.hero && u.dead ? 0.85 : alpha;
   if (u.hero && u.dead && as !== 'down') {

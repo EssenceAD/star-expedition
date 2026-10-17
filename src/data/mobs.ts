@@ -29,6 +29,45 @@ export const MOB_KINDS: Record<MobKind['id'], MobKind> = {
   },
 };
 
+/**
+ * 지역 몹 그림 (docs/ANIM_1017.md ③): public/art/mobs2/<지역>/ 5열×3행 · r0 슬라임 · r1 고블린 · r2 늑대
+ *  c0·c1 대기 · c2 공격 준비 · c3 공격(hit) · c4 피격 (죽을 때도 c4 → 가라앉으며 사라짐) · 모두 왼쪽을 봄 · 색 바꾸기(mobTint) 안 씀
+ */
+export const MOB_ROW: Record<'slime' | 'goblin' | 'wolf', number> = { slime: 0, goblin: 1, wolf: 2 };
+export function regionMob(region: string, row: number): AnimSet {
+  const f = (c: number) => `mobs2/${region}:r${row}c${c}`;
+  return {
+    idle: { frames: [f(0), f(1)], fps: 3, loop: true },
+    attack: { frames: [f(2), f(3), f(2)], fps: 7, loop: false, hit: [1], lunge: -18 },
+    hurt: { frames: [f(4)], fps: 4, loop: false },
+    down: { frames: [f(4)], fps: 1, loop: false },
+  };
+}
+/**
+ * 장 보스 그림: public/art/bosses2/<지역>/ 4×2 · r0c0·c1 대기 · r0c2→r0c3 내려찍기(slam·quake) · r1c0→r1c1 광선(beam·focus) · r1c2 포효(roar) · r1c3 비틀거림(쓰러질 때)
+ *  경고(warn) 동안은 준비 칸(BOSS_PREP)을 붙들고 살짝 떨림 → 언제 때리는지 보임
+ */
+export function regionBoss(region: string): AnimSet {
+  const f = (r: number, c: number) => `bosses2/${region}:r${r}c${c}`;
+  return {
+    idle: { frames: [f(0, 0), f(0, 1)], fps: 2.5, loop: true },
+    // 평타: 예전 골렘과 같은 시간(4칸 · 6fps · hit 2)
+    attack: { frames: [f(0, 2), f(0, 2), f(0, 3), f(0, 3)], fps: 6, loop: false, hit: [2], lunge: -16 },
+    skill1: { frames: [f(0, 3), f(0, 3)], fps: 3, loop: false },
+    skill2: { frames: [f(1, 1), f(1, 1)], fps: 3, loop: false },
+    skill3: { frames: [f(1, 2), f(1, 2)], fps: 3, loop: false },
+    down: { frames: [f(1, 3)], fps: 1, loop: false },
+  };
+}
+/** 패턴 → 경고 동안 보여 줄 준비 칸 · 터질 때 동작 */
+export const BOSS_PREP: Record<'slam' | 'beam' | 'focus' | 'roar' | 'quake', { cell: string; act: 'skill1' | 'skill2' | 'skill3' }> = {
+  slam: { cell: 'r0c2', act: 'skill1' },
+  quake: { cell: 'r0c2', act: 'skill1' },
+  beam: { cell: 'r1c0', act: 'skill2' },
+  focus: { cell: 'r1c0', act: 'skill2' },
+  roar: { cell: 'r1c2', act: 'skill3' },
+};
+
 /** 보스 패턴: 몇 초마다 · 경고 시간 · 배수 · 대상 · 상태이상 · 경고 문구({boss}) */
 export interface BossPattern {
   key: 'slam' | 'beam' | 'focus' | 'roar' | 'quake';

@@ -4,7 +4,7 @@
 import { CONFIG } from '../config';
 import { SER_ASK } from '../data/bonds';
 import { JOBS, ZONES } from '../data/jobs';
-import type { BossPattern } from '../data/mobs';
+import { BOSS_PREP, type BossPattern } from '../data/mobs';
 import type { Eff, SkillDef, StatusKey } from '../data/skills';
 import { durOf, hitTimes, type Act, type AnimSet } from '../sprite/sheet';
 import { elemColor, T } from '../theme/tokens';
@@ -76,6 +76,8 @@ export interface Unit {
   taken: number;
   /** 마지막으로 맞은 뒤 지난 초 (머리 위 체력 바를 잠깐 보임 · MOBILE_REF §3-A-1) */
   hurtT: number;
+  /** 장 보스 경고 동안 붙들고 있을 준비 칸 (예: r0c2 · ANIM_1017 ③) */
+  prep?: string;
   pending: { at: number; fn: () => void }[];
 }
 export interface Num {
@@ -447,7 +449,9 @@ function kill(b: Battle, u: Unit) {
   u.pending = [];
   u.st = {};
   u.shield = 0;
-  if (u.side === 'hero') play(u, 'down');
+  u.prep = undefined;
+  // 영웅 = 쓰러짐 · 지역 몹 = 피격 칸(c4) · 장 보스 = 비틀거림 (그다음 render가 가라앉히며 지움)
+  if (u.side === 'hero' || u.anims.down) play(u, 'down');
   b.stop = Math.max(b.stop, K.hitstop.kill);
   burst(b, u.x, u.y - u.h * 0.5, T.battle.burstKill, u.mob?.boss ? 60 : 16, u.mob?.boss ? 320 : 180);
   if (u.mob?.boss) {
@@ -652,7 +656,8 @@ export function autoPick(b: Battle, u: Unit): number {
 function bossStrike(b: Battle, boss: Unit, P: BossPattern) {
   const hs = alive(b.heroes);
   const targets = P.to === 'back' ? backLine(hs) : P.to === 'front' ? frontLine(hs) : hs;
-  play(boss, 'attack');
+  // 패턴마다 타격 동작 (내려찍기·광선·포효 · 없으면 평타 그림)
+  play(boss, boss.anims[BOSS_PREP[P.key].act] ? BOSS_PREP[P.key].act : 'attack');
   for (const h of targets) {
     damage(b, boss, h, P.mult);
     if (P.st) addSt(h, P.st.s, P.st.dur);
@@ -824,6 +829,7 @@ export function step(b: Battle, dtReal: number) {
       b.pat.warn -= dt;
       if (b.pat.warn <= 0) {
         b.pat.text = '';
+        boss.prep = undefined;
         if (!has(boss, 'stun') && !has(boss, 'silence')) bossStrike(b, boss, P);
         b.pat.i++;
         b.pat.left = pats[b.pat.i % pats.length].every;
@@ -831,6 +837,8 @@ export function step(b: Battle, dtReal: number) {
     } else if ((b.pat.left -= dt) <= 0) {
       b.pat.warn = P.warn;
       b.pat.text = P.text.replace('{boss}', boss.name);
+      // 경고 동안 준비 칸을 붙들고 있음 (지역 보스 그림만 · ANIM_1017 ③)
+      if (boss.anims.idle?.frames[0].startsWith('bosses2/')) boss.prep = BOSS_PREP[P.key].cell;
     }
   }
 

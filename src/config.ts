@@ -63,6 +63,8 @@ export const CONFIG = {
     anim: { idle: 0.17, walk: 0.11, attack: [0.2, 0.06, 0.16, 0.15] as number[], skill: [0.3, 0.12, 0.38, 0.3] as number[], skill1Speed: 0.8, skill3Speed: 0.7 },
     /** 이펙트 그림 (ANIM_1017 ②): 칸 하나 초 · bolt 날아가는 초 · meteor 떨어지는 거리(px) · 크기 = 대상 키 × centerK/bottomK (최소 px) · 보호막 유지 1↔2 바뀌는 초 · 진하기 · 기절 별 크기 · 전체 진하기(alpha) */
     fxArt: { alpha: 0.85, frameSec: 0.08, boltTravel: 0.16, meteorDrop: [90, -170] as number[], centerK: 1.25, bottomK: 1.55, minCenter: 70, minBottom: 100, shieldLoopSec: 0.6, shieldAlpha: 0.7, stunH: 34 },
+    /** 몹 쓰러짐 (ANIM_1017 ③): 지역 몹 사라지는 초 · 장 보스 초 · 가라앉는 px · 흔들림 px (경고 중 떨림은 절반) · 맞은 칸을 보일 번쩍 세기 */
+    mobDie: { sec: 0.4, bossSec: 1.0, sink: 18, shake: 3, hurtFlash: 0.3 },
     /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
     headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4 },
     /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */
