@@ -11,6 +11,7 @@ import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import { kitUrl, loadKit } from './ui/kit';
 import { bustSheet } from './ui/bust';
+import { modal, rewardRow, skillIconUrl } from './ui/core';
 import './ui/screens';
 import './ui/screensB';
 import './ui/screensC';
@@ -153,5 +154,7 @@ const castNow = (h: number, i: number) => {
   b.heroes[h].scd[i] = 0;
   return requestSkill(b, b.heroes[h], i);
 };
+/** 팝업 1종 확인 (tools/capture_1018.mjs popup · 정답 화면 popup.jpg와 같은 내용) */
+const popupDemo = () => modal('보상 획득', rewardRow((['common', 'rare', 'epic', 'legend'] as const).map((r, i) => [skillIconUrl('woongs', i % 3), r, '', ''])), [['닫기', null], ['받기', null, true]]);
 const gachaDemo = (grades: number[]) => gachaShow(grades.map((g, i) => makeGear((['weapon', 'armor', 'acc'] as const)[i % 3], g, 10, newSave())), null, () => {});
-Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame, __bustSheet: bustSheet });
+Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame, __bustSheet: bustSheet, __popupDemo: popupDemo });

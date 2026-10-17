@@ -239,6 +239,8 @@ export const T = {
     canvas: { num: 20, numBig: 26, numCrit: 34, critLabel: 13, cutName: 38, cutHero: 15, stun: 13, tag: 10 },
   },
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
+  /** UI 키트 판 안쪽 여백·간격 (target_screens.py popup(): 판 안쪽 inset + 양피지 · 버튼 간격 20) → var(--sk-<이름>) */
+  kitSpace: { pop: '60px 34px 22px', parch: '13px 14px', btnGap: '20px', rowGap: '8px 24px', panel: '26px 28px 22px' } as Record<string, string>,
   radius: { sm: '3px', md: '8px', pill: '999px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
   border: { thin: '1px', base: '2px', thick: '3px', stroke: '3px' },
   /** 유리 판 뒤 흐림 */
@@ -498,6 +500,7 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
   bossMat: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.5M14.5 10h.5M9 15c2 1 4 1 6 0'],
   rotate: ['M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5'],
   sweep: ['M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5'],
+  stats: ['M3 21h18M6 21V11M11 21V5M16 21v-7M21 21V8'],
 };
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
 /** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
@@ -509,6 +512,13 @@ export const ICON_UI: Record<string, string> = {
   friend: 'menu/friend', shop: 'menu/shop', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
 };
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
+/** 선 아이콘만 (키트 medal 위에 얹는 금색 기호 · 색 그림 아이콘을 쓰지 않음 · UI_KIT_1018 §1 medal) */
+export function svgIcon(key: string, cls = 'ic'): string {
+  const sv = ICON_SVG[key] ?? ICON_SVG.next;
+  return `<svg class="${cls} svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${sv[0]}" fill="${sv[1] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+/** 아이콘 그림 주소 (재화·메뉴 그림이 있으면 · 키트 받침 안에 넣을 때) — 없으면 null */
+export const iconArt = (key: string): string | null => (ICON_IMG[key] ? `${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png` : ICON_UI[key] ? `${import.meta.env.BASE_URL}art/ui/${ICON_UI[key]}.png` : null);
 export function icon(key: string, cls = 'ic'): string {
   if (ICON_UI[key]) return `<img class="${cls} img ui" src="${import.meta.env.BASE_URL}art/ui/${ICON_UI[key]}.png" alt="">`;
   if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
@@ -548,6 +558,7 @@ export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.font.kit)) set(`--fk-${k.slice(1)}`, v);
   for (const [k, v] of Object.entries(T.kit2)) set(`--k-${k}`, v);
   for (const [k, v] of Object.entries(T.space)) set(`--s-${k}`, v);
+  for (const [k, v] of Object.entries(T.kitSpace)) set(`--sk-${k}`, v);
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
   for (const [k, v] of Object.entries(T.fx)) set(`--fx-${k}`, v);

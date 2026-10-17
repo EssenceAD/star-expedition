@@ -579,8 +579,8 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
 }
 
 /** 전투 없이 배경만 (타이틀·로비 뒤) */
-export function renderBg(ctx: CanvasRenderingContext2D, art: Art, scroll: number, W: number, region = 0) {
-  background(ctx, art, scroll, W, region);
+export function renderBg(ctx: CanvasRenderingContext2D, art: Art, scroll: number, W: number, region = 0, key?: string) {
+  background(ctx, art, scroll, W, region, key);
 }
 export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: number) {
   if (b.raid) return renderRaid(ctx, art, b, now);

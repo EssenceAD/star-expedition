@@ -74,6 +74,29 @@ export function bustUrl(id: string, h = 84, maxW = 66): Promise<string> {
   }
   return p;
 }
+/** 전신 그림을 투명 테두리 잘라(trim) 높이 h로 (결과 화면 · 영웅 카드 · target_screens.py fullbody()) */
+export function fullUrl(id: string, h = 190): Promise<string> {
+  const src = fullbodyUrl(id);
+  const key = `full|${src}|${h}`;
+  let p = cache.get(key);
+  if (!p) {
+    p = img(src).then((im) => {
+      const [x0, y0, x1, y1] = bbox(im);
+      const outH = Math.round(h * 2);
+      const s = outH / (y1 - y0);
+      const outW = Math.max(1, Math.round((x1 - x0) * s));
+      const c = document.createElement('canvas');
+      c.width = outW;
+      c.height = outH;
+      const x = c.getContext('2d')!;
+      x.imageSmoothingQuality = 'high';
+      x.drawImage(im, x0, y0, x1 - x0, y1 - y0, 0, 0, outW, outH);
+      return c.toDataURL('image/png');
+    });
+    cache.set(key, p);
+  }
+  return p;
+}
 /** 36명 상반신 확인 시트 (tools/capture_1018.mjs → docs/captures/impl_1018/busts.jpg) */
 export async function bustSheet(): Promise<string> {
   const cols = 9;

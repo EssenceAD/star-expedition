@@ -1,17 +1,17 @@
 {
  "total": {
-  "border": 99,
-  "radius": 66,
-  "gradient": 55,
-  "boxShadow": 41,
+  "border": 68,
+  "radius": 52,
+  "gradient": 39,
+  "boxShadow": 31,
   "outline": 1
  },
  "files": {
   "style.css": {
-   "border": 98,
-   "radius": 66,
-   "gradient": 55,
-   "boxShadow": 41,
+   "border": 67,
+   "radius": 52,
+   "gradient": 39,
+   "boxShadow": 31,
    "outline": 1
   },
   "theme/tokens.ts": {

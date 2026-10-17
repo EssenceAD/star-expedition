@@ -11,6 +11,7 @@ import { cur, persist, S, type ChatLine } from '../game/state';
 import { fullbodyPath } from '../game/costume';
 import { icon, iconText } from '../theme/tokens';
 import { setBackdrop } from './view';
+import { k9, kitSocket } from './kit';
 
 export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as E;
 export const $$ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => [...root.querySelectorAll(s)] as E[];
@@ -190,13 +191,20 @@ export function toast(msg: string) {
   $('#stage').append(t);
   setTimeout(() => t.remove(), CONFIG.ui.toastSec * 1000);
 }
-/** 창: 버튼 [글, 할 일, 강조] · 할 일이 false 를 돌려주면 안 닫힘 */
-export function modal(title: string, html: string, buttons: [string, (() => void | boolean) | null, boolean?][]): HTMLElement {
+/** 팝업 1종 (UI_KIT_1018 §8 · target_1018/popup.jpg): popup 9-slice(corner 40) + 위 가운데 title_ribbon 200×34(위로 12px 걸침, Hahmlet)
+ *  + 안쪽 panel_parch(양피지 · 진갈색 글씨) + 아래 btn_navy(취소·닫기) / btn_gold(확인·받기) 120×38
+ *  버튼 [글, 할 일, 강조(=금)] · 할 일이 false 를 돌려주면 안 닫힘 · o.w = 판 너비(기본 400) */
+export function modal(title: string, html: string, buttons: [string, (() => void | boolean) | null, boolean?][], o: { w?: number } = {}): HTMLElement {
   const m = document.createElement('div');
-  m.className = 'modal';
-  m.innerHTML = `<div class="panel"><h3>${title}</h3><div class="grow scroll">${html}</div><div class="row" style="justify-content:flex-end">${buttons.map(([t, , hi], i) => `<button class="btn${hi ? ' hi' : ''}" data-i="${i}">${t}</button>`).join('')}</div></div>`;
+  m.className = 'modal kpop';
+  const t = title.replace(/<[^>]*>/g, '').trim();
+  const w = o.w ?? 400;
+  m.innerHTML = `<div class="pf" style="width:${w}px;${k9('popup', 40)}">
+    <div class="pr" style="${k9('title_ribbon', 16)}"><span class="th">${esc(t)}</span></div>
+    <div class="pb" style="${k9('panel_parch', 24)}"><div class="pin">${html}</div></div>
+    <div class="pbt">${buttons.map(([label, , hi], i) => `<button class="kbtn ${hi ? 'gold' : 'navy'}" data-i="${i}" style="${k9(hi ? 'btn_gold' : 'btn_navy', 17)}"><span>${esc(label.replace(/<[^>]*>/g, '').trim())}</span></button>`).join('')}</div></div>`;
   $('#stage').append(m);
-  $$('button[data-i]', m).forEach((b) => {
+  $$<HTMLButtonElement>('button[data-i]', m).forEach((b) => {
     b.onclick = () => {
       const f = buttons[+b.dataset.i!][1];
       if (f?.() === false) return;
@@ -205,6 +213,9 @@ export function modal(title: string, html: string, buttons: [string, (() => void
   });
   return m;
 }
+/** 보상 받침 줄 (팝업 안 · 등급 받침 56 + 개수) — [그림 주소, 등급, 개수 글, 이름] */
+export const rewardRow = (items: [string, 'common' | 'rare' | 'epic' | 'legend', string, string][], size = 56) =>
+  `<div class="krow">${items.map(([url, r, n, name]) => `<div class="krw" title="${esc(name)}">${kitSocket(url, size, r, '', n ? `<b class="tx">${esc(n)}</b>` : '')}${name ? `<span>${esc(name)}</span>` : ''}</div>`).join('')}</div>`;
 /** 꾸밈 글씨 (T3): 뒤 겹 = 굵은 남색 선 + 그림자 · 앞 겹 = 금 그라데이션 — 큰 제목·승리·합류·강화 숫자 */
 /** 글씨 자동 축소 (FONT_FINAL2 §2): .fit 글씨가 칸(1줄 또는 줄 수 고정)을 넘치면 data-min까지 조금씩 줄임 · 줄 수는 늘리지 않음 */
 export function fitText(root: ParentNode = document) {

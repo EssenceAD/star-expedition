@@ -135,7 +135,16 @@ for (const name of want) {
         await p.waitForTimeout(400);
         return shot(p, name);
       }
-      await p.evaluate(() => { const b = window.__b(); for (const h of b.heroes) (h.atk *= 30); });
+      await p.evaluate(() => {
+        const b = window.__b();
+        for (const h of b.heroes) h.atk *= 30;
+        // 정답 화면처럼: 1-1 깬 상태(다음 전투 열림) · 3명은 이번 판에 레벨 업
+        const S = window.__S();
+        const H = window.__cfg.hero.exp;
+        S.stages['1-1-0'] = { stars: 3, clears: 1, bestTime: 60, bestDps: 1, mvp: 'woongs' };
+        S.acc.exp = Math.round(window.__cfg.account.exp.base * Math.pow(S.acc.lv, window.__cfg.account.exp.pow) * 0.8);
+        ['woongs', 'ikamolly', 'walwal'].forEach((id) => (S.heroes[id].exp = Math.max(0, Math.round(H.base * Math.pow(S.heroes[id].lv, H.pow)) - 5)));
+      });
       for (let i = 0; i < 900 && (await p.evaluate(() => window.__b().phase)) !== 'win'; i++) await tick(p, 0.5);
       if (name === 'victory') {
         // 승리 → resultDelayWin 뒤 VICTORY 글씨 (실시간 타이머) → 글씨가 뜰 때 찍음
