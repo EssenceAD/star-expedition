@@ -283,7 +283,7 @@ register('shop', {
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone));
         rollTrack(S);
-        body = `<div class="xs dim">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+        body = `<div class="xs dim capline">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
       } else if (cat === 'summon') {
         const sm = CONFIG.gear.summon;
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>

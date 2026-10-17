@@ -389,6 +389,8 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
     ctx.stroke();
   }
   const im = art.cutin[c.u.hero!.def.id];
+  // 컷인 그림은 고화질 일러스트 → 부드럽게 줄임 (도트 전투와 다름)
+  ctx.imageSmoothingEnabled = true;
   if (im) {
     const ih = bh * 1.9;
     const iw = (im.width / im.height) * ih;
@@ -548,9 +550,10 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
       bx.globalCompositeOperation = 'source-over';
     }
   }
-  if (u.flash > 0.05) {
+  // 맞을 때 번쩍임: 보스는 8명이 계속 때려서 늘 켜져 있음 → 그림이 하얗게 바래 보였음 (ART_DONE_1017 남은 것 1) · 큰 타격(flash 큼)일 때만 살짝
+  if (u.flash > RA.flashMin) {
     bx.globalCompositeOperation = 'source-atop';
-    bx.fillStyle = `${B.hitFlash}${0.6 * u.flash})`;
+    bx.fillStyle = `${B.hitFlash}${RA.flashMax * u.flash})`;
     bx.fillRect(0, 0, bossCv.width, bossCv.height);
     bx.globalCompositeOperation = 'source-over';
   }

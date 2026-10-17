@@ -273,7 +273,10 @@ export const CONFIG = {
    */
   raidArena: {
     /** 보스: 화면 키(논리 px) · 가운데 x (너비 비율) · 발 y */
-    bossH: 400, bossX: 0.75, bossY: 330,
+    bossH: 335, bossX: 0.75, bossY: 342,
+    /** 맞을 때 하얀 번쩍임: 이 값보다 클 때만 · 최대 진하기 */
+    flashMin: 0.5,
+    flashMax: 0.22,
     /** 두 줄 발 y · 파티 A(내 파티) x · 파티 B(AI·뒤쪽) x — 줄은 처음에 A 위 / B 아래 */
     lanes: [218, 280] as number[],
     aX: [372, 330, 288, 246] as number[],
