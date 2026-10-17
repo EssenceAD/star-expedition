@@ -336,6 +336,11 @@
 - 「승리!」: Hahmlet 900 · 금 그라데이션 · 진갈색 외곽선 2px(`--sh-winText`) · 결과 띠 14px · 체크는 금 아이콘
 - 고친 버그: 금박 글씨(fxt) 안쪽에 본문 그림자가 비쳐 어둡게 보이던 것 (`.fxt > span { text-shadow: none }`)
 
+## 2-N. 영웅 카드 한 줄 소개 (v0.9.9 · docs/TAGLINE_1017.md)
+- 카드 설명 줄 = `taglineOf(id, h.title)` (`src/data/taglines.ts` · 기획 쪽 작성 · 문구 수정은 이 파일만) — 쓰는 곳은 `heroShopCard`(상점 영웅 · 영웅 목록 「미보유」 탭) 하나
+- 영웅 목록·편성의 보유 영웅 카드(`card()`)는 원래 설명 줄 없이 이름·직업만 → 바꿀 것 없음 · 긴 소개(concept)는 영웅 정보 이름 판·영입 화면 그대로
+- 테스트: 36명 모두 소개가 있고 18자 이하 (tests/data.test.ts)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
