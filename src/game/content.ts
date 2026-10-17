@@ -8,7 +8,6 @@ import { artOf, HEROES, heroOf } from '../data/heroes';
 import { JOBS } from '../data/jobs';
 import { CHAPTER_MOBS, PATTERNS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
-import { T } from '../theme/tokens';
 import { addAccExp } from './account';
 import { dropGear, makeGear, makeRune, bagFull } from './gear';
 import { baseStats, heroPower, owned } from './heroes';
@@ -78,7 +77,7 @@ export function specFor(id: string, lv: number, star = 1): HeroSpec {
   st.hp = Math.round(st.hp * m);
   st.atk = Math.round(st.atk * m);
   st.def = Math.round(st.def * m);
-  return { def, art: artOf(def, T.battle.tint.length), zone: JOBS[def.job].zone, lv, st };
+  return { def, art: artOf(def), zone: JOBS[def.job].zone, lv, st };
 }
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const hashStr = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 17) || 1;

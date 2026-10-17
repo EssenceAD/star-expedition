@@ -276,6 +276,14 @@
 - 가방 빈 칸을 27칸까지 보여 줌
 - 내가 정한 것: 메뉴 화면 배경은 따로 그림이 없어 로비 마을을 흐리게 · 걸어 다니는 영웅 = 파티 먼저 5명 · 편성 화면은 가진 영웅이 적으면 빈 곳이 남음(데이터대로)
 
+## 2-G. 전투 도트 36명 · 전신 정사각 (v0.9.2 · docs/SPRITES_1017.md · docs/SIZE_1017.md)
+- 전투 도트: 36명 모두 `public/art/px/<id>` 8칸 시트 (`data/heroes.ts` `px()`) · 직업 자리표시자 시트·색 바꾸기(`T.battle.tint/heroTint`)·`JOBS.sheet`·영웅별 키(HEIGHT) 없앰
+  - 대기 r0c0↔r0c1 · 걷기 = 대기 2칸 + 들썩임(`CONFIG.combat.walkBob`) · 평타 r0c2→r0c3(맞힘 r0c3) · 스킬 r0c2→r1c3 · 피격 r1c0 · 쓰러짐 r1c1(유지) · 승리 r1c2
+  - 배율 하나: `CONFIG.combat.pxScale` = 26/48 (시트 머리 48px → 화면 26px) · 화면 키 = 대기 첫 칸 키 × 배율 (`setPxHeights`가 시트 불러온 뒤 채움) · 로비 걷는 영웅은 그 × `CONFIG.ui.lobbyLife.scale`
+  - 동작 캡처: `node tools/shot-acts.mjs out/acts woongs,gonu,kleine,grom` (대기·공격·피격·승리·패배 · `?rec=1` 고정 걸음)
+- 전신 그림 칸 정사각 (`.fb` · `.recruit .rc-fb` · `#loading .ld-fb` · `.join .jfb`) · 영웅 정보 전신은 좌우로 넘쳐 옆 패널 뒤로 · 코스튬 카드는 얼굴~상반신
+- 남은 확인: 배율 26/48이면 영웅 키 120~180px라 4명이 겹쳐 보이고 레이드 8명은 뒷줄 머리가 DPS 창에 가려짐 → 형철 확인 뒤 `pxScale`만 바꾸면 됨
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

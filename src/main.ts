@@ -2,7 +2,7 @@
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
-import { CUTIN_ART, HD_PORTRAIT, HEROES, sheetDirs } from './data/heroes';
+import { CUTIN_ART, HD_PORTRAIT, HEROES, setPxHeights, sheetDirs } from './data/heroes';
 import { MOB_KINDS } from './data/mobs';
 import { loadSave, persist, S } from './game/state';
 import { loadSheets } from './sprite/sheet';
@@ -44,6 +44,7 @@ const img = (src: string) =>
 const dirs = new Set(sheetDirs());
 for (const m of Object.values(MOB_KINDS)) for (const d of Object.values(m.anims)) for (const f of d!.frames) dirs.add(f.split(':')[0]);
 const sheet = await loadSheets([...dirs]);
+setPxHeights(sheet);
 const bg = await img(`${B}art/bg.jpg`).catch(() => null);
 const cutin: Art['cutin'] = {};
 // 컷인 일러스트가 있으면 그것, 없으면 고화질 초상화 (처음 쓸 때 받음)

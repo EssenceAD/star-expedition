@@ -8,8 +8,6 @@ export interface JobDef {
   id: JobId;
   name: string;
   zone: Zone;
-  /** 자리표시자 도트 시트 = 이 개척자의 동작 (PROGRESS §6 A) */
-  sheet: 'woongs' | 'ikamolly' | 'walwal' | 'warmnight' | 'gonu';
   /** 「체크인」 초상화 mc_<이것>_<m|f>.png */
   mc: 'knight' | 'warrior' | 'rogue' | 'hunter' | 'mage' | 'priest';
   /** 전투 효과음 (combatSynth) */
@@ -18,14 +16,14 @@ export interface JobDef {
   weapon: string;
 }
 export const JOBS: Record<JobId, JobDef> = {
-  knight: { id: 'knight', zone: 'front', name: '기사', sheet: 'woongs', mc: 'knight', sfx: 'skill_knight', weapon: '검과 방패' },
-  warrior: { id: 'warrior', zone: 'front', name: '전사', sheet: 'woongs', mc: 'warrior', sfx: 'skill_warrior', weapon: '대검' },
-  fighter: { id: 'fighter', zone: 'front', name: '격투가', sheet: 'woongs', mc: 'warrior', sfx: 'skill_warrior', weapon: '건틀릿' },
-  assassin: { id: 'assassin', zone: 'mid', name: '암살자', sheet: 'gonu', mc: 'rogue', sfx: 'skill_rogue', weapon: '단검' },
-  archer: { id: 'archer', zone: 'back', name: '궁수', sheet: 'warmnight', mc: 'hunter', sfx: 'skill_hunter', weapon: '활' },
-  engineer: { id: 'engineer', zone: 'mid', name: '기계공학자', sheet: 'warmnight', mc: 'hunter', sfx: 'skill_hunter', weapon: '총' },
-  mage: { id: 'mage', zone: 'back', name: '마법사', sheet: 'ikamolly', mc: 'mage', sfx: 'skill_mage', weapon: '지팡이' },
-  priest: { id: 'priest', zone: 'back', name: '사제', sheet: 'walwal', mc: 'priest', sfx: 'skill_priest', weapon: '성물' },
-  druid: { id: 'druid', zone: 'mid', name: '드루이드', sheet: 'walwal', mc: 'priest', sfx: 'skill_priest', weapon: '토템' },
+  knight: { id: 'knight', zone: 'front', name: '기사', mc: 'knight', sfx: 'skill_knight', weapon: '검과 방패' },
+  warrior: { id: 'warrior', zone: 'front', name: '전사', mc: 'warrior', sfx: 'skill_warrior', weapon: '대검' },
+  fighter: { id: 'fighter', zone: 'front', name: '격투가', mc: 'warrior', sfx: 'skill_warrior', weapon: '건틀릿' },
+  assassin: { id: 'assassin', zone: 'mid', name: '암살자', mc: 'rogue', sfx: 'skill_rogue', weapon: '단검' },
+  archer: { id: 'archer', zone: 'back', name: '궁수', mc: 'hunter', sfx: 'skill_hunter', weapon: '활' },
+  engineer: { id: 'engineer', zone: 'mid', name: '기계공학자', mc: 'hunter', sfx: 'skill_hunter', weapon: '총' },
+  mage: { id: 'mage', zone: 'back', name: '마법사', mc: 'mage', sfx: 'skill_mage', weapon: '지팡이' },
+  priest: { id: 'priest', zone: 'back', name: '사제', mc: 'priest', sfx: 'skill_priest', weapon: '성물' },
+  druid: { id: 'druid', zone: 'mid', name: '드루이드', mc: 'priest', sfx: 'skill_priest', weapon: '토템' },
 };
 export const JOB_IDS = Object.keys(JOBS) as JobId[];

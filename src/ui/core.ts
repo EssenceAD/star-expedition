@@ -9,7 +9,7 @@ import { aiLine, mailUnread, pushChat } from '../game/social';
 import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
 import { cur, persist, S, type ChatLine } from '../game/state';
 import { fullbodyPath } from '../game/costume';
-import { icon, iconText, T } from '../theme/tokens';
+import { icon, iconText } from '../theme/tokens';
 
 export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as E;
 export const $$ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => [...root.querySelectorAll(s)] as E[];
@@ -18,7 +18,7 @@ export const portraitUrl = (key: string) => `${BASE}art/portraits/${key}.png`;
 /** 전신 일러스트 (영입·영웅 정보·로딩 · 입은 코스튬이 있으면 코스튬) */
 export const fullbodyUrl = (id: string, set?: string | null) => `${BASE}art/${fullbodyPath(id, S, set)}`;
 /** 영웅 초상화: 고화질 일러스트가 있으면 그것 (메뉴 화면 전부) · 없으면 도트 초상화 */
-export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id), T.battle.tint.length).portrait));
+export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 

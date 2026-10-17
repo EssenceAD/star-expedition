@@ -13,7 +13,7 @@ cv.height = H;
 const id = q.get('hero') ?? 'woongs';
 const def = heroOf(id) ?? null;
 const mob = def ? null : MOB_KINDS[id as keyof typeof MOB_KINDS];
-const anims = def ? artOf(def, 1).anims : mob!.anims;
+const anims = def ? artOf(def).anims : mob!.anims;
 const dirs = [...new Set(Object.values(anims).flatMap((a) => a!.frames.map((f) => f.split(':')[0])))];
 const sheet = await loadSheets(dirs);
 let act = (q.get('act') ?? 'idle') as Act;

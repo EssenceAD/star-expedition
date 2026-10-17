@@ -38,10 +38,11 @@ describe('데이터', () => {
       expect(descPassive(h.passive).length).toBeGreaterThan(4);
     }
   });
-  it('그림: 개척자 5명은 자기 시트, 나머지는 자리표시자 + 초상화 파일이 있다', () => {
+  it('그림: 36명 모두 자기 전투 도트 시트(px 8칸) + 초상화 파일이 있다', () => {
     for (const h of HEROES) {
-      const a = artOf(h, T.battle.tint.length);
-      expect(a.placeholder, h.id).toBe(!['woongs', 'ikamolly', 'walwal', 'warmnight', 'gonu'].includes(h.id));
+      const a = artOf(h);
+      for (const d of Object.values(a.anims)) for (const f of d!.frames) expect(existsSync(`public/art/${f.replace(':', '/')}.png`), f).toBe(true);
+      expect(existsSync(`public/art/px/${h.id}/_parts.json`), h.id).toBe(true);
       expect(existsSync(`public/art/portraits/${a.portrait}.png`), `${h.id} → ${a.portrait}`).toBe(true);
     }
   });
