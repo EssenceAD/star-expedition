@@ -43,6 +43,8 @@ export const T = {
     bossBg: '#f3e3b8',
     ink: '#1d2a58',
     black: '#000000',
+    /** 승리 별 뒤 금빛 햇살 (MOBILE_REF §3-A-5) */
+    ray: 'rgba(255,214,120,0.38)',
     shade: 'rgba(60,45,20,0.25)',
     veil: 'rgba(40,32,18,0.5)',
     veil2: 'rgba(255,250,240,0.96)',
@@ -171,6 +173,8 @@ export const T = {
     bossBg: '#2a1430',
     ink: '#0f0c22',
     black: '#000000',
+    /** 승리 별 뒤 금빛 햇살 (MOBILE_REF §3-A-5) */
+    ray: 'rgba(255,214,120,0.38)',
     shade: 'rgba(8,6,20,0.62)',
     veil: 'rgba(10,8,24,0.78)',
     veil2: 'rgba(10,8,24,0.92)',
@@ -322,6 +326,7 @@ export const T = {
     pebble: 'rgba(110,84,56,0.35)',
     grass: ['#4f9e3e', '#63b34c', '#ffd1e6'],
     hpMob: '#ff5a5a',
+    hpAlly: '#5fe07a',
     hpBar: 'rgba(20,16,30,0.8)',
     slowBar: '#66c8ff',
     shield: 'rgba(170,225,255,0.7)',
@@ -347,7 +352,10 @@ export const T = {
     numHeal: '#7dff9b',
     numMob: '#ffb0b0',
     /** 치명타 숫자: 흰색 → 금 (BATTLE_HUD §4) · 「치명타」 리본 */
-    numCrit: ['#ffffff', '#ffe9a0', '#f4b632'],
+    /** 치명타 = 주황 (MOBILE_REF §3-A-2) · 보호막 막은 숫자 = 하늘색 */
+    numCrit: ['#fff4d6', '#ffb14a', '#ff7417'],
+    numShield: '#9fe2ff',
+    numShieldStroke: '#0b2a48',
     critRibbon: '#a82418',
     /** 레이드 약점 표적 링 · 이름표 글씨 테두리 */
     weakRing: '#ff5a4a',

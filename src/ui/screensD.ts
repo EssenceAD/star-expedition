@@ -287,7 +287,7 @@ register('settings', {
           <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
           <div class="panel col"><b>소리 · 화면</b>
-            <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label></div></div>
+            <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-hpall ${getPref('hpAlways', false) ? 'checked' : ''}> 머리 위 체력 바 늘 보기</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label></div></div>
           <div class="row"><button class="btn" data-title-screen>타이틀로</button><button class="btn mini" data-reset>처음부터</button></div>
         </div></div>`;
       const q = <E extends HTMLElement = HTMLElement>(s: string) => root.querySelector<E>(s);
@@ -336,6 +336,7 @@ register('settings', {
       q<HTMLInputElement>('[data-bgm]')?.addEventListener('change', (e) => ((prefs.bgmOn = (e.target as HTMLInputElement).checked), savePrefs(), applyPrefs()));
       q<HTMLInputElement>('[data-sfx]')?.addEventListener('change', (e) => ((prefs.sfxOn = (e.target as HTMLInputElement).checked), savePrefs(), applyPrefs()));
       q<HTMLInputElement>('[data-cut]')?.addEventListener('change', (e) => setPref('cutOff', !(e.target as HTMLInputElement).checked));
+      q<HTMLInputElement>('[data-hpall]')?.addEventListener('change', (e) => setPref('hpAlways', (e.target as HTMLInputElement).checked));
       q<HTMLInputElement>('[data-full]')?.addEventListener('change', (e) => {
         const on = (e.target as HTMLInputElement).checked;
         setPref('fullscreen', on);

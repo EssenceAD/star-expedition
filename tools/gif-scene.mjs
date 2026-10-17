@@ -1,0 +1,85 @@
+// 연출 GIF (docs/MOBILE_REF_1017.md 확인용): CDP 화면 스트림(실제 시각) → ffmpeg 팔레트 GIF (15fps)
+//  node tools/gif-scene.mjs <장면> [out.gif]  (먼저 npm run build · W=844 H=390 · ffmpeg 필요)
+//  장면: win = 마지막 일격(흰 번쩍·느리게) → 승리 별 3개 「쾅」 + 금빛 햇살 · arena = 결투장 VS 입장 → 3·2·1 → 전투 시작
+//  ?rec=1로 앞부분을 빨리 감고, 녹화 중에는 페이지 안에서 매 프레임 __tick(1/60)
+import { chromium } from 'playwright-core';
+import { createServer } from 'node:http';
+import { readFileSync, writeFileSync, existsSync, statSync, mkdtempSync, rmSync, mkdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { extname, join, dirname } from 'node:path';
+const [scene = 'win', out = `out/scene_${scene}.gif`] = process.argv.slice(2);
+mkdirSync(dirname(out), { recursive: true });
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json' };
+const srv = createServer((q, r) => {
+  let p = join('dist', decodeURIComponent(q.url.split('?')[0]));
+  if (p.endsWith('/')) p += 'index.html';
+  if (!existsSync(p)) return r.writeHead(404).end();
+  r.writeHead(200, { 'content-type': TYPES[extname(p)] ?? 'application/octet-stream' }).end(readFileSync(p));
+}).listen(0);
+const exe = process.env.CHROME ?? (existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome') ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' : undefined);
+const br = await chromium.launch(exe ? { executablePath: exe } : { channel: 'chrome' });
+const size = { width: Number(process.env.W ?? 844), height: Number(process.env.H ?? 390) };
+const p = await br.newPage({ viewport: size });
+p.on('pageerror', (e) => console.log('pageerror', String(e)));
+await p.goto(`http://localhost:${srv.address().port}/?rec=1`);
+await p.waitForFunction(() => window.__ready);
+const party = (ids, lv) =>
+  p.evaluate(([ids, lv]) => {
+    const S = window.__S();
+    for (const id of ids) S.heroes[id] = { awaken: 0, star: 1, skill: [1, 1, 1], trans: [], ex: 0, gear: { weapon: null, armor: null, acc1: null, acc2: null }, ...(S.heroes[id] ?? {}), lv, exp: 0 };
+    S.party = ids;
+    S.sta.n = 999;
+    S.prologue = true;
+    for (const c of [1, 2, 3]) S.seen[`${c}:intro`] = S.seen[`${c}:preBoss`] = true;
+  }, [ids, lv]);
+/** 녹화 중 게임 진행: 페이지 안 rAF마다 1/60초 */
+const play = () => p.evaluate(() => { const f = () => (window.__tick(1 / 60), requestAnimationFrame(f)); requestAnimationFrame(f); });
+const fast = (cond, sec) =>
+  p.evaluate(([cond, sec]) => {
+    const f = new Function('b', `return ${cond}`);
+    for (let t = 0; t < sec; t += 1 / 30) {
+      window.__tick(1 / 30);
+      if (f(window.__b())) return true;
+    }
+    return false;
+  }, [cond, sec]);
+
+let secs = 6;
+if (scene === 'win') {
+  await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 14);
+  await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 3, d: 0 } }); window.__b().auto = true; });
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  // 마지막 적 하나 · 체력 조금 남을 때까지 빨리 감기
+  console.log('ff', await fast("b.phase === 'fight' && b.wave === b.setup.waves.length - 1 && b.mobs.filter((m) => !m.dead).length === 1", 240));
+  secs = 7;
+} else if (scene === 'arena') {
+  await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 30);
+  await p.evaluate(() => window.__go('portal', { tab: 'arena' }));
+  await p.waitForTimeout(500);
+  secs = 6.5;
+}
+const vid = mkdtempSync(join(tmpdir(), 'scene-'));
+const cdp = await p.context().newCDPSession(p);
+const frames = [];
+cdp.on('Page.screencastFrame', ({ data, metadata, sessionId }) => {
+  frames.push([data, metadata.timestamp]);
+  void cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
+});
+await play();
+await p.waitForTimeout(150);
+await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: size.width, maxHeight: size.height });
+if (scene === 'arena') await p.evaluate(() => document.querySelector('[data-arena], [data-fight], .scr [data-go-arena]')?.click());
+await p.waitForTimeout(secs * 1000);
+await cdp.send('Page.stopScreencast');
+let list = '';
+frames.forEach(([data, ts], i) => {
+  writeFileSync(join(vid, `${i}.jpg`), Buffer.from(data, 'base64'));
+  list += `file '${i}.jpg'\nduration ${Math.max(0.01, (frames[i + 1]?.[1] ?? ts + 1) - ts).toFixed(3)}\n`;
+});
+writeFileSync(join(vid, 'list.txt'), list + `file '${frames.length - 1}.jpg'\n`);
+execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(vid, 'list.txt'), '-vf', 'fps=15,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4', out]);
+rmSync(vid, { recursive: true, force: true });
+console.log('saved', out, frames.length, 'frames', (statSync(out).size / 1e6).toFixed(1) + 'MB');
+await br.close();
+srv.close();

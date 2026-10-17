@@ -74,20 +74,22 @@ export interface Unit {
   dealt: number;
   healed: number;
   taken: number;
+  /** 마지막으로 맞은 뒤 지난 초 (머리 위 체력 바를 잠깐 보임 · MOBILE_REF §3-A-1) */
+  hurtT: number;
   pending: { at: number; fn: () => void }[];
 }
 export interface Num {
   x: number;
   y: number;
   v: number;
-  kind: 'hit' | 'crit' | 'heal' | 'hurt' | 'burn';
+  kind: 'hit' | 'crit' | 'heal' | 'hurt' | 'burn' | 'shield';
   t: number;
   big: boolean;
   /** 겹침 판정용 크기 */
   w: number;
   hgt: number;
 }
-export type FxKind = 'slash' | 'burst' | 'ring' | 'bolt' | 'star' | 'heal' | 'shield' | 'slam' | 'beam' | 'pillar';
+export type FxKind = 'slash' | 'burst' | 'ring' | 'bolt' | 'star' | 'heal' | 'shield' | 'slam' | 'beam' | 'pillar' | 'dome';
 export interface Fx {
   kind: FxKind;
   x: number;
@@ -141,6 +143,9 @@ export interface Battle {
   stop: number;
   shake: number;
   flash: number;
+  /** 마지막 일격: 흰 번쩍 남은 초 · 느리게 남은 초 (MOBILE_REF §3-A-7) */
+  white: number;
+  slowT: number;
   auto: boolean;
   speed: number;
   /** 컷인: all = 모든 스킬 · big = 3번 스킬과 손으로 누른 스킬 · off = 없음 */
@@ -161,7 +166,7 @@ const NO_MODS = (): Mods => ({ atk: 0, crit: 0, spd: 0, heal: 0, mana: 0, dmgCut
 function unit(side: Unit['side'], name: string, o: Partial<Unit> & Pick<Unit, 'max' | 'atk' | 'def' | 'rate' | 'x' | 'y' | 'anims' | 'h'>): Unit {
   return {
     uid: uidN++, side, name, hp: o.max, crit: K.critChance, critDmg: K.critMult, mod: NO_MODS(), tx: o.x, zone: 0, ai: false, flip: false, lane: 0, act: 'idle', at: rand() * 2, busy: 0, cd: 0.4 + rand() * 0.8, mana: K.mana.start,
-    scd: [0, 0, 0], autoOn: false, shield: 0, st: {}, burnAcc: 0, flash: 0, knock: 0, dead: false, deadT: 0, trail: 0, dealt: 0, healed: 0, taken: 0, pending: [], ...o,
+    scd: [0, 0, 0], autoOn: false, shield: 0, st: {}, burnAcc: 0, flash: 0, knock: 0, dead: false, deadT: 0, trail: 0, dealt: 0, healed: 0, taken: 0, hurtT: 99, pending: [], ...o,
   };
 }
 
@@ -228,7 +233,7 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
   });
   const b: Battle = {
     setup, w: o.w ?? CONFIG.view.wBase, t: 0, phase: 'walk', why: '', wave: -1, walkLeft: K.walkSec * (1 - Math.max(0, ...setup.bonds.map((x) => x.walkCut ?? 0))), scroll: 0, heroes, mobs: [], nums: [], fx: [], parts: [], cut: null, says: [],
-    stop: 0, shake: 0, flash: 0, auto: false, speed: 1, cutIns: 'big', pat: { i: 0, left: 0, warn: 0, text: '' }, stats: { dealt: 0, taken: 0, healed: 0, skills: 0, time: 0, bossDealt: 0 }, queue: [], sounds: [],
+    stop: 0, shake: 0, flash: 0, white: 0, slowT: 0, auto: false, speed: 1, cutIns: 'big', pat: { i: 0, left: 0, warn: 0, text: '' }, stats: { dealt: 0, taken: 0, healed: 0, skills: 0, time: 0, bossDealt: 0 }, queue: [], sounds: [],
   };
   if (setup.arena) b.walkLeft = 0.5;
   applyMods(b);
@@ -342,11 +347,12 @@ export function placeNum(b: Battle, x0: number, top: number, v: number, kind: Nu
   const N = K.nums;
   // 대상별 가로 흩뿌림 (STAR_PLAN_v2 §1-5): 기준 x를 대상 위 ±scatter 안에서 고른다
   const x = x0 + (rand() * 2 - 1) * N.scatter;
-  const size = kind === 'crit' ? T.font.canvas.numCrit : big ? T.font.canvas.numBig : kind === 'hurt' || kind === 'burn' ? T.font.canvas.num * 0.8 : T.font.canvas.num;
-  const text = shortNum(v) + (kind === 'heal' ? '+' : '');
-  // 글자는 기준선(y) 위로 그려지고 치명타는 그 위에 「치명타」 글자가 더 붙는다 · 튀어나올 때 1.15배까지 커짐
+  // render.drawNums와 같은 크기 (치명타 = 일반 × critMul · 튀어나올 때 1.3배까지)
+  const normal = T.font.canvas.num * N.normalScale;
+  const size = kind === 'crit' ? normal * N.critMul * 1.15 : big ? T.font.canvas.numBig * N.normalScale : kind === 'hurt' || kind === 'burn' || kind === 'shield' ? normal * 0.85 : normal;
+  const text = (kind === 'heal' ? '+' : '') + shortNum(v);
   const w = (text.length * size * 0.62 + 6) * 1.15;
-  const hgt = (size + (kind === 'crit' ? T.font.canvas.critLabel + 2 : 0)) * 1.1;
+  const hgt = size * 1.1;
   const rise = (n: Num) => n.t * N.rise;
   const boxes = (cy: number) => b.nums.filter((n) => n.t < N.life - 0.2 && Math.abs(numMid(n) - rise(n) - (cy - hgt / 2)) * 2 < n.hgt + hgt);
   for (let r = 0; r < N.rows; r++) {
@@ -394,6 +400,7 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
   to.hp = Math.max(0, to.hp - left);
   to.taken += dmg;
   to.flash = 1;
+  to.hurtT = 0;
   const boss = !!to.mob?.boss;
   to.knock = (crit ? K.knock.crit : K.knock.hit) * (to.side === 'mob' ? 1 : -1) * (boss ? K.bossKnock : 1);
   if (o.st) {
@@ -413,7 +420,9 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
     to.mana = Math.min(K.mana.max, to.mana + K.mana.hurt * (1 + to.mod.mana));
     if (to.busy <= 0 || to.act === 'idle') play(to, 'hurt');
   }
-  placeNum(b, to.x, topOf(to), dmg, by.side === 'mob' ? 'hurt' : crit ? 'crit' : 'hit', mult >= 2.5 || crit);
+  // 보호막이 막은 만큼은 하늘색 · 체력에 들어간 만큼은 평소 색 (MOBILE_REF §3-A-2)
+  if (dmg > left) placeNum(b, to.x, topOf(to), dmg - left, 'shield', false);
+  if (left > 0) placeNum(b, to.x, topOf(to), left, by.side === 'mob' ? 'hurt' : crit ? 'crit' : 'hit', mult >= 2.5 || crit);
   b.stop = Math.max(b.stop, crit ? K.hitstop.crit : K.hitstop.hit);
   if (crit) b.shake = Math.max(b.shake, K.shake.crit);
   b.sounds.push(crit ? 'crit' : 'hit');
@@ -433,6 +442,11 @@ function kill(b: Battle, u: Unit) {
   if (u.mob?.boss) {
     b.shake = K.shake.bossKill;
     b.flash = 1;
+  }
+  // 웨이브·보스의 마지막 적: 흰 번쩍 + 잠깐 느리게
+  if (u.side === 'mob' && !b.mobs.some((m) => !m.dead)) {
+    b.white = K.lastHit.flash;
+    b.slowT = K.lastHit.slow;
   }
 }
 function heal(b: Battle, by: Unit, to: Unit, amt: number) {
@@ -545,6 +559,19 @@ function cast(b: Battle, u: Unit, i: number, manual = false) {
   u.trail = durOf(u.anims, s.act);
   const times = hitTimes(u.anims, s.act);
   const at0 = u.at;
+  // 궁극기(3번째)가 범위 공격이면: 첫 타에 적 무리 위로 영웅 속성색 반투명 돔 (컷인 뒤 · MOBILE_REF §3-A-6)
+  if (i === 2 && s.eff.some((e) => e.k === 'dmg' && e.to === 'all'))
+    u.pending.push({
+      at: at0 + times[0],
+      fn: () => {
+        const ms = alive(foesOf(b, u));
+        if (!ms.length) return;
+        const xs = ms.map((m) => m.x);
+        const x = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const y = ms.reduce((a, m) => a + m.y, 0) / ms.length;
+        b.fx.push({ kind: 'dome', x, y, color: elemColor(h.def.elem), t: 0, dur: K.ultDome.sec, r: (Math.max(...xs) - Math.min(...xs)) / 2 + K.ultDome.pad });
+      },
+    });
   /** 스킬 레벨 배수 (피해·회복·보호막) */
   const lvM = 1 + CONFIG.growth.skill.perLv * ((h.st.skillLv?.[i] ?? 1) - 1);
   for (const e of s.eff) {
@@ -633,6 +660,11 @@ export function step(b: Battle, dtReal: number) {
   }
   // 협공 컷인 · 페이즈 전환 중에는 느리게
   if (b.raid && ((b.raid.duo && b.raid.duo.t < 1.1) || b.raid.phaseT > 0)) dt *= CONFIG.combat.cutInSlow;
+  if (b.slowT > 0) {
+    b.slowT -= dtReal;
+    dt *= K.lastHit.rate;
+  }
+  b.white = Math.max(0, b.white - dtReal);
   b.shake = Math.max(0, b.shake - dtReal * 30);
   b.flash = Math.max(0, b.flash - dtReal * 3);
   for (const n of b.nums) n.t += dtReal;
@@ -663,6 +695,7 @@ export function step(b: Battle, dtReal: number) {
   for (const u of [...b.heroes, ...b.mobs]) {
     u.at += dt * (has(u, 'slow') ? K.slowRate : 1);
     u.flash = Math.max(0, u.flash - dt * K.hitFlash.fade);
+    u.hurtT += dtReal;
     u.knock *= Math.pow(0.0005, dt);
     u.trail = Math.max(0, u.trail - dt);
     for (const k of Object.keys(u.st) as StatusKey[]) u.st[k]!.t = Math.max(0, u.st[k]!.t - dt);

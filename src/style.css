@@ -619,7 +619,7 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
 /* §4 가방 빈 칸 = 반투명 남색 + 얇은 금선 */
 .gi.slot { border: var(--b-thin) solid color-mix(in srgb, var(--c-gold) 55%, transparent); background: var(--c-panelDeep); opacity: 1; }
 /* §5 결과: 전투 HUD 숨김 · 엠블럼 왼쪽 크게(위 18% · 높이 50%) · 결과는 오른쪽 */
-#hud:has(#result:not([hidden])) :is(#tl, #tr, #dps, #wave, #bar, #stg, #warn, #pausedTag, #boss) { display: none; }
+#hud:has(#result:not([hidden])) :is(#tl, #tr, #dps, #wave, #clock, #bar, #stg, #warn, #pausedTag, #boss) { display: none; }
 #result:has(.rcol) > .emb { position: absolute; left: 27%; top: 18%; height: 50%; width: auto; aspect-ratio: 1; transform: translateX(-50%); background-size: contain; }
 #result:has(.rcol) > .emb .fxt { top: 20%; font-size: var(--fs-h2); }
 .rcol { position: absolute; left: 52%; right: var(--s-xl); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-md); }
@@ -985,3 +985,27 @@ input, select, textarea { font-family: inherit; }
   .chatlog { min-height: 120px; max-height: 200px; gap: 0; font-size: var(--fs-sm); }
   .chatp { min-width: 480px; }
 }
+/* ───────── 전투 디테일 (docs/MOBILE_REF_1017.md §3-A) ───────── */
+/* 남은 시간: WAVE 판 오른쪽 · 30초 남으면 빨강 */
+#clock { position: absolute; left: calc(50% + var(--s-xxl) * 2 + var(--s-xl)); top: var(--s-lg); height: 24px; padding: 0 var(--s-md); display: flex; align-items: center; border: var(--b-thin) solid var(--c-gold2); border-radius: var(--r-pill); background: var(--c-glass); font-family: var(--f-num); font-weight: var(--fw-num); font-size: var(--fs-md); color: var(--c-gold1); text-shadow: var(--sh-outlineSm); }
+#clock[hidden] { display: none; }
+#clock.low { color: var(--c-bad); border-color: var(--c-bad); animation: clockLow 1s ease-in-out infinite; }
+@keyframes clockLow { 50% { transform: scale(1.08); } }
+/* DPS 판: 오른쪽 끝 손잡이로 접기(왼쪽으로 쏙) · 위에 피해·회복·받은 피해 탭 */
+#dps { display: flex; align-items: flex-start; top: 72px; transition: transform 0.25s ease-out; }
+#dps #dpsL { display: block; }
+#dps:not(.open) { transform: translateX(calc(-1 * var(--dpsW))); }
+#dps { --dpsW: 150px; }
+#dps #bDps { width: 22px; height: 52px; margin-top: var(--s-xl); padding: 0; border: var(--b-base) solid var(--c-gold2); border-left: 0; border-radius: var(--r-tabR); background: var(--c-glass); color: var(--c-gold1); font-size: var(--fs-lg); line-height: 1; text-shadow: var(--sh-outlineSm); }
+#dpsL .dtabs { display: flex; justify-content: center; gap: var(--s-xxs); height: auto; }
+#dpsL .dtabs button { height: 16px; padding: 0 var(--s-xs); border: 0; border-radius: var(--r-pill); background: transparent; font-family: var(--f-menu); font-size: var(--fs-xs); font-weight: var(--fw-black); color: var(--c-ink); opacity: 0.6; cursor: pointer; pointer-events: auto; }
+#dpsL .dtabs button.on { opacity: 1; background: var(--c-pill); color: var(--c-gold1); }
+/* 승리 별 3개: 엠블럼 위로 하나씩 「쾅」 · 뒤에서 금빛 햇살 */
+.emb.starred { overflow: visible; isolation: isolate; }
+.emb .rays { position: absolute; left: 50%; top: 50%; z-index: -1; width: 170%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: repeating-conic-gradient(var(--c-ray) 0 9deg, transparent 9deg 22deg); -webkit-mask: radial-gradient(circle, var(--c-black) 18%, transparent 68%); mask: radial-gradient(circle, var(--c-black) 18%, transparent 68%); animation: raySpin 14s linear infinite, gFade 0.6s ease-out; }
+@keyframes raySpin { to { rotate: 360deg; } }
+.emb .stars3 { position: absolute; left: 50%; top: -24%; z-index: 2; display: flex; align-items: flex-end; gap: var(--s-xs); transform: translateX(-50%); }
+.emb .stars3 img { width: 54px; opacity: 0; filter: grayscale(1) brightness(0.45); animation: starSlam 0.42s cubic-bezier(0.3, 0, 0.5, 1.6) forwards; animation-delay: calc(0.45s + var(--i) * 0.32s); }
+.emb .stars3 img:nth-child(2) { width: 68px; margin-bottom: var(--s-md); }
+.emb .stars3 img.on { filter: drop-shadow(var(--sh-starOn)); }
+@keyframes starSlam { 0% { opacity: 0; transform: translateY(-90px) scale(2.2) rotate(-30deg); } 60% { opacity: 1; transform: translateY(0) scale(0.85) rotate(0deg); } 100% { opacity: 1; transform: scale(1); } }

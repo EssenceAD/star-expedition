@@ -55,7 +55,14 @@ export const CONFIG = {
     bossSlot: [180, 258] as [number, number],
     /** 피해 숫자: 대상 위 가로로 흩뿌리는 폭(±) · 줄 수 · 줄 높이 · 비켜 놓는 최대 거리 · 수명(초) · 올라가는 속도(px/초) · 이보다 위(보스 바)에는 안 놓음 */
     /** 피해 숫자 · 일반 크기 배율 · 외곽선 두께(일반·치명타 px) · 치명타 커졌다 작아지는 시간 · 폭발 그림 크기(글자 폭 배) (docs/BATTLE_HUD_1017.md §4) */
-    nums: { scatter: 34, rows: 6, rowH: 22, spread: 90, life: 1.15, rise: 30, minY: 70, normalScale: 0.85, stroke: 1.5, critStroke: 2, critPop: 0.35, burstW: 1.9 },
+    /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
+    headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4 },
+    /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */
+    ultDome: { sec: 0.6, pad: 70, alpha: 0.28 },
+    /** 마지막 일격: 흰 번쩍(초) · 느리게(초) · 그동안 속도 배율 */
+    lastHit: { flash: 0.15, slow: 0.4, rate: 0.3 },
+    /** 피해 숫자: 치명타 = 일반 × critMul (주황) */
+    nums: { critMul: 1.6, scatter: 34, rows: 6, rowH: 22, spread: 90, life: 1.15, rise: 30, minY: 70, normalScale: 0.85, stroke: 1.5, critStroke: 2, critPop: 0.35, burstW: 1.9 },
   },
   /** 영웅 성장 (1단계 A: 레벨만 · 각성·스킬 레벨·초월은 B) */
   hero: {
@@ -359,6 +366,10 @@ export const CONFIG = {
   power: { atkW: 6, hpW: 0.5, defW: 1.5 },
   /** 채팅·기타 */
   ui: {
+    /** 전투 남은 시간이 이 초 이하면 빨갛게 (MOBILE_REF §3-A-3) */
+    clockLowSec: 30,
+    /** 승리 별 3개: 첫 별까지(초) · 별 사이(초) */
+    winStars: { delay: 0.45, gap: 0.32 },
     /** 어두운 톤 예외 (스타일 D 규칙 · 형철 10/17): 이 콘텐츠 전투만 남색 팔레트 */
     darkModes: ['tower', 'raid', 'world', 'graid'] as string[],
     /** 콘텐츠 전투 배경 (전투 제목 앞부분 = 콘텐츠 이름 → public/art/bgs/<값>.jpg) · 스토리는 bg.jpg */
