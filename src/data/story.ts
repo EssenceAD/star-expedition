@@ -19,10 +19,10 @@ export interface ChapterDef {
 /** 첫 진입 프롤로그 (STAR_PLAN_v2 §1-1: 5장 이내 · 1-1 필드에 파티가 선 채로 · 끝나면 바로 1-1 전투) */
 export const PROLOGUE: Line[] = [
   ['narr', '밤하늘의 별이 하나씩 꺼지고 있다. 옛날 「다섯 별」이 봉인한 「별을 삼킨 것」이 깨어나려 한다.'],
-  ['woongs', '별이 또 하나 꺼졌다꼬? …가만히 있을 수는 없제.'],
+  ['woongs', '별이 또 하나 꺼졌다고? …가만히 있을 수는 없지.'],
   ['ikamolly', '숲 동굴 쪽에서 별 냄새가 나요. 균열이 열렸어요!'],
-  ['gonu', '그럼 무대로 가 볼까? 막내야, 앞에 서라이~'],
-  ['walwal', '다치믄 내한테 바로 온나. 원정대, 출발!'],
+  ['gonu', '그럼 무대로 가 볼까? 막내야, 앞에 서!'],
+  ['walwal', '다치면 바로 나한테 와. 원정대, 출발!'],
 ];
 
 export const CHAPTERS: ChapterDef[] = [
@@ -31,13 +31,13 @@ export const CHAPTERS: ChapterDef[] = [
     waves: ['ss|sss', 'sss|gs', 'gs|sgs', 'ssg|gg', 'gsg|sgs|gg', 'ww|gs', 'wsg|gw', 'gwg|wsw', 'wgw|gwg|ww', 'gsg|B'],
     intro: [
       ['warmnight', '숲 동굴 입구야. 균열 빛이 여기까지 새어 나와.'],
-      ['woongs', '슬라임들이 왜 이렇게 성이 났노?'],
+      ['woongs', '슬라임들이 왜 이렇게 성이 났지?'],
       ['ikamolly', '균열 기운에 취한 것 같아요. 조심해요!'],
     ],
     preBoss: [
       ['boss', '……쿠웅.'],
       ['warmnight', '저 골렘, 눈이 호박색으로 빛나. 별빛을 삼킨 거야.'],
-      ['walwal', '내려찍기 예고가 보이믄 버텨라. 내가 바로 치료한다.'],
+      ['walwal', '내려찍기 예고가 보이면 버텨. 내가 바로 치료할게.'],
     ],
     clear: [
       ['narr', '골렘의 호박눈이 깨지며 작은 별빛이 하늘로 올라갔다. 첫째 별이 다시 켜졌다.'],
@@ -55,7 +55,7 @@ export const CHAPTERS: ChapterDef[] = [
     ],
     preBoss: [
       ['cult', '곰팡이왕이시여, 저 별빛 도둑들을 삼키소서!'],
-      ['walwal', '포효 들리믄 스킬이 잠깐 막힌다. 그 전에 써라!'],
+      ['walwal', '포효가 들리면 스킬이 잠깐 막혀. 그 전에 써!'],
     ],
     clear: [
       ['narr', '늪 위로 둘째 별이 떠올랐다. 안개가 걷히고 개구리 울음이 돌아왔다.'],

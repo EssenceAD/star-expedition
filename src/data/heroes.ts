@@ -137,7 +137,7 @@ export const HEROES: HeroDef[] = [
     skills: [
       sk(0, '응급 처치', 'heal', 'nature', 'pillar', { k: 'heal', to: 'lowest', m: 4.5 }),
       sk(1, '주사 한 방', 'needle', 'nature', 'heal', { k: 'regen', to: 'allies', m: 0.4, dur: 5 }),
-      sk(2, '안정 취하이소', 'bed', 'holy', 'shield', { k: 'shield', to: 'allies', m: 3.5 }),
+      sk(2, '안정을 취하세요', 'bed', 'holy', 'shield', { k: 'shield', to: 'allies', m: 3.5 }),
     ],
   },
   {

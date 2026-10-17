@@ -16,7 +16,7 @@ export interface BondDef {
 export const BONDS: BondDef[] = [
   {
     id: 'port3', name: '남쪽 항구 삼총사', members: ['woongs', 'gonu', 'walwal'], need: 3, eff: { s: 'spd', v: 0.15 },
-    lines: [['gonu', '야야, 막내야 앞에 서라이~'], ['woongs', '누나들 뒤에 딱 붙어 있으면 된다 아이가!'], ['walwal', '다치믄 내한테 바로 온나. 알았제?']],
+    lines: [['gonu', '막내야, 앞에 서!'], ['woongs', '누나들 뒤에 딱 붙어 있으면 돼!'], ['walwal', '다치면 바로 나한테 와. 알았지?']],
   },
   { id: 'elders', name: '형님들의 술자리', members: ['bube', 'panda'], need: 2, eff: { s: 'dmgCut', v: 0.12 }, lines: [['bube', '끝나고 한잔 어때, 팬더.'], ['panda', '형님이 쏘시는 거죠? 허허.']] },
   { id: 'young', name: '젊은 피', members: ['haeung', 'yuwol'], need: 2, eff: { s: 'mana', v: 0.25 }, lines: [['haeung', '내가 앞을 막을게!'], ['yuwol', '오케이, 공략은 나한테 맡겨.']] },
@@ -34,7 +34,7 @@ export const BONDS: BondDef[] = [
 ];
 /** 세르미뉴가 파티에 있으면 다른 영웅 하나가 「세르님」께 묻는 대사 (모두의 리스펙) */
 export const SER_ASK: [string, string][] = [
-  ['woongs', '세르님! 이 보스 패턴 뭐예요? 알려 주이소!'],
+  ['woongs', '세르님! 이 보스 패턴 뭐예요? 알려 주세요!'],
   ['gonu', '세르님, 오늘 공략 순서 한 번만 짚어 주세요~'],
   ['yuwol', '세르님, 이 각 맞죠? …맞다고 해 주세요.'],
   ['haeung', '세르님, 앞은 제가 막을게요. 타이밍만 불러 주세요!'],

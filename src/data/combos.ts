@@ -9,7 +9,7 @@ export interface Combo {
 }
 export const COMBOS: Combo[] = [
   { pair: ['woongs', 'gonu'], name: '남쪽 항구 합동 무대', line: '막내야, 지금이다이!' },
-  { pair: ['woongs', 'walwal'], name: '응급 돌격', line: '다치믄 바로 고쳐 줄게, 가라!' },
+  { pair: ['woongs', 'walwal'], name: '응급 돌격', line: '다치면 바로 고쳐 줄게, 가!' },
   { pair: ['ikamolly', 'kkangto'], name: '마법 학교 합동 마법', line: '바람에 맞춰서, 깡!' },
   { pair: ['hwang', 'kleine'], name: '오래된 지도의 약속', line: '이 길, 같이 끝내죠.' },
   { pair: ['bube', 'panda'], name: '형님들의 일격', line: '끝나고 한잔은 내가 쏘지.' },
