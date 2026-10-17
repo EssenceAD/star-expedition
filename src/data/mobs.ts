@@ -3,7 +3,7 @@
 import type { AnimSet } from '../sprite/sheet';
 
 export interface MobKind {
-  id: 'slime' | 'goblin' | 'wolf' | 'golem';
+  id: 'slime' | 'goblin' | 'wolf' | 'uniq1' | 'uniq2' | 'elite' | 'golem';
   hp: number;
   atk: number;
   def: number;
@@ -20,6 +20,10 @@ export const MOB_KINDS: Record<MobKind['id'], MobKind> = {
   slime: { id: 'slime', hp: 0.7, atk: 0.7, def: 0.6, rate: 1.6, h: 46, anims: mobRow(0) },
   goblin: { id: 'goblin', hp: 1, atk: 1, def: 1.2, rate: 1.4, h: 70, anims: mobRow(1) },
   wolf: { id: 'wolf', hp: 1.1, atk: 1.25, def: 0.9, rate: 1.1, h: 64, anims: mobRow(2) },
+  // 10/18 지역 고유 몹 2종 + 정예 (mobs2/<지역>/ r3·r4·r5) — 그림은 지역마다 다름, 능력치 배수만 공통
+  uniq1: { id: 'uniq1', hp: 1.05, atk: 1.1, def: 1.0, rate: 1.3, h: 62, anims: mobRow(1) },
+  uniq2: { id: 'uniq2', hp: 0.95, atk: 1.2, def: 0.9, rate: 1.2, h: 58, anims: mobRow(2) },
+  elite: { id: 'elite', hp: 2.6, atk: 1.6, def: 1.4, rate: 1.6, h: 104, anims: mobRow(1) },
   golem: {
     id: 'golem', hp: 1, atk: 1, def: 1, rate: 2.2, h: 250,
     anims: {
@@ -33,7 +37,8 @@ export const MOB_KINDS: Record<MobKind['id'], MobKind> = {
  * 지역 몹 그림 (docs/ANIM_1017.md ③): public/art/mobs2/<지역>/ 5열×3행 · r0 슬라임 · r1 고블린 · r2 늑대
  *  c0·c1 대기 · c2 공격 준비 · c3 공격(hit) · c4 피격 (죽을 때도 c4 → 가라앉으며 사라짐) · 모두 왼쪽을 봄 · 색 바꾸기(mobTint) 안 씀
  */
-export const MOB_ROW: Record<'slime' | 'goblin' | 'wolf', number> = { slime: 0, goblin: 1, wolf: 2 };
+export type RegionMobId = 'slime' | 'goblin' | 'wolf' | 'uniq1' | 'uniq2' | 'elite';
+export const MOB_ROW: Record<RegionMobId, number> = { slime: 0, goblin: 1, wolf: 2, uniq1: 3, uniq2: 4, elite: 5 };
 export function regionMob(region: string, row: number): AnimSet {
   const f = (c: number) => `mobs2/${region}:r${row}c${c}`;
   return {
@@ -105,19 +110,19 @@ export const PATTERNS: Record<BossPattern['key'], BossPattern> = {
 
 /** 장마다 몬스터 이름 · 보스 이름 · 보스 패턴 · 색 번호 (T.battle.mobTint · region) */
 export interface ChapterMobs {
-  names: Record<'slime' | 'goblin' | 'wolf', string>;
+  names: Record<RegionMobId, string>;
   boss: string;
   patterns: BossPattern['key'][];
 }
 export const CHAPTER_MOBS: ChapterMobs[] = [
-  { names: { slime: '민트 슬라임', goblin: '두건 고블린', wolf: '수정 늑대' }, boss: '이끼 골렘 「호박눈」', patterns: ['slam', 'beam'] },
-  { names: { slime: '포자 슬라임', goblin: '늪 고블린', wolf: '진흙 늑대' }, boss: '버섯 골렘 「곰팡이왕」', patterns: ['slam', 'roar'] },
-  { names: { slime: '녹슨 슬라임', goblin: '광부 고블린', wolf: '갱도 늑대' }, boss: '광석 골렘 「녹슨 심장」', patterns: ['quake', 'beam'] },
-  { names: { slime: '서리 슬라임', goblin: '설원 고블린', wolf: '눈보라 늑대' }, boss: '얼음 골렘 「서리발」', patterns: ['slam', 'focus', 'roar'] },
-  { names: { slime: '별조각 슬라임', goblin: '교단 고블린', wolf: '심연 늑대' }, boss: '꺼진 별의 골렘 「잿빛눈」', patterns: ['beam', 'quake', 'focus'] },
-  { names: { slime: '소금 슬라임', goblin: '해적 고블린', wolf: '파도 늑대' }, boss: '등대 골렘 「가라앉은 빛」', patterns: ['beam', 'roar', 'slam'] },
-  { names: { slime: '모래 슬라임', goblin: '유적 고블린', wolf: '사막 늑대' }, boss: '모래시계 골렘 「거꾸로 시간」', patterns: ['quake', 'focus', 'beam'] },
-  { names: { slime: '용암 슬라임', goblin: '잿불 고블린', wolf: '화염 늑대' }, boss: '화산 골렘 「잿불 심장」', patterns: ['slam', 'beam', 'roar'] },
-  { names: { slime: '구름 슬라임', goblin: '바람 고블린', wolf: '하늘 늑대' }, boss: '구름 골렘 「바람지기」', patterns: ['focus', 'roar', 'quake'] },
-  { names: { slime: '심연 슬라임', goblin: '교단 사제', wolf: '삼켜진 늑대' }, boss: '「별을 삼킨 것」의 그림자', patterns: ['beam', 'quake', 'roar', 'focus'] },
+  { names: { slime: '민트 슬라임', goblin: '두건 고블린', wolf: '수정 늑대' , uniq1: '도토리 버섯병정', uniq2: '가시덩굴 뱀', elite: '정예 · 가시곰' }, boss: '이끼 골렘 「호박눈」', patterns: ['slam', 'beam'] },
+  { names: { slime: '포자 슬라임', goblin: '늪 고블린', wolf: '진흙 늑대' , uniq1: '독두꺼비', uniq2: '갈대 도마뱀 창병', elite: '정예 · 진흙 트롤' }, boss: '버섯 골렘 「곰팡이왕」', patterns: ['slam', 'roar'] },
+  { names: { slime: '녹슨 슬라임', goblin: '광부 고블린', wolf: '갱도 늑대' , uniq1: '곡괭이 두더지', uniq2: '광석 박쥐', elite: '정예 · 수정껍질 거북' }, boss: '광석 골렘 「녹슨 심장」', patterns: ['quake', 'beam'] },
+  { names: { slime: '서리 슬라임', goblin: '설원 고블린', wolf: '눈보라 늑대' , uniq1: '서리 펭귄 전사', uniq2: '얼음 정령', elite: '정예 · 설인' }, boss: '얼음 골렘 「서리발」', patterns: ['slam', 'focus', 'roar'] },
+  { names: { slime: '별조각 슬라임', goblin: '교단 고블린', wolf: '심연 늑대' , uniq1: '별교단 마법사', uniq2: '그림자 눈', elite: '정예 · 타락한 별기사' }, boss: '꺼진 별의 골렘 「잿빛눈」', patterns: ['beam', 'quake', 'focus'] },
+  { names: { slime: '소금 슬라임', goblin: '해적 고블린', wolf: '파도 늑대' , uniq1: '큰집게 게', uniq2: '물고기 해적', elite: '정예 · 문어 선장' }, boss: '등대 골렘 「가라앉은 빛」', patterns: ['beam', 'roar', 'slam'] },
+  { names: { slime: '모래 슬라임', goblin: '유적 고블린', wolf: '사막 늑대' , uniq1: '사막 전갈', uniq2: '붕대 미라', elite: '정예 · 자칼 수호병' }, boss: '모래시계 골렘 「거꾸로 시간」', patterns: ['quake', 'focus', 'beam'] },
+  { names: { slime: '용암 슬라임', goblin: '잿불 고블린', wolf: '화염 늑대' , uniq1: '용암 도롱뇽', uniq2: '불씨 정령', elite: '정예 · 마그마 거인' }, boss: '화산 골렘 「잿불 심장」', patterns: ['slam', 'beam', 'roar'] },
+  { names: { slime: '구름 슬라임', goblin: '바람 고블린', wolf: '하늘 늑대' , uniq1: '폭풍 하피', uniq2: '구름 해파리', elite: '정예 · 그리폰 기사' }, boss: '구름 골렘 「바람지기」', patterns: ['focus', 'roar', 'quake'] },
+  { names: { slime: '심연 슬라임', goblin: '교단 사제', wolf: '삼켜진 늑대' , uniq1: '등불 아귀', uniq2: '해골 망령', elite: '정예 · 공허의 기사' }, boss: '「별을 삼킨 것」의 그림자', patterns: ['beam', 'quake', 'roar', 'focus'] },
 ];

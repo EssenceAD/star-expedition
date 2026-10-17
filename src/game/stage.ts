@@ -2,7 +2,7 @@
 import { CONFIG } from '../config';
 import { activeBonds } from '../data/bonds';
 import { artOf, heroOf, HEROES } from '../data/heroes';
-import { CHAPTER_MOBS, MOB_KINDS, MOB_ROW, PATTERNS, regionBoss, regionMob, type MobKind } from '../data/mobs';
+import { CHAPTER_MOBS, MOB_KINDS, MOB_ROW, PATTERNS, regionBoss, regionMob, type MobKind, type RegionMobId } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
@@ -58,7 +58,23 @@ export function bestCleared(s: Save = S): StageId | null {
 }
 
 // ───────── 웨이브 ─────────
-const KIND: Record<string, MobKind['id']> = { s: 'slime', g: 'goblin', w: 'wolf', B: 'golem' };
+const KIND: Record<string, MobKind['id']> = { s: 'slime', g: 'goblin', w: 'wolf', a: 'uniq1', b: 'uniq2', E: 'elite', B: 'golem' };
+/**
+ * 10/18 몹 다양화: 웨이브 글자를 그대로 두고 장 고유 몹·정예를 섞는다 (같은 입력 → 늘 같은 결과)
+ *  s 중 일부 → a(고유 1) · w 중 일부 → b(고유 2) · 보스 바로 앞 웨이브(보스 없으면 마지막 웨이브, 3마리 이상)의 첫 g → E(정예)
+ */
+export function varyWaves(waves: string): string {
+  const ws = waves.split('|');
+  const bi = ws.findIndex((w) => w.includes('B'));
+  const ei = bi > 0 ? bi - 1 : bi < 0 && ws.length >= 2 ? ws.length - 1 : -1;
+  return ws
+    .map((w, i) => {
+      let out = [...w].map((ch, j) => (ch === 's' && (i + j) % 3 === 1 ? 'a' : ch === 'w' && (i + j) % 2 === 1 ? 'b' : ch)).join('');
+      if (i === ei && w.length >= 3 && out.includes('g')) out = out.replace('g', 'E');
+      return out;
+    })
+    .join('|');
+}
 /** 자리표시자 장(4~10)은 3장 웨이브를 그대로 (수치만 다름) */
 function waveText(st: StageId): string {
   const ch = CHAPTERS[st.c - 1];
@@ -72,16 +88,16 @@ export function buildMobs(st: StageId): MobSpec[][] {
 export function mobsAt(p: number, waves: string, chapter: number, o: { hp?: number; atk?: number; boss?: string; patterns?: MobSpec['patterns'] } = {}): MobSpec[][] {
   const g = Math.pow(C.grow, p);
   const cm = CHAPTER_MOBS[(chapter - 1) % CHAPTER_MOBS.length];
-  return waves.split('|').map((w) =>
+  return varyWaves(waves).split('|').map((w) =>
     [...w].map((ch): MobSpec => {
       const base = MOB_KINDS[KIND[ch]];
       const boss = base.id === 'golem';
       // 지역 그림 (ANIM_1017 ③): 장의 지역 몹 3종 · 장 보스 — 그림 자체가 지역 색이라 색 바꾸기 없음
       const region = CHAPTERS[(chapter - 1) % CHAPTERS.length].region;
-      const kind = { ...base, anims: boss ? regionBoss(region) : regionMob(region, MOB_ROW[base.id as 'slime']) };
+      const kind = { ...base, anims: boss ? regionBoss(region) : regionMob(region, MOB_ROW[base.id as RegionMobId]) };
       const bm = boss ? C.boss : { hp: 1, atk: 1, def: 1 };
       return {
-        kind, boss, name: boss ? (o.boss ?? cm.boss) : cm.names[kind.id as 'slime'],
+        kind, boss, name: boss ? (o.boss ?? cm.boss) : cm.names[kind.id as RegionMobId],
         hp: Math.round(C.mob.hp * kind.hp * bm.hp * g * (o.hp ?? 1)),
         atk: Math.round(C.mob.atk * kind.atk * bm.atk * g * (o.atk ?? 1)),
         def: Math.round(C.mob.def * kind.def * bm.def * g),
