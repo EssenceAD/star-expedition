@@ -435,6 +435,13 @@
 - 로딩: 처음엔 몹 시트 안 받음 · `ensureBattleArt(setup)` = 영웅 시트·컷인 + 그 전투 몹·보스 시트 + 지역 배경을 전투 전에
 - 도구: `tools/gif-scene.mjs boss3 · forest`
 
+## 2-Z. ANIM ④ 레이드 · 월드 보스 동작 (v0.11.1 · docs/ANIM_1017.md ④)
+- `bigBoss('raidboss' | 'worldboss')`(data/mobs.ts) → 레이드·월드 보스 MobSpec.kind.anims · 월드 보스 이름 `WORLD_BOSS` 「불꽃 날개 마왕」(패턴은 주마다 장 보스에서)
+- `drawRaidBoss`: 상태별 칸 — 쓰러짐(anim2 r1c1→c2→c3 · 1.2초 뒤 사라짐) · 그로기(anim1 r1c3) · 부위 파괴 순간 움찔(anim2 r0c0 · `raidArena.anim.flinchSec`) · 경고(줄 광선 r1c0 · 두 줄 폭발 r1c2 · 나머지 r0c2 + 떨림) · 타격(분노 anim2 r1c0 · 광선 r1c1 · 내려찍기 r0c3) · 대기(분노 anim2 r0c3 · 부위 파괴 후 anim2 r0c1↔c2 · 평소 anim1 r0c0↔c1)
+- `intact.png`·`broken.png`는 메뉴 썸네일에만 (전투에선 안 받음) · 그림 없는 보스(길드 레이드 = 장 보스)는 예전 구멍·금 그리기
+- 이펙트: 크기 상한 `fxArt.maxH` 190 · 한 번에 그림 이펙트 최신 `maxOn` 10개 (8인 레이드에서 lighter가 쌓여 하얗게 타던 것)
+- 도구: `tools/gif-scene.mjs raid · world`
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

@@ -102,6 +102,30 @@ if (scene === 'win') {
   await p.evaluate(() => { window.__go('battle', { stage: { c: 1, s: 2, d: 0 } }); window.__b().auto = true; });
   await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
   secs = 7;
+} else if (scene === 'raid' || scene === 'world') {
+  // 레이드 「잿날개」: 대기 → 그로기 → 부위 파괴(움찔 → 부서진 대기) → 쓰러짐·무너짐·잔해 (ANIM_1017 ④) · world = 월드 보스 그림
+  await party(['woongs', 'gonu', 'walwal', 'ikamolly'], 22);
+  await p.evaluate((mode) => {
+    const S = window.__S();
+    S.stages['1-1-0'] = { stars: 3, clears: 1, bestTime: 60, bestDps: 1000, mvp: 'woongs' };
+    window.__go('battle', { run: { mode, arg: 0 } });
+    window.__b().auto = false;
+  }, scene);
+  await p.waitForFunction(() => !window.__artWait(), null, { timeout: 120000 });
+  console.log('ff', await fast("b.mobs.some((m) => m.mob?.boss && !m.dead && m.x <= m.tx + 1) && b.phase === 'fight'", 60));
+  await p.evaluate(() => {
+    const b = window.__b();
+    const boss = b.mobs.find((m) => m.mob?.boss);
+    b.cutIns = 'off';
+    b.raid.left = 99;
+    // 녹화용: 순서대로 다 보이게 체력을 넉넉히 (그로기 → 부위 파괴 → 쓰러짐)
+    boss.max *= 8;
+    boss.hp = boss.max;
+    setTimeout(() => (b.raid.downT = 2.2), 900);
+    setTimeout(() => { const pt = b.raid.parts.find((x) => !x.broken); if (pt) ((pt.broken = true), (pt.brokenT = 0), (pt.hp = 0)); }, 3600);
+    setTimeout(() => (boss.hp = 1), 5600);
+  });
+  secs = 8.5;
 } else if (scene === 'arena') {
   await party(['woongs', 'gonu', 'ikamolly', 'walwal'], 30);
   await p.evaluate(() => window.__go('portal', { tab: 'arena' }));

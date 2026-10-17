@@ -6,7 +6,7 @@ import { activeBonds } from '../data/bonds';
 import { CHAT_NAMES } from '../data/chat';
 import { artOf, HEROES, heroOf } from '../data/heroes';
 import { JOBS } from '../data/jobs';
-import { CHAPTER_MOBS, PATTERNS } from '../data/mobs';
+import { bigBoss, CHAPTER_MOBS, PATTERNS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { addAccExp } from './account';
 import { dropGear, makeGear, makeRune, bagFull } from './gear';
@@ -112,6 +112,8 @@ export const towerP = (floor: number) => CC.tower.base + (floor - 1);
 export const dayKind = (now = Date.now()) => CC.day.kinds[kstDay(now)];
 export const DAY_NAME: Record<string, string> = { all: '모든 보상', exp: '경험치 물약', gold: '금화', enh: '강화석' };
 const RAID_BOSS = '심연 드래곤 「잿날개」';
+/** 월드 보스 이름 (그림 = public/art/worldboss · 패턴은 주마다 장 보스에서 · ANIM_1017 ④) */
+export const WORLD_BOSS = '불꽃 날개 마왕';
 export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
   const c = typeof r.arg === 'number' ? r.arg : 1;
   switch (r.mode) {
@@ -131,14 +133,17 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
     case 'raid': {
       const p = top(s) + CC.raid.add;
       const mobs = mobsAt(p, 'B', 8, { hp: CC.raid.hp / CONFIG.story.boss.hp, atk: CC.raid.atk / CONFIG.story.boss.atk, boss: RAID_BOSS, patterns: [PATTERNS.beam, PATTERNS.roar, PATTERNS.slam, PATTERNS.focus] });
+      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('raidboss') };
       const allies = aiParty(hashStr(dayKey(now)) + 7, myLv(s), 2, partyIds(s));
       return base(s, `${MODE_NAME.raid} · ${RAID_BOSS}`, mobs, 7, { allies, limit: CC.raid.limit, arena: true });
     }
     case 'world': {
       const wk = weekKey(now);
       const cm = CHAPTER_MOBS[hashStr(wk) % CHAPTER_MOBS.length];
-      const mobs = mobsAt(top(s) + CC.world.add, 'B', 5, { hp: 1000, boss: `월드 보스 · ${cm.boss}`, patterns: cm.patterns.map((k) => PATTERNS[k]) });
+      const mobs = mobsAt(top(s) + CC.world.add, 'B', 5, { hp: 1000, boss: `월드 보스 · ${WORLD_BOSS}`, patterns: cm.patterns.map((k) => PATTERNS[k]) });
       mobs[0][0].partBase = mobs[0][0].hp / 1000 * CC.world.partBase;
+      // 월드 보스는 자기 그림 (불꽃 날개 마왕 · 레이드·골렘 그림 같이 쓰던 것 · ANIM_1017 ④)
+      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('worldboss') };
       return base(s, `${MODE_NAME.world} · ${CC.world.sec}초 동안 피해 주기`, mobs, 9, { limit: CC.world.sec, timeUp: 'win', arena: true });
     }
     case 'arena': {
@@ -168,6 +173,8 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
       const gb = guildBoss(s, now);
       const mobs = mobsAt(top(s) + CONFIG.social.guild.raidAdd, 'B', 6, { hp: 1000, boss: gb.name, patterns: [PATTERNS.slam, PATTERNS.focus, PATTERNS.quake] });
       mobs[0][0].partBase = mobs[0][0].hp / 1000 * CC.world.partBase;
+      // 월드 보스는 자기 그림 (불꽃 날개 마왕 · 레이드·골렘 그림 같이 쓰던 것 · ANIM_1017 ④)
+      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('worldboss') };
       return base(s, `${MODE_NAME.graid} · ${CONFIG.social.guild.raidSec}초 동안 피해 주기`, mobs, 6, { limit: CONFIG.social.guild.raidSec, timeUp: 'win', arena: true });
     }
     case 'side': {
@@ -373,7 +380,7 @@ export function worldBoss(s: Save = S, now = Date.now()) {
   const hours = (now - (Date.parse(wk) - KST)) / 3600e3;
   const ai = Math.min(0.97, hours * CC.world.aiPerHour) * max;
   const my = s.world.week === wk ? s.world.my : 0;
-  return { week: wk, max, hp: Math.max(0, max - ai - my), my, name: `월드 보스 · ${CHAPTER_MOBS[hashStr(wk) % CHAPTER_MOBS.length].boss}` };
+  return { week: wk, max, hp: Math.max(0, max - ai - my), my, name: `월드 보스 · ${WORLD_BOSS}` };
 }
 /** 이번 주 랭킹 (AI 플레이어 + 나) */
 export function worldBoard(s: Save = S, now = Date.now()) {
