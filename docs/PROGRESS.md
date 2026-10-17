@@ -381,6 +381,14 @@
 - 재화·소모품: 품목마다 그림(`items/m_*`) · 전용 무기 조각 = `ui/icons/slot_exclusive`
 - 도구: `tools/gif-gacha.mjs`(CDP 화면 스트림 → ffmpeg GIF · `__gachaDemo(등급들)`) · `tools/shot-menus.mjs`에 상점 미리보기 · e2e 소환 단계는 건너뛰기 → 확인
 
+## 2-T. 모바일 ① 가로 고정 · 전체 화면 · PWA · 채팅 키보드 (v0.10.5 · docs/MOBILE_REF_1017.md §1·§2)
+- `fitView`(ui/view.ts): 창이 세로면 `#stage`를 `rotate(90deg)`로 돌려 그림(`view.rotated` · html.rot) · 크기는 `visualViewport` 기준 · `resize`/`orientationchange`/`visualViewport.resize`에 다시 맞춤(입력 중엔 건너뜀) · `#rotate` 안내 없앰
+- 노치·홈바: `env(safe-area-inset-*)`을 읽어 `--safeL/--safeR`(게임 px · 돌렸으면 위/아래)로 → `#hud`·`#ui`·위 띠·티커가 안으로
+- `ui/mobile.ts`: 「원정 출발」 터치에 `requestFullscreen` → `screen.orientation.lock('landscape')` (안 되면 조용히 넘어감 · 설정 「전체 화면 (안드로이드)」) · 「홈 화면에 추가」 띠(터치 기기 · 처음 한 번 · standalone이면 안 뜸)
+- PWA: `public/manifest.webmanifest`(fullscreen · landscape) · `public/icons/`(192·512·apple 180 · `tools/make-icons.mjs`로 타이틀 그림 + 로고) · iOS 메타 · `interactive-widget=resizes-visual`
+- 채팅: 입력칸 포커스 → `.kb` + `#stage.typing` · 키보드가 가린 높이(`--kbT/B/L/R`)만큼 빼고 판을 꽉 채움 · 나머지 화면은 어둡게 · blur면 원래대로 · 😊 빠른 채팅(`CONFIG.social.quick` 8말 + 감정 4 · 결투장 감정 표현과 같은 묶음) · 누르는 버튼은 입력 포커스를 안 뺏음 · 터치 기기는 채팅 글씨 한 단계 작게
+- 확인 도구: `tools/shot-mobile.mjs` (세로 회전 + 실제 탭으로 로비·상점 이동 · 가로 · 전체 화면 · 홈 화면 실행 흉내 · 키보드 채팅 · 빠른 채팅)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

@@ -256,6 +256,8 @@ export const T = {
   /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
   hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
   shadow: {
+    /** 채팅 입력 중 나머지 화면 가리기 (MOBILE_REF §2) */
+    kbVeil: '0 0 0 2000px rgba(10,8,24,0.86)',
     glow: '0 0 10px rgba(242,200,106,0.55)',
     glowHi: '0 0 14px rgba(255,210,100,0.7)',
     drop: '0 2px 0 rgba(0,0,0,0.6)',
@@ -383,6 +385,7 @@ export const T = {
   icon: {
     gold: '🪙', stardust: '✦', token: '🎟', enh: '🔷', tierMat: '🐉', optTicket: '🎫', rune: '🔶', guildCoin: '🛡', arenaCoin: '⚔', towerCoin: '🗼', exp: '🧪', skillBook: '📘', transStone: '💠', exShard: '🗡', treasureShard: '🏺', awakenStone: '🌟', chest: '🎁', bossMat: '🟠', stamina: '⚡', booster: '🚀', badge: '●', achieve: '🎖', friend: '🤝', raid: '🐉', world: '🌋', zone_front: '🛡', zone_mid: '🗡', zone_back: '🏹', join: '🎉', repeat: '🔁', battle: '⚔', summon: '🎲', craft: '⚒',
     adventure: '🗺', content: '⚔', heroes: '👥', formation: '🧩', bag: '🎒', recruit: '🏠', shop: '🛒', guild: '🏰', ranking: '🏆', mail: '✉', mission: '📜', settings: '⚙', chat: '💬', back: '◀', close: '✕', lock: '🔒', star: '★', starOff: '☆', check: '✓', cross: '✗', auto: '⟳', sweep: '⏩', offline: '💤', warn: '⚠', next: '▶', open: '▸', fold: '◂', rotate: '📱↻', sparkle: '✦', story: '📖', skip: '⏭',
+    emote: '😊', emo_smile: '😄', emo_wow: '😮', emo_angry: '😠', emo_heart: '❤️',
     tower: '🗼', day: '📅', coop: '🐉', guildRaid: '🛡', worldBoss: '🌋', arena: '🏟',
     weapon: '🗡', armor: '🛡', acc: '💍', shield: '🛡', guard: '✦', taunt: '📯', regen: '❀', stun: '💫', silence: '🤐', slow: '❄', burn: '🔥', atkUp: '⬆', atkDown: '⬇', spdUp: '⏫', fury: '🔥', critUp: '🎯',
     knight: '🛡', warrior: '⚔', fighter: '👊', assassin: '🗡', archer: '🏹', engineer: '🔧', mage: '🔮', priest: '✚', druid: '🌿',

@@ -2,7 +2,7 @@
    크기(width·height·위치)는 화면 배치라서 여기서 · 꾸밈 값은 전부 토큰 */
 [hidden] { display: none !important; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; background: var(--c-bg); overflow: hidden; font-family: var(--f-base); color: var(--c-text); user-select: none; }
+html, body { margin: 0; height: 100%; height: 100dvh; background: var(--c-bg); overflow: hidden; font-family: var(--f-base); color: var(--c-text); user-select: none; }
 button { font-family: inherit; cursor: pointer; }
 #stage { position: absolute; left: 50%; top: 50%; height: 390px; overflow: hidden; background: var(--c-bg); }
 #cv { position: absolute; left: 0; top: 0; height: 390px; image-rendering: pixelated; }
@@ -307,8 +307,6 @@ input.tab { color: var(--c-text); }
 .rw div span { display: block; font-size: var(--fs-h2); }
 .rw div b { display: block; color: var(--c-btnHi2); font-family: var(--f-num); }
 .why { font-size: var(--fs-md); color: var(--c-textSoft); margin: 0; text-align: center; line-height: 1.5; }
-#rotate { display: none; position: fixed; inset: 0; background: var(--c-bg); color: var(--c-text); font-size: var(--fs-h2); font-weight: var(--fw-bold); align-items: center; justify-content: center; z-index: 99; }
-@media (orientation: portrait) and (max-width: 700px) { #rotate { display: flex; } }
 /* 영광의 리그 밴픽 · 최후의 리그 편성 */
 .banpick .pcard { min-height: 0; width: 56px; cursor: pointer; border: var(--b-base) solid var(--c-line); background: var(--c-panelDeep); color: var(--c-text); }
 .banpick .pcard.ban { border-color: var(--c-warn); box-shadow: var(--sh-glow); filter: grayscale(0.6); }
@@ -960,3 +958,30 @@ input, select, textarea { font-family: inherit; }
 .cards.goods .gpic svg.ic.svg { width: 40px; height: 40px; color: var(--c-gold1); }
 .shopc.hero[data-h] { cursor: pointer; }
 .row.preview { align-items: center; gap: var(--s-md); flex: none; }
+/* ───────── 모바일 (docs/MOBILE_REF_1017.md §1·§2) ───────── */
+/* 노치·홈바: HUD·메뉴·위 띠는 --safeL/--safeR(fitView가 채움)만큼 안으로 · 배경(캔버스)은 끝까지 */
+#stage { --safeL: 0px; --safeR: 0px; }
+#hud, #ui { left: var(--safeL); right: var(--safeR); }
+.top { padding-left: calc(var(--s-md) + var(--safeL)); padding-right: calc(var(--s-md) + var(--safeR)); }
+#ticker { right: var(--safeR); }
+/* 홈 화면에 추가 안내 띠 (처음 한 번) */
+.a2hs { position: absolute; left: 50%; top: var(--s-sm); z-index: 40; transform: translateX(-50%); display: flex; align-items: center; gap: var(--s-sm); padding: var(--s-xs) var(--s-md); border: var(--b-thin) solid var(--c-gold2); border-radius: var(--r-pill); background: var(--c-glass); font-size: var(--fs-sm); color: var(--c-text); white-space: nowrap; }
+.a2hs button { border: 0; background: none; color: var(--c-gold1); font-size: var(--fs-md); cursor: pointer; padding: 0 var(--s-xs); }
+/* 채팅: 😊 빠른 채팅 · 입력 중엔 최근 몇 줄 + 입력줄만 키보드 바로 위에 (--kbT/B/L/R = 키보드·주소창이 가린 게임 px) */
+.chatbox { display: flex; flex-direction: column; gap: var(--s-sm); min-height: 0; }
+.chatrow { gap: var(--s-xs); }
+.qbtn { min-width: 34px; font-size: var(--fs-lg); }
+.qpop { display: flex; flex-wrap: wrap; gap: var(--s-xs); padding: var(--s-xs); border-radius: var(--r-md); background: var(--c-panelDeep); }
+.qpop[hidden] { display: none; }
+.qpop .tab { height: 26px; padding: 0 var(--s-sm); font-size: var(--fs-sm); cursor: pointer; }
+.qpop .emo { font-size: var(--fs-lg); }
+#stage { --kbT: 0px; --kbB: 0px; --kbL: 0px; --kbR: 0px; }
+#stage.typing .kb { position: fixed; z-index: 70; top: calc(var(--kbT) + var(--s-xs)); bottom: calc(var(--kbB) + var(--s-xs)); left: calc(var(--kbL) + var(--safeL) + var(--s-sm)); right: calc(var(--kbR) + var(--safeR) + var(--s-sm)); width: auto; min-width: 0; max-width: none; max-height: none; margin: 0; display: flex; flex-direction: column; justify-content: flex-end; box-shadow: var(--sh-kbVeil); }
+#stage.typing .kb > :not(.chatbox):not(.chatlog):not(.chatrow):not(.qpop) { display: none; }
+#stage.typing .kb .chatbox { flex: 1; }
+#stage.typing .kb .chatlog { flex: 1 1 0; min-height: 0; max-height: none; }
+#stage.typing :is(#topbar, #ticker) { visibility: hidden; }
+@media (pointer: coarse) {
+  .chatlog { min-height: 120px; max-height: 200px; gap: 0; font-size: var(--fs-sm); }
+  .chatp { min-width: 480px; }
+}
