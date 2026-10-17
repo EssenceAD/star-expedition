@@ -410,6 +410,15 @@
 - 길드: 위 설명 `why band` · 카드에 문양 메달 · 대표 멤버 초상화 3 · AI 길드는 「오늘 출석 n/m」(날짜로 정해지는 값) · 실멤버 길드 설명 「단톡방 멤버 길드」
 - 도구: `tools/gif-scene.mjs arena`
 
+## 2-W. ANIM ① 영웅 동작 16칸 (v0.10.8 · docs/ANIM_1017.md ①)
+- `px()`(data/heroes.ts): idle = `m1r1c0~3` · walk = `m1r0c0~3` · attack = `m2r0c0~3`(hit 2) · skill1·2·3 = `m2r1c0~3`(hit 2 · 1은 0.8배 · 3은 0.7배 속도) · hurt/down/win은 기존 r1c0~2
+- `AnimDef.durs`(칸마다 초) → `frameAt`·`lenOf`·`hitTimes`가 칸 시간 기준 · 타이밍은 `CONFIG.combat.anim`
+- `Cell.by` 발 기준선: `drawFrame`이 `c.by ?? 줄 기준선`
+- 보조 캔버스 360 → 560 (발 = (280, 440)) — 넓은 스킬 칸이 안 잘림
+- 타격감: `hitstop.hit` 0.06 · 치명타·스킬3 흔들림 4px(`shake.crit/ult`) · 숨쉬기·걷기 그림이 4칸이면 가짜 들썩임·숨쉬기 배율은 끔
+- 밸런스: 평타 그림이 길어진 만큼 쿨다운에서 빼서 공격 간격은 예전(`combat.attackBeat` 0.46초 기준) 그대로 — 레이드 AUTO 테스트 통과
+- 도구: `tools/gif-scene.mjs heroes` · `tools/shot-acts.mjs`에 스킬·걷기 자세
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

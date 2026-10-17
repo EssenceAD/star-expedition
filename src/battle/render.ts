@@ -2,7 +2,7 @@
 //  · 이펙트(빛줄기·기둥·파티클·흔들림·번쩍임) · 피해 숫자(만·억 · 겹침 없음은 sim.placeNum) · 일러스트 컷인 · 인연 말풍선
 //  색·글꼴은 전부 theme/tokens 에서
 import { CONFIG } from '../config';
-import { animOf, drawFrame, frameAt, heightOf, type Sheet } from '../sprite/sheet';
+import { animOf, drawFrame, frameAt, heightOf, lenOf, type Sheet } from '../sprite/sheet';
 import { canvasFace, canvasFont, elemColor, iconText, T } from '../theme/tokens';
 import { has, shortNum, type Battle, type Unit } from './sim';
 import { view } from '../ui/view';
@@ -30,8 +30,11 @@ const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[
 
 // 보조 캔버스는 화면 해상도(view.dpr)로 — 1배로 그린 뒤 늘리면 도트가 뭉개지고 2~3px씩 툭툭 끊김 (SPRITE_RES_1017 §A)
 //  그 안은 논리 px로 그리고(setTransform dpr) 본 캔버스엔 논리 크기를 지정해 붙인다
-const OW = 360;
-const OH = 360;
+//  크기: 스킬 칸은 이펙트 때문에 넓어서 360이면 잘림 → 520 넘게 (ANIM_1017 ①) · 발은 (AX, AY)
+const OW = 560;
+const OH = 560;
+const AX = OW / 2;
+const AY = 440;
 const off = document.createElement('canvas');
 const ox = off.getContext('2d')!;
 /** 보조 캔버스를 지금 dpr 해상도로 맞추고 논리 px 기준으로 비움 */
@@ -77,10 +80,11 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   let x = u.x + u.knock;
   let y = u.y;
   let alpha = 1;
-  const dur = def.frames.length / def.fps;
+  const dur = lenOf(def);
   if (def.lunge && u.busy > 0) x += def.lunge * lungeCurve(Math.min(1, u.at / dur));
   // 걷기: 대기 2칸을 번갈아 + 살짝 들썩임
-  if (as === 'walk') y -= CONFIG.combat.walkBob * Math.abs(Math.sin(u.at * def.fps * Math.PI));
+  // 걷기 그림이 2칸뿐인 것(몹 등)만 살짝 들썩임 · 영웅은 4칸 걷기 그림 (ANIM_1017)
+  if (as === 'walk' && def.frames.length <= 2) y -= CONFIG.combat.walkBob * Math.abs(Math.sin(u.at * def.fps * Math.PI));
   if (u.side === 'mob' && u.dead) {
     alpha = Math.max(0, 1 - u.deadT * 1.8);
     y += u.deadT * 24;
@@ -95,13 +99,13 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
     for (let j = 3; j >= 1; j--) {
       const pf = Math.max(0, fi - j);
       auxReady(off, ox, OW, OH);
-      drawFrame(ox, art.sheet, def.frames[pf], 180, 300, k, face);
+      drawFrame(ox, art.sheet, def.frames[pf], AX, AY, k, face);
       ox.globalCompositeOperation = 'source-atop';
       ox.fillStyle = sp ? elemColor(sp.def.elem) : B.white;
       ox.fillRect(0, 0, OW, OH);
       ox.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 0.18 * (4 - j) * alpha;
-      ctx.drawImage(off, x - 180 - j * 10 * face, y - 300, OW, OH);
+      ctx.drawImage(off, x - AX - j * 10 * face, y - AY, OW, OH);
     }
     ctx.globalAlpha = 1;
   }
@@ -110,7 +114,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   const HF = CONFIG.combat.hitFlash;
   const fl = Math.min(HF.max, u.flash);
   ox.filter = fl > 0.02 ? `${filter === 'none' ? '' : filter} brightness(${1 + HF.bright * fl})`.trim() : filter;
-  drawFrame(ox, art.sheet, def.frames[fi], 180, 300, k, face);
+  drawFrame(ox, art.sheet, def.frames[fi], AX, AY, k, face);
   ox.filter = 'none';
   ctx.globalAlpha = u.hero && u.dead ? 0.85 : alpha;
   if (u.hero && u.dead && as !== 'down') {
@@ -120,13 +124,13 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
     ctx.translate(x, y);
     ctx.rotate((-Math.PI / 2) * r);
     ctx.filter = 'brightness(0.7)';
-    ctx.drawImage(off, -180, -300 + r * 12, OW, OH);
+    ctx.drawImage(off, -AX, -AY + r * 12, OW, OH);
     ctx.restore();
   } else {
     // 대기 숨쉬기: 발 기준 세로 1.000↔1.012 (1.6초 · 유닛마다 위상 다름)
     const BR = CONFIG.combat.breathe;
-    const sy = as === 'idle' && !u.dead ? 1 + (BR.amp / 2) * (1 + Math.sin(((now + u.uid * 0.37) / BR.sec) * Math.PI * 2)) : 1;
-    ctx.drawImage(off, x - 180, y - 300 * sy, OW, OH * sy);
+    const sy = as === 'idle' && !u.dead && def.frames.length <= 2 ? 1 + (BR.amp / 2) * (1 + Math.sin(((now + u.uid * 0.37) / BR.sec) * Math.PI * 2)) : 1;
+    ctx.drawImage(off, x - AX, y - AY * sy, OW, OH * sy);
   }
   ctx.globalAlpha = 1;
   if (u.dead) return;

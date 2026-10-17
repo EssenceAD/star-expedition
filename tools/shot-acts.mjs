@@ -72,6 +72,11 @@ await pose('attack', 0.25);
 await shot('2_attack');
 await pose('hurt', 0.05);
 await shot('3_hurt');
+// 스킬 발동 칸(m2r1c2) · 걷기 (ANIM_1017: 넓은 스킬 칸이 잘리지 않는지)
+await pose('skill2', 0.47);
+await shot('3b_skill');
+await pose('walk', 0.15);
+await shot('3c_walk');
 // 승리: 끝까지 싸워서 이기면 살아남은 영웅이 승리 자세
 console.log('win', await runUntil("b.phase === 'win'", 240));
 await runUntil('false', 0.4);
