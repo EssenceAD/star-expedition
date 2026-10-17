@@ -24,7 +24,7 @@ import { expNeed } from '../game/heroes';
 import type { Gear, Rune } from '../game/state';
 import { flag } from '../core/flags';
 import { setBackdrop, view } from './view';
-import { k9, kit9, kitBar, kitPart, kitSocket, setBar, titleUrl, type Rarity } from './kit';
+import { kit9, kitBar, kitPart, kitSocket, setBar, titleUrl, type Rarity } from './kit';
 import { bustUrl, fullUrl } from './bust';
 import { aiEmote, countdown, emote, pvpHudHtml, resetAiEmote, syncPvpHud, vsIntro } from './arena';
 
@@ -44,7 +44,8 @@ let intro = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
 /** DPS 판: 펼침(기억함) · 탭 피해·회복·받은 피해 (MOBILE_REF §3-A-4) */
-let dpsOpen = getPref('dpsOpen', false);
+// 기본 접힘 (UI_KIT_1018 §4) · 예전 설정(펼침 기억)은 새 키로 한 번 초기화
+let dpsOpen = getPref('dpsOpen1018', false);
 let dpsTab: 'dealt' | 'healed' | 'taken' = 'dealt';
 const DPS_HEAD = { dealt: '피해량', healed: '회복량', taken: '받은 피해' } as const;
 let paused = false;
@@ -136,7 +137,7 @@ function buildRaid() {
   $('#raidHud').hidden = !r;
   $('#bDodge').hidden = !r;
   if (!r) return;
-  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false" style="${k9('pill', 10)}"><span class="tx">${esc(p.name)}</span>${kitBar(74, 7, 1, T.kit2.mobHp)}</button>`).join('');
+  $('#rParts').innerHTML = r.parts.map((p, i) => `<button data-p="${i}" aria-pressed="false"><span class="tx">${esc(p.name)}</span>${kitBar(90, 8, 1, T.kit2.mobHp)}</button>`).join('');
   $('#raidHud .ggb').innerHTML = kitBar(150, 9, 0, T.kit2.mp);
   $$<HTMLButtonElement>('#rParts button').forEach((btn) => (btn.onclick = () => {
     const rr = b?.raid;
@@ -264,7 +265,6 @@ function bossIntro(boss: Unit): Promise<void> {
   });
 }
 /** 연출이 화면을 잡고 있는 동안 전투 진행 멈춤 */
-let cueHold = false;
 let cueBattle = false;
 let cueBossWave = -1;
 function cueTick(bb: Battle) {
@@ -277,8 +277,7 @@ function cueTick(bb: Battle) {
     cueBossWave = bw;
     const boss = bb.mobs.find((m) => m.mob?.boss);
     if (boss) {
-      cueHold = true;
-      void bossIntro(boss).then(() => (cueHold = false));
+      void bossIntro(boss);
     }
   }
 }
@@ -300,7 +299,7 @@ function setup() {
   setPaused(false);
   setBackdrop(`${import.meta.env.BASE_URL}art/${b.setup.bg ? `bgs/${b.setup.bg}` : 'bg'}.jpg`);
   cueBattle = false;
-  cueHold = false;
+  bossCard = null;
   cueBossWave = -1;
   cueTimers = [];
   $('#cue').innerHTML = '';
@@ -357,7 +356,7 @@ function resultScreen(v: ResultView, onAct: (a: string) => void) {
         <span class="tx rlv">Lv.${hv?.lv ?? 1}</span>${h.gain ? `<span class="tx rex">EXP +${fmt(h.gain)}</span>` : ''}${kitBar(96, 12, ratio, T.kit2.exp, 'bar_thick', 'rxb', `<b class="tx">${Math.floor(ratio * 100)}%</b>`)}</div>`;
     }).join('')}
     <div class="rloot">${kitPart('loot_band', 600, 62)}<span class="tx rlt">전리품</span>
-      ${n ? v.loot.map((it, j) => `<div class="rit" style="left:${300 - (n * step) / 2 + j * step + (step - sz) / 2}px;--i:${j}" title="${esc(it.title)}">${kitSocket(it.url, sz, it.rarity, '', it.n ? `<b class="tx">${it.n}</b>` : '')}</div>`).join('') : `<span class="tx rnone">${esc(v.hint ?? '전리품 없음')}</span>`}</div>
+      ${n ? v.loot.map((it, j) => `<div class="rit" style="left:${300 - (n * step) / 2 + j * step + (step - sz) / 2}px;--i:${j}" title="${esc(it.title)}">${kitSocket(it.url, sz, it.rarity, '', it.n ? `<b class="tx">${it.n}</b>` : '')}</div>`).join('') : `<span class="tx rnone">${esc(v.hint || '전리품 없음')}</span>`}</div>
   </div>
   <div class="rbtns">${v.buttons.map(([l, a, ic, off]) => medalBtn(56, l, a, ic, off)).join('')}</div>
   <div class="rstat">${medalBtn(48, '통계', 'stats', 'stats')}</div>`;
@@ -420,7 +419,7 @@ function showRunResult() {
     for (const p of rs.parts) stats.push([esc(p.name), p.broken ? `파괴 · ${esc(p.top)}` : '남음']);
   }
   if (left) stats.push(['남은 도전', left]);
-  resultScreen({ win: win || scoreRun, heroes: partyView(bb), loot: lootOf(o.items, o.gear, o.runes), hint: o.lines[0] ?? (win ? '' : '이번엔 보상이 없어요'), stats, lines: o.lines,
+  resultScreen({ win: win || scoreRun, heroes: partyView(bb), loot: lootOf(o.items, o.gear, o.runes), hint: o.lines[0] || (win ? '전리품 없음' : '이번엔 보상이 없어요'), stats, lines: o.lines,
     buttons: [[nextFloor ? (r.mode === 'tower' ? `${+r.arg + 1}층` : '다음 막') : '다음 전투', 'nextrun', 'next', !nextFloor], [`다시하기${left ? ` (${left})` : ''}`, 'again', 'repeat', !!lockOf(r)], ['나가기', 'portal', 'back']] }, go2);
 }
 /** 콘텐츠 전투 시작: 도전 수 쓰고 → 파티를 세우고 → (외전 대사) → 전투 */
@@ -567,7 +566,7 @@ register('battle', {
     $('#bPause').onclick = () => (paused ? setPaused(false) : openPause());
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
-      setPref('dpsOpen', dpsOpen);
+      setPref('dpsOpen1018', dpsOpen);
       dpsLabel();
     };
     $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => (t.onclick = () => ((dpsTab = t.dataset.dt as typeof dpsTab), dpsLabel())));
@@ -612,7 +611,7 @@ register('battle', {
       return render(ctx, view.art, b, performance.now() / 1000);
     }
     cueTick(b);
-    if (paused || artWait || cueHold) return void render(ctx, view.art, b, performance.now() / 1000);
+    if (paused || artWait || bossCard) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);

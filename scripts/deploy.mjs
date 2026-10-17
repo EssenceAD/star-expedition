@@ -23,6 +23,13 @@ if (force) console.log('⚠ force 업데이트: 플레이어는 「조금 있다
 // 자동 테스트 — 하나라도 실패하면 배포하지 않는다
 // 2026-10-14: 보이는 새 플래그가 확인 없이 켜지지 않게 (scripts/check-flags.mjs · 허용은 ALLOW_FLAGS=…)
 run('node scripts/check-flags.mjs');
+// 10/18 (docs/ART_RULES_1018.md §3 · UI_KIT_1018 §0-5): 잘린 그림이 1장이라도 있으면 배포하지 않는다 (tools/art_audit.py 종료 코드 ≠ 0)
+try {
+  run('python3 tools/art_audit.py');
+} catch {
+  console.error('\n✗ 잘린 그림이 있어요 (python3 tools/art_audit.py) — 그림을 고친 뒤 다시 배포해 주세요');
+  process.exit(1);
+}
 if (existsSync('tests')) run('npm test');
 run('npm run build');
 // 핫픽스 7: 빌드 결과물에서 그림·소리 요청 실패가 하나라도 있으면 배포하지 않는다

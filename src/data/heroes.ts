@@ -308,6 +308,7 @@ export const HEROES: HeroDef[] = [
   },
   {
     id: 'moss', name: '모스 할머니', gender: 'f', job: 'druid', title: '대드루이드', concept: '황짐승의 스승. 느릿한 말투, 엄청난 자연 마법', origin: 'new', elem: 'nature', stat: { atk: 1.05 },
+    bust: { dx: -0.1, dy: 0.07 },
     passive: pas('숲의 숨', { k: 'stat', s: 'heal', v: 0.15, team: true }),
     skills: [
       sk(0, '가시 덩굴', 'leaf', 'nature', 'ring', { k: 'dmg', to: 'all', m: 1.1, st: { s: 'slow', dur: 4 } }),

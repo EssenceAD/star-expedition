@@ -61,15 +61,25 @@ function lungeCurve(p: number) {
   return 1 - (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 }
 
-/** 발밑 그림자 (UI_KIT_1018 §4 필드): 발 y가 타원 한가운데 · 가장자리는 흐리게 (캔버스 그리기) */
+/** 발밑 그림자 (UI_KIT_1018 §4 필드): 발 y가 타원 한가운데 · 가장자리는 흐리게 — 흐린 타원을 한 번만 그려 두고 늘려 씀 (매 프레임 blur 필터는 느림) */
+let shadowCv: HTMLCanvasElement | null = null;
+export function shadowSprite() {
+  if (shadowCv) return shadowCv;
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 48;
+  const x = c.getContext('2d')!;
+  x.filter = 'blur(5px)';
+  x.fillStyle = B.shadow;
+  x.beginPath();
+  x.ellipse(64, 24, 52, 14, 0, 0, Math.PI * 2);
+  x.fill();
+  return (shadowCv = c);
+}
 function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
-  ctx.save();
-  ctx.fillStyle = B.shadow;
-  ctx.filter = 'blur(3px)';
-  ctx.beginPath();
-  ctx.ellipse(x, y, w, w * 0.28, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  // 스프라이트 안 타원 반지름 52 → 화면 w
+  const k = w / 52;
+  ctx.drawImage(shadowSprite(), x - 64 * k, y - 24 * k, 128 * k, 48 * k);
 }
 /** 키트 9-slice 그림을 캔버스에 (slice = 원본 px · corner = 화면 px) */
 export function drawNine(ctx: CanvasRenderingContext2D, im: HTMLImageElement, slice: number, x: number, y: number, w: number, h: number, corner: number) {
@@ -172,7 +182,8 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   ctx.globalAlpha = 1;
   if (u.dead) return;
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
-  if (sp && (u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
+  // 이름표: 결투장 상대만 (AI 동료 8인 이름표가 서로 겹치던 것 · 머리 위 HP바로 충분)
+  if (sp && u.pvp) tag(ctx, sp.def.name, x, y + 12);
   // 보호막 · 기절 · 침묵 · 화상
   // 보호막이 남아 있는 동안: 그림 1↔2를 shieldLoopSec마다 · 알파 0.7로 몸에 겹침 (그림이 없으면 예전 타원)
   const FA = CONFIG.combat.fxArt;

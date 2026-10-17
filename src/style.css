@@ -70,18 +70,8 @@ button { font-family: inherit; cursor: pointer; }
 .talk .nxt { position: absolute; right: var(--s-xl); bottom: var(--s-lg); font-size: var(--fs-sm); color: var(--c-textMute); }
 
 /* ───────── 로비 (킹스레이드 0-2 배치: 왼쪽 위 내 정보 · 왼쪽 진행 중 · 오른쪽 큰 원형 버튼 · 아래 아이콘 줄) ───────── */
-.lobby .me { position: absolute; left: var(--s-md); top: var(--s-sm); width: 230px; display: flex; gap: var(--s-sm); align-items: center; padding: var(--s-sm); }
 .xbar { height: 5px; background: var(--c-panelDeep); border-radius: var(--r-sm); overflow: hidden; }
 .xbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--c-mp2), var(--c-exp)); }
-.lobby .quest { position: absolute; left: var(--s-md); top: 74px; width: 230px; }
-.qrow { position: relative; height: 26px; text-align: left; font-size: var(--fs-md); font-weight: var(--fw-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lobby .bigs { position: absolute; right: var(--s-lg); top: var(--s-md); display: flex; flex-direction: column; gap: var(--s-md); align-items: flex-end; }
-.round { width: 74px; height: 74px; border-radius: 50%; border: var(--b-thick) solid var(--c-gold2); background: radial-gradient(circle at 50% 35%, var(--c-panelHi), var(--c-panel)); color: var(--c-text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-xxs); font-size: var(--fs-md); font-weight: var(--fw-black); box-shadow: var(--sh-drop); }
-.round .ic { font-size: var(--fs-h2); }
-.round.main { width: 96px; height: 96px; border-color: var(--c-btnHi2); background: radial-gradient(circle at 50% 35%, var(--c-btnHi2), var(--c-btnHi)); color: var(--c-btnText); box-shadow: var(--sh-btn); }
-.lobby .dock { position: absolute; left: 0; right: 0; bottom: 0; height: 60px; display: flex; justify-content: center; gap: var(--s-sm); padding: var(--s-xs) var(--s-md); background: linear-gradient(transparent, var(--c-barFade) 35%); }
-.dk { position: relative; width: 58px; height: 54px; border-radius: 50%; border: var(--b-base) solid var(--c-gold2); background: radial-gradient(circle at 50% 35%, var(--c-panel2), var(--c-panel)); color: var(--c-text); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: var(--fs-xs); font-weight: var(--fw-bold); }
-.dk .ic { font-size: var(--fs-xl); }
 .badge { position: absolute; right: -4px; top: -2px; padding: 0 var(--s-xs); border-radius: var(--r-md); background: var(--c-bad); color: var(--c-text); font-style: normal; font-size: var(--fs-xxs); font-weight: var(--fw-black); }
 
 /* ───────── 모험 ───────── */
@@ -319,15 +309,6 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 .fbcol .chip, .body > .hlist, .fbcol ~ .col { position: relative; z-index: 1; }
 .recruit .rc-fb { align-self: flex-end; width: auto; height: 98%; aspect-ratio: 1; }
 /* 아이콘 크게 (1.2~1.4배) */
-.dk { width: 72px; height: 64px; }
-.dk .ic { font-size: var(--fs-h2); }
-.lobby .dock { height: 74px; }
-.round { width: 92px; height: 92px; }
-.round.main { width: 124px; height: 124px; }
-.round.art { background-size: cover; background-position: center; color: var(--c-white); text-shadow: var(--sh-outlineSm); border-color: var(--c-gold1); box-shadow: var(--sh-roundIn); }
-.round.main.art { box-shadow: var(--sh-roundInMain); }
-.round .ic { font-size: var(--fs-h1); }
-.round span { font-family: var(--f-menu); font-weight: var(--fw-menu); }
 .shopcats { width: 124px; }
 .shopcats .tab { height: 40px; font-size: var(--fs-lg); }
 .cur { height: 28px; font-size: var(--fs-base); }
@@ -337,11 +318,6 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
 .hrow { height: 52px; }
 .hrow .pt.s { width: 40px; height: 40px; }
 /* 결과·보상: 아이콘 크게 + 빛 */
-.lobby .bigs { top: var(--s-xs); gap: var(--s-xs); }
-.round { width: 84px; height: 84px; }
-.round.main { width: 112px; height: 112px; }
-.lobby .dock { pointer-events: none; }
-.lobby .dock .dk { pointer-events: auto; }
 .gi.slot { opacity: 0.7; }
 /* 편성: 아직 없는 영웅 (흐리게 · 자물쇠 · docs/SCREENS_1017.md) */
 /* ───────── UI 키트 그림 테두리 (docs/ART_UI_1017.md · UI_POLISH_1017 §5) ─────────
@@ -391,19 +367,6 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
 .medalbtn img.ic.img { width: 100%; height: 100%; vertical-align: top; }
 #ticker { color: var(--c-text); }
 /* §1 로비: 원정대장 판 · 진행 중 목록 · 큰 메달 3 · 아래 메달 11 */
-.lobby .me b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lobby .me .pw { color: var(--c-gold1); font-family: var(--f-num); }
-.qrow { height: 28px; padding: 0 var(--s-xs); border: 0; border-bottom: var(--b-thin) solid color-mix(in srgb, var(--c-gold) 45%, transparent); border-radius: 0; background: none; color: var(--c-text); text-shadow: var(--sh-textBack); }
-.lobby .bigs { gap: var(--s-lg); }
-.medal { position: relative; width: 74px; height: 74px; padding: 0; border: 0; background: none; }
-.medal img.ic.img { width: 100%; height: 100%; vertical-align: top; }
-.medal span { position: absolute; left: 50%; bottom: calc(var(--s-xs) * -1); transform: translateX(-50%); white-space: nowrap; padding: 0 var(--s-sm); border-radius: var(--r-sm); background: linear-gradient(var(--c-gold1), var(--c-gold3)); color: var(--c-ink); font-family: var(--f-menu); font-weight: var(--fw-menu); font-size: var(--fs-xs); }
-.medal.main img.ic.img { filter: drop-shadow(var(--sh-glowHi)); }
-.lobby .dock { justify-content: space-evenly; }
-.dk { width: 62px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
-.dk img.ic.img { width: 52px; height: 52px; vertical-align: top; }
-.dk span { color: var(--c-white); text-shadow: var(--sh-outlineGold); font-family: var(--f-menu); font-weight: var(--fw-menu); font-size: var(--fs-sm); }
-.dk .badge { top: 0; right: 0; }
 /* §2 영웅 정보: 목록은 초상화 + 이름만(좁게) · 전신은 목록 오른쪽부터 */
 .hlist { width: 58px; }
 .hrow { height: auto; flex-direction: column; justify-content: center; gap: var(--s-xxs); padding: var(--s-xs) 0; border: var(--b-thin) solid var(--c-line); background: var(--c-panel); color: var(--c-text); }
@@ -445,16 +408,11 @@ img.ic.img { width: 1.6em; height: 1.6em; vertical-align: -0.45em; }
    글씨 3종: 본문 Noto Serif KR(--f-base · --f-menu) · 제목·이름 Hahmlet(--f-hero) · 숫자 Cinzel(--f-num) */
 body, .scr, #topbar, #ticker, .modal, .toast { font-family: var(--f-base); text-shadow: var(--sh-navyText); }
 /* 제목·이름 = 크림 + 진갈색 외곽선 + 아래 그림자 */
-.top h2, .hn, .skn, .shopc b, .lobby .me b, .body > .col > .row.panel > .col > b:first-child { font-family: var(--f-hero); font-weight: var(--fw-hero); color: var(--c-text); text-shadow: var(--sh-titleText); }
+.top h2, .hn, .skn, .shopc b, .body > .col > .row.panel > .col > b:first-child { font-family: var(--f-hero); font-weight: var(--fw-hero); color: var(--c-text); text-shadow: var(--sh-titleText); }
 /* §2 로비: 원정대장 이름 Hahmlet · Lv는 금 숫자 작게 */
-.lobby .me b .gold { font-family: var(--f-num); font-size: var(--fs-md); color: var(--c-gold1); }
 /* 진행 중 목록: 아이콘·글씨 세로 가운데 · 줄 높이 같게 */
-.qrow { display: flex; align-items: center; gap: var(--s-sm); height: 25px; font-family: var(--f-base); font-size: var(--fs-md); }
-.qrow img.ic.img, .qrow svg.ic { flex: none; vertical-align: middle; }
 /* 큰 메달 이름: 리본 폭 = 메달 폭 90% · Hahmlet */
-.medal span { width: 90%; text-align: center; padding: 0; font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-lg); text-shadow: none; }
 /* 아래 메뉴 이름: 모두 같은 높이·크기 (Hahmlet) */
-.dk span { display: block; height: 16px; line-height: 16px; font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-md); }
 /* 영웅 정보: 목록 이름 12px · 초상화 아래 남색 띠 가운데 */
 .hlist { width: 64px; }
 .hrow { padding: var(--s-xs) 0 0; overflow: hidden; }
@@ -552,7 +510,6 @@ input, select, textarea { font-family: inherit; }
 /* 0-7 불투명 네모 배경 대신 반투명 남색 알약 */
 .chip { background: color-mix(in srgb, var(--c-panelDeep) 80%, transparent); }
 /* §9 로비 진행 중 목록: 알림 점을 줄 안쪽 오른쪽으로 (판 테두리에 안 잘리게) */
-.qrow .badge { position: static; margin-left: auto; margin-right: var(--s-lg); flex: none; }
 /* §10 출석: 보상 칸 카드 가로 · 받기 버튼은 판 안쪽 가운데 아래 */
 /* §1 로딩: 다시 시도 */
 #loading [data-retry] { align-self: flex-start; margin-top: var(--s-sm); }

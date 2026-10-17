@@ -44,14 +44,14 @@ export interface Screen {
   back?: false | ((p: Record<string, unknown>) => void);
 }
 export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero' | 'bag' | 'shop' | 'portal' | 'mission' | 'guild' | 'friends' | 'ranking' | 'mail' | 'settings';
-export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(여관)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점', portal: '콘텐츠', mission: '미션', guild: '길드', friends: '친구', ranking: '랭킹', mail: '우편', settings: '설정' };
+export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '로비(마을)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점', portal: '콘텐츠', mission: '미션', guild: '길드', friends: '친구', ranking: '랭킹', mail: '우편', settings: '설정' };
 /** 화면 흐름: 이 화면에서 1탭으로 갈 수 있는 곳 [가는 곳, 누르는 것] (흐름도 · 탭 수 시험 · 실제 이동은 go()) */
 export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   title: [['battle', '원정 출발 (처음: 프롤로그 > 1-1)'], ['lobby', '원정 출발 (이어서)']],
-  lobby: [['adventure', '모험 (오른쪽 큰 버튼)'], ['portal', '월드 보스·레이드 (오른쪽 큰 버튼) · 콘텐츠 (아래 줄)'], ['prep', '왼쪽 「다음 스테이지」 > 전투 준비'], ['heroes', '영웅 (아래 줄)'], ['prep', '편성 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['mission', '미션·업적 (아래 줄 · 진행 중)'], ['guild', '길드 (아래 줄)'], ['friends', '친구 (아래 줄)'], ['ranking', '랭킹 (아래 줄)'], ['mail', '우편 (상단 바)'], ['settings', '설정 (아래 줄)']],
+  lobby: [['adventure', '출격 (오른쪽 아래 큰 버튼 · 「출격」 간판)'], ['portal', '「결투장」·「레이드」 간판 · ≡ 메뉴 > 콘텐츠'], ['prep', '왼쪽 「다음: 스테이지」 > 전투 준비 · ≡ 메뉴 > 편성'], ['heroes', '영웅 (아래 메달 · 「영웅」 간판)'], ['bag', '가방 (아래 메달 · 「대장간」 간판)'], ['mission', '임무 (아래 메달 · 왼쪽 일일 미션)'], ['shop', '「상점」 간판 · ≡ 메뉴'], ['guild', '「길드」 간판 · ≡ 메뉴'], ['friends', '≡ 메뉴 > 친구'], ['ranking', '≡ 메뉴 > 랭킹'], ['mail', '≡ 메뉴 > 우편'], ['settings', '≡ 메뉴 > 설정']],
   adventure: [['prep', '스테이지 고르고 「전투 준비」'], ['portal', '지도 위 토벌·상급 던전·탑 입구'], ['lobby', '뒤로']],
   prep: [['battle', '전투 시작'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로']],
-  battle: [['portal', '콘텐츠 결과 > 콘텐츠'], ['lobby', '결과 > 로비'], ['adventure', '결과 > 모험'], ['battle', '결과 > 다시 / 다음'], ['prep', '패배 > 편성']],
+  battle: [['portal', '콘텐츠 결과 > 나가기'], ['lobby', '첫 전투 결과 > 다음 전투'], ['adventure', '스토리 결과 > 나가기'], ['battle', '결과 > 다시하기 / 다음 전투'], ['prep', '패배 > 편성']],
   heroes: [['hero', '영웅 카드'], ['lobby', '뒤로']],
   hero: [['heroes', '뒤로']],
   bag: [['lobby', '뒤로']],
@@ -174,6 +174,8 @@ function showTicker(l: ChatLine) {
 /** 채팅 창 열기 (screensD가 등록) */
 let chatOpener: () => void = () => {};
 export const setChatOpener = (f: () => void) => (chatOpener = f);
+/** 채팅 창 열기 (로비 ≡ 메뉴 등) */
+export const openChatWindow = () => chatOpener();
 /** 뒤로 (없으면 로비) */
 export function back(fallback: ScreenId = 'lobby') {
   const h = history.pop();
