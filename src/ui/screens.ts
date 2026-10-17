@@ -259,12 +259,14 @@ register('prep', {
       const ids = partyIds();
       const bonds = activeBonds(ids);
       const mine = HEROES.filter((h) => owned(h.id) && (tab === 'all' || zoneOf(h.id) === tab));
+      // 빈 땅이 안 남게: 아직 없는 영웅을 흐리게(자물쇠) 뒤에 채움 · 누르면 상점 영웅 칸으로 (docs/SCREENS_1017.md)
+      const notMine = HEROES.filter((h) => !owned(h.id) && (tab === 'all' || zoneOf(h.id) === tab));
       const bl = boostLeft();
       const cost = st ? stageCost(st.d) : 0;
       root.innerHTML = `<div class="body">
           <div class="col grow">
             ${zoneTabs(tab)}
-            <div class="roster grow scroll">${mine.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ids.includes(h.id) ? 'in' : '')).join('')}</div>
+            <div class="roster grow scroll">${mine.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ids.includes(h.id) ? 'in' : '')).join('')}${notMine.map((h) => card(h.id, `<span class="lk">${icon('lock')}</span>`).replace('data-h=', 'data-lk=')).join('')}</div>
             <span class="xs mute">카드를 눌러 넣고 빼요 (최대 ${PARTY_MAX}명) · 위치(전방·중앙·후방)는 직업으로 정해지고 전투에서 그 순서로 서요 · 길게 누르면 영웅 정보</span>
           </div>
           <div class="col side">
@@ -316,6 +318,7 @@ register('prep', {
           draw();
         };
       });
+      $$('[data-lk]', root).forEach((b) => (b.onclick = () => go('shop', { cat: 'hero' })));
       $$('[data-out]', root).forEach(
         (b) =>
           (b.onclick = () => {
