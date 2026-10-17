@@ -395,7 +395,7 @@ svg.ic.svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; 
 #title .tip { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
 .fmap.panel { background: var(--c-ink); border-color: var(--c-gold); }
 /* 지도 그림은 비율 그대로(가로 꽉) · 노드 %는 그림 기준 · 위아래만 살짝 잘림 */
-.fmap-in { position: absolute; left: 0; top: 50%; width: 100%; aspect-ratio: 1672 / 941; transform: translateY(-50%); background: center/100% 100% no-repeat; }
+.fmap-in { position: absolute; left: 0; top: 50%; width: 100%; aspect-ratio: 1672 / 941; transform: translateY(-50%); background-position: center; background-repeat: no-repeat; background-size: cover; }
 .fmap-in polyline { stroke: var(--c-gold1); opacity: 0.6; }
 /* 지도 노드: 길이 보이게 작은 메달 · 잠긴 칸은 흐리게 */
 .fmap-in .node { width: 40px; height: 34px; border-radius: var(--r-lg); background: var(--c-glass); border-color: var(--c-gold); box-shadow: var(--sh-drop); }
