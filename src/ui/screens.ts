@@ -12,9 +12,7 @@ import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { accNeed, boostLeft, boostMult, buyBooster, stageCost, stamina } from '../game/account';
 import { freeSummonLeft } from '../game/gear';
-import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, milesReady, nextMile, triesText, validLast, type Run } from '../game/content';
-import { openMiles } from './milestones';
-import { playNotices } from './notice';
+import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
 import { view } from './view';
 import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
@@ -102,7 +100,7 @@ register('lobby', {
     const lead = partyIds()[0] ?? 'woongs';
     const NODES = nodesOf(c);
     const stars = NODES.reduce((a, _, i) => a + starsAt({ c, s: i + 1, d }), 0);
-    const mile = nextMile();
+    const mile = MILESTONES.find((m) => !S.miles.includes(m.id));
     const ready = milesReady().length;
     const nodes = NODES.map(([x, y], i) => {
       const id = { c, s: i + 1, d };
@@ -116,7 +114,7 @@ register('lobby', {
       <div class="mhud">
         <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
         <div class="mquest">
-          <button class="mq" data-miles><em class="tag mile">이정표</em>${mile ? esc(mile.name) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
+          <button class="mq" data-portal="miles"><em class="tag mile">이정표</em>${mile ? esc(mile.name.replace(/^스토리 /, '')) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
           <button class="mq" data-next><em class="tag story">스토리</em>${stageName(ns)} 클리어</button>
         </div>
         <div class="mside">
@@ -139,19 +137,10 @@ register('lobby', {
     $$('[data-s]', root).forEach((b) => (b.onclick = () => stageInfo({ c, s: +b.dataset.s!, d })));
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
-    $('[data-miles]', root).onclick = () => openMiles();
     $('[data-attend]', root).onclick = () => (attendToday() ? attendPopup() : toast('오늘 출석 보상은 이미 받았어요'));
     mainMapStart($('.mlayer', root), c, d, lead, ns.s);
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
-    // 새 장에 처음 들어오면 그 장 이정표 창을 한 번 (S5) · 첫 진입(프롤로그 직후)은 1장부터
-    if (!document.querySelector('.modal') && !S.seen[`miles:${c}`]) {
-      S.seen[`miles:${c}`] = true;
-      persist();
-      openMiles(c);
-    }
-    // 전투에서 쌓인 알림 카드 (S4)
-    playNotices();
     // 메인이 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },
