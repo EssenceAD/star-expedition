@@ -566,7 +566,7 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
 /** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
 /** 도트 아이콘 (UI v3 · tools/pixel_ui.py · pixel_icons2.py → public/art/ui2/icons) — 키 → 파일 이름 */
 export const ICON_PX: Record<string, string> = {
-  heroes: 'hero', recruit: 'hero', formation: 'team', bag: 'bag', shop: 'shop', friend: 'friend', guild: 'guild', content: 'portal', mission: 'mission', event: 'event', attend: 'attend',
+  tree: 'tree', heroes: 'hero', recruit: 'hero', formation: 'team', bag: 'bag', shop: 'shop', friend: 'friend', guild: 'guild', content: 'portal', mission: 'mission', event: 'event', attend: 'attend',
   mail: 'mail', settings: 'gear', chat: 'chat', ranking: 'trophy', achieve: 'trophy', back: 'back', next: 'next', close: 'close', cross: 'close', check: 'check', lock: 'lock', star: 'star', join: 'star',
   repeat: 'repeat', auto: 'auto', rotate: 'repeat', adventure: 'adventure', story: 'story', sk_hammer: 'sk_hammer', craft: 'sk_hammer', rune: 'rune', pointer: 'pointer', open: 'pointer', warn: 'warn',
   tower: 'tower', target: 'target', summon: 'summon', skip: 'skip', sweep: 'skip', power: 'power', offline: 'offline', menu: 'menu', emote: 'emote', badge: 'badge', chest: 'chest', booster: 'booster',
