@@ -57,8 +57,6 @@ register('title', {
     a2hsBanner(root);
     $('[data-go]', root).onclick = async () => {
       goFullscreen();
-      const { initAudioEngine } = await import('../core/audio/engine');
-      initAudioEngine();
       // 첫 진입: 프롤로그(1-1 필드에서) → 1-1 전투 → 승리 → 로비 (STAR_PLAN_v2 §1-1)
       if (!S.prologue) go('battle', { stage: { c: 1, s: 1, d: 0 }, first: true });
       else go('lobby');

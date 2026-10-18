@@ -335,3 +335,9 @@ body, #stage { font-weight: normal; }
 #stage .trow > span { grid-column: 2 / -1; }
 /* 결과 보상 칸: 높이 고정이라 숫자가 칸 밖으로 → 내용만큼 · 가운데 정렬 */
 #stage .rcol .rw div.rwc { height: auto; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-xxs); padding: var(--s-sm) var(--s-xs); line-height: 1.2; }
+/* 영웅 정보: 전신 위 빈자리에 대사 한 줄 (말풍선) */
+#stage .fbcol .hvoice { position: absolute; z-index: 2; left: 0; right: 0; top: var(--s-sm); margin: 0; padding: var(--s-xs) var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); text-shadow: none; font-size: var(--fs-md); line-height: 1.35; text-align: center; animation: v3PopIn 0.4s ease-out both; }
+#stage .fbcol .hvoice::after { content: ''; position: absolute; left: 50%; bottom: calc(var(--s-sm) * -1); border: var(--s-sm) solid transparent; border-top-color: var(--px-ink); border-bottom: 0; transform: translateX(-50%); }
+/* 길드: 만들기·새로고침 줄 · 이름 입력 */
+#stage .gtools { align-items: center; gap: var(--s-sm); margin-bottom: var(--s-sm); }
+#stage .gname-in { width: 100%; padding: var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); font: inherit; }

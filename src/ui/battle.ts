@@ -6,6 +6,8 @@ import { headHpPref, render, renderBg, type Art } from '../battle/render';
 import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
+import { music } from '../core/audio/music';
+import { jingle } from '../core/audio/sfx';
 import { heroOf } from '../data/heroes';
 import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
@@ -242,6 +244,9 @@ function setup() {
   if (wait) void wait.then(() => (artWait = false));
   b.auto = keepAuto;
   b.speed = keepSpeed;
+  // 배경음악: 콘텐츠는 모드별 · 스토리는 그 장 지역 · 보스 스테이지는 보스곡
+  const RUN_BGM: Record<string, string> = { raid: 'raid', graid: 'raid', world: 'world', arena: 'arena', tower: 'tower', dungeon: 'dungeon', day: 'dungeon', side: 'story' };
+  music(run ? (RUN_BGM[run.mode] ?? CHAPTERS[(Math.max(1, Number(run.arg) || 1) - 1) % CHAPTERS.length].region) : isBoss(st) ? 'boss' : CHAPTERS[st.c - 1].region);
   b.cutIns = flag('cutIn') && !getPref('cutOff', false) ? 'big' : 'off';
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
   speedLabel();
@@ -357,6 +362,7 @@ function beginRun(r: Run) {
 /** 결과 조건 표시: 됨 = 금색 체크 · 안 됨 = 흐린 X */
 const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${icon(ok ? 'check' : 'cross')}</i>`;
 function showResult() {
+  jingle(b!.phase === 'win' ? 'win' : 'lose');
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
   if (sideEnd) return playTalk(sideEnd, showRunResult);
@@ -595,7 +601,8 @@ register('battle', {
     if (paused || artWait || loading) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
-    for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
+    // 한 프레임에 같은 소리는 한 번만 (회복·타격이 몰려도 띵띵띵 없게)
+    for (const s of new Set(b.sounds)) combatSynth(s, s === 'hit' ? 0.45 : s === 'heal' ? 0.5 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
       shown = true;
       setTimeout(showResult, (b.phase === 'win' ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose) * 1000);

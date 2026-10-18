@@ -13,6 +13,8 @@ import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
 import { gachaShow } from './gacha';
+import { jingle, sfx } from '../core/audio/sfx';
+import { taglineOf } from '../data/taglines';
 import { $, $$, comingSoon, CUR_DESC, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
@@ -26,7 +28,11 @@ const ilvNow = () => {
   const b = bestCleared();
   return b ? powIdx(b) : 0;
 };
-const say = (r: string, m: Record<string, string>) => toast(m[r] ?? r);
+const say = (r: string, m: Record<string, string>) => {
+  // 됐으면 반짝 · 안 됐으면 부드러운 「뚝」
+  sfx(/^(ok|0|great|up)$/.test(r) ? 'item' : 'place_bad', 0.7);
+  toast(m[r] ?? r);
+};
 
 // ───────── 영웅 정보 ─────────
 /** 탭 4개 (FINAL_1018 §4): 일반 · 스킬 · 장비 · 성장 — 글씨만 · 탭마다 예전 칸 묶음 */
@@ -47,7 +53,7 @@ register('hero', {
       const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="cap xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
       root.innerHTML = `<div class="body">
         <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}" title="${heroOf(x).name} Lv.${S.heroes[x].lv}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}</span><span class="hst">${iconText('star').repeat(S.heroes[x].star ?? 1)}</span><b class="hlv">Lv.${S.heroes[x].lv}</b></button>`).join('')}</div>
-        <div class="fbcol"><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
+        <div class="fbcol"><p class="hvoice">「${esc(h.voice?.[Math.floor(Math.random() * h.voice.length)] ?? taglineOf(id, h.concept.split('.')[0]))}」</p><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
         <div class="col grow">
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
@@ -298,6 +304,7 @@ export function heroShopCard(id: string) {
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
 export function recruitShow(id: string, done: () => void) {
+  jingle('recruit');
   const h = heroOf(id);
   const j = JOBS[h.job];
   const el = document.createElement('div');

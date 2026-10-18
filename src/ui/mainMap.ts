@@ -74,6 +74,10 @@ function addFig(n: number, h: number, face: number, anim: Anim, [dx, dy] = [0, 0
   figs.push({ cv, anim, h, face });
 }
 
+let refit: (() => void) | null = null;
+view.onResize.push(() => {
+  if (layer?.isConnected) refit?.();
+});
 /** 메인에 들어올 때: 지도 레이어 · 이 장 · 원정대장 · 다음 노드 n */
 export function mainMapStart(el: HTMLElement, c: number, leadId: string, next: number) {
   layer = el;
@@ -96,6 +100,8 @@ export function mainMapStart(el: HTMLElement, c: number, leadId: string, next: n
     at.y = (lo + hi) / 2;
     clamp();
   };
+  // 창 크기가 바뀌면(PC 창 늘리기·전체 화면) 지도를 다시 맞춤 → 오른쪽 끝이 비지 않게
+  refit = fit;
   const src = mapUrl(c);
   img = imgs[src] ??= Object.assign(new Image(), { src });
   if (!img.complete) img.addEventListener('load', fit, { once: true });

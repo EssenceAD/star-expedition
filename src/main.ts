@@ -7,6 +7,8 @@ import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
 import { applyTheme } from './theme/tokens';
+import { initAudioEngine } from './core/audio/engine';
+import { sfx } from './core/audio/sfx';
 import { $, currentScreen, go, scrollHints, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
@@ -21,6 +23,13 @@ import { requestSkill } from './battle/sim';
 import { makeGear } from './game/gear';
 
 applyTheme();
+// 소리: 첫 터치에 열림 (타이틀 터치부터 음악) · 버튼마다 「톡」 · 뒤로/닫기는 「닫힘」
+initAudioEngine();
+document.addEventListener('click', (e) => {
+  const b = (e.target as Element).closest('button');
+  if (!b || b.disabled) return;
+  sfx(b.matches('[data-back], .x, [data-close]') ? 'close' : 'tap', 0.5);
+}, { capture: true });
 const stage = $('#stage');
 const cv = $('#cv') as HTMLCanvasElement;
 view.ctx = cv.getContext('2d')!;

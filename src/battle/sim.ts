@@ -288,6 +288,7 @@ export function addSt(u: Unit, s: StatusKey, dur: number, v = 0) {
 
 function spawnWave(b: Battle) {
   b.wave++;
+  if (b.wave > 0) b.sounds.push('wave');
   const specs = b.setup.waves[b.wave];
   b.mobs = specs.map((m, i) => {
     const [ox, y] = m.boss ? K.bossSlot : K.mobSlots[i % K.mobSlots.length];
@@ -446,6 +447,7 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
   return dmg;
 }
 function kill(b: Battle, u: Unit) {
+  b.sounds.push(u.side === 'hero' ? 'down' : 'death');
   u.dead = true;
   u.deadT = 0;
   u.pending = [];
@@ -473,6 +475,7 @@ function heal(b: Battle, by: Unit, to: Unit, amt: number) {
   to.hp += real;
   by.healed += real;
   b.stats.healed += real;
+  if (real > 0) b.sounds.push('heal');
   placeNum(b, to.x, topOf(to), n, 'heal', false);
 }
 
@@ -849,6 +852,7 @@ export function step(b: Battle, dtReal: number) {
       }
     } else if ((b.pat.left -= dt) <= 0) {
       b.pat.warn = P.warn;
+      b.sounds.push('warn');
       b.pat.text = P.text.replace('{boss}', boss.name);
       // 경고 동안 준비 칸을 붙들고 있음 (지역 보스 그림만 · ANIM_1017 ③)
       if (boss.anims.idle?.frames[0].startsWith('bosses2/')) boss.prep = BOSS_PREP[P.key].cell;

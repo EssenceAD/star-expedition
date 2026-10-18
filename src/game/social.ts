@@ -27,8 +27,25 @@ export const GUILDS: Guild[] = [
   { id: 'ai1', name: '새벽등불 상단', real: false, desc: '매일 출석하는 성실파 AI 길드', lv: 7, members: CHAT_NAMES.slice(0, 6) },
   { id: 'ai2', name: '심연낚시 동호회', real: false, desc: '탑과 월드 보스에 진심인 AI 길드', lv: 9, members: CHAT_NAMES.slice(6, 12) },
   { id: 'ai3', name: '느긋한 여관', real: false, desc: '천천히 즐기는 AI 길드', lv: 4, members: [...CHAT_NAMES.slice(3, 9)] },
+  { id: 'ai4', name: '바람개비 기사단', real: false, desc: '결투장 위주 AI 길드', lv: 6, members: CHAT_NAMES.slice(1, 8) },
+  { id: 'ai5', name: '별빛 수선집', real: false, desc: '장비 강화에 진심인 AI 길드', lv: 5, members: CHAT_NAMES.slice(4, 10) },
+  { id: 'ai6', name: '모래시계 탐험대', real: false, desc: '스토리 진도 빠른 AI 길드', lv: 8, members: CHAT_NAMES.slice(2, 7) },
+  { id: 'ai7', name: '잿불 대장간', real: false, desc: '길드 레이드 꼬박꼬박 AI 길드', lv: 10, members: CHAT_NAMES.slice(5, 12) },
+  { id: 'ai8', name: '구름 정원회', real: false, desc: '초보 환영 AI 길드', lv: 2, members: CHAT_NAMES.slice(0, 4) },
 ];
-export const guildOf = (s: Save = S) => GUILDS.find((g) => g.id === s.guild.id) ?? null;
+/** 내가 만든 길드 (멤버는 나부터 · Lv.1) */
+const myGuild = (s: Save): Guild | null => (s.guild.own ? { id: 'mine', name: s.guild.own.name, real: false, desc: s.guild.own.desc, lv: 1, members: [] } : null);
+export const guildOf = (s: Save = S) => (s.guild.id === 'mine' ? myGuild(s) : (GUILDS.find((g) => g.id === s.guild.id) ?? null));
+/** 길드 만들기: 금화 SO.guild.createGold · 이름 2~8자 */
+export function createGuild(name: string, s: Save = S, now = Date.now()): 'ok' | 'name' | 'poor' {
+  const n = name.trim();
+  if (n.length < 2 || n.length > 8) return 'name';
+  if (!spend('gold', SO.guild.createGold, s)) return 'poor';
+  s.guild.own = { name: n, desc: '내가 만든 길드' };
+  s.guild.id = 'mine';
+  rollGuild(s, now);
+  return 'ok';
+}
 function rollGuild(s: Save, now: number) {
   if (s.guild.week !== weekOf(now)) ((s.guild.week = weekOf(now)), (s.guild.weekContrib = 0), (s.guild.raid = 0));
 }
@@ -172,7 +189,7 @@ const pick = <X>(xs: X[]) => xs[Math.floor(Math.random() * xs.length)];
 /** AI 한 줄 (말투는 「체크인」 chat_pool 참고 · 랭커면 칭호) */
 export function aiLine(ch: ChatLine['ch'] = 'world', s: Save = S, now = Date.now()): ChatLine {
   const g = guildOf(s);
-  const name = ch === 'guild' && g && !g.real ? pick(g.members) : pick(CHAT_NAMES);
+  const name = ch === 'guild' && g && !g.real && g.members.length ? pick(g.members) : pick(CHAT_NAMES);
   const text = pick(CHAT_LINES).replace('{영웅}', pick(HEROES).name).replace('{보스}', pick(CHAPTER_MOBS.slice(0, 3)).boss).replace('{장}', '숲 동굴');
   const top = (Object.keys(BOARD_NAME) as Board[]).find((b) => board(b, s, now).slice(0, SO.titleTop).some((x) => x.name === name));
   return { name, text, at: now, ch, title: top ? TITLE_OF[top] : undefined };

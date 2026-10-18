@@ -10,6 +10,8 @@ import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
 import { cur, persist, S, type ChatLine } from '../game/state';
 import { fullbodyPath } from '../game/costume';
 import { icon, iconText } from '../theme/tokens';
+import { music } from '../core/audio/music';
+import { sfx } from '../core/audio/sfx';
 
 export const $ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as E;
 export const $$ = <E extends HTMLElement = HTMLElement>(s: string, root: ParentNode = document) => [...root.querySelectorAll(s)] as E[];
@@ -79,6 +81,11 @@ export function go(id: ScreenId, params: Record<string, unknown> = {}, push = tr
     current.s.leave?.();
     current.root.remove();
     if (push) history.push({ id: current.id, params: current.params });
+  }
+  // 배경음악: 화면마다 (전투는 battle.ts가 지역·모드별로) · 밤(20~6시) 로비는 밤 곡
+  if (id !== 'battle') {
+    const h = new Date().getHours();
+    music(({ title: 'title', shop: 'shop', hero: 'hero', heroes: 'hero', friends: 'friends', guild: 'guild' } as Record<string, string>)[id] ?? (h >= 20 || h < 6 ? 'night' : 'lobby'));
   }
   const root = document.createElement('div');
   root.className = s.title ? 'scr withbar' : 'scr';
@@ -204,6 +211,7 @@ export function toast(msg: string) {
 export function modal(title: string, html: string, buttons: [string, (() => void | boolean) | null, boolean?][]): HTMLElement {
   const m = document.createElement('div');
   m.className = 'modal';
+  sfx('open', 0.6);
   m.innerHTML = `<div class="panel"><h3>${title}</h3><div class="grow scroll">${html}</div><div class="row" style="justify-content:flex-end">${buttons.map(([t, , hi], i) => `<button class="btn${hi ? ' hi' : ''}" data-i="${i}">${t}</button>`).join('')}</div></div>`;
   $('#stage').append(m);
   $$('button[data-i]', m).forEach((b) => {
