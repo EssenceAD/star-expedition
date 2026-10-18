@@ -282,12 +282,14 @@ export function watchFit(root: HTMLElement) {
 const hints = new Map<HTMLElement, HTMLElement[]>();
 export function scrollHints(stage: HTMLElement) {
   for (const [el, hs] of hints) if (!el.isConnected) (hs.forEach((h) => h.remove()), hints.delete(el));
-  for (const el of $$('.scroll', stage)) {
+  for (const el of $$('.scroll, .hscroll', stage)) {
     let hs = hints.get(el);
-    const over = el.scrollHeight > el.clientHeight + 1 && el.offsetParent !== null;
+    // 가로 목록(.hscroll)은 왼쪽·오른쪽 끝에 < > (형철 10/18)
+    const hz = el.classList.contains('hscroll');
+    const over = (hz ? el.scrollWidth > el.clientWidth + 1 : el.scrollHeight > el.clientHeight + 1) && el.offsetParent !== null;
     if (!over && !hs) continue;
     if (!hs) {
-      hs = ['up', 'down'].map((d) => {
+      hs = (hz ? ['left', 'right'] : ['up', 'down']).map((d) => {
         // 그림 대신 코드 화살표 (UI v2)
         const h = document.createElement('i');
         h.className = `scrollhint ${d}`;
@@ -303,6 +305,14 @@ export function scrollHints(stage: HTMLElement) {
     for (let e: HTMLElement | null = el; e && e !== stage; e = e.offsetParent as HTMLElement | null) ((x += e.offsetLeft), (y += e.offsetTop));
     for (let e = el.parentElement; e && e !== stage; e = e.parentElement) ((x -= e.scrollLeft), (y -= e.scrollTop));
     const [up, dn] = hs;
+    if (hz) {
+      up.hidden = !over || el.scrollLeft <= 1;
+      dn.hidden = !over || el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+      up.style.top = dn.style.top = `${y + el.offsetHeight / 2}px`;
+      up.style.left = `${x + 2}px`;
+      dn.style.left = `${x + el.offsetWidth - 2}px`;
+      continue;
+    }
     up.hidden = !over || el.scrollTop <= 1;
     dn.hidden = !over || el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
     up.style.left = dn.style.left = `${x + el.offsetWidth / 2}px`;
