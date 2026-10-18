@@ -396,8 +396,9 @@ export const CONFIG = {
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
-    /** 메인 모험 지도 (RECOVER_1018 S1): 화면 덮는 크기의 몇 배 · 처음 다음 노드를 둘 화면 비율 자리 · 끌기 시작 거리(px) · 원정대장·보스 크기(전투 키 대비) · 발 자리(노드 가운데에서 px) · 그림자 반지름 · 보스 노드에서 원정대장 비켜 서기(px) */
-    mainMap: { zoom: 1.15, focus: [0.5, 0.6] as [number, number], dragPx: 6, heroScale: 0.42, bossScale: 0.3, footDy: -16, shadowR: 14, leadDx: -34 }, speeds: [1, 1.5, 2], toastSec: 1.5,
+    /** 메인 모험 지도 (RECOVER_1018 S1 · 형철 10/18): 화면 덮는 크기의 몇 배 · 끌기 시작 거리(px) · 노드 메달 가운데가 올 safe 띠(위 HUD 밑 ~ 아래 메뉴 위 · px)
+     *  노드 위 그림: 원정대장·보스 키(메달 32px의 2배 남짓) · 그림 캔버스 너비 · 머리 위 여백 · 발밑 그림자 높이 */
+    mainMap: { zoom: 1, dragPx: 6, nodeTop: 118, nodeBottom: 264, leadH: 64, bossH: 72, figW: 110, figPad: 14, figFoot: 6 }, speeds: [1, 1.5, 2], toastSec: 1.5,
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */

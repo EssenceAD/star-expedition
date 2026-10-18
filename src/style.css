@@ -1144,12 +1144,14 @@ input, select, textarea { font-family: inherit; }
 .mnode .pl em { font-style: normal; color: var(--c-bad); }
 .mnode .stars { font-size: var(--fs-sm); line-height: 1.1; text-shadow: var(--sh-textBack); }
 .mnode.now .md { border-color: var(--c-gold); background: radial-gradient(circle at 40% 30%, var(--c-warn), var(--c-warnDeep)); color: var(--c-white); box-shadow: var(--sh-glowHi); }
-.mnode.off .md { width: 22px; height: 22px; border-width: var(--b-base); background: var(--c-veil2); color: var(--c-textMute); }
+.mnode.off .md { width: 24px; height: 24px; border-width: var(--b-base); border-color: var(--c-gold3); background: radial-gradient(circle at 40% 30%, var(--c-panelHi), var(--c-panelDeep)); }
 .mnode.off .md .ic { width: 12px; height: 12px; }
-.mnode.off .pl { opacity: 0.6; }
-.mnode .arw { position: absolute; left: calc(50% - 14px); top: -36px; width: 28px; color: var(--c-gold1); font-style: normal; filter: drop-shadow(var(--sh-drop)); animation: arwBob 0.6s ease-in-out infinite alternate; }
+.mnode.off .pl { color: var(--c-panelDeep); }
+.mnode .arw { position: absolute; left: calc(50% - 14px); top: -30px; width: 28px; color: var(--c-gold1); font-style: normal; filter: drop-shadow(var(--sh-drop)); animation: arwBob 0.6s ease-in-out infinite alternate; }
 .mnode .arw .ic { width: 28px; height: 28px; }
-@keyframes arwBob { from { transform: translateY(-6px); } to { transform: translateY(2px); } }
+@keyframes arwBob { from { transform: translateY(-5px); } to { transform: translateY(0); } }
+/* 노드 위에 서는 원정대장·보스 (발 = 메달 윗변 · 메달보다 앞 · 누름은 노드로) */
+.mfig { position: absolute; z-index: 2; transform: translate(-50%, calc(-100% - 7px)); pointer-events: none; }
 
 .mhud { position: absolute; inset: 0; pointer-events: none; }
 .mhud > * { pointer-events: auto; }
@@ -1167,6 +1169,9 @@ input, select, textarea { font-family: inherit; }
 .mquest { position: absolute; left: calc(max(var(--s-md), var(--safeL)) + 50px); top: 46px; width: 250px; display: flex; flex-direction: column; gap: var(--s-xxs); }
 .mq { position: relative; height: 22px; display: flex; align-items: center; gap: var(--s-sm); padding: 0 var(--s-md); border: 0; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--c-glass) 65%, transparent); color: var(--c-text); font-size: var(--fs-md); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mq em { font-style: normal; flex: none; color: var(--c-gold1); font-weight: var(--fw-bold); }
+.mq em.tag { padding: 0 var(--s-sm); border-radius: var(--r-sm); font-size: var(--fs-xs); line-height: 1.5; color: var(--c-ink); }
+.mq em.tag.mile { background: var(--c-gold1); }
+.mq em.tag.story { background: var(--c-info); color: var(--c-white); }
 .mq .badge { position: static; margin-left: var(--s-xs); }
 .mdock { position: absolute; left: max(var(--s-sm), var(--safeL)); bottom: 0; display: flex; gap: 0; padding-right: var(--s-xxl); background: linear-gradient(90deg, var(--c-barFade) 70%, transparent); border-top-right-radius: var(--r-lg); }
 .mgo { position: absolute; right: max(var(--s-lg), var(--safeR)); bottom: var(--s-lg); width: 78px; height: 78px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: var(--b-thick) solid var(--c-gold); background: radial-gradient(circle at 40% 30%, var(--c-warn), var(--c-warnDeep)); color: var(--c-white); box-shadow: var(--sh-glowHi); }

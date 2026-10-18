@@ -104,14 +104,16 @@ register('lobby', {
       const id = { c, s: i + 1, d };
       const open = unlocked(id);
       const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
-      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw">${icon('pointer')}</i>` : ''}<i class="md">${icon(open ? 'battle' : 'lock')}</i><b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
+      // 다음 노드 화살표: 메달 바로 위 · 그 노드에 원정대장(장 첫 노드)이나 보스가 서 있으면 그 머리 위
+      const fig = i === 0 && ns.s === 1 ? CONFIG.ui.mainMap.leadH : isBoss(id) ? CONFIG.ui.mainMap.bossH : 0;
+      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}<i class="md">${icon(open ? 'battle' : 'lock')}</i><b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
     }).join('');
     root.innerHTML = `<div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div>
       <div class="mhud">
         <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
         <div class="mquest">
-          <button class="mq" data-portal="miles"><em>이정표</em>${mile ? esc(mile.name) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
-          <button class="mq" data-next><em>스토리</em>${stageName(ns)} ${esc(ch.name)}</button>
+          <button class="mq" data-portal="miles"><em class="tag mile">이정표</em>${mile ? esc(mile.name.replace(/^스토리 /, '')) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
+          <button class="mq" data-next><em class="tag story">스토리</em>${stageName(ns)} 클리어</button>
         </div>
         <div class="mside">
           ${sideBtn('data-go="mission"', 'mission', '미션', missionBadge())}
