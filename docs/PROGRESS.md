@@ -602,6 +602,8 @@
 
 - v1.0.20: 전투 준비 오른쪽 파티 4칸(data-out 눌러서 빼기) 되돌림 · 이름 대신 초상만(title) · 844×390·1000×544 스크롤 0 확인
 
+- v1.0.21: combat.frameScale (황짐승 m2 1.08~1.18 · 웅스 m2r1c1·c2) · tools/soften_edges.py (m2 칸 바깥 25% 안 일직선 잘림 → 알파 26px 페이드 · 34장 · 왈왈 빛기둥 제외) · fx 그림 가장자리 14% destination-in 그라데이션
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

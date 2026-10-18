@@ -1,3 +1,4 @@
+import { CONFIG } from '../config';
 // HD 도트 프레임 시트: GPT 시트(마젠타 · 같은 칸 격자)를 tools/cut-sheet.mjs --grid 로 자른 칸 그림 + _parts.json
 //  칸 이름 = r{줄}c{칸} · 줄마다 발 기준선(그 줄 그림들의 아래 끝 중 가장 아래)을 맞춰 그린다 → 프레임마다 키가 달라도 땅에 붙음
 //  동작 정의(ANIM)는 영웅마다: 없는 동작은 대신할 동작으로 (나머지 3명은 대기·평타만 있는 파일럿)
@@ -152,7 +153,9 @@ export function drawFrame(ctx: CanvasRenderingContext2D, s: Sheet, key: string, 
   ctx.imageSmoothingEnabled = k < 1.5;
   ctx.imageSmoothingQuality = 'high';
   ctx.translate(fx, fy);
-  ctx.scale(face * k, k);
+  // 칸마다 크기 보정 (발 기준이라 서 있는 자리는 그대로)
+  const sk = k * (CONFIG.combat.frameScale[key] ?? 1);
+  ctx.scale(face * sk, sk);
   ctx.drawImage(im, c.x - (c.ax ?? c.cw / 2), c.y - base);
   ctx.restore();
 }

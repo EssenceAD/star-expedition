@@ -2,6 +2,7 @@
 //  검은 배경 · 흰 그림 → 보조 캔버스에 그리고 속성색을 multiply로 입힌 뒤 본 캔버스엔 lighter (검정은 사라짐)
 //  앵커: center = 대상 몸통 가운데 · bottom = 발밑 · 그림이 아직 없으면 render.ts의 예전 선 그리기로
 import { CONFIG } from '../config';
+import { T } from '../theme/tokens';
 import { view } from '../ui/view';
 
 export interface FxArt {
@@ -55,6 +56,17 @@ export function drawFxImg(ctx: CanvasRenderingContext2D, A: FxArt | null | undef
   fcx.globalCompositeOperation = 'multiply';
   fcx.fillStyle = color;
   fcx.fillRect(0, 0, pw, ph);
+  // 가장자리 바깥 FA.edge 비율을 투명으로 서서히 → 그림 끝에서 잘린 빛·JPEG 바탕이 네모 상자로 보이던 것 (형철 10/18 「엣지」)
+  fcx.globalCompositeOperation = 'destination-in';
+  for (const [x1, y1] of [[pw, 0], [0, ph]]) {
+    const g = fcx.createLinearGradient(0, 0, x1, y1);
+    g.addColorStop(0, T.battle.maskOff);
+    g.addColorStop(FA.edge, T.battle.maskOn);
+    g.addColorStop(1 - FA.edge, T.battle.maskOn);
+    g.addColorStop(1, T.battle.maskOff);
+    fcx.fillStyle = g;
+    fcx.fillRect(0, 0, pw, ph);
+  }
   fcx.globalCompositeOperation = 'source-over';
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
