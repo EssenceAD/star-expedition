@@ -31,9 +31,12 @@ const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[
 /** 배경 그림의 땅 띠(public/art/bgs/_ground.json · 그림 높이 비율)를 화면 발 띠(CONFIG.ui.groundScreen)에 맞춘 그림 높이·위 y (FINAL §3-4)
  *  화면을 다 덮도록 (위 y ≤ 0 · 아래 ≥ 화면 높이) */
 const GR = groundJson as unknown as Record<string, [number, number]>;
+/** 화면이 기본(CONFIG.view.h)보다 높을 때(폴드 등) 전장을 그만큼 아래로 → 영웅 발밑과 스킬 칸 사이가 늘 같은 간격 (고느끼 10/18 「캐릭터들이 밑으로 좀」) */
+export const fieldDy = () => Math.max(0, view.h - CONFIG.view.h);
 export function bgFit(key?: string) {
   const [t, bt] = (key && GR[key]) || GR._default;
-  const [sy0, sy1] = CONFIG.ui.groundScreen;
+  const sy0 = CONFIG.ui.groundScreen[0] + fieldDy();
+  const sy1 = CONFIG.ui.groundScreen[1] + fieldDy();
   let h = (sy1 - sy0) / (bt - t);
   let y0 = sy0 - t * h;
   if (y0 > 0) ((h = sy0 / t), (y0 = 0));
@@ -238,7 +241,7 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
   }
   // 전용 배경 그림은 그 그림의 땅 그대로 (덧칠 길·자갈·풀 막대 없음 · FINAL §3-1 「초록 세로 막대」)
   if (own) return;
-  const gy = GROUND - 30;
+  const gy = GROUND - 30 + fieldDy();
   const road = ctx.createLinearGradient(0, gy, 0, view.h);
   road.addColorStop(0, B.road0);
   road.addColorStop(0.15, B.road1);
@@ -587,6 +590,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   ctx.save();
   if (b.shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * b.shake * 2), Math.round((Math.random() - 0.5) * b.shake * 2));
   background(ctx, art, b.scroll, W, b.setup.region, b.setup.bg);
+  ctx.translate(0, fieldDy());
   // 보스 패턴 경고: 영웅 발밑이 붉게 깜빡
   if (b.pat.warn > 0)
     for (const h of b.heroes) {
@@ -635,7 +639,8 @@ function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: n
   } else background(ctx, art, b.t * 10, W, b.setup.region, b.setup.bg);
   // 두 줄 바닥 + 경고 줄
   const half = Math.abs(RA.lanes[1] - RA.lanes[0]) / 2;
-  RA.lanes.forEach((y, i) => {
+  RA.lanes.forEach((ly, i) => {
+    const y = ly + fieldDy();
     // 결과 화면에서는 경고 줄·글씨 없음 (FINAL §3-6)
     const warn = r.warnLane === i && b.phase !== 'win' && b.phase !== 'lose';
     ctx.fillStyle = warn ? `${B.laneWarn}${0.22 + 0.25 * Math.abs(Math.sin(b.t * 14))})` : B.laneBand;
@@ -864,6 +869,7 @@ function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: num
     ctx.translate(-r.zoom.x, -r.zoom.y);
   }
   raidBackground(ctx, art, b, W);
+  ctx.translate(0, fieldDy());
   const boss = b.mobs.find((m) => m.mob?.boss);
   if (boss) drawRaidBoss(ctx, art, boss, b, now);
   const units = [...b.heroes, ...b.mobs.filter((m) => !m.mob?.boss)].sort((a, c) => a.y - c.y);
