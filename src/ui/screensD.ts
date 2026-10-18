@@ -14,6 +14,7 @@ import { HEROES } from '../data/heroes';
 import { icon, iconText } from '../theme/tokens';
 import { view } from './view';
 import { goFullscreen } from './mobile';
+import { openBackups, openReport } from './ops';
 import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
 
 const SO = CONFIG.social;
@@ -332,6 +333,7 @@ register('settings', {
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
           <div class="panel col"><b>소리 · 화면</b>
             <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-hpall ${getPref('hpAlways', false) ? 'checked' : ''}> 머리 위 체력 바 늘 보기</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label></div></div>
+          <div class="row"><button class="btn" data-report>${icon('mail')} 제보·건의</button><button class="btn" data-backup>${icon('repeat')} 세이브 백업</button></div>
           <div class="row"><button class="btn" data-title-screen>타이틀로</button><button class="btn mini" data-reset>처음부터</button></div>
         </div></div>`;
       const q = <E extends HTMLElement = HTMLElement>(s: string) => root.querySelector<E>(s);
@@ -388,6 +390,8 @@ register('settings', {
         else if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
       });
       q('[data-title-screen]')?.addEventListener('click', () => go('title'));
+      q('[data-report]')?.addEventListener('click', () => void openReport());
+      q('[data-backup]')?.addEventListener('click', () => openBackups());
       q('[data-reset]')?.addEventListener('click', () =>
         modal('처음부터 할까요?', '<p class="dim">이 기기에 저장된 원정대 기록이 모두 지워져요. (클라우드는 그대로)</p>', [
           ['그만두기', null],

@@ -515,6 +515,10 @@
 - 시작 영웅 4명 + 따뜻한밤 튜토리얼 합류 · 미보유 영웅 대사 거름(playTalk) · 전투 시작 컷씬 · 영웅 목록 가로 · .narrow(패드) · NEW HERO · 휴식 보너스 · 이번 주 영입(heroCost) · 우정 포인트
 - 새로 만들 것(그림·글·서버) 명세: docs/ASSET_SPEC_1018.md
 
+### v0.16.1 (10/18) — 운영 기능 (「체크인」에서 가져옴)
+- 제보·건의: src/ui/ops.ts openReport → cloud.sendLetter → 체크인 bug_letters (본문 앞 [W.I.N.D] · app_version wind-vX) · 운영자 답장 my_letter_replies → 우편 「운영자의 답장」 (W.I.N.D 편지만) · 손님 하루 3통
+- 새 버전 띠 (version.json 10분마다 · 앱으로 돌아올 때 · 전투 중엔 미룸) · 업데이트 뒤 패치노트 카드 · 오류 기록 log_events (p_version wind-…) · 하루 백업 3개 + 설정 「세이브 백업」
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

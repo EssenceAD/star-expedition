@@ -28,6 +28,7 @@ import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
 import { coach, whenFree } from './coach';
+import { openReport, opsOnLobby } from './ops';
 import { recruitShow } from './screensB';
 import { $, $$, CUR_NAME, esc, fitText, fmt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
@@ -137,7 +138,7 @@ register('lobby', {
         </div>
         <button class="mgo btn hi" data-next>${icon('battle')}<span>전투 준비</span></button>
         <div class="mmenu panel col" hidden>
-          ${[['mission', 'ach', '업적', 'achieve'], ['ranking', '', '랭킹', 'ranking'], ['mail', '', '우편', 'mail'], ['settings', '', '설정', 'settings']].map(([to, tab, n, ic]) => `<button class="btn qrow" data-go="${to}"${tab ? ` data-tab="${tab}"` : ''}>${icon(ic)} ${n}</button>`).join('')}
+          ${[['mission', 'ach', '업적', 'achieve'], ['ranking', '', '랭킹', 'ranking'], ['mail', '', '우편', 'mail'], ['settings', '', '설정', 'settings']].map(([to, tab, n, ic]) => `<button class="btn qrow" data-go="${to}"${tab ? ` data-tab="${tab}"` : ''}>${icon(ic)} ${n}</button>`).join('')}<button class="btn qrow" data-report>${icon('mail')} 제보·건의</button>
         </div>
       </div>`;
     $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never, b.dataset.tab ? { tab: b.dataset.tab } : {})));
@@ -146,6 +147,8 @@ register('lobby', {
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
     $('[data-miles]', root).onclick = () => openMiles();
+    $('[data-report]', root).onclick = () => void openReport();
+    opsOnLobby();
     // 가이드 화살표 (형철 10/18): 다음 이정표를 하러 갈 버튼 위에 「여기를 눌러요」 말풍선 · 누르면 그 탭으로 바로
     const gd = mile && !mile.done(S) ? mile.go : null;
     // 스테이지 깨기(prep)는 오른쪽 아래 「전투 준비」 위에
