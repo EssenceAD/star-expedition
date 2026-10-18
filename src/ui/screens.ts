@@ -20,7 +20,7 @@ import { runTitle } from './screensC';
 import { view } from './view';
 import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
 import { attendPopup, missionBadge } from './screensD';
-import { attendToday, eventLeft } from '../game/missions';
+import { attendToday, eventLeft, eventToday } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, join, owned } from '../game/heroes';
 import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
@@ -136,7 +136,7 @@ register('lobby', {
         </div>
         <div class="mside">
           ${sideBtn('data-go="mission"', 'mission', '미션', missionBadge())}
-          ${sideBtn('data-mis="ev"', 'event', '이벤트', eventLeft() ? 'N' : '')}
+          ${sideBtn('data-mis="ev"', 'event', '이벤트', eventToday() ? 'N' : '')}
           ${sideBtn('data-attend', 'attend', '출석', attendToday() ? 'N' : '')}
         </div>
         <div class="mdock">

@@ -78,6 +78,8 @@ export function claimAll(k: Kind, s: Save = S, now = Date.now()): number {
 const SO = CONFIG.social;
 export const attendToday = (s: Save = S, now = Date.now()) => s.attend.last !== dayKey(now);
 /** 오늘 출석 (안 했으면) → 받은 것 · 몇째 날 */
+/** 오늘 이벤트 출석 보상이 남았는지 (출석하면 같이 받음) */
+export const eventToday = (s: Save = S, now = Date.now()) => eventLeft(now) > 0 && s.attend.evLast !== dayKey(now);
 export function attend(s: Save = S, now = Date.now()): { day: number; give: Record<string, number> } | null {
   if (!attendToday(s, now)) return null;
   s.attend.last = dayKey(now);

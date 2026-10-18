@@ -457,3 +457,11 @@ body, #stage { font-weight: normal; }
 #stage .mwin .mcell { flex: 1 1 0; width: auto; min-width: 0; }
 #stage .mwin .mcell .nm { overflow-wrap: anywhere; }
 #stage .mwin .chain .link { flex: 0 0 var(--s-xs); min-width: 0; }
+/* 메뉴 탭 N: 그 탭 오른쪽 위에 (화면 오른쪽 끝으로 튀던 것) */
+#stage .shopcats .tab, #stage .tabs .tab { position: relative; }
+#stage .shopcats .tab .badge { right: var(--s-xs); top: 50%; transform: translateY(-50%); }
+/* 영웅 정보: 가운데 이름 판은 한 줄 요약만 (초상화·설명 숨김 · 전신 그림이 옆에 있음) → 아래 성장·각성·초월 판을 크게 (10/18) */
+#stage [data-screen="hero"] .col.grow > .row.panel { flex: none; padding: var(--s-xs) var(--s-md); }
+#stage [data-screen="hero"] .col.grow > .row.panel > .pt.l, #stage [data-screen="hero"] .col.grow > .row.panel .fit2 { display: none; }
+#stage [data-screen="hero"] .col.grow > .row.panel > .col > b:first-child { font-size: var(--fs-xl); }
+#stage [data-screen="hero"] .col.grow > .panel.scroll { flex: 1 1 auto; min-height: 0; }
