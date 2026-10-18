@@ -14,6 +14,7 @@ import { accNeed, boostLeft, boostMult, buyBooster, stageCost, stamina } from '.
 import { freeSummonLeft } from '../game/gear';
 import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
+import { view } from './view';
 import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
 import { attendPopup, missionBadge } from './screensD';
 import { attendToday, eventLeft } from '../game/missions';
@@ -23,7 +24,7 @@ import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, 
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast, uiPic } from './core';
+import { $, $$, CUR_NAME, esc, fitText, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast, uiPic } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
@@ -154,7 +155,7 @@ export function stageInfo(st: StageId) {
   const myLv = Math.round(partyIds().reduce((a, id) => a + S.heroes[id].lv, 0) / Math.max(1, partyIds().length));
   // 적 카드: 얼굴(대기 첫 칸) + 이름 · 보스는 맨 앞에 BOSS
   const mobs = [...new Map(buildMobs(st).flat().map((m) => [m.name, m])).values()].sort((a, b) => +b.boss - +a.boss);
-  const enemy = mobs.map((m) => `<div class="ecard${m.boss ? ' boss' : ''}"><i style="background-image:url(${import.meta.env.BASE_URL}art/${m.kind.anims.idle!.frames[0].replace(':', '/')}.png)"></i>${m.boss ? '<em>BOSS</em>' : ''}<span>${esc(m.name)}</span></div>`).join('');
+  const enemy = mobs.map((m) => `<div class="ecard${m.boss ? ' boss' : ''}"><i style="background-image:url(${import.meta.env.BASE_URL}art/${m.kind.anims.idle!.frames[0].replace(':', '/')}.png)"></i>${m.boss ? '<em>BOSS</em>' : ''}<span class="fit" data-min="${CONFIG.ui.fit.tiny}">${esc(m.name)}</span></div>`).join('');
   const pct = (p: number) => `${Math.round(p * 100)}%`;
   const drops: [string, string, string][] = [['gold', '금화', '늘'], ['stardust', '별가루', pct(R.dust.chance)], ['enh', '강화석', pct(R.enh.chance)], ['gear', '장비', pct(CONFIG.gear.drop.chance)], ...(isBoss(st) ? [['rune', '룬', pct(CONFIG.gear.drop.runeBoss)] as [string, string, string]] : [])];
   const dropHtml = drops.map(([k, n, p]) => `<div class="dcell">${k === 'gear' ? uiPic('icons/slot_weapon', 'ic img') : icon(k)}<span>${n}</span><b>${p}</b></div>`).join('');
@@ -177,6 +178,8 @@ export function stageInfo(st: StageId) {
     [`${icon('battle')} 전투 준비`, () => go('prep', { stage: { ...st }, from: 'lobby' }), true],
   ]);
   m.classList.add('stagewin');
+  if (view.scale >= CONFIG.ui.pcWin.minScale) $('.panel', m).style.transform = `scale(${CONFIG.ui.pcWin.scale})`;
+  fitText(m);
   if (!rep) m.querySelector<HTMLButtonElement>('button[data-i="0"]')!.classList.add('off');
 }
 

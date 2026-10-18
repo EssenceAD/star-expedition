@@ -409,6 +409,8 @@ export const CONFIG = {
     loadStallSec: 5,
     loadItemSec: 12,
     /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */
-    fit: { step: 0.5, name: 13, desc: 10 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    fit: { step: 0.5, name: 13, desc: 10, tiny: 7 },
+    /** 큰 화면(PC · 게임 배율 이 값 이상)에서 정보 창을 이만큼 줄여 그림 (형철 10/18: PC에서 너무 커 보임) */
+    pcWin: { minScale: 1.8, scale: 0.72 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;
