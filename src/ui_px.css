@@ -482,3 +482,13 @@ body, #stage { font-weight: normal; }
 #stage #hud.raid #boss { left: 184px; right: 64px; }
 #stage #hud.raid #raidHud { left: 248px; right: 128px; }
 #stage #boss .bp { background-position: center; background-size: contain; background-repeat: no-repeat; overflow: hidden; }
+/* 가로 목록 끝 화살표 < > */
+#stage .scrollhint.left { transform: translate(0, -50%); }
+#stage .scrollhint.right { transform: translate(-100%, -50%); }
+#stage .scrollhint.left .ic { transform: rotate(90deg); }
+#stage .scrollhint.right .ic { transform: rotate(-90deg); }
+/* 상점 영웅·코스튬 가로 목록: 남은 높이에 카드를 맞춤 (아래 잘림 · 세로 스크롤 없앰) */
+#stage .scr[data-screen='shop'] .col.grow.scroll:has(> .cards.hscroll) { overflow: hidden; }
+#stage .scr[data-screen='shop'] .cards.hscroll { flex: 1 1 0; min-height: 0; grid-template-rows: 100%; }
+#stage .scr[data-screen='shop'] .cards.hscroll > .shopc.hero, #stage .scr[data-screen='shop'] .cards.hscroll > .shopc.costume { height: auto; min-height: 0; }
+#stage .scr[data-screen='shop'] .cards.costumes.hscroll .fbc { flex: 1 1 0; height: auto; min-height: 0; }
