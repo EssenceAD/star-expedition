@@ -274,6 +274,42 @@ html.t1b .chap span { color: #ffd77a; }
 /* 영웅 정보: 전신을 더 크게 (일러스트가 주인공) */
 html.t1b #C .fb { left: 60px; top: 30px; width: 260px; }
 html.t1b #C .info { left: 300px; width: 300px; }
+
+/* ════ t1c: 영웅 정보 전신 꽉 · 판 없는 아이콘 확대 적용 · 움직임 ════ */
+/* 전신 그림 36장은 모두 900×900 안 세로 30~890에 인물 → 한 규칙으로 머리 = 위 바 바로 아래, 발 = 화면 아래 */
+html.t1c #C .hlist { z-index: 2; }
+html.t1c #C .fb { left: 4px; top: 36px; bottom: -10px; width: 358px; background-position: center top; background-size: contain; }
+html.t1c #C .info { left: 300px; }
+/* 판 없이: 아이콘 + 진한 외곽선 글씨 (자동·배속·일시정지·뒤로·재화·웨이브) */
+html.t1c .rbtn.glass, html.t1c .back.glass, html.t1c .cur.glass, html.t1c .hud-top.glass, html.t1c .dmg-h.glass { background: none; border: 0; box-shadow: none; backdrop-filter: none; }
+html.t1c .rbtn .ic, html.t1c .back .ic { width: 26px; height: 26px; color: #fff; stroke-width: 2.6; filter: drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 2px 3px rgba(0,0,0,.7)); }
+html.t1c .rbtn small { color: #fff; font-size: 11px; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000; }
+html.t1c .rbtn.on .ic { color: #ffd77a; }
+html.t1c .cur, html.t1c .hud-top .t, html.t1c .hud-top .s { color: #fff; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000; }
+html.t1c .cur { font-size: 14px; }
+html.t1c .cur img { width: 22px; height: 22px; filter: drop-shadow(0 1px 2px #000); }
+html.t1c .hud-top .w { color: #ffd77a; -webkit-text-fill-color: #ffd77a; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000; }
+html.t1c .hud-top .t { font-size: 18px; }
+html.t1c .topbar .back .ic { color: #6b2e12; filter: none; }
+html.t1c .topbar .cur { color: #3b2614; text-shadow: none; }
+/* 움직임 */
+@keyframes pulse { 50% { box-shadow: 0 0 0 2px #ffe08a, 0 0 18px 5px rgba(255,214,120,.95); } }
+html.t1c .sk .s.ready { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes shine { 0% { left: -60%; } 60%, 100% { left: 130%; } }
+html.t1c .go::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; transform: skewX(-20deg); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: shine 1.8s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.04); } }
+html.t1c .go { animation: breathe 1.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translate(-50%, -6px); } }
+html.t1c .node.now::before { content: '▼'; position: absolute; left: 50%; top: -20px; transform: translateX(-50%); color: #ffd77a; font-size: 14px; text-shadow: 0 0 2px #2a1606, 0 1px 3px #000; animation: bob .7s ease-in-out infinite; }
+@keyframes idle { 50% { transform: translateY(-3px) scaleY(1.01); } }
+html.t1c .leadfb { animation: idle 2.2s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes pop { 0% { transform: translate(-50%, -50%) scale(.7); opacity: 0; } 70% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); } }
+html.t1c .modal { animation: pop .45s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes giftIn { 0% { transform: scale(0) rotate(-20deg); } 80% { transform: scale(1.15); } 100% { transform: scale(1); } }
+html.t1c .gift img { animation: giftIn .5s .3s cubic-bezier(.2,.9,.3,1.4) both; }
+@keyframes spark { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
+html.t1c .gift { position: relative; }
+html.t1c .gift::after { content: '✦'; position: absolute; right: 6px; top: 4px; color: #ffd77a; font-size: 14px; text-shadow: 0 0 6px #ffb020; animation: spark 1.1s .6s ease-in-out infinite; }
 </style></head><body>
 <!-- SVG 아이콘 묶음 -->
 <svg width="0" height="0" style="position:absolute">
