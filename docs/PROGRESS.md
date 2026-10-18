@@ -474,6 +474,11 @@
 - 노드 메달은 늘 위 HUD 밑 ~ 아래 메뉴 위(config ui.mainMap.nodeTop·nodeBottom) · 보스는 노드 오른쪽 뒤
 - 캡처: docs/captures/s1_map, s1_map/v2
 
+### v0.12.3 (10/18) — 장별 지도
+- 메인 지도·모험 화면이 장마다 map_<지역>.jpg (1장 map.jpg) · 노드 자리 장마다 (src/ui/mainMap.ts MAP_NODES)
+- 새 그림들은 길이 왼쪽 아래→오른쪽 위 대각선이라 안전 띠(그림 세로 약 33~65%) 안 길이 짧음 → 띠 안 길 위 + 나머지는 띠 안 땅 위 점선 길
+- 캡처: docs/captures/s1_map/chapters (장 10개 · 폰·PC)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

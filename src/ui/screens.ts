@@ -14,7 +14,7 @@ import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/acco
 import { freeSummonLeft } from '../game/gear';
 import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
-import { mainMapStart, mainMapTick, NODES } from './mainMap';
+import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
 import { attendPopup, missionBadge } from './screensD';
 import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
@@ -97,6 +97,7 @@ register('lobby', {
     const { c, d } = ns;
     const ch = CHAPTERS[c - 1];
     const lead = partyIds()[0] ?? 'woongs';
+    const NODES = nodesOf(c);
     const stars = NODES.reduce((a, _, i) => a + starsAt({ c, s: i + 1, d }), 0);
     const mile = MILESTONES.find((m) => !S.miles.includes(m.id));
     const ready = milesReady().length;
@@ -166,9 +167,10 @@ function offlinePopup() {
 // ───────── 모험: 필드 지도 (STAR_PLAN_v2 §3 · 스테이지 = 길 위 노드 · 지금 위치에 영웅 · 지도 안 토벌·상급 던전·탑 입구) ─────────
 function fieldMap(c: number, d: number, sel: StageId) {
   const ns = nextStage();
+  const NODES = nodesOf(c);
   const here = ns.c === c && d === 0 ? ns.s : null;
   const lead = partyIds()[0] ?? 'woongs';
-  return `<div class="fmap panel"><div class="fmap-in" style="background-image:url(${import.meta.env.BASE_URL}art/screens/map.jpg)">
+  return `<div class="fmap panel"><div class="fmap-in" style="background-image:url(${mapUrl(c)})">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>
     ${NODES.map(([x, y], i) => {
       const id = { c, s: i + 1, d };
