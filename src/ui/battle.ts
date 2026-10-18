@@ -15,13 +15,13 @@ import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
 import { TIPS } from '../data/tips';
-import { stageCost, useStamina } from '../game/account';
+import { stageCost, stamina, useStamina } from '../game/account';
 import { buildRun, finishRun, lockOf, milesReady, MODE_NAME, nextMile, triesText, useTry, type Run } from '../game/content';
 import { pushNotice } from './notice';
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, stageName, unlocked, type StageId } from '../game/stage';
 import { partyIds, persist, S } from '../game/state';
 import { applyTheme, icon, iconText, T } from '../theme/tokens';
-import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, register, skillIconUrl, toast, CUR_NAME } from './core';
+import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, register, skillIconUrl, syncBar, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
@@ -451,14 +451,25 @@ function wire(next?: StageId) {
       else if (a === 'adv') go('adventure', { c: st.c, d: st.d, s: st.s }, false);
       else if (a === 'lobby') go('lobby', {}, false);
       else if (a === 'form') go('prep', { stage: st }, false);
-      else if (a === 'repeat') {
-        const h = repeatBattle(st, REPEAT_N);
-        if (!h) return toast('행동력이 모자라요');
-        persist();
-        toast(repeatText(h));
-      }
+      else if (a === 'repeat') repeatAsk(st, REPEAT_N);
     };
   });
+}
+/** 반복 전투 n판: 행동력이 n판치가 안 되면 몇 판까지 되는지 먼저 묻고 그만큼만 (왈왈콩선생 10/18 「10회 누르니 모자란다고 뜨고 행동력이 사라짐」 — 말없이 되는 만큼 돌던 것) */
+export function repeatAsk(st: StageId, n: number, done?: () => void) {
+  const cost = stageCost(st.d);
+  const can = Math.min(n, Math.floor(stamina() / cost));
+  if (can <= 0) return void toast(`행동력이 모자라요 (한 판 ${cost}) · 상단 바 [+]로 채울 수 있어요`);
+  const run = () => {
+    const h = repeatBattle(st, can);
+    if (!h) return void toast('행동력이 모자라요');
+    persist();
+    syncBar();
+    toast(repeatText(h));
+    done?.();
+  };
+  if (can === n) return run();
+  modal(`${icon('repeat')} 반복 전투`, `<p class="dim">지금 행동력 ${stamina()}로는 ${n}판 중 <b class="gold">${can}판</b>까지 할 수 있어요 (한 판 ${cost}). ${can}판만 할까요?</p>`, [['취소', null], [`${can}판 하기`, run, true]]);
 }
 export const repeatText = (h: NonNullable<ReturnType<typeof repeatBattle>>) =>
   `반복 전투 ${h.runs}판: 금화 +${fmt(h.gold)} · 경험치 +${fmt(h.exp)}${h.enh ? ` · 강화석 +${h.enh}` : ''}${h.gear ? ` · 장비 ${h.gear}개` : ''}${h.ups.length ? ` · 레벨 업 ${h.ups.map((id) => heroOf(id).name).join('·')}` : ''}${h.accUp ? ' · 원정대 레벨 업!' : ''}`;

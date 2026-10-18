@@ -18,7 +18,7 @@ import { haptic } from '../core/haptic';
 import { taglineOf } from '../data/taglines';
 import { coach } from './coach';
 import { claimSaga, SAGA, sagaGot, sagaLine } from '../game/saga';
-import { $, $$, comingSoon, CUR_DESC, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
+import { $, $$, comingSoon, CUR_DESC, CUR_NAME, esc, fmt, fullbodyUrl, fitText, fxt, go, heroPortrait, modal, noClip, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
@@ -212,11 +212,15 @@ function tabHtml(tab: string, id: string): string {
   return `<b class="sm">인연</b>${bonds.map((x) => `<div class="md"><b class="gold">${x.name}</b> <span class="dim">${x.members.map((m) => heroOf(m).name).join(' · ')} (${x.need}명)</span></div>`).join('') || '<span class="xs mute">인연 조합 없음</span>'}`;
 }
 function wireTab(root: HTMLElement, id: string, draw: () => void) {
+  // 안 바뀐 결과(모자람·최대 등)는 다시 그리지 않음 · 다시 그리면 같은 프레임에 글씨 맞춤 → 누를 때마다 글씨가 커졌다 줄며 춤추던 것 (고느끼 10/18)
   const after = (r: string, m: Record<string, string>) => {
     persist();
     syncBar();
     say(r, m);
+    if (['poor', 'max', 'need', 'owned', '-1'].includes(r)) return;
     draw();
+    fitText(root);
+    noClip(root);
   };
   // 코스튬: 입기 · (영웅 정보에서) 사기
   $$('[data-wear]', root).forEach((b) => (b.onclick = () => (wearCostume(id, b.dataset.wear || null), persist(), draw())));

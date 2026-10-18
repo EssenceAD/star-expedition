@@ -155,8 +155,25 @@ export function initOps() {
   void checkUpdate();
   dailyBackup();
 }
-/** 로비에 들어올 때: 패치노트 카드 · 답장 배달 · 백업 */
+/** 운영 선물 (한 사람 한 번 · id로 구분): 오류 보상 등 */
+const GIFTS = [
+  { id: 'v1.0.11-sta', title: '반복 전투 행동력 보상', body: '반복 전투를 누를 때 행동력이 모자라면 아무 말 없이 되는 만큼만 돌아서, 행동력이 사라진 것처럼 보였어요. 이제는 몇 판까지 되는지 먼저 물어봐요. 불편을 드려 미안해요!', give: { stamina: 60, stardust: 100 } },
+];
+function deliverGifts() {
+  let n = 0;
+  for (const g of GIFTS) {
+    if (S.seen[`gift:${g.id}`]) continue;
+    S.seen[`gift:${g.id}`] = true;
+    addMail(S, '운영자', g.title, g.body, g.give);
+    n++;
+  }
+  if (!n) return;
+  persist();
+  toast('우편함에 운영자 선물이 왔어요');
+}
+/** 로비에 들어올 때: 운영 선물 · 패치노트 카드 · 답장 배달 · 백업 */
 export function opsOnLobby() {
+  deliverGifts();
   void patchCard();
   void deliverReplies();
   dailyBackup();

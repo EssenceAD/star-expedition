@@ -202,7 +202,8 @@ export function claimMail(id: number, s: Save = S): boolean {
   const m = s.mail.list.find((x) => x.id === id);
   if (!m || m.got) return false;
   m.got = true;
-  for (const [k, v] of Object.entries(m.give)) addCur(k, v, s, true);
+  for (const [k, v] of Object.entries(m.give)) if (k === 'stamina') s.sta.n += v;
+    else addCur(k, v, s, true);
   return true;
 }
 export const mailUnread = (s: Save = S) => s.mail.list.filter((m) => !m.got).length;
