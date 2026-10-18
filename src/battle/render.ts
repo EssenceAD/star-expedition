@@ -592,7 +592,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   ctx.save();
   if (b.shake > 0) ctx.translate(Math.round((Math.random() - 0.5) * b.shake * 2), Math.round((Math.random() - 0.5) * b.shake * 2));
   background(ctx, art, b.scroll, W, b.setup.region, b.setup.bg);
-  ctx.translate(0, fieldDy());
+  ctx.translate(0, fieldDy() + CONFIG.ui.fieldDown);
   // 보스 패턴 경고: 영웅 발밑이 붉게 깜빡
   if (b.pat.warn > 0)
     for (const h of b.heroes) {
