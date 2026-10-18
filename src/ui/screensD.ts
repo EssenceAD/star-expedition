@@ -326,6 +326,8 @@ export function openChat() {
     wireChat(m, ch, draw);
   };
   draw();
+  // 보내기·탭 전환으로 다시 그릴 때는 창이 뜨는 움직임 없이 (닫혔다 열리는 것처럼 보여 어지럽던 것 · 10/18)
+  m.classList.add('drawn');
 }
 
 // ───────── 설정 (계정 · 클라우드 · 소리 · 이름 · 칭호 · 처음부터) ─────────
@@ -341,7 +343,7 @@ register('settings', {
           <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
           <div class="panel col"><b>소리 · 화면</b>
-            <div class="row"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-hpall ${getPref('hpAlways', false) ? 'checked' : ''}> 머리 위 체력 바 늘 보기</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label><label class="sm grow"><input type="checkbox" data-haptic ${hapticOn() ? 'checked' : ''}> 진동 (크게 맞을 때·강화·뽑기)</label></div></div>
+            <div class="row toggles"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-hpall ${getPref('hpAlways', false) ? 'checked' : ''}> 머리 위 체력 바 늘 보기</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label><label class="sm grow"><input type="checkbox" data-haptic ${hapticOn() ? 'checked' : ''}> 진동 (크게 맞을 때·강화·뽑기)</label></div></div>
           <div class="row"><button class="btn" data-report>${icon('mail')} 제보·건의</button><button class="btn" data-backup>${icon('repeat')} 세이브 백업</button></div>
           <div class="row"><button class="btn" data-title-screen>타이틀로</button><button class="btn mini" data-reset>처음부터</button></div>
         </div></div>`;

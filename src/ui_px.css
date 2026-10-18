@@ -519,3 +519,17 @@ body, #stage { font-weight: normal; }
 #stage.narrow #bar .hc .sk { padding-left: 0; gap: var(--s-xxs); justify-content: center; }
 #stage.narrow #bar .sk button { width: 24px; height: 24px; }
 #stage.narrow #bar .sk .au { width: 30px; padding: 0; font-size: var(--fs-xs); letter-spacing: 0; }
+/* 설정 소리·화면 체크칸: 판 밖으로 나가지 않게 줄바꿈 (진동이 판 밖으로 벗어나던 것) */
+#stage .row.toggles { flex-wrap: wrap; gap: var(--s-xs) var(--s-md); }
+#stage .row.toggles label { flex: 0 1 auto; white-space: nowrap; }
+/* 채팅 창: 다시 그릴 때는 뜨는 움직임 없음 */
+#stage .modal.drawn .panel { animation: none; }
+/* 상점 영웅 카드 (가로 목록): 초상화와 글자 판을 위아래로 나눔 → 낮은 화면에서도 칩·이름·가격이 얼굴을 덮지 않게 (고느끼 10/18) */
+#stage .scr[data-screen='shop'] .cards.hscroll > .shopc.hero { display: flex; flex-direction: column; justify-content: flex-start; }
+#stage .scr[data-screen='shop'] .cards.hscroll > .shopc.hero .pt.card { position: relative; inset: auto; flex: 1 1 0; min-height: 0; width: 100%; background-position: center 10%; }
+#stage .scr[data-screen='shop'] .cards.hscroll > .shopc.hero .pt.card::after { display: none; }
+#stage .scr[data-screen='shop'] .cards.hscroll > .shopc.hero .band { position: relative; flex: none; }
+/* 좁은 화면(.narrow) 결과 화면: 오른쪽 판이 화면 밖으로 잘리던 것 → 판을 넓히고 보상 칸을 작게 · 넘치면 위가 잘리지 않고 스크롤 */
+#stage.narrow .rcol { left: 34%; gap: var(--s-xs); justify-content: safe center; overflow-y: auto; }
+#stage.narrow .rcol .rw div.rwc { width: 64px; min-width: 64px; height: 78px; }
+#stage.narrow .rcol > .row { gap: var(--s-xs); }
