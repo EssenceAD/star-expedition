@@ -73,10 +73,18 @@ describe('데이터', () => {
 });
 
 describe('멤버 영웅 관계 (docs/MEMBERS.md · HEROES_ADD_4)', () => {
-  it('멤버 영웅 17명 = 실멤버 길드 「윈드」 명단 (개척자 5 + 추가 멤버 11 + 황짐승)', async () => {
+  it('멤버 영웅 17명 (founder) · 실멤버 길드 「윈드」 명단은 실유저(서버)만 — 가짜 멤버 이름 없음 (형철 10/18)', async () => {
     const { GUILDS } = await import('../src/game/social');
+    const { setReal } = await import('../src/game/real');
     const want = ['웅스', '고느끼', '이카몰리', '왈왈콩선생', '따뜻한밤', '세르미뉴', '클레이네', '팬더', '부브', '하응', '이치애', '재희아빠', '유월', '깡토끼', '딸기망고모찌', '신야군', '황짐승'];
-    expect(GUILDS.find((g) => g.real)!.members.sort()).toEqual(want.sort());
+    expect(HEROES.filter((h) => h.origin === 'founder').map((h) => h.name).sort()).toEqual(want.sort());
+    const wind = GUILDS.find((g) => g.real)!;
+    setReal([]);
+    expect(wind.members).toEqual([]);
+    const row = { me: false, avatar: null, lv: 1, tower_week: null, tower: 0, arena: 0, world_week: null, world: 0, contrib_week: null, contrib: 0, raid: 0 };
+    setReal([{ ...row, name: '실유저A', guild: 'real' }, { ...row, name: '다른길드', guild: 'ai1' }, { ...row, name: '나', guild: 'real', me: true }]);
+    expect(wind.members).toEqual(['실유저A']);
+    setReal([]);
   });
   it('관계: 인연 · 협공 컷인 자리 · 세르님 리스펙 대사 · 대사 3종 · 외형', async () => {
     const { BONDS, SER_ASK } = await import('../src/data/bonds');

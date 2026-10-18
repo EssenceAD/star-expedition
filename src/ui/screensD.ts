@@ -8,7 +8,7 @@ import * as cloud from '../core/net/cloud';
 import { lockOf, triesText } from '../game/content';
 import { attend, attendToday, claim, claimAll, eventLeft, eventToday, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
 import {
-  addFriend, board, BOARD_NAME, buyGuild, buyFriendPt, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
+  addFriend, aiChatOn, isAiLine, board, BOARD_NAME, buyGuild, buyFriendPt, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { HEROES } from '../data/heroes';
@@ -16,6 +16,7 @@ import { icon, iconText } from '../theme/tokens';
 import { view } from './view';
 import { goFullscreen } from './mobile';
 import { openBackups, openReport } from './ops';
+import { setReal } from '../game/real';
 import { $, $$, CUR_NAME, esc, fmt, go, heroPortrait, medal, modal, register, setChatOpener, syncBar, tabLabel, toast } from './core';
 
 const SO = CONFIG.social;
@@ -127,15 +128,15 @@ register('guild', {
         // 길드 카드: 문양 메달 · 대표 멤버 초상화 3 · 오늘 출석(AI 길드) — 빈 아래 절반 채우기 (MOBILE_REF §4)
         const face = (n: string) => heroPortrait(HEROES.find((h) => h.name === n)?.id ?? avatarOf(n));
         const came = (x: (typeof GUILDS)[number]) => 1 + ([...(dayKey() + x.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % x.members.length);
-        body = `<p class="sm why band">길드에 들어가면 출석·기여·길드 상점·길드 채팅·길드 레이드가 열려요. 실멤버 길드는 단톡방 원정대, 나머지는 AI 길드예요.</p>
+        body = `<p class="sm why band">길드에 들어가면 출석·기여·길드 상점·길드 채팅·길드 레이드가 열려요. 「윈드」는 실유저 길드, 나머지는 AI 길드예요.</p>
           <div class="row gtools"><button class="btn hi" data-gmake>${icon('guild')} 길드 만들기 (${icon('gold')}${fmt(SO.guild.createGold)})</button><span class="grow"></span><button class="btn" data-grefresh>${icon('repeat')} 새로고침</button></div>
-          <div class="cards gcards">${shownGuilds().map((x) => `<div class="panel col shopc gcard"><div class="gem">${icon('guild', 'ic gemi')}</div><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><div class="gface">${x.members.slice(0, 3).map((n) => `<i class="pt s" style="background-image:url(${face(n)})" title="${esc(n)}"></i>`).join('')}</div><span class="xs gold">${x.real ? `멤버 영웅 ${x.members.length}명` : `오늘 출석 ${came(x)}/${x.members.length + 1}`}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
+          <div class="cards gcards">${shownGuilds().map((x) => `<div class="panel col shopc gcard"><div class="gem">${icon('guild', 'ic gemi')}</div><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><div class="gface">${x.members.slice(0, 3).map((n) => `<i class="pt s" style="background-image:url(${face(n)})" title="${esc(n)}"></i>`).join('')}</div><span class="xs gold">${x.real ? `실유저 ${x.members.length}명` : `오늘 출석 ${came(x)}/${x.members.length + 1}`}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
       } else if (tab === 'info') {
         const bd = guildBoard();
         body = `<div class="panel col"><b>${g.name} · Lv.${g.lv}</b><span class="xs dim">${esc(g.desc)}</span>
             <div class="row gbtns"><button class="btn hi" data-att ${S.guild.attendDay === dayKey() ? 'disabled' : ''}>출석 (${icon('guildCoin')}${SO.guild.attendCoin})</button>${SO.guild.donate.map(([gold, pts, coin], i) => `<button class="btn" data-don="${i}">기여 ${icon('gold')}${fmt(gold)} = ${pts}점 · ${icon('guildCoin')}${coin}</button>`).join('')}</div>
             <span class="xs mute">기여는 하루 한 번 · 내 기여 이번 주 ${fmt(S.guild.weekContrib)} · 모두 ${fmt(S.guild.contrib)}</span></div>
-          <div class="panel col"><b class="sm">이번 주 기여 순위</b>${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.pts)}점 · 레이드 ${fmt(x.raid)}</b></div>`).join('')}${g.real ? '<span class="xs mute">실멤버 기록은 서버(클라우드)가 붙으면 보여요</span>' : ''}</div>
+          <div class="panel col"><b class="sm">이번 주 기여 순위</b>${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.pts)}점 · 레이드 ${fmt(x.raid)}</b></div>`).join('')}${g.real ? '<span class="xs mute">실유저 기록 · 1분마다 서버에서 새로 받아요</span>' : ''}</div>
           <button class="btn mini" data-leave>길드 나가기</button>`;
       } else if (tab === 'shop') {
         body = `<div class="cards">${GUILD_SHOP.map((x) => `<div class="panel col shopc"><b class="sm">${x.name}</b><button class="btn" data-buy="${x.id}">${icon('guildCoin')}${x.price}</button></div>`).join('')}</div><span class="xs mute">보유 ${icon('guildCoin')}${S.cur.guildCoin ?? 0}</span>`;
@@ -212,11 +213,17 @@ register('ranking', {
       const bd = board(tab).slice(0, 13);
       root.innerHTML = `<div class="body"><div class="col shopcats">${(Object.keys(BOARD_NAME) as Board[]).map((k) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(BOARD_PIC[k], BOARD_NAME[k])}</button>`).join('')}</div>
         <div class="col grow"><span class="xs dim">내 순위 ${myRank(tab) || '-'}위 · ${SO.titleTop}위 안이면 랭커 칭호 「${TITLE_OF[tab]}」 (채팅 이름 옆) · 칭호 달기는 설정</span>
-          <div class="panel col grow scroll">${bd.map((x, i) => `<div class="kv rank${x.me ? ' gold' : ''}"><span>${medal(i)} <b class="hn">${esc(x.name)}</b>${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div></div></div>`;
+          <div class="panel col grow scroll">${bd.map((x, i) => `<div class="kv rank${x.me ? ' gold' : ''}"><span>${medal(i)} <i class="pt s rav" style="background-image:url(${heroPortrait(x.av && HEROES.some((h) => h.id === x.av) ? x.av : avatarOf(x.name))})"></i> <b class="hn">${esc(x.name)}</b>${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div></div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab as Board), draw())));
       if (got.length) toast(`랭커 칭호 「${got.join('」「')}」을 얻었어요!`);
     };
     draw();
+    // 들어올 때 실유저 기록을 새로 받아 다시 그림
+    void cloud.fetchBoard().then((rows) => {
+      if (!rows || !root.isConnected) return;
+      setReal(rows);
+      draw();
+    });
   },
 });
 
@@ -248,7 +255,7 @@ async function notice() {
 const QUICK = SO.quick;
 export const quickHtml = () => `<div class="qpop" hidden>${QUICK.phrases.map((t) => `<button class="tab" data-q="${esc(t)}">${esc(t)}</button>`).join('')}${QUICK.emotes.map((k) => `<button class="tab emo" data-qe="${k}">${icon(k)}</button>`).join('')}</div>`;
 export function chatHtml(ch: ChatLine['ch']) {
-  const lines = S.chat.filter((l) => l.ch === ch).slice(-30);
+  const lines = S.chat.filter((l) => l.ch === ch && (aiChatOn() || !isAiLine(l))).slice(-30);
   return `<div class="chatbox"><div class="chatlog scroll" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
     ${quickHtml()}<div class="row chatrow"><button class="btn mini qbtn" data-quick title="빠른 채팅">${icon('emote')}</button><input class="tab grow chatin" data-in maxlength="${SO.chat.max}" enterkeyhint="send" placeholder="${ch === 'world' ? '월드 채팅' : '길드 채팅'} (로그인하면 다른 사람에게도)"><button class="btn mini hi" data-send>보내기</button></div></div>`;
 }
@@ -320,9 +327,14 @@ export function openChat() {
   $('#stage').append(m);
   let ch: ChatLine['ch'] = 'world';
   const draw = () => {
-    m.innerHTML = `<div class="panel chatp"><div class="row"><div class="tabs grow"><button class="tab${ch === 'world' ? ' on' : ''}" data-ch="world">월드</button><button class="tab${ch === 'guild' ? ' on' : ''}" data-ch="guild" ${S.guild.id ? '' : 'disabled'}>길드</button></div><button class="btn mini" data-x>${icon('close')}</button></div>${chatHtml(ch)}</div>`;
+    m.innerHTML = `<div class="panel chatp"><div class="row"><div class="tabs grow"><button class="tab${ch === 'world' ? ' on' : ''}" data-ch="world">월드</button><button class="tab${ch === 'guild' ? ' on' : ''}" data-ch="guild" ${S.guild.id ? '' : 'disabled'}>길드</button></div><button class="btn mini${aiChatOn() ? ' on' : ''}" data-ai>AI ${aiChatOn() ? '켜짐' : '꺼짐'}</button><button class="btn mini" data-x>${icon('close')}</button></div>${chatHtml(ch)}</div>`;
     $$('[data-ch]', m).forEach((b) => (b.onclick = () => ((ch = b.dataset.ch as ChatLine['ch']), draw())));
     $('[data-x]', m).onclick = () => m.remove();
+    $('[data-ai]', m).onclick = () => {
+      setPref('aiChat', !aiChatOn());
+      toast(aiChatOn() ? 'AI 채팅을 켰어요' : 'AI 채팅을 껐어요 · 실유저 채팅과 알림만 보여요');
+      draw();
+    };
     wireChat(m, ch, draw);
   };
   draw();

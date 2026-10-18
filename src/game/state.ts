@@ -85,6 +85,10 @@ export interface ChatLine {
   me?: boolean;
   title?: string;
   ch: 'world' | 'guild';
+  /** AI가 만든 줄 (AI 채팅 끄면 숨김) */
+  ai?: boolean;
+  /** 경사 알림 줄 (누가 무엇을 해냈어요) */
+  news?: boolean;
 }
 export interface SaveV6 {
   version: 6 | 7;
@@ -95,7 +99,7 @@ export interface SaveV6 {
   /** 첫 진입(프롤로그 → 1-1) 끝났나 */
   prologue: boolean;
   /** 원정대(계정) */
-  acc: { name: string; lv: number; exp: number };
+  acc: { name: string; lv: number; exp: number; /** 프로필 초상 영웅 id (없으면 파티 대장) */ avatar?: string };
   /** 행동력: 값 · 마지막으로 회복을 계산한 시각 */
   sta: { n: number; at: number };
   /** 부스터(전리품 2배) 끝나는 시각 */
@@ -240,6 +244,12 @@ function typeFor(g: Gear, s: Save): string {
 }
 
 /** 지금 저장 (게임 전체가 이것 하나를 쓴다) */
+/** 경사 소식 (형철 10/18 「빡센 거 했을 때 알림」): 게임 쪽이 부르면 화면(core.ts)이 한 줄 채팅·토스트·서버 월드 채팅으로 알림
+ *  지금 플레이 중인 저장(S)에서 일어난 일만 (경제 시뮬·시험 저장은 조용히) */
+export const newsBus: ((text: string) => void)[] = [];
+export function news(text: string, s: Save) {
+  if (s === S) for (const f of newsBus) f(text);
+}
 export let S: Save = newSave();
 export function loadSave(now = Date.now()) {
   S = migrate(getPref<unknown>('save', null), now);

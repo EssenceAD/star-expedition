@@ -1,7 +1,8 @@
 // 영웅 성장 (STAR_PLAN_v2 §2): 각성(레벨 상한) · 별(1~5성) · 스킬 레벨 · 초월(단계마다 특성 2택) · 경험치 물약 · 전용 무기(조각) · 전용 보물(자리)
 import { CONFIG } from '../config';
 import { addExp, levelCap } from './heroes';
-import { addCur, S, spend, track, type Save } from './state';
+import { addCur, news, S, spend, track, type Save } from './state';
+import { heroOf } from '../data/heroes';
 
 const GR = CONFIG.growth;
 /** 초월 특성: 단계마다 둘 중 하나 (빌드 분기) — 값은 능력 보정 비율 */
@@ -31,6 +32,7 @@ export function awaken(id: string, s: Save = S): R {
   addCur('gold', -c.gold, s);
   h.awaken++;
   track('awaken', 1, s);
+  if (h.awaken >= GR.awaken.stones.length) news(`${s.acc.name}님의 ${heroOf(id).name}, 최대 각성!`, s);
   return 'ok';
 }
 // ───────── 별 ─────────
@@ -71,6 +73,7 @@ export function transcend(id: string, pickIdx: 0 | 1, s: Save = S): R {
   addCur('transStone', -c.stones, s);
   addCur('gold', -c.gold, s);
   h.trans.push(pickIdx);
+  news(`${s.acc.name}님의 ${heroOf(id).name}, ${h.trans.length}단계 초월!`, s);
   return 'ok';
 }
 /** 특성 다시 고르기 (같은 단계 · 무료 — 빌드 연구용) */

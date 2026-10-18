@@ -4,6 +4,7 @@
 import { CONFIG } from '../../config';
 import { sb } from './supabase';
 import { getPref, setPref } from '../save';
+import type { RealRow } from '../../game/real';
 
 const C = CONFIG.social.cloud;
 export const emailOf = (loginId: string) => `${loginId}@${C.emailDomain}`;
@@ -95,6 +96,18 @@ export async function pull(): Promise<{ data: unknown; at: number } | null | str
   const { data, error } = await sb.from('star_saves').select('data,updated_at').eq('user_id', w.uid).maybeSingle();
   if (error) return why(error)!;
   return data ? { data: data.data, at: Date.parse(data.updated_at as string) } : null;
+}
+/** 실유저 랭킹 줄 (star_board · 로그인 안 해도 읽힘 · 시험 브라우저는 빈 목록) */
+export async function fetchBoard(): Promise<RealRow[] | null> {
+  if (!sb || sandbox()) return null;
+  const { data, error } = await sb.rpc('star_board');
+  return error || !Array.isArray(data) ? null : (data as RealRow[]);
+}
+/** 처음 켤 때: 로그인 안 했으면 게스트 계정을 만들어 둠 → 1분마다 클라우드 저장 → 실유저 랭킹에 나옴 (형철 10/18) */
+export async function ensureSession(): Promise<boolean> {
+  if (!sb || sandbox() || (await who())) return false;
+  const r = await sb.auth.signInAnonymously().catch(() => null);
+  return !!r && !r.error;
 }
 /** 채팅 올리기 (로그인했을 때만 · 실패해도 이 기기엔 남음) */
 export async function postChat(line: { ch: 'world' | 'guild'; guild: string | null; name: string; title?: string; text: string }): Promise<string | null> {

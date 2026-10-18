@@ -24,6 +24,7 @@ import { gachaShow } from './ui/gacha';
 import { loadFxArt } from './battle/fxart';
 import { requestSkill } from './battle/sim';
 import { makeGear } from './game/gear';
+import { setReal } from './game/real';
 
 applyTheme();
 // 소리: 첫 터치에 열림 (타이틀 터치부터 음악) · 버튼마다 「톡」 · 뒤로/닫기는 「닫힘」
@@ -179,7 +180,15 @@ const autoPush = async () => {
   persist();
   if (!(await cloud.push(S))) S.cloud.pushedAt = Date.now();
 };
-setInterval(autoPush, CONFIG.social.cloud.pushSec * 1000);
+// 실유저 랭킹: 받아 두기 (랭킹·길드 화면이 이 값을 씀)
+const refreshReal = async () => {
+  const rows = await cloud.fetchBoard();
+  if (rows) setReal(rows);
+};
+setInterval(() => void autoPush().then(refreshReal), CONFIG.social.cloud.pushSec * 1000);
+// 로그인 안 했으면 게스트로 들어가 바로 한 번 올림 → 실유저 랭킹·윈드 길드에 나옴
+//  (이미 로그인한 계정은 켜자마자 올리지 않음 — 새 기기의 빈 저장이 클라우드를 덮지 않게 · 1분 주기는 그대로)
+void cloud.ensureSession().then((made) => (made ? autoPush() : undefined)).then(refreshReal);
 document.addEventListener('visibilitychange', () => document.hidden && void autoPush());
 if (q.get('go')) {
   const [c, st, d] = (q.get('go') === '1' ? '1-10-0' : q.get('go')!).split('-').map(Number);
@@ -204,4 +213,4 @@ const castNow = (h: number, i: number) => {
   return requestSkill(b, b.heroes[h], i);
 };
 const gachaDemo = (grades: number[]) => gachaShow(grades.map((g, i) => makeGear((['weapon', 'armor', 'acc'] as const)[i % 3], g, 10, newSave())), null, () => {});
-Object.assign(window, { __ready: true, __go: go, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame });
+Object.assign(window, { __ready: true, __go: go, __setReal: setReal, __b: battleNow, __artWait: battleArtWait, __gachaDemo: gachaDemo, __cast: castNow, __fxReady: () => !!view.art.fx, __cfg: CONFIG, __S: () => S, __tick: frame });

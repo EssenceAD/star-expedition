@@ -5,9 +5,9 @@ import { CONFIG } from '../config';
 import { artOf, artPath, HD_PORTRAIT, heroOf } from '../data/heroes';
 import { SPEAKER, type Line } from '../data/story';
 import * as cloud from '../core/net/cloud';
-import { aiLine, mailUnread, pushChat } from '../game/social';
+import { aiChatOn, aiLine, mailUnread, pushChat } from '../game/social';
 import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
-import { cur, persist, S, type ChatLine } from '../game/state';
+import { cur, newsBus, persist, S, type ChatLine } from '../game/state';
 import { fullbodyPath } from '../game/costume';
 import { icon, iconText } from '../theme/tokens';
 import { music } from '../core/audio/music';
@@ -113,8 +113,9 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
   bar.hidden = !s.title;
   // 메인 지도: 바 바탕 없이 지도 위에 · 채팅 한 줄은 숨김 (채팅은 바 오른쪽 버튼)
   bar.classList.toggle('onmap', id === 'lobby');
-  // 위 채팅 띠는 모든 화면에서 숨김 (MASTER 1-7) · 채팅은 상단 바 채팅 버튼
-  tk.hidden = true;
+  // 한 줄 채팅 띠 (형철 10/18 「기존 한 줄 채팅 보이게」): 상단 바가 있는 화면에서 · 누르면 채팅 창
+  tk.hidden = !s.title;
+  tk.onclick = () => chatOpener();
   if (!s.title) return;
   const title = typeof s.title === 'function' ? s.title(p) : s.title;
   const backBtn = s.back === false || id === 'lobby' ? '' : `<button class="btn mini" data-back>${icon('back')}</button>`;
@@ -172,7 +173,10 @@ export function tickChat(dt: number) {
         lastReal = Math.max(lastReal, r.at);
         if (r.ch === 'guild' && r.guild !== S.guild.id) continue;
         if (r.name === S.acc.name && S.chat.some((l) => l.me && l.text === r.text)) continue;
-        pushChat({ name: r.name, title: r.title ?? undefined, text: r.text, at: r.at, ch: r.ch }, S);
+        // 내가 올린 소식이 돌아온 것은 건너뜀
+        const isNews = r.name === NEWS_NAME;
+        if (isNews && S.chat.some((l) => l.news && l.text === r.text)) continue;
+        pushChat({ name: r.name, title: r.title ?? undefined, text: r.text, at: r.at, ch: r.ch, news: isNews || undefined }, S);
         showTicker(S.chat[S.chat.length - 1]);
       }
     });
@@ -183,12 +187,23 @@ export function tickChat(dt: number) {
   chatT = a + Math.random() * (b - a);
   // AI 길드에 들었으면 가끔 길드 채팅도 (실멤버 길드는 실유저만)
   const g = S.guild.id;
+  // AI 채팅을 끄면 AI 줄은 만들지 않음 (실유저 줄·알림만)
+  if (!aiChatOn()) return;
   if (g && g !== 'real' && Math.random() < 0.3) pushChat(aiLine('guild'), S);
   const line = aiLine('world');
   pushChat(line, S);
   showTicker(line);
   syncBar();
 }
+/** 경사 소식 받기: 내 한 줄 채팅 · 토스트 · 서버 월드 채팅(이름 「소식」 · 60자) → 다른 사람 한 줄 채팅에도 */
+export const NEWS_NAME = '소식';
+newsBus.push((text) => {
+  const line: ChatLine = { name: NEWS_NAME, text: text.slice(0, 60), at: Date.now(), ch: 'world', news: true };
+  pushChat(line, S);
+  showTicker(line);
+  toast(text);
+  void cloud.postChat({ ch: 'world', guild: null, name: NEWS_NAME, text: line.text });
+});
 function showTicker(l: ChatLine) {
   $('#ticker').innerHTML = `${icon('chat')} ${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}<b>${esc(l.name)}</b> : ${esc(l.text)}`;
 }

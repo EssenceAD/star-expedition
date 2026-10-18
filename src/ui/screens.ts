@@ -15,6 +15,7 @@ import { accNeed, boostLeft, boostMult, buyBooster, stageCost, stamina } from '.
 import { freeSummonLeft } from '../game/gear';
 import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, milesReady, nextMile, triesText, validLast, type Run } from '../game/content';
 import { openMiles } from './milestones';
+import { myAvatar, openProfile } from './profile';
 import { playNotices } from './notice';
 import { runTitle } from './screensC';
 import { view } from './view';
@@ -93,9 +94,12 @@ register('title', {
 const guideOff = new Set<string>();
 const sideBtn = (attr: string, ic: string, name: string, badge: string | number = '') => `<button class="sic" ${attr}>${icon(ic)}<span>${name}</span>${badge ? `<em class="badge">${badge}</em>` : ''}</button>`;
 register('lobby', {
-  title: () => `<span class="prof"><span class="pf"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i></span><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
+  title: () => `<span class="prof" data-prof title="내 프로필"><span class="pf"><i class="pt" style="background-image:url(${heroPortrait(myAvatar())})"></i></span><span class="col"><b><em>Lv.${S.acc.lv}</em> <span class="nm">${esc(S.acc.name)}</span></b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
   enter(root) {
     root.classList.add('mainmap');
+    // 왼쪽 위 프로필 → 내 프로필 창 (초상 바꾸기 · 원정대 레벨 자세히 · 형철 10/18)
+    const prof = document.querySelector<HTMLElement>('#topbar [data-prof]');
+    if (prof) prof.onclick = openProfile;
     const ns = nextStage();
     const { c, d } = ns;
     const ch = CHAPTERS[c - 1];
