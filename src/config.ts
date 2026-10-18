@@ -2,7 +2,7 @@
 //  전투 공식은 「체크인」 전투(combat/field.ts · CONFIG.combat): 치명 15% ×2 · 받는 피해 × (1 − 방어/(방어+K)) 최대 40% · 히트스톱/넉백/흔들림
 export const CONFIG = {
   /** 논리 화면: 높이 고정 · 너비는 창 비율에 맞춰 (화면 꽉 채우기) */
-  view: { h: 390, wMin: 540, wMax: 960, wBase: 844, ground: 254, narrow: 640 },
+  view: { h: 390, wMin: 720, wMax: 960, wBase: 844, ground: 254, narrow: 640 },
   combat: {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
     pxScale: 26 / 72,

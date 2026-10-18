@@ -1,4 +1,5 @@
 // 화면 크기 · 캔버스 · 그림 (main.ts가 채움) — 화면 꽉 채우기: 높이 390 고정, 너비는 창 비율(wMin~wMax)
+//  wMin 720 (10/18 폴드·패드): 정사각형에 가까운 화면도 전장을 넓게 → 위아래 여백은 늘지만 영웅·몹이 몰려 보이지 않게 (웅스·고느끼 피드백)
 import { CONFIG } from '../config';
 import type { Art } from '../battle/render';
 

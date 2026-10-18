@@ -144,7 +144,8 @@ export function drawFrame(ctx: CanvasRenderingContext2D, s: Sheet, key: string, 
   const c = s.cell[key];
   if (!im || !c) return;
   const [d, name] = key.split(':');
-  const base = c.by ?? s.base[`${d}:${name.split('c')[0]}`] ?? c.ch;
+  // 쓰러짐 칸(r1c1)은 누운 몸의 아래 끝을 발 자리에 → 서 있는 줄 기준선(by)에 맞추면 몸이 그림자 위로 붕 뜨던 것 (10/18)
+  const base = name === 'r1c1' ? c.y + c.h : (c.by ?? s.base[`${d}:${name.split('c')[0]}`] ?? c.ch);
   ctx.save();
   ctx.globalAlpha *= alpha;
   // 줄일 땐 늘 부드럽게 (도트가 계단지지 않게) · 1.5배 넘게 키울 때만 픽셀 그대로 (SPRITE_RES_1017 §A)
