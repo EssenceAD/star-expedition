@@ -338,8 +338,8 @@ register('settings', {
       const w = await cloud.who();
       root.innerHTML = `<div class="body"><div class="col grow scroll">
           <div class="panel col"><b>계정 (「체크인」과 같은 계정)</b>
-            ${w ? `<span class="sm">${w.guest ? '게스트' : `아이디 ${esc(w.login ?? '')}`} 로그인 중</span><div class="row"><button class="btn" data-push>${icon('next')} 클라우드에 올리기</button><button class="btn" data-pull>클라우드에서 받기</button><button class="btn mini" data-out>로그아웃</button></div>`
-              : `<span class="xs dim">「체크인」 아이디·비밀번호로 로그인하면 클라우드 저장·실유저 채팅이 켜져요</span><div class="row"><input class="tab" data-id placeholder="아이디"><input class="tab" data-pw type="password" placeholder="비밀번호"><button class="btn hi" data-login>로그인</button><button class="btn" data-guest>게스트로</button></div>`}</div>
+            ${w ? `<span class="sm">${w.guest ? '게스트' : `아이디 ${esc(w.login ?? '')}`} 로그인 중</span><div class="row acct"><button class="btn" data-push>${icon('next')} 클라우드에 올리기</button><button class="btn" data-pull>클라우드에서 받기</button><button class="btn mini" data-out>로그아웃</button>${w.guest ? '<button class="btn hi" data-signup>회원가입</button>' : ''}</div>`
+              : `<span class="xs dim">「체크인」 아이디·비밀번호로 로그인하면 클라우드 저장·실유저 채팅이 켜져요</span><div class="row acct"><input class="tab" data-id placeholder="아이디"><input class="tab" data-pw type="password" placeholder="비밀번호"><button class="btn hi" data-login>로그인</button><button class="btn" data-guest>게스트로</button><button class="btn" data-signup>회원가입</button></div>`}</div>
           <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
           <div class="panel col"><b>소리 · 화면</b>
@@ -360,6 +360,28 @@ register('settings', {
       });
       q('[data-guest]')?.addEventListener('click', async () => (msg(await cloud.guest(), '게스트로 들어왔어요'), void draw()));
       q('[data-out]')?.addEventListener('click', async () => (await cloud.logout(), toast('로그아웃했어요'), void draw()));
+      // 회원가입 (왈왈콩선생 10/18 「회원가입 키가 없어요」): 아이디·비밀번호·닉네임 → 지금 진행을 그 계정 클라우드로 올림 → 복구 코드 보여 줌
+      q('[data-signup]')?.addEventListener('click', () => {
+        const m = modal(`${icon('mail')} 회원가입`, `<p class="sm dim">「체크인」과 같은 계정이에요. 지금까지 한 진행은 그대로 이 계정에 저장돼요.</p>
+          <div class="col"><input class="tab" data-sid placeholder="아이디 (영어 소문자·숫자 4~16자)" maxlength="16" autocomplete="username">
+          <input class="tab" data-spw type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password">
+          <input class="tab" data-snm placeholder="닉네임 (2~8자)" maxlength="8" value="${esc([...S.acc.name].slice(0, 8).join(''))}"></div>`, [
+          ['취소', null],
+          ['가입하기', () => {
+            const v = (k: string) => m.querySelector<HTMLInputElement>(`[${k}]`)!.value;
+            void cloud.signup(v('data-sid'), v('data-spw'), v('data-snm')).then(async (r) => {
+              if ('err' in r) return toast(r.err);
+              m.remove();
+              persist();
+              const e = await cloud.push(S);
+              if (!e) ((S.cloud.pushedAt = Date.now()), persist());
+              modal('가입했어요!', `<p class="dim">이제 다른 기기에서도 이 아이디로 이어서 할 수 있어요.</p><p class="sm">비밀번호를 잊었을 때 쓰는 <b>복구 코드</b>예요. 꼭 적어 두세요 (다시 볼 수 없어요).</p><p class="gold" style="user-select:text">${r.code}</p>`, [['적어 뒀어요', null, true]]);
+              void draw();
+            });
+            return false;
+          }, true],
+        ]);
+      });
       q('[data-push]')?.addEventListener('click', async () => {
         persist();
         const e = await cloud.push(S);
