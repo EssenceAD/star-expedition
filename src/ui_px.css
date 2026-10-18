@@ -417,3 +417,7 @@ body, #stage { font-weight: normal; }
 #stage .hcard .newh { position: absolute; z-index: 2; left: var(--s-xs); top: var(--s-xs); padding: var(--s-xxs) var(--s-xs); background: var(--px-red); color: var(--px-text); text-shadow: var(--px-outlineSm); font-size: var(--fs-sm); animation: v3Blink 0.8s ease-in-out infinite; }
 #stage .shopc.hero .wk { position: absolute; z-index: 3; left: var(--s-xs); top: var(--s-xs); }
 #stage .fpt { margin-top: var(--s-md); }
+/* 새 버전 띠 · 제보 창 */
+#stage .updband { position: absolute; z-index: 90; left: 50%; top: var(--s-xs); padding: var(--s-xs) var(--s-lg); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; color: var(--px-text); text-shadow: var(--px-redText); font-size: var(--fs-md); transform: translateX(-50%); animation: v3Pulse 1.4s ease-in-out infinite; cursor: pointer; }
+#stage .rep { gap: var(--s-xs); }
+#stage .rep select, #stage .rep textarea { width: 100%; padding: var(--s-xs); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); font: inherit; font-size: var(--fs-md); resize: none; }

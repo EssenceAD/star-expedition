@@ -10,6 +10,7 @@ import { applyTheme } from './theme/tokens';
 import { initAudioEngine } from './core/audio/engine';
 import { sfx } from './core/audio/sfx';
 import { initTips } from './ui/tip';
+import { initOps } from './ui/ops';
 import { $, currentScreen, go, scrollHints, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
@@ -128,6 +129,8 @@ setInterval(() => scrollHints($('#stage')), CONFIG.ui.scrollHintMs);
 addEventListener('pagehide', () => persist());
 document.addEventListener('visibilitychange', () => document.hidden && persist());
 go('title', {}, false);
+// 운영: 새 버전 알림 · 오류 기록 · 하루 백업 (「체크인」에서 가져옴)
+initOps();
 document.getElementById('loading')?.remove();
 
 // 녹화·자동 플레이 (tools/gif.mjs · play.mjs): ?go=1(=1-10) 또는 ?go=장-스테이지-난이도 · &auto=1 · &speed=2 · &rec=1(고정 걸음 · __tick)
