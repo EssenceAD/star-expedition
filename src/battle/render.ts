@@ -42,8 +42,21 @@ export function bgFit(key?: string) {
   let h = (sy1 - sy0) / (bt - t);
   let y0 = sy0 - t * h;
   if (y0 > 0) ((h = sy0 / t), (y0 = 0));
-  if (y0 + h < view.h) h = view.h - y0;
+  // 너무 키우면 도트가 뭉개짐 (외전 배경 2.7배 · 형철 10/18) → 상한 · 모자란 아래는 drawBg가 그림 맨 아래 줄을 늘려 채움(대부분 스킬 칸 뒤)
+  if (y0 + h < view.h) h = Math.min(view.h - y0, CONFIG.ui.bgMaxH);
   return { h, y0 };
+}
+/** 배경 한 장 그리기: 그림 + (아래가 모자라면) 그림 아래쪽을 거울처럼 뒤집어 이어 붙임 (늘린 띠가 보이던 것 · 폴드) */
+function drawBg(ctx: CanvasRenderingContext2D, im: HTMLImageElement, x: number, y0: number, w: number, h: number) {
+  ctx.drawImage(im, x, y0, w, h);
+  const gap = Math.min(h, view.h - (y0 + h));
+  if (gap <= 0) return;
+  const sh = (gap / h) * im.height;
+  ctx.save();
+  ctx.translate(0, 2 * (y0 + h));
+  ctx.scale(1, -1);
+  ctx.drawImage(im, 0, im.height - sh, im.width, sh, x, y0 + h - gap, w, gap);
+  ctx.restore();
 }
 
 // 보조 캔버스는 화면 해상도(view.dpr)로 — 1배로 그린 뒤 늘리면 도트가 뭉개지고 2~3px씩 툭툭 끊김 (SPRITE_RES_1017 §A)
@@ -232,7 +245,7 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
     const w = (im.width / im.height) * h;
     const o = -((s * 0.25) % w);
     ctx.filter = own ? 'none' : (B.region[region] ?? 'none');
-    for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), y0, Math.ceil(w) + 1, h);
+    for (let x = o; x < W; x += w) drawBg(ctx, im, Math.floor(x), y0, Math.ceil(w) + 1, h);
     ctx.filter = 'none';
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, view.h);
@@ -636,7 +649,7 @@ function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: n
     const fit = bgFit(own ? b.setup.bg : undefined);
     const w = (im.width / im.height) * fit.h;
     ctx.filter = `${tint === 'none' ? '' : tint} brightness(0.85)`.trim();
-    for (let x = Math.min(0, (W - w) / 2); x < W; x += w) ctx.drawImage(im, Math.floor(x), fit.y0, Math.ceil(w) + 1, fit.h);
+    for (let x = Math.min(0, (W - w) / 2); x < W; x += w) drawBg(ctx, im, Math.floor(x), fit.y0, Math.ceil(w) + 1, fit.h);
     ctx.filter = 'none';
   } else background(ctx, art, b.t * 10, W, b.setup.region, b.setup.bg);
   // 두 줄 바닥 + 경고 줄

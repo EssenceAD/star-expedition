@@ -426,6 +426,8 @@ export const CONFIG = {
     bgDyRate: 0.5,
     /** 일반 전투: 유닛·이펙트를 배경보다 이만큼 아래로 → 숲·바위 끝선이 아니라 땅 안쪽을 딛고 섬 (형철 10/18 「땅에 딛고 서 있는 느낌」 · 보스 전장은 그대로) */
     fieldDown: 36,
+    /** 전투 배경 그림 높이 상한 (논리 px · 넘게 키우면 흐림) */
+    bgMaxH: 770,
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
     screenBg: { tower: 'tower', world: 'world', capital: 'capital', inn: 'inn', library: 'library', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */

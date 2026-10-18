@@ -476,7 +476,11 @@ register('prep', {
         toast(`부스터 켬 · 전리품 ${CONFIG.booster.mult}배`);
         draw();
       };
-      $('[data-start]', root).onclick = () => go('battle', { stage: { ...st } });
+      // 행동력은 전투 화면으로 가기 전에 확인 → 빈 전투 배경이 잠깐 보이고 알림이 뜨던 것 (고느끼 10/18)
+      $('[data-start]', root).onclick = () =>
+        stamina() < stageCost(st.d)
+          ? void modal(`${icon('stamina')} 행동력이 모자라요`, `<p class="dim">이 스테이지는 행동력이 ${stageCost(st.d)}개 필요해요 (지금 ${stamina()}개). 시간이 지나면 차거나, 상단 바 [+]로 채울 수 있어요.</p>`, [['확인', null, true]])
+          : go('battle', { stage: { ...st } });
       $('[data-repeat]', root).onclick = () => repeatAsk(st, rep, draw);
     };
     draw();

@@ -480,7 +480,7 @@ function begin(s: StageId) {
   const use = useStamina(cost);
   if (!use.ok) {
     // 확인 → 그 스테이지 전투 준비로 돌아감 (빈 전투 화면에 남던 것 · 10/18)
-    modal(`${icon('stamina')} 행동력이 모자라요`, `<p class="dim">이 스테이지는 행동력 ${cost}이 필요해요. 시간이 지나면 차거나, 상단 바 [+]로 채울 수 있어요.</p>`, [['확인', () => go('prep', { stage: s }), true]]);
+    modal(`${icon('stamina')} 행동력이 모자라요`, `<p class="dim">이 스테이지는 행동력이 ${cost}개 필요해요. 시간이 지나면 차거나, 상단 바 [+]로 채울 수 있어요.</p>`, [['확인', () => go('prep', { stage: s }), true]]);
     return;
   }
   if (use.up) toast('원정대 레벨 업! 행동력이 가득 찼어요');
