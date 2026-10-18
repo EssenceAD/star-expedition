@@ -23,7 +23,7 @@ import { attendPopup, missionBadge } from './screensD';
 import { attendToday, eventToday } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, join, owned } from '../game/heroes';
-import { baseReward, buildMobs, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
+import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatAsk, repeatText } from './battle';
@@ -418,6 +418,11 @@ register('prep', {
             <div class="panel col tsum">
               <div class="kv"><span>팀 레벨</span><b>Lv.${S.acc.lv}</b></div>
               <div class="kv"><span>파티 전투력</span><b class="gold">${fmt(partyPower())}</b></div>
+              <div class="party">${[0, 1, 2, 3].map((i) => {
+                const id = byZone(ids)[i];
+                // 누르면 파티에서 빼기 (편성 바꾸기 · v1.0.11에서 뺐다가 되돌림 · 형철 10/18)
+                return id ? `<div class="pcard" data-out="${id}" title="${heroOf(id).name} · 눌러서 빼기"><div class="pt" style="background-image:url(${heroPortrait(id)})"></div></div>` : '<div class="pcard empty"></div>';
+              }).join('')}</div>
               <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<button class="chip${bonds.includes(x) ? ' on' : ''}" data-bond="${x.id}" title="${esc(bondText(x))}">${x.name}</button>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
             </div>
             ${run ? `<div class="panel col">
@@ -461,6 +466,15 @@ register('prep', {
       });
       $$('[data-lk]', root).forEach((b) => (b.onclick = () => go('shop', { cat: 'hero' })));
       $$('[data-bond]', root).forEach((b) => (b.onclick = () => toast(bondText(BONDS.find((x) => x.id === b.dataset.bond)!))));
+      $$('[data-out]', root).forEach(
+        (b) =>
+          (b.onclick = () => {
+            if (S.party.length <= 1) return toast('한 명은 있어야 해요');
+            S.party = S.party.filter((x) => x !== b.dataset.out);
+            persist();
+            draw();
+          }),
+      );
       const rs = root.querySelector<HTMLElement>('[data-runstart]');
       if (rs && run) rs.onclick = () => go('battle', { run: run.arg === 'glory' ? { ...run, ban: ban || undefined, swap: swap || undefined } : run });
       $$('[data-ban]', root).forEach((b) => (b.onclick = () => ((ban = b.dataset.ban!), draw())));
