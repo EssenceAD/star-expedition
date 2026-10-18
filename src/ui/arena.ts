@@ -7,7 +7,7 @@ import { combatSynth } from '../core/audio/combatSfx';
 import { arenaOpps, tierOf, type Run } from '../game/content';
 import { S } from '../game/state';
 import { iconText } from '../theme/tokens';
-import { $, esc, fxt, heroPortrait } from './core';
+import { $, esc, fxt } from './core';
 
 const A = CONFIG.ui.arenaShow;
 const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -23,7 +23,7 @@ export function plates(r: Run) {
 }
 type Plate = ReturnType<typeof plates>['me'];
 const plateHtml = (p: Plate) => `<div class="plate"><b>${esc(p.name)}</b><small>${p.tier} 리그${p.rank ? ` ${p.rank}위` : ''} · ${p.score}점 · 승률 ${p.rate === null ? '-' : `${p.rate}%`}</small></div>`;
-const card = (h: HeroSpec, i: number) => `<div class="vc" style="--i:${i}"><i class="pt" style="background-image:url(${heroPortrait(h.def.id)})"></i><span class="st">${iconText('star').repeat(h.star ?? 1)}</span><b>Lv.${h.lv}</b><em>${esc(h.def.name)}</em></div>`;
+const card = (h: HeroSpec, i: number) => `<div class="vc" style="--i:${i}"><i class="pt" style="background-image:url(${import.meta.env.BASE_URL}art/${h.art.face})"></i><span class="st">${iconText('star').repeat(h.star ?? 1)}</span><b>Lv.${h.lv}</b><em>${esc(h.def.name)}</em></div>`;
 
 /** 상대 파티 (전투 전엔 아직 안 나와 있으니 첫 웨이브 설정에서) */
 const foes = (b: Battle): HeroSpec[] => (b.setup.waves[0] ?? []).map((m) => m.hero).filter((h): h is HeroSpec => !!h);
@@ -66,10 +66,10 @@ export function countdown(done: () => void) {
 /** 팀 전체 체력 줄 (맨 위: 왼쪽 우리 편 초록 · 오른쪽 상대 빨강 · 양쪽 대장 초상화 · 가운데 남은 시간 · 아래 점수) */
 export function pvpHudHtml(b: Battle, r: Run) {
   const P = plates(r);
-  const capL = b.heroes[0]?.hero?.def.id;
-  const capR = foes(b)[0]?.def.id;
-  // 양쪽 초상 = 원형 틀 그림(ui/map/portrait_frame) 안 (FINAL §3-2)
-  const cap = (id?: string) => `<span class="cap framed"><i class="framed-in" style="background-image:url(${id ? heroPortrait(id) : ''})"></i></span>`;
+  const capL = b.heroes[0]?.hero?.art.face;
+  const capR = foes(b)[0]?.art.face;
+  // 양쪽 초상 = 원형 틀 그림(ui/map/portrait_frame) 안 (FINAL §3-2) · 입은 코스튬 초상화
+  const cap = (face?: string) => `<span class="cap framed"><i class="framed-in" style="background-image:url(${face ? `${import.meta.env.BASE_URL}art/${face}` : ''})"></i></span>`;
   return `<div class="tm me">${cap(capL)}<div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.me.name)} · ${P.me.score}점</span></div></div>
     <div class="tclock"><b></b></div>
     <div class="tm op"><div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.op.name)} · ${P.op.score}점</span></div>${cap(capR)}</div>`;

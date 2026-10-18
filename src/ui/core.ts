@@ -2,7 +2,7 @@
 //  화면 흐름은 FLOW 표 하나 → tests/flow.test.ts 가 탭 수(로비에서 1탭/3탭 이내)를 확인하고 docs/FLOW.md 흐름도를 만든다
 //  상단 바(STAR_PLAN_v2 §1-8): ← 뒤로 + 화면 이름 / 행동력·금화·별가루 [+] / 우편·채팅 — 모든 화면 같은 자리 (타이틀·전투 빼고)
 import { CONFIG } from '../config';
-import { artOf, HD_PORTRAIT, heroOf } from '../data/heroes';
+import { artOf, artPath, HD_PORTRAIT, heroOf } from '../data/heroes';
 import { SPEAKER, type Line } from '../data/story';
 import * as cloud from '../core/net/cloud';
 import { aiLine, mailUnread, pushChat } from '../game/social';
@@ -28,7 +28,8 @@ export const uiPic = (path: string, cls = 'up') => `<img class="${cls} px" src="
 export const tabLabel = (_pic: string, text: string) => `<span>${text}</span>`;
 /** 틀 구조 (FINAL §1): .framed > .framed-in(초상 · 틀 구멍 모양으로 잘림) + .framed-frame(원형 틀 그림 · 맨 위) */
 export const framedPt = (url: string, cls = '') => `<span class="fpt framed ${cls}"><i class="framed-in" style="background-image:url(${url})"></i></span>`;
-export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
+/** set 기본 = 내가 입힌 코스튬 (남의 영웅이면 null을 넘김) */
+export const heroPortrait = (id: string, set: string | null | undefined = S.heroes[id]?.costume) => (HD_PORTRAIT.has(id) ? `${BASE}art/${artPath(id, 'portrait', set)}` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 

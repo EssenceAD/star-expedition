@@ -63,4 +63,5 @@ export function openMiles(c0?: number) {
     });
   };
   draw();
+  el.classList.add('drawn');
 }

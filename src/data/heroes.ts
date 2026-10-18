@@ -384,8 +384,8 @@ export const heroOf = (id: string) => HERO_BY_ID[id];
 // 전투 도트: 36명 모두 public/art/px2/<id> (docs/ANIM_1017.md) · 새 16칸 m1r1 숨쉬기 · m1r0 걷기 · m2r0 평타(준비→휘두름→타격→회수) · m2r1 스킬(기 모으기→큰 준비→발동→마무리)
 //  기존 8칸은 r1c0 피격 · r1c1 쓰러짐 · r1c2 승리만 씀 · 칸마다 보이는 초는 CONFIG.combat.anim
 //  모든 시트는 머리를 72px로 맞춰 저장 → 모든 영웅에 같은 배율(CONFIG.combat.pxScale) = 얼굴 크기가 같고 키는 체격대로
-const px = (id: string): AnimSet => {
-  const f = (...c: string[]) => c.map((k) => `px2/${id}:${k}`);
+const px = (id: string, dir: string): AnimSet => {
+  const f = (...c: string[]) => c.map((k) => `${dir}:${k}`);
   const A = CONFIG.combat.anim;
   const four = (row: string) => f(`${row}c0`, `${row}c1`, `${row}c2`, `${row}c3`);
   // 스킬: 4칸을 한 번 재생하고 대기로 (POLISH_1017 ②) · 다단 히트면 c1→c2를 타격마다 짧게 되풀이한 뒤 c3
@@ -415,6 +415,12 @@ const SHEETS: Record<string, AnimSet> = {};
 export const CUTIN_ART = new Set(['aria', 'ayla', 'bube', 'ceres', 'elysia', 'gonu', 'grom', 'haeung', 'hwang', 'ichae', 'ikamolly', 'jaehi', 'jin', 'kkangto', 'kleine', 'leon', 'luna', 'mochi', 'momo2', 'moss', 'noel', 'nyx', 'panda', 'ryuka', 'scarlet', 'sermi', 'shinya', 'sylas', 'vael', 'veronica', 'vivian', 'walwal', 'warmnight', 'woongs', 'yeonhwa', 'yuwol']);
 export interface HeroArt {
   anims: AnimSet;
+  /** 전투 도트 시트 폴더 (public/art 아래 · 코스튬이면 코스튬 쪽) */
+  dir: string;
+  /** 컷인 그림 경로 (public/art 아래 · view.art.cutin 키) */
+  cutin: string;
+  /** 고화질 초상화 경로 (public/art 아래) */
+  face: string;
   /** 화면 키 (논리 px) = 대기 첫 칸 키 × CONFIG.combat.pxScale */
   h: number;
   portrait: string;
@@ -427,17 +433,30 @@ const MEMBER_ART = new Set(['sermi', 'ichae', 'mochi', 'jaehi']);
 const PX_H: Record<string, number> = {};
 export async function setPxHeights() {
   // 칸 정보(_parts.json)만으로 키를 앎 → 그림을 다 받기 전에도 전투 배치·크기가 맞음
-  await Promise.all(HEROES.map(async (h) => {
-    const p = await loadParts(`px2/${h.id}`);
-    if (p?.r0c0) PX_H[h.id] = p.r0c0.h;
+  const dirs = [...HEROES.map((h) => `px2/${h.id}`), ...Object.keys(CONFIG.costume).flatMap((k) => CONFIG.costume[k].heroes.map((id) => artPath(id, 'px2', k)))];
+  await Promise.all(dirs.map(async (d) => {
+    const p = await loadParts(d);
+    if (p?.r0c0) PX_H[d] = p.r0c0.h;
   }));
+}
+export type ArtKind = 'fullbody' | 'portrait' | 'px2' | 'cutin';
+/** 영웅 그림 경로 (public/art 아래) — 코스튬 set을 입었으면 CONFIG.costume[set].dir 쪽을 먼저, 그 묶음에 없는 영웅이면 기본 그림
+ *  전신·초상화·전투 도트·컷인 전부 이 함수 하나로 (10/18 · 코스튬 도트 시트가 없으면 sheet.ts loadInto가 기본 시트로 대신함) */
+export function artPath(id: string, kind: ArtKind, set?: string | null): string {
+  const c = set ? CONFIG.costume[set] : undefined;
+  if (c?.heroes.includes(id)) return kind === 'px2' ? `${c.dir}/px2/${id}` : kind === 'fullbody' ? `${c.dir}/${id}.png` : `${c.dir}/portraits_hd/${id}.png`;
+  if (kind === 'px2') return `px2/${id}`;
+  if (kind === 'fullbody') return `fullbody/${id}.png`;
+  return kind === 'cutin' && CUTIN_ART.has(id) ? `cutin/${id}.png` : `portraits_hd/${id}.png`;
 }
 /** 이 영웅들의 전투 도트 시트 폴더 */
 export const heroDirs = (ids: string[]) => [...new Set(ids)].map((id) => `px2/${id}`);
-export function artOf(h: HeroDef): HeroArt {
-  const anims = (SHEETS[h.id] ??= px(h.id));
+/** set = 입은 코스튬 (없으면 기본 그림) */
+export function artOf(h: HeroDef, set?: string | null): HeroArt {
+  const dir = artPath(h.id, 'px2', set);
+  const anims = (SHEETS[dir] ??= px(h.id, dir));
   const portrait = h.fiveStar ? `star_${h.id}` : h.origin === 'legend' ? `legend_${h.id}` : MEMBER_ART.has(h.id) ? `member_${h.id}` : `mc_${JOBS[h.job].mc}_${h.gender}`;
-  return { anims, h: (PX_H[h.id] ?? CONFIG.combat.pxFallbackH) * CONFIG.combat.pxScale, portrait };
+  return { anims, dir, cutin: artPath(h.id, 'cutin', set), face: artPath(h.id, 'portrait', set), h: (PX_H[dir] ?? PX_H[`px2/${h.id}`] ?? CONFIG.combat.pxFallbackH) * CONFIG.combat.pxScale, portrait };
 }
 /** 모든 시트 폴더 이름 (불러오기용) */
 export const sheetDirs = () => HEROES.map((h) => `px2/${h.id}`);
