@@ -10,7 +10,6 @@ import { view } from '../ui/view';
 import { getPref } from '../core/save';
 import { drawFxImg, type FxArt } from './fxart';
 
-export const LH = CONFIG.view.h;
 export const GROUND = CONFIG.view.ground;
 const B = T.battle;
 const F = T.font.canvas;
@@ -38,7 +37,7 @@ export function bgFit(key?: string) {
   let h = (sy1 - sy0) / (bt - t);
   let y0 = sy0 - t * h;
   if (y0 > 0) ((h = sy0 / t), (y0 = 0));
-  if (y0 + h < LH) h = LH - y0;
+  if (y0 + h < view.h) h = view.h - y0;
   return { h, y0 };
 }
 
@@ -231,21 +230,21 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
     for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), y0, Math.ceil(w) + 1, h);
     ctx.filter = 'none';
   } else {
-    const g = ctx.createLinearGradient(0, 0, 0, LH);
+    const g = ctx.createLinearGradient(0, 0, 0, view.h);
     g.addColorStop(0, B.sky[0]);
     g.addColorStop(1, B.sky[1]);
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, LH);
+    ctx.fillRect(0, 0, W, view.h);
   }
   // 전용 배경 그림은 그 그림의 땅 그대로 (덧칠 길·자갈·풀 막대 없음 · FINAL §3-1 「초록 세로 막대」)
   if (own) return;
   const gy = GROUND - 30;
-  const road = ctx.createLinearGradient(0, gy, 0, LH);
+  const road = ctx.createLinearGradient(0, gy, 0, view.h);
   road.addColorStop(0, B.road0);
   road.addColorStop(0.15, B.road1);
   road.addColorStop(1, B.road2);
   ctx.fillStyle = road;
-  ctx.fillRect(0, gy, W, LH - gy);
+  ctx.fillRect(0, gy, W, view.h - gy);
   ctx.fillStyle = B.pebble;
   for (let i = 0; i < 30; i++) {
     const x = ((((i * 97 - s) % (W + 60)) + W + 60) % (W + 60)) - 30;
@@ -254,7 +253,7 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
   }
   for (let i = 0; i < 18; i++) {
     const x = ((((i * 131 - s * 1.5) % (W + 80)) + W + 80) % (W + 80)) - 40;
-    const y = LH - 2;
+    const y = view.h - 2;
     ctx.fillStyle = i % 5 === 0 ? B.grass[2] : i % 2 ? B.grass[0] : B.grass[1];
     for (let j = 0; j < 5; j++) ctx.fillRect(Math.round(x + j * 4), y - 8 - ((j * 7 + i) % 9), 3, 12);
   }
@@ -504,7 +503,7 @@ function drawWhite(ctx: CanvasRenderingContext2D, b: Battle, W: number) {
   if (b.white <= 0) return;
   ctx.globalAlpha = Math.min(1, b.white / CONFIG.combat.lastHit.flash) * 0.85;
   ctx.fillStyle = B.white;
-  ctx.fillRect(0, 0, W, LH);
+  ctx.fillRect(0, 0, W, view.h);
   ctx.globalAlpha = 1;
 }
 
@@ -518,8 +517,8 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.save();
   ctx.globalAlpha = 1 - eout;
   ctx.fillStyle = B.cutVeil;
-  ctx.fillRect(0, 0, W, LH);
-  ctx.translate(W / 2, LH * 0.44);
+  ctx.fillRect(0, 0, W, view.h);
+  ctx.translate(W / 2, view.h * 0.44);
   ctx.rotate(-0.1);
   const bw = W * 1.4;
   const bh = 150;
@@ -606,7 +605,7 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
   ctx.restore();
   if (b.flash > 0) {
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;
-    ctx.fillRect(0, 0, W, LH);
+    ctx.fillRect(0, 0, W, view.h);
   }
   drawWhite(ctx, b, W);
   drawCut(ctx, art, b, W);
@@ -793,10 +792,10 @@ function drawDuo(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.save();
   ctx.globalAlpha = 1 - eout;
   ctx.fillStyle = B.cutVeil;
-  ctx.fillRect(0, 0, W, LH);
+  ctx.fillRect(0, 0, W, view.h);
   const side = (unit: Unit, left: boolean, color: string) => {
     ctx.save();
-    ctx.translate(left ? W * 0.27 : W * 0.73, LH * 0.45);
+    ctx.translate(left ? W * 0.27 : W * 0.73, view.h * 0.45);
     ctx.rotate(left ? -0.12 : 0.12);
     const bw = W * 0.62;
     const bh = 170;
@@ -826,14 +825,14 @@ function drawDuo(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.lineWidth = 8;
   ctx.lineJoin = 'round';
   ctx.strokeStyle = B.cutStroke;
-  ctx.strokeText(d.name, W / 2, LH * 0.82);
+  ctx.strokeText(d.name, W / 2, view.h * 0.82);
   ctx.fillStyle = B.white;
-  ctx.fillText(d.name, W / 2, LH * 0.82);
+  ctx.fillText(d.name, W / 2, view.h * 0.82);
   ctx.font = canvasFont(F.cutHero, 'bold', false);
   ctx.lineWidth = 5;
-  ctx.strokeText(`「${d.line}」`, W / 2, LH * 0.82 + 24);
+  ctx.strokeText(`「${d.line}」`, W / 2, view.h * 0.82 + 24);
   ctx.fillStyle = B.cutName;
-  ctx.fillText(`「${d.line}」`, W / 2, LH * 0.82 + 24);
+  ctx.fillText(`「${d.line}」`, W / 2, view.h * 0.82 + 24);
   ctx.restore();
 }
 function drawNote(ctx: CanvasRenderingContext2D, b: Battle, W: number) {
@@ -875,7 +874,7 @@ function renderRaid(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: num
   ctx.restore();
   if (b.flash > 0) {
     ctx.fillStyle = `${B.flash}${b.flash * 0.55})`;
-    ctx.fillRect(0, 0, W, LH);
+    ctx.fillRect(0, 0, W, view.h);
   }
   drawWhite(ctx, b, W);
   drawNote(ctx, b, W);

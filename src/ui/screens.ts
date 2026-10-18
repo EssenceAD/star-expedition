@@ -228,7 +228,7 @@ function nodeHtml(id: StageId, open: boolean, st: string) {
 /** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
 export function stageInfo(st: StageId) {
   const R = CONFIG.reward;
-  const base = baseReward(st, () => 1);
+  const base = baseReward(st, () => 1, partyIds(), !starsAt(st));
   const gold = Math.round(base.gold * taperAt(S.day.runs + 1) * boostMult());
   const rl = recLevel(st);
   const myLv = Math.round(partyIds().reduce((a, id) => a + S.heroes[id].lv, 0) / Math.max(1, partyIds().length));
@@ -254,9 +254,12 @@ export function stageInfo(st: StageId) {
       syncBar();
       toast(repeatText(h));
     }],
+    ['닫기', null],
     [`${icon('battle')} 전투 준비`, () => go('prep', { stage: { ...st }, from: 'lobby' }), true],
   ]);
   m.classList.add('stagewin');
+  // 창 바깥(어두운 곳)을 눌러도 닫힘 (형철 10/18 「취소하고 싶어도 취소가 안 돼」)
+  m.addEventListener('click', (e) => e.target === m && m.remove());
   if (view.scale >= CONFIG.ui.pcWin.minScale) $('.panel', m).style.transform = `scale(${CONFIG.ui.pcWin.scale})`;
   fitText(m);
   if (!rep) m.querySelector<HTMLButtonElement>('button[data-i="0"]')!.classList.add('off');
