@@ -308,7 +308,8 @@ export function scrollHints(stage: HTMLElement) {
     if (hz) {
       up.hidden = !over || el.scrollLeft <= 1;
       dn.hidden = !over || el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
-      up.style.top = dn.style.top = `${y + el.offsetHeight / 2}px`;
+      // 카드 아래쪽(가격 줄 높이)에 → 초상화 얼굴 위에 뜨지 않게 (고느끼 10/18)
+      up.style.top = dn.style.top = `${y + el.offsetHeight * 0.82}px`;
       up.style.left = `${x + 2}px`;
       dn.style.left = `${x + el.offsetWidth - 2}px`;
       continue;

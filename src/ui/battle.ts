@@ -366,18 +366,8 @@ function beginRun(r: Run) {
 
 /** 결과 조건 표시: 됨 = 금색 체크 · 안 됨 = 흐린 X */
 const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${icon(ok ? 'check' : 'cross')}</i>`;
-/** 승리 결과 판(화면 오른쪽 절반)이 영웅 얼굴을 가리지 않게 — 결과가 뜨면 영웅들을 왼쪽 자리(너비 6~37%)로 모아 세움 (고느끼 10/18) */
-function gatherLeft(bb: NonNullable<typeof b>) {
-  const lo = bb.w * 0.06;
-  const hi = bb.w * 0.37;
-  const xs = bb.heroes.map((u) => u.x);
-  const [min, max] = [Math.min(...xs), Math.max(...xs)];
-  if (max <= hi) return;
-  for (const u of bb.heroes) u.x = Math.round(lo + ((u.x - min) / Math.max(1, max - min)) * (hi - lo));
-}
 function showResult() {
   jingle(b!.phase === 'win' ? 'win' : 'lose');
-  if (b!.phase === 'win') gatherLeft(b!);
   haptic(b!.phase === 'win' ? 'success' : 'fail');
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
