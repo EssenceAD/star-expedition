@@ -496,3 +496,17 @@ body, #stage { font-weight: normal; }
 #stage .dayban { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s-xxs); height: 96px; flex: none; padding: var(--s-sm) var(--s-md); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 / var(--px-edgeSm) stretch; background: center 40% / cover no-repeat; image-rendering: auto; text-shadow: var(--px-outline); }
 #stage .dayban b { color: var(--px-gold); font-size: var(--fs-xxl); }
 #stage .cards.days .shopc { border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; }
+/* 피해량 미터 (10/18 PC 피드백): 그림 판 여백 대신 도트 판 여백 · 탭은 작은 칩 · 줄마다 이름/값 · 막대/초당 두 줄이 겹치지 않게 */
+#stage #dps { --dpsW: 184px; }
+#stage #dpsL { width: 184px; padding: var(--s-sm) var(--s-sm) var(--s-xs); }
+#stage #dpsL .dh:not(.dtabs) { height: auto; margin: 0 0 var(--s-xxs); color: var(--px-gold); line-height: 1.2; }
+#stage #dpsL .dh.dtabs { margin: 0 0 var(--s-xs); gap: var(--s-xxs); }
+#stage #dpsL .dtabs button { flex: 1 1 0; min-width: 0; height: 18px; min-height: 0; padding: 0 var(--s-xxs); font-size: var(--fs-xs); line-height: 1; }
+#stage #dpsL .dr { grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-rows: auto auto; row-gap: var(--s-xxs); height: auto; margin-bottom: var(--s-xs); line-height: 1.1; }
+#stage #dpsL .dr .g { grid-column: 2; grid-row: 2; height: 6px; }
+#stage #dpsL .dr small { position: static; grid-column: 3; grid-row: 2; line-height: 1; }
+/* 기억의 도서관 (10/18): 카드 높이를 내용만큼 · 지난 이야기 버튼 줄은 카드 안에서 줄바꿈 · 서사 카드 초상화 겹침 */
+#stage [data-screen="library"] .cards { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: max-content; align-content: start; }
+#stage [data-screen="library"] .cards > .shopc { height: auto; min-height: 0; overflow: hidden; }
+#stage [data-screen="library"] .cards > .shopc .row { flex-wrap: wrap; justify-content: center; gap: var(--s-xxs); }
+#stage [data-screen="library"] .cards > .shopc .row .btn.mini { flex: 0 1 auto; min-width: 0; }
