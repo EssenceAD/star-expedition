@@ -59,3 +59,11 @@ A·B는 끝났어요. 파일은 명세의 이름 그대로라 대부분 코드 �
 - 전부 표준말. 외전(side.ts)이 있는 영웅은 4명뿐이라 나머지 32명의 7칸(외전 완료)은 「자기 그림자와 마주한다」 공통 주제로 씀 — 외전이 생기면 그 줄만 바꾸면 됨.
 
 ## C. 서버 — 형철 결정 대기 (Supabase 테이블 배포 필요)
+
+## 별빛 축제 코스튬 — 전투 도트·초상화까지 (10/18 형철 요청)
+- 코스튬을 입으면 **전신·초상화·전투 도트가 전부** 축제 옷으로 바뀌어야 해요. 지금은 전신만 바뀜.
+- 그림 위치 (12명: woongs gonu walwal ikamolly warmnight hwang kleine sermi jaehi mochi ichae kkangto):
+  - 전신: `public/art/costume_festival/{id}.png` (기존 경로 · 광원 뺀 버전으로 교체)
+  - 초상화: `public/art/costume_festival/portraits_hd/{id}.png` (512 투명 · `portraits_hd/{id}.png`와 같은 구도)
+  - 전투 도트: `public/art/costume_festival/px2/{id}/` — `px2/{id}/`와 **파일 이름·`_parts.json` 형식이 똑같음** (r0c0… m2r1c3)
+- 코드 할 일: 초상화·전투 도트 경로를 고르는 곳(`fullbodyPath`처럼)에서 `hs.costume`이 있으면 `CONFIG.costume[set].dir` 아래 경로를 먼저 쓰고, 파일이 없으면 기본으로. 전투·편성·카드·컷인 초상화 전부 같은 함수로.
