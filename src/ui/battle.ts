@@ -196,8 +196,8 @@ function buildRaid() {
   $('#bDodge').onclick = () => b && raidDodge(b);
 }
 function speedLabel() {
-  $('#bSpeed span').textContent = `×${b!.speed}`;
-  $('#bSpeed').classList.toggle('fast', b!.speed > 1);
+  // 배속 3개를 펼쳐 둠 (×1 · ×1.5 · ×2) · 지금 배속만 켜짐
+  for (const x of document.querySelectorAll<HTMLElement>('#bSpeed [data-sp]')) x.classList.toggle('on', Number(x.dataset.sp) === b!.speed);
 }
 function setPaused(on: boolean) {
   paused = on;
@@ -233,7 +233,8 @@ function syncRaid(bb: Battle) {
 function setup() {
   headHpPref.always = getPref('hpAlways', false);
   const keepAuto = b?.auto ?? getPref('auto', false);
-  const keepSpeed = b?.speed ?? 1;
+  // 배속은 다음 판·다음 스테이지에도 그대로 (설정에 저장)
+  const keepSpeed = b?.speed ?? getPref('speed', 1);
   b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
   // 이 전투 영웅 시트·컷인을 아직 안 받았으면 받을 때까지 전투를 멈춤 (SPRITE_RES §C)
   const wait = ensureBattleArt(b.setup);
@@ -518,7 +519,7 @@ register('battle', {
   enter(_root, p) {
     hud().hidden = false;
     // 위 버튼 = 판 없는 아이콘 (UI v2) · 한 번만 넣음
-    for (const [id, ic] of [['#bAuto', 'auto'], ['#bSpeed', 'skip'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('svg')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
+    for (const [id, ic] of [['#bAuto', 'auto'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('svg')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
     applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'glass');
     $('#bAuto').onclick = () => {
       if (!b) return;
@@ -526,12 +527,15 @@ register('battle', {
       setPref('auto', b.auto);
       $('#bAuto').setAttribute('aria-pressed', String(b.auto));
     };
-    $('#bSpeed').onclick = () => {
-      if (!b) return;
-      const sp = CONFIG.ui.speeds as readonly number[];
-      b.speed = sp[(sp.indexOf(b.speed) + 1) % sp.length];
-      speedLabel();
-    };
+    $$('#bSpeed [data-sp]').forEach(
+      (x) =>
+        (x.onclick = () => {
+          if (!b) return;
+          b.speed = Number(x.dataset.sp);
+          setPref('speed', b.speed);
+          speedLabel();
+        }),
+    );
     $('#bPause').onclick = () => setPaused(!paused);
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;

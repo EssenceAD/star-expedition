@@ -160,7 +160,7 @@ function tabHtml(tab: string, id: string): string {
       ${TRAITS.map((pair, i) => {
         const done = i < hs.trans.length;
         const next = i === hs.trans.length;
-        return `<div class="row"><b class="sm">${i + 1}단계</b>${pair.map((t, j) => `<button class="btn mini grow${done && hs.trans[i] === j ? ' on' : ''}" ${done ? `data-re="${i}"` : next && can ? `data-tr="${j}"` : 'disabled'}>${t.name}</button>`).join('')}${next ? `<span class="xs dim">${cost([['transStone', GR.transcend.stones[i]], ['gold', GR.transcend.gold[i]]])}</span>` : ''}</div>`;
+        return `<div class="row trow"><b class="sm">${i + 1}단계</b>${pair.map((t, j) => `<button class="btn mini grow${done && hs.trans[i] === j ? ' on' : ''}" ${done ? `data-re="${i}"` : next && can ? `data-tr="${j}"` : 'disabled'}>${t.name}</button>`).join('')}${next ? `<span class="xs dim">${cost([['transStone', GR.transcend.stones[i]], ['gold', GR.transcend.gold[i]]])}</span>` : ''}</div>`;
       }).join('')}`;
   }
   if (tab === 'ex')

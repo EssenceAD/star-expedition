@@ -34,6 +34,16 @@ const fit = () => {
 };
 addEventListener('resize', fit);
 addEventListener('orientationchange', fit);
+// 페이지 자체가 손가락 따라 밀리지 않게: 스크롤되는 목록 안이 아니면 touchmove 막기 (지도 끌기는 pointer 이벤트라 그대로)
+const scrollsInside = (el: Element | null) => {
+  if (el?.closest('input, textarea')) return true;
+  for (; el && el !== document.body; el = el.parentElement) {
+    const cs = getComputedStyle(el);
+    if ((/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight) || (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth)) return true;
+  }
+  return false;
+};
+document.addEventListener('touchmove', (e) => !scrollsInside(e.target as Element) && e.cancelable && e.preventDefault(), { passive: false });
 visualViewport?.addEventListener('resize', fit);
 document.addEventListener('focusout', () => setTimeout(fit, 300));
 fitView(stage, cv);
