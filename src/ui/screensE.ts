@@ -25,14 +25,14 @@ register('world', {
   enter(root) {
     const W: Spot[] = [
       { k: 'capital', x: 18, y: 76, name: '수도', ic: 'guild', open: () => true, go: () => go('capital'), big: true },
-      { k: 'tree', x: 22, y: 20, name: '세계수', tip: '요일 던전 · 세계수의 시련', ic: 'event', open: () => chOpen(1), go: () => go('portal', { tab: 'day' }) },
+      { k: 'tree', x: 22, y: 20, name: '세계수', tip: '요일 던전 · 세계수의 시련', ic: 'tree', open: () => chOpen(1), go: () => go('portal', { tab: 'day' }) },
       { k: 'tower', x: 69, y: 28, name: '도전의 탑', ic: 'tower', open: () => chOpen(2), go: () => go('portal', { tab: 'tower' }) },
       { k: 'raid', x: 56, y: 28, name: '용의 둥지', tip: '레이드 · 심연 드래곤', ic: 'raid', open: () => chOpen(3), go: () => go('portal', { tab: 'raid' }) },
       { k: 'rift', x: 88, y: 20, name: '하늘 균열', tip: '월드 보스', ic: 'world', open: () => chOpen(4), go: () => go('portal', { tab: 'world' }) },
       { k: 'arena', x: 57, y: 72, name: '결투장', ic: 'arena', open: () => chOpen(2), go: () => go('portal', { tab: 'arena' }) },
       { k: 'hunt', x: 82, y: 76, name: '토벌·상급 던전', ic: 'battle', open: () => chOpen(1), go: () => go('portal', { tab: 'hunt' }) },
       ...CHAPTERS.map((c, i): Spot => {
-        const p: [number, number][] = [[39, 47], [40, 57], [51, 48], [26, 60], [64, 46], [11, 66], [85, 52], [78, 55], [38, 30], [50, 8]];
+        const p: [number, number][] = [[39, 47], [40, 57], [51, 48], [26, 60], [64, 46], [11, 66], [88, 44], [77, 61], [38, 30], [50, 8]];
         return { k: `ch${c.n}`, x: p[i][0], y: p[i][1], name: `${c.n}장 ${c.name}`, ic: 'adventure', open: () => unlocked({ c: c.n, s: 1, d: 0 }), go: () => go('adventure', { c: c.n }) };
       }),
     ];
