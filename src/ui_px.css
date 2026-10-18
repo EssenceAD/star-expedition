@@ -465,3 +465,10 @@ body, #stage { font-weight: normal; }
 #stage [data-screen="hero"] .col.grow > .row.panel > .pt.l, #stage [data-screen="hero"] .col.grow > .row.panel .fit2 { display: none; }
 #stage [data-screen="hero"] .col.grow > .row.panel > .col > b:first-child { font-size: var(--fs-xl); }
 #stage [data-screen="hero"] .col.grow > .panel.scroll { flex: 1 1 auto; min-height: 0; }
+/* 상점 영웅·코스튬: 가로로 넘겨 보기 (세로 스크롤 대신 · 마우스 휠도 가로로) · 위치 거르기 = 탭 버튼 (윈도우 목록 대신) */
+#stage .scr[data-screen='shop'] .cards.hscroll { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto; grid-auto-columns: 176px; align-content: start; overflow-x: auto; overflow-y: hidden; padding-bottom: var(--s-xs); }
+#stage .scr[data-screen='shop'] .cards.costumes.hscroll { grid-auto-columns: 140px; }
+#stage .scr[data-screen='shop'] .cards.hscroll > .mute { grid-column: 1 / -1; white-space: normal; }
+#stage .scr[data-screen='shop'] .jobbar { flex-wrap: wrap; align-items: flex-start; gap: var(--s-xs); }
+#stage .scr[data-screen='shop'] .jobbar .tabs.zones { flex: none; }
+#stage .scr[data-screen='shop'] .cards.hscroll:has(> .mute) { display: block; }
