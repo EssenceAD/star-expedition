@@ -1,5 +1,6 @@
 // 영웅 서사 (형철 10/18 · 킹스레이드 「영웅 이야기」식): 그 영웅을 키우면 한 칸씩 열리는 업적 + 보상
 //  칸 = [키, 제목, 조건, 보상] · 받은 칸은 s.saga[id] · 대사는 그 영웅 voice/concept에서
+import { CONFIG } from '../config';
 import { heroOf } from '../data/heroes';
 import { SAGA_LINES } from '../data/saga';
 import { affLv } from './inn';
@@ -27,9 +28,16 @@ export function claimSaga(id: string, k: string, s: Save = S): Record<string, nu
   (s.saga ??= {})[id] = [...sagaGot(id, s), k];
   for (const [c, n] of Object.entries(st.give)) {
     if (c === 'exShard') s.exShards[id] = (s.exShards[id] ?? 0) + n;
-    else addCur(c, n, s);
+    // 한 번만 받는 보상이라 주간 상한 밖 (상한에 닿으면 「받았어요」만 뜨고 0이 들어가던 것 · 웅스 10/18)
+    else addCur(c, n, s, true);
   }
   return st.give;
+}
+/** v1.0.24 보상: 주간 별가루 상한에 닿은 뒤 받은 서사·이정표 별가루는 0이 들어갔음
+ *  받은 시각 기록이 없어 어느 칸이 0이었는지 가릴 수 없음 → 받은 칸 전부의 별가루 + 10% (형철 10/18) */
+export function capRefund(s: Save = S) {
+  const saga = Object.values(s.saga ?? {}).flat().reduce((a, k) => a + (SAGA.find((x) => x.k === k)?.give.stardust ?? 0), 0);
+  return Math.round((saga + s.miles.length * CONFIG.content.milestoneDust) * 1.1);
 }
 /** 칸마다 한 줄 이야기 (그 영웅 말투) */
 export function sagaLine(id: string, i: number) {
