@@ -588,6 +588,8 @@
 
 - v1.0.13: cloud.signup (체크인 규칙: login_id ^[a-z0-9_]{4,16}$ · 닉네임 2~8 · profiles insert · set_recovery_code) · 게스트면 updateUser로 승격(uid 유지) · 가입 뒤 클라우드 올리기 · 설정 계정 줄 줄바꿈. 서버 메일 인증 없음(기존 가입 6건 즉시 확인) — 실서버 가입은 샌드박스라 미실측
 
+- v1.0.14: 장비 창 강화 비용 옆 (보유 N) · 충분 good / 모자람 bad (웅스 10/18)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
