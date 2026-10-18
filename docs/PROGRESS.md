@@ -586,6 +586,8 @@
 
 - v1.0.12: fieldDy() = view.h − 440 · 일반 전투·보스 전장 모두 배경 땅 띠·유닛·이펙트·레이드 줄을 그만큼 아래로 (986×624 캡처 확인 · 844×390은 0이라 그대로)
 
+- v1.0.13: cloud.signup (체크인 규칙: login_id ^[a-z0-9_]{4,16}$ · 닉네임 2~8 · profiles insert · set_recovery_code) · 게스트면 updateUser로 승격(uid 유지) · 가입 뒤 클라우드 올리기 · 설정 계정 줄 줄바꿈. 서버 메일 인증 없음(기존 가입 6건 즉시 확인) — 실서버 가입은 샌드박스라 미실측
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

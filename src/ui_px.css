@@ -537,3 +537,6 @@ body, #stage { font-weight: normal; }
 #stage .body > .side.pside { overflow: visible; gap: var(--s-sm); }
 #stage .pside .tsum { gap: var(--s-xs); }
 #stage .pside .pstart { width: 100%; white-space: nowrap; }
+/* 설정 계정 줄: 회원가입 버튼까지 들어가면 좁은 폰에서 오른쪽이 잘림 → 줄바꿈 (10/18) */
+#stage .row.acct { flex-wrap: wrap; }
+#stage .row.acct input { flex: 1 1 140px; min-width: 0; }

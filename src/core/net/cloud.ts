@@ -43,6 +43,32 @@ export async function guest(): Promise<string | null> {
   const { error } = await sb.auth.signInAnonymously();
   return error ? '게스트 로그인이 꺼져 있어요' : null;
 }
+/** 회원가입 (「체크인」과 같은 계정 규칙 · profiles · 복구 코드) → { err } 또는 { code: 복구 코드 }
+ *  게스트로 들어와 있으면 그 계정을 그대로 정식 계정으로 바꿈(클라우드 저장 유지) · 아니면 새로 만듦 · 서버는 메일 인증 없이 바로 로그인 */
+export async function signup(loginId: string, pw: string, nick: string): Promise<{ err: string } | { code: string }> {
+  if (!sb) return { err: '서버 설정이 없어요' };
+  if (sandbox()) return { err: '시험 브라우저에선 가입하지 않아요' };
+  const id = loginId.trim().toLowerCase();
+  const nm = nick.trim();
+  if (!/^[a-z0-9_]{4,16}$/.test(id) || id.startsWith(C.guestPrefix)) return { err: '아이디는 영어 소문자·숫자·_ 4~16자예요' };
+  if (pw.length < 6 || pw.length > 72) return { err: '비밀번호는 6자 이상이에요' };
+  if ([...nm].length < 2 || [...nm].length > 8) return { err: '닉네임은 2~8자예요' };
+  const taken = async (col: string, v: string) => !!(await sb!.from('profiles').select('id').eq(col, v).maybeSingle()).data;
+  if (await taken('login_id', id)) return { err: '이미 있는 아이디예요' };
+  if (await taken('nickname', nm)) return { err: '이미 있는 닉네임이에요' };
+  const w = await who();
+  const email = emailOf(id);
+  const r = w?.guest ? await sb.auth.updateUser({ email, password: pw }) : await sb.auth.signUp({ email, password: pw });
+  if (r.error) return { err: /registered|exists/i.test(r.error.message) ? '이미 있는 아이디예요' : '가입에 실패했어요 · 잠시 뒤 다시 해 주세요' };
+  const uid = r.data.user?.id;
+  if (!uid) return { err: '가입에 실패했어요 · 잠시 뒤 다시 해 주세요' };
+  const { error: pe } = await sb.from('profiles').insert({ id: uid, login_id: id, nickname: nm });
+  if (pe) return { err: '계정은 만들었는데 프로필 저장에 실패했어요 · 제보해 주세요' };
+  // 복구 코드 (비밀번호를 잊으면 「체크인」 계정 찾기에 씀 · 서버엔 해시만)
+  const code = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('').replace(/(.{4})(?!$)/g, '$1-');
+  await sb.rpc('set_recovery_code', { p_code: code });
+  return { code };
+}
 export async function logout() {
   await sb?.auth.signOut();
 }
