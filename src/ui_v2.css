@@ -17,9 +17,8 @@
   -webkit-backdrop-filter: none; backdrop-filter: none;
 }
 /* 모서리 보석 4개 + 위 빛줄 */
-.panel::before, .modal .panel::before, #pausedTag::before, .gp::before, .mw::before { content: ''; position: absolute; inset: -3px; z-index: 0; pointer-events: none; background: var(--pa-corner); border: 0; }
-.panel::after, .modal .panel::after, .gp::after, .mw::after { content: ''; position: absolute; left: 18%; right: 18%; top: -1px; height: 1px; pointer-events: none; background: var(--pa-topLine); border: 0; }
-.panel > *, .modal .panel > * { position: relative; }
+.panel::before, .modal .panel::before, #pausedTag::before, .gp::before, .mw::before { content: ''; position: absolute; inset: 1px; z-index: 0; pointer-events: none; background: var(--pa-corner); border: 0; }
+.panel::after, .modal .panel::after, .gp::after, .mw::after { content: ''; position: absolute; left: 18%; right: 18%; top: 0; height: 1px; pointer-events: none; background: var(--pa-topLine); border: 0; }
 .panel :is(b, span, small, em, p, div, label, h3, h4), .modal .panel :is(b, span, small, em, p, div, label, h3, h4) { text-shadow: none; }
 .modal { background: var(--pa-veilHi); }
 .modal h3 { color: var(--pa-ink2); }
@@ -180,7 +179,6 @@ input[type='checkbox']:checked::after { left: 18px; }
 .rcol .why.band, .rtable { border: var(--b-thin) solid var(--pa-line); border-radius: var(--r-lg); background: var(--pa-paper); box-shadow: var(--pa-paperShadowSm); color: var(--pa-ink); text-shadow: none; }
 .rcol .rw div.rwc, .rw div, .rw .rwc { border: var(--b-thin) solid var(--pa-line); border-image: none; border-radius: var(--r-md); background: var(--pa-paper); box-shadow: var(--pa-paperShadowSm); color: var(--pa-ink); text-shadow: none; }
 .rw .rwc b { color: var(--pa-ink2); }
-.rw .rwc .ic.img { animation: v2GiftIn 0.5s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.4) both; }
 
 /* ───── 9. 영웅 정보: 전신이 위 바 아래 ~ 화면 아래 꽉 (전신 36장 = 900 안 세로 30~890 → 위 3.3% · 아래 1.1% 여백) ───── */
 .fbcol { position: relative; margin: 0; overflow: visible; }

@@ -274,7 +274,7 @@ export const T = {
     paperDeep: '#e3cfa6',
     paperShadow: '0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(255,250,235,0.7), inset 0 0 0 3px rgba(138,90,24,0.35), inset 0 0 26px rgba(150,100,40,0.25)',
     paperShadowSm: '0 3px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,250,235,0.7), inset 0 0 14px rgba(150,100,40,0.2)',
-    corner: 'radial-gradient(circle at 3px 3px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top left / 7px 7px no-repeat, radial-gradient(circle at 4px 3px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top right / 7px 7px no-repeat, radial-gradient(circle at 3px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom left / 7px 7px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom right / 7px 7px no-repeat',
+    corner: 'radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top left / 8px 8px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top right / 8px 8px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom left / 8px 8px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom right / 8px 8px no-repeat',
     topLine: 'linear-gradient(90deg, transparent, #b5832d, transparent)',
     btn: 'linear-gradient(#fdf6e6, #e3cc9c)',
     btnShadow: '0 2px 0 rgba(90,50,10,0.5), inset 0 1px 0 #fff',
