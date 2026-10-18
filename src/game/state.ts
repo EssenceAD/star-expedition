@@ -131,6 +131,13 @@ export interface SaveV6 {
   /** 영웅 외전: 영웅별 깬 막 수 · 전용 보물 해금 */
   side: Record<string, number>;
   treasure: Record<string, boolean>;
+  /** 여관: 인연(우호도) · 오늘 대화 · 음식 버프 · 서사 받은 칸 (옛 저장엔 없음 → game/inn이 채움) */
+  inn?: { aff: Record<string, number>; talk: Record<string, string>; food: { id: string; until: number } | null };
+  saga?: Record<string, string[]>;
+  /** 새로 합류한 영웅 (NEW HERO · 영웅 메뉴 N 배지 · 정보를 보면 지움) */
+  fresh?: string[];
+  /** 마지막으로 들어온 날 (휴식 보너스) */
+  lastDay?: string;
   /** 이정표: 받은 것 · 콘텐츠별 이긴 수 */
   miles: string[];
   wins: Record<string, number>;

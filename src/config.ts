@@ -2,7 +2,7 @@
 //  전투 공식은 「체크인」 전투(combat/field.ts · CONFIG.combat): 치명 15% ×2 · 받는 피해 × (1 − 방어/(방어+K)) 최대 40% · 히트스톱/넉백/흔들림
 export const CONFIG = {
   /** 논리 화면: 높이 고정 · 너비는 창 비율에 맞춰 (화면 꽉 채우기) */
-  view: { h: 390, wMin: 640, wMax: 960, wBase: 844, ground: 254 },
+  view: { h: 390, wMin: 540, wMax: 960, wBase: 844, ground: 254, narrow: 640 },
   combat: {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
     pxScale: 26 / 72,
@@ -149,7 +149,19 @@ export const CONFIG = {
   /** 방치 보상 (「체크인」 offline 방식): 최고 스테이지 1판 보상 × 시간당 판 수 · fullHours 뒤로는 tailRate · 최대 maxHours */
   offline: { runsPerHour: 20, rate: 0.25, fullHours: 3, tailRate: 0.15, maxHours: 8, minSeconds: 60 },
   /** 처음 시작: 다섯 별 전원 · 파티 4 (전방 → 후방 순서는 자동) */
-  start: { gold: 5000, stardust: 100, heroes: ['woongs', 'gonu', 'ikamolly', 'walwal', 'warmnight'], party: ['woongs', 'gonu', 'ikamolly', 'walwal'], name: '원정대장' },
+  /** 여관 (인연·버프 음식) */
+  inn: {
+    perLv: 100, maxLv: 10, talk: 25, gift: 40, giftGold: 8000, lvDust: 20, lvStat: 0.005,
+    food: [
+      { id: 'stew', name: '든든한 고기 스튜', desc: '체력 +10%', eff: { hp: 0.1 } as Record<string, number>, gold: 15000, min: 60 },
+      { id: 'skewer', name: '매운 불꼬치', desc: '공격력 +8%', eff: { atk: 0.08 } as Record<string, number>, gold: 20000, min: 60 },
+      { id: 'pie', name: '황금 사과 파이', desc: '금화 +30%', eff: { gold: 0.3 } as Record<string, number>, gold: 12000, min: 60 },
+      { id: 'tea', name: '별빛 허브차', desc: '경험치 +30%', eff: { exp: 0.3 } as Record<string, number>, gold: 12000, min: 60 },
+      { id: 'feast', name: '여관 주인 특선', desc: '공격력·체력 +5% · 금화·경험치 +15%', eff: { atk: 0.05, hp: 0.05, gold: 0.15, exp: 0.15 } as Record<string, number>, gold: 40000, min: 90 },
+    ],
+  },
+  /** 처음 4명 · 따뜻한밤은 1-1 뒤 튜토리얼 보상으로 합류 (tutorialHero) */
+  start: { gold: 5000, stardust: 100, heroes: ['woongs', 'gonu', 'ikamolly', 'walwal'], party: ['woongs', 'gonu', 'ikamolly', 'walwal'], name: '원정대장', tutorialHero: 'warmnight' },
   /** 월드 채팅 한 줄 티커: 몇 초마다 한 줄 */
   chat: { everySec: [6, 14] as number[] },
   /**
@@ -251,6 +263,8 @@ export const CONFIG = {
   shop: {
     /** 멤버 영웅(founder) 17명 같은 값 · 전설·스토리 오리지널 */
     hero: { founder: 3000, legend: 4000, new: 4000 },
+    /** 이번 주 영입 할인 배수 */
+    weekly: 0.7,
     items: [
       { id: 'potion', name: '경험치 물약 ×5', give: { exp: 5 }, gold: 5000 },
       { id: 'enh', name: '강화석 ×20', give: { enh: 20 }, gold: 8000 },
@@ -303,7 +317,14 @@ export const CONFIG = {
     /** 길드: 출석 코인 · 기여(금화 → 기여 점수·코인) · 길드 레이드(주간 · 하루 2 · 90초 · 준 피해 = 기여) */
     guild: { createGold: 50000, attendCoin: 20, donate: [[10000, 10, 10], [50000, 60, 50], [200000, 250, 200]] as number[][], raidTries: 2, raidSec: 90, raidHp: 2e9, raidAdd: 15, raidCoinPer: 2e6, members: 30 },
     /** 친구: 하루 선물 보내기·받기 (행동력) · 최대 친구 수 */
-    friends: { gift: 5, giftsPerDay: 10, max: 30 },
+    friends: { gift: 5, giftsPerDay: 10, max: 30, pt: 10,
+      /** 우정 포인트 상점 */
+      ptShop: [
+        { id: 'fp_sta', name: '행동력 ×10', give: { stamina: 10 } as Record<string, number>, pt: 50 },
+        { id: 'fp_exp', name: '경험치 물약 ×3', give: { exp: 3 } as Record<string, number>, pt: 60 },
+        { id: 'fp_gold', name: '금화 ×10,000', give: { gold: 10000 } as Record<string, number>, pt: 40 },
+        { id: 'fp_enh', name: '강화석 ×10', give: { enh: 10 } as Record<string, number>, pt: 50 },
+      ] },
     /** 랭커 칭호: 이 순위 안이면 칭호 */
     titleTop: 3,
     /** 클라우드 저장: 자동 올리기 간격(초) · 「체크인」 계정 이메일 꼴 */
@@ -393,11 +414,11 @@ export const CONFIG = {
     /** 전투 배경의 땅 띠(public/art/bgs/_ground.json)를 화면의 이 y 띠에 맞춰 그림 (발 자리 226~342가 땅 위 · FINAL §3-4) */
     groundScreen: [210, 385] as [number, number],
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
-    screenBg: { title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
+    screenBg: { world: 'map', capital: 'capital', inn: 'lobby', library: 'heroes', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
-    screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
+    screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild', 'inn', 'library'] as string[],
     /** 메인 모험 지도 (RECOVER_1018 S1 · 형철 10/18): 화면 덮는 크기의 몇 배 · 끌기 시작 거리(px) · 노드 메달 가운데가 올 safe 띠(위 HUD 밑 ~ 아래 메뉴 위 · px)
      *  노드 위 그림: 원정대장·보스 키(메달 32px의 2배 남짓) · 그림 캔버스 너비 · 머리 위 여백 · 발밑 그림자 높이 · 보스는 노드에서 오른쪽·뒤(위)로 비켜 섬(px · 1-9 원정대장과 안 겹치게) */
     mainMap: { zoom: 1, dragPx: 6, nodeTop: 118, nodeBottom: 264, leadH: 64, bossH: 72, figW: 110, figPad: 14, figFoot: 6, boss: [34, 14] as [number, number] }, speeds: [1, 1.5, 2], toastSec: 1.5,

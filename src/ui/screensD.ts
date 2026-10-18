@@ -7,7 +7,7 @@ import * as cloud from '../core/net/cloud';
 import { lockOf, triesText } from '../game/content';
 import { attend, attendToday, claim, claimAll, eventLeft, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
 import {
-  addFriend, board, BOARD_NAME, buyGuild, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
+  addFriend, board, BOARD_NAME, buyGuild, buyFriendPt, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { HEROES } from '../data/heroes';
@@ -187,8 +187,9 @@ register('friends', {
       root.innerHTML = `<div class="body"><div class="col grow scroll">
           <div class="row"><b class="grow">친구 ${S.friends.list.length}/${SO.friends.max}</b><span class="xs dim">하루 한 번씩 선물(행동력 ${SO.friends.gift}) · 받기 하루 ${SO.friends.giftsPerDay}번</span></div>
           ${S.friends.list.map((n) => `<div class="panel row frow"><div class="pt s" style="background-image:url(${heroPortrait(avatarOf(n))})"></div><b class="hn grow">${esc(n)} <span class="chip">Lv.${friendLv(n)}</span></b><button class="btn mini" data-gift="${esc(n)}" ${S.friends.sent.includes(n) && S.friends.day === dayKey() ? 'disabled' : ''}>선물</button><button class="btn mini" data-del="${esc(n)}">삭제</button></div>`).join('') || '<span class="mute">아직 친구가 없어요</span>'}
-        </div><div class="col side scroll"><b class="sm">추천 원정대</b>${friendSuggest().map((n) => `<div class="row"><span class="grow xs">${esc(n)} · Lv.${friendLv(n)}</span><button class="btn mini" data-add="${esc(n)}">추가</button></div>`).join('')}<span class="xs mute">친구 영웅 빌려 쓰기는 선택 기능 — 나중에</span></div></div>`;
+        </div><div class="col side scroll"><b class="sm">추천 원정대</b>${friendSuggest().map((n) => `<div class="row"><span class="grow xs">${esc(n)} · Lv.${friendLv(n)}</span><button class="btn mini" data-add="${esc(n)}">추가</button></div>`).join('')}<b class="sm fpt">우정 포인트 상점 · 보유 ${icon('friend')}${fmt(S.cur.friendPt ?? 0)}</b><span class="xs dim">선물을 보낼 때마다 +${SO.friends.pt}</span>${SO.friends.ptShop.map((x) => `<div class="row"><span class="grow xs">${esc(x.name)}</span><button class="btn mini" data-fp="${x.id}">${icon('friend')}${x.pt}</button></div>`).join('')}</div></div>`;
       $$('[data-gift]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '선물을 보냈어요 (답례 행동력)', done: '오늘은 이미 보냈어요', none: '' }[gift(b.dataset.gift!)])));
+      $$('[data-fp]', root).forEach((b) => (b.onclick = () => (buyFriendPt(b.dataset.fp!) === 'ok' ? (sfx('coin'), after(draw, '바꿨어요')) : toast('우정 포인트가 모자라요'))));
       $$('[data-del]', root).forEach((b) => (b.onclick = () => (removeFriend(b.dataset.del!), after(draw, ''))));
       $$('[data-add]', root).forEach((b) => (b.onclick = () => after(draw, addFriend(b.dataset.add!) ? '친구가 됐어요' : '친구가 가득 찼어요')));
     };

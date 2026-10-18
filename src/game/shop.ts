@@ -7,7 +7,16 @@ import { join, owned } from './heroes';
 import { addCur, capLeft, S, spend, track, type Save } from './state';
 
 const SH = CONFIG.shop;
+/** 이번 주 영입 (기간 영입 이벤트): 주마다 한 명 · 값 SH.weekly 배 */
+export function weeklyHero(s: Save = S, now = Date.now()) {
+  const left = HEROES.filter((h) => !owned(h.id, s));
+  if (!left.length) return null;
+  const w = Math.floor((now / 86400000 + 3) / 7);
+  return left[w % left.length].id;
+}
 export const heroPrice = (id: string) => SH.hero[heroOf(id).origin];
+/** 실제로 내는 값 (이번 주 영입이면 할인) */
+export const heroCost = (id: string, s: Save = S) => Math.round(heroPrice(id) * (weeklyHero(s) === id ? SH.weekly : 1));
 /** 이름으로 정하는 고정 섞기 값 (멤버·오리지널이 몰리지 않게) */
 const mixKey = (id: string) => [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % 9973;
 /** 영웅 상점 진열 (B 보강 §3): 아직 없는 영웅 · 전방→중앙→후방 차례로 한 명씩 돌려 역할이 골고루 섞이게 · zone을 주면 그 위치만
@@ -19,9 +28,10 @@ export function heroStock(s: Save = S, zone?: Zone) {
   for (let i = 0; out.length < left.length; i++) for (const g of by) if (g[i]) out.push(g[i]);
   return out;
 }
-export function buyHero(id: string, s: Save = S): 'owned' | 'poor' | 'ok' {
+/** price: 화면에서 살 때는 heroCost(이번 주 할인 포함) · 시뮬·시험은 기본값 */
+export function buyHero(id: string, s: Save = S, price: number = heroPrice(id)): 'owned' | 'poor' | 'ok' {
   if (owned(id, s)) return 'owned';
-  if (!spend('stardust', heroPrice(id), s)) return 'poor';
+  if (!spend('stardust', price, s)) return 'poor';
   join(id, s);
   track('hero', 1, s);
   return 'ok';

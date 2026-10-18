@@ -7,6 +7,7 @@ import { activeBonds, BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { heroStock } from '../game/shop';
+import { restBonus } from '../game/social';
 import { heroShopCard } from './screensB';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
@@ -21,12 +22,13 @@ import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
 import { attendPopup, missionBadge } from './screensD';
 import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
-import { heroPower, owned } from '../game/heroes';
+import { heroPower, join, owned } from '../game/heroes';
 import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { coach } from './coach';
+import { coach, whenFree } from './coach';
+import { recruitShow } from './screensB';
 import { $, $$, CUR_NAME, esc, fitText, fmt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
 const C = CONFIG.story;
@@ -40,7 +42,7 @@ const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간
 const card = (id: string, extra = '', cls = '') => {
   const h = heroOf(id);
   const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}">${own ? `<span class="lv chip">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs chips"><span class="chip">${icon(`zone_${JOBS[h.job].zone}`)} ${ZONE_NAME[JOBS[h.job].zone]}</span><span class="chip">${icon(h.job)} ${JOBS[h.job].name}</span></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span>${extra}</button>`;
+  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}">${S.fresh?.includes(id) ? '<span class="newh">NEW HERO</span>' : ''}${own ? `<span class="lv chip">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs chips"><span class="chip">${icon(`zone_${JOBS[h.job].zone}`)} ${ZONE_NAME[JOBS[h.job].zone]}</span><span class="chip">${icon(h.job)} ${JOBS[h.job].name}</span></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span>${extra}</button>`;
 };
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
@@ -129,8 +131,8 @@ register('lobby', {
           ${sideBtn('data-attend', 'attend', '출석', attendToday() ? 'N' : '')}
         </div>
         <div class="mdock">
-          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['portal', '콘텐츠', 'content']]
-            .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
+          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['world', '포탈', 'content']]
+            .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}${to === 'heroes' && S.fresh?.length ? '<em class="badge">N</em>' : ''}</button>`)
             .join('')}
         </div>
         <button class="mgo btn hi" data-next>${icon('battle')}<span>전투 준비</span></button>
@@ -147,7 +149,7 @@ register('lobby', {
     // 가이드 화살표 (형철 10/18): 다음 이정표를 하러 갈 버튼 위에 「여기를 눌러요」 말풍선 · 누르면 그 탭으로 바로
     const gd = mile && !mile.done(S) ? mile.go : null;
     // 스테이지 깨기(prep)는 오른쪽 아래 「전투 준비」 위에
-    const gb = gd && root.querySelector<HTMLElement>(gd[0] === 'prep' ? '.mgo' : `.mdock [data-go="${gd[0]}"], .mside [data-go="${gd[0]}"]`);
+    const gb = gd && root.querySelector<HTMLElement>(gd[0] === 'prep' ? '.mgo' : gd[0] === 'portal' ? '.mdock [data-go="world"]' : `.mdock [data-go="${gd[0]}"], .mside [data-go="${gd[0]}"]`);
     if (gd && gb) {
       gb.classList.add('guide');
       gb.insertAdjacentHTML('beforeend', `<i class="gbub"><mark class="gtx">「${esc(mile!.name)}」<br>여기를 눌러요</mark>${icon('pointer')}</i>`);
@@ -165,11 +167,24 @@ register('lobby', {
       persist();
       openMiles(c);
     }
+    // 휴식 보너스: 못 들어온 날만큼 우편으로
+    const rested = restBonus();
+    if (rested) (persist(), toast(`${rested}일 만이에요! 휴식 보너스를 우편함에 넣었어요`));
     // 전투에서 쌓인 알림 카드 (S4)
     playNotices();
     // 기능 열림 튜토리얼 (S6): 진도에 맞는 것 하나만 · 창·알림이 다 닫힌 뒤
     const did = (c2: number, s2: number) => starsAt({ c: c2, s: s2, d: 0 }) > 0;
-    if (!S.seen['tut:lobby'])
+    const TH = CONFIG.start.tutorialHero;
+    // 튜토리얼 보상: 1-1을 깨면 따뜻한밤 합류 (빠밤~ 영입 무대) → 로비로 돌아와 이어서 안내
+    if (did(1, 1) && !S.heroes[TH] && !S.seen['tut:warm']) {
+      whenFree(() => {
+        S.seen['tut:warm'] = true;
+        join(TH);
+        persist();
+        toast('튜토리얼 보상 · 새 동료가 원정대에 합류했어요!');
+        recruitShow(TH, () => go('lobby', {}, false), true);
+      });
+    } else if (!S.seen['tut:lobby'])
       coach('lobby', [
         { sel: '.mgo', text: '「전투 준비」를 누르면\n다음 스테이지로 바로 가요' },
         { sel: '.mq.mile', text: '다음에 할 일은 여기 「다음 할 일」 카드에\n늘 떠 있어요' },
@@ -180,7 +195,7 @@ register('lobby', {
     else if (did(1, 3) && !S.seen['tut:shop'])
       coach('shop', [{ sel: '.mdock [data-go="shop"]', text: '상점 「영웅」에서\n새 영웅을 원정대로 데려올 수 있어요', press: true }]);
     else if (did(1, 10) && !S.seen['tut:portal'])
-      coach('portal', [{ sel: '.mdock [data-go="portal"]', text: '「콘텐츠」가 열렸어요\n토벌·던전·탑·결투장·레이드를 여기서 해요', press: true }]);
+      coach('portal', [{ sel: '.mdock [data-go="world"]', text: '「포탈」을 누르면 월드맵이 열려요\n수도·도전의 탑·세계수·레이드로 갈 수 있어요', press: true }]);
     // 메인이 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },
@@ -495,8 +510,8 @@ register('heroes', {
     const draw = () => {
       const list = HEROES.filter((h) => (tab === 'all' || zoneOf(h.id) === tab) && owned(h.id));
       // 미보유: 상점과 같은 카드 · 같은 섞인 순서 (B 보강 §3)
-      const unowned = `<div class="cards hcards grow scroll">${heroStock().map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
-      root.innerHTML = `<div class="body"><div class="col grow">${zoneTabs(tab, true)}${tab === 'none' ? unowned : `<div class="roster grow scroll">${list
+      const unowned = `<div class="cards hcards grow scroll hscroll">${heroStock().map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+      root.innerHTML = `<div class="body"><div class="col grow">${zoneTabs(tab, true)}${tab === 'none' ? unowned : `<div class="roster grow scroll hscroll">${list
         .map((h) => card(h.id, owned(h.id) ? `<span class="xs gold">${fmt(heroPower(h.id))}</span>` : `<span class="xs mute">${h.joinChapter ? `${h.joinChapter}장 클리어` : '영웅 상점 (B)'}</span>`))
         .join('') || '<span class="mute">없어요</span>'}</div>`}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));

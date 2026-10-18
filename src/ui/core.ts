@@ -45,12 +45,12 @@ export interface Screen {
   /** 상단 바 ← 뒤로 (없으면 로비로 · false면 버튼 없음) */
   back?: false | ((p: Record<string, unknown>) => void);
 }
-export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero' | 'bag' | 'shop' | 'portal' | 'mission' | 'guild' | 'friends' | 'ranking' | 'mail' | 'settings';
-export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '메인(모험 지도)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점', portal: '콘텐츠', mission: '미션', guild: '길드', friends: '친구', ranking: '랭킹', mail: '우편', settings: '설정' };
+export type ScreenId = 'title' | 'lobby' | 'adventure' | 'prep' | 'battle' | 'heroes' | 'hero' | 'bag' | 'shop' | 'portal' | 'mission' | 'guild' | 'friends' | 'ranking' | 'mail' | 'settings' | 'world' | 'capital' | 'inn' | 'library';
+export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby: '메인(모험 지도)', adventure: '모험', prep: '전투 준비', battle: '전투', heroes: '영웅 목록', hero: '영웅 정보', bag: '가방', shop: '상점', portal: '콘텐츠', mission: '미션', guild: '길드', friends: '친구', ranking: '랭킹', mail: '우편', settings: '설정', world: '월드맵', capital: '수도', inn: '여관', library: '기억의 도서관' };
 /** 화면 흐름: 이 화면에서 1탭으로 갈 수 있는 곳 [가는 곳, 누르는 것] (흐름도 · 탭 수 시험 · 실제 이동은 go()) */
 export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   title: [['battle', '원정 출발 (처음: 프롤로그 > 1-1)'], ['lobby', '원정 출발 (이어서)']],
-  lobby: [['adventure', '위 가운데 장 이름'], ['prep', '지도 노드 > 스테이지 정보 > 전투 준비 · 오른쪽 아래 「전투 준비」 · 왼쪽 위 스토리 줄 · 아래 편성'], ['portal', '콘텐츠 (아래 줄) · 왼쪽 위 이정표 줄'], ['heroes', '영웅 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['friends', '친구 (아래 줄)'], ['guild', '길드 (아래 줄)'], ['mission', '미션·이벤트 (왼쪽 세로) · 업적 (≡ 메뉴)'], ['ranking', '≡ 메뉴 > 랭킹'], ['mail', '우편 (상단 바) · ≡ 메뉴'], ['settings', '≡ 메뉴 > 설정']],
+  lobby: [['adventure', '위 가운데 장 이름'], ['prep', '지도 노드 > 스테이지 정보 > 전투 준비 · 오른쪽 아래 「전투 준비」 · 왼쪽 위 스토리 줄 · 아래 편성'], ['world', '월드맵 (아래 줄 「월드맵」)'], ['portal', '왼쪽 위 이정표 줄'], ['heroes', '영웅 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['friends', '친구 (아래 줄)'], ['guild', '길드 (아래 줄)'], ['mission', '미션·이벤트 (왼쪽 세로) · 업적 (≡ 메뉴)'], ['ranking', '≡ 메뉴 > 랭킹'], ['mail', '우편 (상단 바) · ≡ 메뉴'], ['settings', '≡ 메뉴 > 설정']],
   adventure: [['prep', '스테이지 고르고 「전투 준비」'], ['portal', '지도 위 토벌·상급 던전·탑 입구'], ['lobby', '뒤로']],
   prep: [['battle', '전투 시작 (로딩 팁 화면 뒤)'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로 (모험에서 왔을 때)'], ['lobby', '뒤로 (메인 지도에서 왔을 때)']],
   battle: [['portal', '콘텐츠 결과 > 콘텐츠'], ['lobby', '결과 > 로비'], ['adventure', '결과 > 모험'], ['battle', '결과 > 다시 / 다음'], ['prep', '패배 > 편성']],
@@ -65,6 +65,10 @@ export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   ranking: [['lobby', '뒤로']],
   mail: [['lobby', '뒤로']],
   settings: [['title', '타이틀로'], ['lobby', '뒤로']],
+  world: [['capital', '수도'], ['portal', '도전의 탑·세계수·레이드·균열·결투장'], ['adventure', '지역(장)'], ['lobby', '뒤로']],
+  capital: [['shop', '상점'], ['inn', '여관'], ['bag', '지하감옥 창고'], ['portal', '결투장'], ['ranking', '왕성'], ['library', '기억의 도서관'], ['guild', '길드'], ['friends', '중심가'], ['world', '뒤로']],
+  inn: [['capital', '뒤로']],
+  library: [['hero', '영웅 서사'], ['capital', '뒤로']],
 };
 const screens: Partial<Record<ScreenId, Screen>> = {};
 export const register = (id: ScreenId, s: Screen) => (screens[id] = s);
@@ -85,7 +89,7 @@ export function go(id: ScreenId, params: Record<string, unknown> = {}, push = tr
   // 배경음악: 화면마다 (전투는 battle.ts가 지역·모드별로) · 밤(20~6시) 로비는 밤 곡
   if (id !== 'battle') {
     const h = new Date().getHours();
-    music(({ title: 'title', shop: 'shop', hero: 'hero', heroes: 'hero', friends: 'friends', guild: 'guild' } as Record<string, string>)[id] ?? (h >= 20 || h < 6 ? 'night' : 'lobby'));
+    music(({ title: 'title', shop: 'shop', hero: 'hero', heroes: 'hero', friends: 'friends', guild: 'guild', inn: 'night', library: 'story', capital: 'lobby', world: 'clear' } as Record<string, string>)[id] ?? (h >= 20 || h < 6 ? 'night' : 'lobby'));
   }
   const root = document.createElement('div');
   root.className = s.title ? 'scr withbar' : 'scr';
@@ -311,13 +315,15 @@ export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t=
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 
 export const syncCur = (root: ParentNode = document) => $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));
-export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓', guildCoin: '길드 코인' };
+export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓', guildCoin: '길드 코인', friendPt: '우정 포인트' };
 /** 재화·소모품 쓰임새 한 줄 (상점 카드 · 형철 10/18 #14) */
 export const CUR_DESC: Record<string, string> = { gold: '강화·각성·성장에 두루 써요', stardust: '영웅·코스튬·장비 소환에 써요', enh: '장비 강화에 써요', exp: '영웅 레벨을 올려요', tierMat: '장비 티어를 올려요', exShard: '영웅 전용 무기를 만들고 별을 올려요', arenaCoin: '결투장 코인 상점에서 써요', towerCoin: '탑 코인 상점에서 써요', skillBook: '영웅 스킬 레벨을 올려요', awakenStone: '각성 · 레벨 상한을 올려요', transStone: '영웅 초월 특성을 열어요', optTicket: '장비 옵션 한 줄을 바꿔요', guildCoin: '길드 상점에서 써요' };
 export const starsHtml = (n: number, max = 3) => `<span class="stars">${iconText('star').repeat(n)}<i>${iconText('star').repeat(Math.max(0, max - n))}</i></span>`;
 
 /** 대화 재생: 탭으로 넘기기 · 스킵 → 끝나면 done */
-export function playTalk(lines: Line[], done: () => void) {
+export function playTalk(all: Line[], done: () => void) {
+  // 아직 만나지 못한(가지지 않은) 영웅은 대사를 하지 않음 (형철 10/18) · 해설·교단원·보스 등은 그대로
+  const lines = all.filter(([who]) => SPEAKER[who] !== undefined || !!S.heroes[who]);
   if (!lines.length) return done();
   const el = document.createElement('div');
   $('#stage').append(el);

@@ -8,7 +8,7 @@ import { descPassive, descSkill } from '../data/skills';
 import { autoEquip, bagUsed, fitsHero, typeName, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
 import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../game/heroes';
-import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
+import { buyCoin, buyHero, buyItem, buyPack, heroCost, heroStock, weeklyHero } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
@@ -16,6 +16,7 @@ import { gachaShow } from './gacha';
 import { jingle, sfx } from '../core/audio/sfx';
 import { taglineOf } from '../data/taglines';
 import { coach } from './coach';
+import { claimSaga, SAGA, sagaGot, sagaLine } from '../game/saga';
 import { $, $$, comingSoon, CUR_DESC, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
@@ -37,13 +38,15 @@ const say = (r: string, m: Record<string, string>) => {
 
 // ───────── 영웅 정보 ─────────
 /** 탭 4개 (FINAL_1018 §4): 일반 · 스킬 · 장비 · 성장 — 글씨만 · 탭마다 예전 칸 묶음 */
-const HERO_TABS: [string, string, string[]][] = [['info', '일반', ['info', 'costume']], ['skill', '스킬', ['skill']], ['gear', '장비', ['ex']], ['grow', '성장', ['grow', 'trans']]];
+const HERO_TABS: [string, string, string[]][] = [['info', '일반', ['info', 'costume']], ['skill', '스킬', ['skill']], ['gear', '장비', ['ex']], ['grow', '성장', ['grow', 'trans']], ['saga', '서사', ['saga']]];
 register('hero', {
   title: (p) => `${icon('heroes')} 영웅 정보 · ${heroOf(p.id as string).name}`,
   back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : p.shop ? go('shop', { cat: 'hero' }, false) : go('heroes', {}, false)),
   enter(root, p) {
     let id = p.id as string;
     let tab = HERO_TABS.some(([k]) => k === p.tab) ? (p.tab as string) : 'grow';
+    // NEW HERO: 정보를 보면 지움
+    if (S.fresh?.includes(p.id as string)) ((S.fresh = S.fresh.filter((x) => x !== p.id)), persist());
     const draw = () => {
       const h = heroOf(id);
       const own = owned(id);
@@ -131,13 +134,24 @@ register('hero', {
 /** 아직 없는 영웅 미리보기 (PLAYTEST §12): 스킬 3개 + 패시브 · 능력치는 오른쪽 판(1레벨 기준) · 영입 버튼 */
 function previewHtml(id: string): string {
   const h = heroOf(id);
-  return `<div class="row preview"><span class="grow sm">미보유 · Lv.1 기준</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))} 영입</button></div>
+  return `<div class="row preview"><span class="grow sm">미보유 · Lv.1 기준</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroCost(id))} 영입</button></div>
     <div class="panel col"><b class="sm">패시브 · ${h.passive.name}</b><span class="xs dim">${descPassive(h.passive)}</span></div>
     ${h.skills.map((s, i) => `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="skn">${s.name}<span class="skm">마나 <i>${s.cost}</i> · <i>${s.cd}</i>초</span></b><span class="skd">${descSkill(s)}</span></div></div>`).join('')}`;
 }
 function tabHtml(tab: string, id: string): string {
   const hs = S.heroes[id];
   const h = heroOf(id);
+  if (tab === 'saga') {
+    // 영웅 서사: 키운 만큼 열리는 이야기 칸 + 보상 (받을 수 있으면 붉은 받기)
+    const got = sagaGot(id);
+    return `<div class="md">${esc(h.name)}의 서사 <span class="xs dim">${got.length}/${SAGA.length} · 이 영웅을 키우면 한 칸씩 열려요</span></div>
+      ${SAGA.map((st, i) => {
+        const have = got.includes(st.k);
+        const ok = st.ok(id, S);
+        return `<div class="saga${have ? ' got' : ok ? ' ready' : ''}"><b class="sm">${i + 1}. ${st.name}</b><span class="xs dim">${have || ok ? `「${esc(sagaLine(id, i))}」` : `조건: ${st.goal}`}</span>
+          <span class="xs gift">${Object.entries(st.give).map(([k, n]) => `${icon(k)}${fmt(n)}`).join(' ')}</span>${have ? `<span class="chip">${icon('check')} 받음</span>` : `<button class="btn mini${ok ? ' hi' : ''}" data-saga="${st.k}" ${ok ? '' : 'disabled'}>${ok ? '받기' : st.goal}</button>`}</div>`;
+      }).join('')}`;
+  }
   if (tab === 'grow') {
     const cap = levelCap(id);
     const ac = hs.awaken < GR.awaken.stones.length ? awakenCost(hs.awaken) : null;
@@ -207,7 +221,21 @@ function wireTab(root: HTMLElement, id: string, draw: () => void) {
   if (aw) aw.onclick = () => after(awaken(id), { ok: '각성! 레벨 상한이 올랐어요', need: '레벨이 상한이어야 해요', poor: '각성석이나 금화가 모자라요', max: '최대 각성' });
   const sb = root.querySelector<HTMLElement>('[data-g="star"]');
   if (sb) sb.onclick = () => after(heroStarUp(id), { ok: '별이 올랐어요!', poor: '별가루나 금화가 모자라요', max: '5성이에요' });
-  $$('[data-sk]', root).forEach((b) => (b.onclick = () => after(skillUp(id, +b.dataset.sk! as 0 | 1 | 2), { ok: '스킬 레벨 업!', poor: '스킬북이나 금화가 모자라요', max: '최대 레벨' })));
+  $$('[data-saga]', root).forEach((b) => (b.onclick = () => (claimSaga(id, b.dataset.saga!) ? (jingle('up'), after('ok', { ok: '서사 보상을 받았어요' })) : undefined)));
+  // 스킬 레벨 업: 그 줄이 번쩍 + 「LEVEL UP! Lv.N」 + 팡파르 (형철 10/18)
+  $$('[data-sk]', root).forEach(
+    (b) =>
+      (b.onclick = () => {
+        const k = +b.dataset.sk! as 0 | 1 | 2;
+        const r = skillUp(id, k);
+        after(r, { ok: `스킬 레벨 업! ${heroOf(id).skills[k].name} Lv.${S.heroes[id].skill[k]}`, poor: '스킬북이나 금화가 모자라요', max: '최대 레벨' });
+        if (r !== 'ok') return;
+        jingle('up');
+        const row = $$('.skl', root)[k];
+        row?.classList.add('lvup');
+        row?.insertAdjacentHTML('beforeend', `<em class="lvfx">LEVEL UP! Lv.${S.heroes[id].skill[k]}</em>`);
+      }),
+  );
   $$('[data-tr]', root).forEach((b) => (b.onclick = () => after(transcend(id, +b.dataset.tr! as 0 | 1), { ok: '초월!', poor: '초월석이나 금화가 모자라요', need: '조건이 모자라요', max: '최대 초월' })));
   $$('[data-re]', root).forEach((b) => (b.onclick = () => (retrait(id, +b.dataset.re!), after('ok', { ok: '특성을 바꿨어요' }))));
   const sh = root.querySelector<HTMLElement>('[data-sh]');
@@ -302,12 +330,12 @@ export function heroShopCard(id: string) {
   const h = heroOf(id);
   const j = JOBS[h.job];
   // 오른쪽 위 직업 아이콘 원 (직업색 · MOBILE_REF §3-C)
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
+  return `<div class="panel col shopc hero" data-h="${id}">${weeklyHero() === id ? `<span class="wk chip on">이번 주 영입 ${Math.round((1 - CONFIG.shop.weekly) * 100)}% 할인</span>` : ''}<div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroCost(id))}</button></div></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
-export function recruitShow(id: string, done: () => void) {
-  jingle('recruit');
+/** gift = 선물로 바로 합류 (튜토리얼 보상) → 합류 무대만 · 닫으면 done */
+export function recruitShow(id: string, done: () => void, gift = false) {
   const h = heroOf(id);
   const j = JOBS[h.job];
   const el = document.createElement('div');
@@ -318,23 +346,25 @@ export function recruitShow(id: string, done: () => void) {
       <div class="rc-info panel col"><small class="dim">${esc(h.title)}</small><b class="rc-name">${fxt(h.name)}</b>
         <div class="row xs"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div>
         <p class="sm">${esc(h.concept)}</p>
-        <div class="row"><button class="btn" data-x>그만두기</button><button class="btn hi big" data-buy ${owned(id) ? 'disabled' : ''}>${owned(id) ? '이미 있어요' : `${icon('stardust')}${fmt(heroPrice(id))} 영입`}</button></div></div>`;
+        <div class="row"><button class="btn" data-x>그만두기</button><button class="btn hi big" data-buy ${owned(id) ? 'disabled' : ''}>${owned(id) ? '이미 있어요' : `${icon('stardust')}${fmt(heroCost(id))} 영입`}</button></div></div>`;
     $('[data-x]', el).onclick = () => el.remove();
     $('[data-buy]', el).onclick = (e) => {
       // 같은 클릭이 합류 연출(눌러서 닫기)까지 올라가 바로 닫히지 않게
       e.stopPropagation();
-      const r = buyHero(id);
+      const r = buyHero(id, S, heroCost(id));
       if (r !== 'ok') return say(r, { poor: '별가루가 모자라요', owned: '이미 있어요' });
       done();
       joined();
     };
   };
   const joined = () => {
+    jingle('recruit');
     el.classList.add('joined');
     el.innerHTML = `<div class="rc-circle"></div><div class="rc-frame"><div class="rc-face" style="background-image:url(${heroPortrait(id)})"></div></div><div class="rc-fb rise" style="background-image:url(${fullbodyUrl(id, null)})"></div><div class="rc-join">${fxt(`${h.name} 합류!`)}</div><span class="xs rc-tap">눌러서 계속</span>`;
-    el.onclick = () => el.remove();
+    el.onclick = () => (el.remove(), gift && done());
   };
-  stage();
+  if (gift) joined();
+  else stage();
   $('#stage').append(el);
 }
 const BASE = import.meta.env.BASE_URL;
