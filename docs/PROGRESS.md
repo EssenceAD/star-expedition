@@ -533,6 +533,8 @@
 ### v0.17.2 (10/18) — 타이틀 로고 글꼴
 - 무료 도트 글꼴 13종(OFL) 비교 → Jacquard 24 @48 (tools/pixel_logo_font.py · 글꼴·OFL tools/fonts) · 비교 docs/captures/logo_fonts_1018.jpg · 화면 폭 453px(3배 딱 맞춤)
 
+- v0.17.3 타이틀 로고: 굵은 기울임 글씨 도트 로고 + 풀네임 + 「바람의 원정대」 (tools/pixel_logo_font.py · Playfair Display OFL)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

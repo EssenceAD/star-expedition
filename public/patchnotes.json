@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.17.3",
+    "date": "2026-10-18",
+    "kind": "patch",
+    "title": "타이틀 로고 새 글씨",
+    "items": [
+      "타이틀 로고를 멋드러진 굵은 기울임 글씨(Playfair Display Black Italic)를 도트로 따라 그린 모양으로 바꿨어요",
+      "로고 아래에 풀네임 「Wayfarers of the Infinite Night's Dawn」을 작게 넣고, 오른쪽 아래에 「바람의 원정대」를 붙였어요"
+    ]
+  },
+  {
     "version": "0.17.2",
     "date": "2026-10-18",
     "kind": "개선",
