@@ -23,9 +23,9 @@ export const skillIconUrl = (id: string, k: number) => `${BASE}art/skills/${id}_
 /** UI 그림 (public/art/ui/<폴더>/<이름>.png · HARMONY: 탭·빈 칸·능력치 아이콘) */
 export const uiPic = (path: string, cls = 'up') => `<img class="${cls}" src="${BASE}art/ui/${path}.png" alt="">`;
 /** 탭 = 아이콘 + 글씨 */
-export const tabLabel = (pic: string, text: string) => `${uiPic(pic, 'ti')}<span>${text}</span>`;
+export const tabLabel = (_pic: string, text: string) => `<span>${text}</span>`;
 /** 틀 구조 (FINAL §1): .framed > .framed-in(초상 · 틀 구멍 모양으로 잘림) + .framed-frame(원형 틀 그림 · 맨 위) */
-export const framedPt = (url: string, cls = '') => `<span class="fpt framed ${cls}"><i class="framed-in" style="background-image:url(${url})"></i><img class="framed-frame" src="${BASE}art/ui/map/portrait_frame.png" alt=""></span>`;
+export const framedPt = (url: string, cls = '') => `<span class="fpt framed ${cls}"><i class="framed-in" style="background-image:url(${url})"></i></span>`;
 export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -275,10 +275,10 @@ export function scrollHints(stage: HTMLElement) {
     if (!over && !hs) continue;
     if (!hs) {
       hs = ['up', 'down'].map((d) => {
-        const h = document.createElement('img');
+        // 그림 대신 코드 화살표 (UI v2)
+        const h = document.createElement('i');
         h.className = `scrollhint ${d}`;
-        h.src = `${BASE}art/ui/battle/scroll_${d}.png`;
-        h.alt = '';
+        h.innerHTML = icon(d === 'up' ? 'fold' : 'open');
         stage.append(h);
         return h;
       });

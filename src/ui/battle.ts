@@ -75,7 +75,7 @@ function buildBar() {
       <div class="nm">${h.name}</div>
       <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
       <div class="bf"></div>
-      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)"><i style="background-image:url(${skillIconUrl(h.id, k)})"></i><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"><i></i></button></div></div>`;
+      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)"><i style="background-image:url(${skillIconUrl(h.id, k)})"></i><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"><i>AUTO</i></button></div></div>`;
     })
     .join('');
   $$('.hc', bar).forEach((c) => {
@@ -306,7 +306,7 @@ function showRunResult() {
   const rows: [string, string][] = [['콘텐츠', MODE_NAME[r.mode]], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['초당', shortNum(partyDps(bb))], ['MVP', `<b class="hn">${esc(mvp.name)}</b>`]];
   if (rs) {
     rows.push(['페이즈', `${rs.phase}페이즈까지`], ['회피', `직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}`]);
-    for (const p of rs.parts) rows.push([`<img class="tg" src="${UI_ART}battle/target.png" alt=""> ${esc(p.name)}`, p.broken ? `${ck(true)} ${esc(p.top)}` : ck(false)]);
+    for (const p of rs.parts) rows.push([`${icon('target', 'ic tg')} ${esc(p.name)}`, p.broken ? `${ck(true)} ${esc(p.top)}` : ck(false)]);
   }
   const table = `<div class="rtable">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}${o.lines.map((l) => `<em>${esc(l)}</em>`).join('')}</div>`;
   $('#result').innerHTML = `${emb(head, win || scoreRun)}<div class="rcol">
@@ -422,7 +422,7 @@ function joinShow(id: string, done: () => void) {
   const line = CHAPTERS.flatMap((c) => c.clear ?? []).find(([who]) => who === id)?.[1] ?? h.concept;
   const el = document.createElement('div');
   el.className = 'join';
-  el.innerHTML = `<div class="jframe" style="background-image:url(${UI_ART}hero_frame.png)"><div class="jface" style="background-image:url(${heroPortrait(id)})"></div></div><div class="jfb" style="background-image:url(${fullbodyUrl(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${fxt(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
+  el.innerHTML = `<div class="jframe"><div class="jface" style="background-image:url(${heroPortrait(id)})"></div></div><div class="jfb" style="background-image:url(${fullbodyUrl(id)})"></div><div class="col"><small>${esc(h.title)}</small><b>${fxt(h.name)}</b><p>「${esc(line)}」</p><em>${icon('join')} 합류!</em><span class="xs mute">눌러서 계속</span></div>`;
   $('#stage').append(el);
   el.onclick = () => {
     el.remove();
@@ -514,6 +514,8 @@ register('battle', {
   canvas: true,
   enter(_root, p) {
     hud().hidden = false;
+    // 위 버튼 = 판 없는 아이콘 (UI v2) · 한 번만 넣음
+    for (const [id, ic] of [['#bAuto', 'auto'], ['#bSpeed', 'skip'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('svg')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
     applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'glass');
     $('#bAuto').onclick = () => {
       if (!b) return;

@@ -139,7 +139,7 @@ function tabHtml(tab: string, id: string): string {
     const steps = [`Lv.${HC.levelCap[0]}`, ...HC.levelCap.slice(1).map((_, i) => `각성${i + 1}`), ...GR.transcend.stones.map((_, i) => `초월${i + 1}`)];
     // 칩 줄 대신: 별 5개 + 각성 점 5개 + 초월 (HARMONY §2)
     // ◇ 대신 지도 별 그림 (FINAL_1018 §4 · ui/map/star_on·star_off)
-    const dots = (n: number, on: number) => Array.from({ length: n }, (_, i) => uiPic(`map/star_${i < on ? 'on' : 'off'}`, 'stpic')).join('');
+    const dots = (n: number, on: number) => Array.from({ length: n }, (_, i) => `<i class="stpic${i < on ? ' on' : ''}">${icon('star')}</i>`).join('');
     const road = `<div class="road2" title="${steps.join(` ${iconText('next')} `)}"><span class="stp">${dots(5, hs.star)}</span><span class="dots">각성 ${dots(5, hs.awaken)}</span><span class="dots">초월 ${dots(5, hs.trans.length)}</span><b>만렙 ${levelMax()}</b></div>`;
     return `${road}<div class="kv"><span>레벨</span><b>${hs.lv} / ${cap} <span class="xs dim">(${fmt(hs.exp)} / ${fmt(expNeed(hs.lv))})</span></b></div>
       <div class="xbar"><i style="width:${Math.min(100, (hs.exp / expNeed(hs.lv)) * 100)}%"></i></div>
@@ -322,7 +322,7 @@ export function recruitShow(id: string, done: () => void) {
   };
   const joined = () => {
     el.classList.add('joined');
-    el.innerHTML = `<div class="rc-circle"></div><div class="rc-frame" style="background-image:url(${BASE}art/ui/hero_frame.png)"><div class="rc-face" style="background-image:url(${heroPortrait(id)})"></div></div><div class="rc-fb rise" style="background-image:url(${fullbodyUrl(id, null)})"></div><div class="rc-join">${fxt(`${h.name} 합류!`)}</div><span class="xs rc-tap">눌러서 계속</span>`;
+    el.innerHTML = `<div class="rc-circle"></div><div class="rc-frame"><div class="rc-face" style="background-image:url(${heroPortrait(id)})"></div></div><div class="rc-fb rise" style="background-image:url(${fullbodyUrl(id, null)})"></div><div class="rc-join">${fxt(`${h.name} 합류!`)}</div><span class="xs rc-tap">눌러서 계속</span>`;
     el.onclick = () => el.remove();
   };
   stage();

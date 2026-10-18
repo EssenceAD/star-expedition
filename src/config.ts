@@ -68,7 +68,7 @@ export const CONFIG = {
     /** 컷인 스킬 이름: 오른쪽 여백(px) · 가장 넓은 폭(화면 비율) */
     cutText: { right: 40, maxW: 0.5 },
     /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
-    headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4 },
+    headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4, markPx: 16 },
     /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */
     ultDome: { sec: 0.6, pad: 70, alpha: 0.28 },
     /** 마지막 일격: 흰 번쩍(초) · 느리게(초) · 그동안 속도 배율 */

@@ -266,6 +266,48 @@ export const T = {
   kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
   /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
   hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
+  /** UI v2 「모험 수첩」 (형철 10/18 확정 · docs/proto/theme_t1c.png): 틀 그림 없이 코드로 그린 양피지 판 · 갈색 잉크 · 붉은 밀랍 버튼 → var(--pa-이름) */
+  pa: {
+    ink: '#3b2614', ink2: '#6b2e12', mute: '#7a5a3a', dim: '#a08060', line: '#8a5a18', lineSoft: 'rgba(90,60,30,0.18)', gold: '#b5832d', goldHi: '#ffd77a', wax: '#9a2618', blue: '#2f5d8a', white: '#ffffff', cream: '#fff4e0',
+    paper: 'linear-gradient(#fbf1dc, #ecd9b4)',
+    paperFlat: '#f3e4c3',
+    paperDeep: '#e3cfa6',
+    paperShadow: '0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(255,250,235,0.7), inset 0 0 0 3px rgba(138,90,24,0.35), inset 0 0 26px rgba(150,100,40,0.25)',
+    paperShadowSm: '0 3px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,250,235,0.7), inset 0 0 14px rgba(150,100,40,0.2)',
+    corner: 'radial-gradient(circle at 3px 3px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top left / 7px 7px no-repeat, radial-gradient(circle at 4px 3px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top right / 7px 7px no-repeat, radial-gradient(circle at 3px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom left / 7px 7px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom right / 7px 7px no-repeat',
+    topLine: 'linear-gradient(90deg, transparent, #b5832d, transparent)',
+    btn: 'linear-gradient(#fdf6e6, #e3cc9c)',
+    btnShadow: '0 2px 0 rgba(90,50,10,0.5), inset 0 1px 0 #fff',
+    waxBtn: 'linear-gradient(#d0503a, #9a2618)',
+    waxShadow: '0 0 0 1px #3c0c04, 0 3px 0 #3c0c04, inset 0 1px 0 #ff9a80',
+    waxText: '0 1px 0 #3c0c04',
+    shine: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent)',
+    bar: '#d9c39a',
+    barDark: 'rgba(30,18,6,0.75)',
+    barShadow: '0 0 0 1px #8a5a18, inset 0 1px 2px rgba(0,0,0,0.3)',
+    hp: 'linear-gradient(90deg, #36b866, #7cf0a2)',
+    mp: 'linear-gradient(90deg, #2f7fe0, #7cc6ff)',
+    xp: 'linear-gradient(90deg, #c98f34, #ffd77a)',
+    ring: '0 0 0 2px #fbf1dc, 0 0 0 3px #8a5a18, 0 3px 6px rgba(0,0,0,0.5)',
+    ringOn: '0 0 0 2px #ffd77a, 0 0 0 3px #9a2618, 0 0 12px rgba(255,215,122,0.8)',
+    outline: '0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000, 0 0 6px rgba(0,0,0,0.6)',
+    iconOutline: 'drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
+    veil: 'rgba(40,24,10,0.35)',
+    veilHi: 'rgba(40,24,10,0.55)',
+    glow: '0 0 0 2px #ffe08a, 0 0 12px 2px rgba(255,214,120,0.85)',
+    glowHi: '0 0 0 2px #ffe08a, 0 0 18px 5px rgba(255,214,120,0.95)',
+    gradeCommon: '#a89a80', gradeUncommon: '#4fb36a', gradeRare: '#3d8fe0', gradeEpic: '#9b5de5', gradeLegend: '#e09a2a',
+    nodeDone: 'radial-gradient(circle at 40% 35%, #ffe8a8, #d39a3c 60%, #8a5a18)',
+    nodeNow: 'radial-gradient(circle at 40% 35%, #a9d0ff, #3f7df0 60%, #1d3a8a)',
+    nodeOff: 'radial-gradient(circle at 40% 35%, #8a90a8, #4a5068)',
+    nodeBoss: 'radial-gradient(circle at 40% 35%, #ff9a8a, #c7363a 60%, #5e1015)',
+    nodeRing: '0 0 0 2px #fff3c4, 0 0 0 4px #8a5a18, 0 4px 8px rgba(0,0,0,0.6)',
+    nodeRingNow: '0 0 0 2px #fff, 0 0 0 4px #1d3a8a, 0 0 18px #6aa8ff',
+    nodeText: '#3a2405',
+    cdVeil: 'rgba(5,8,20,0.72)',
+    buffUp: 'linear-gradient(#9dffb8, #2fbf63)',
+    buffDown: 'linear-gradient(#ffb0a0, #d8402e)',
+  } as Record<string, string>,
   shadow: {
     /** 쿨다운 숫자 검은 외곽선 (POLISH_1017 ③-7) */
     cdNum: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 -2px 0 #000, -2px 0 0 #000, 2px 0 0 #000, 0 2px 0 #000',
@@ -340,6 +382,9 @@ export const T = {
     slowBar: '#66c8ff',
     shield: 'rgba(170,225,255,0.7)',
     stun: '#ffe36b',
+    markGood: 'rgba(40,150,80,0.85)',
+    markBad: 'rgba(190,40,40,0.85)',
+    markEdge: '#fff3c4',
     silence: '#c79bff',
     burn: '#ff7a3d',
     warnFloor: 'rgba(255,50,30,',
@@ -490,15 +535,16 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
   /** 메인 지도 다음 노드 화살표 · 장 이름 펼침 (RECOVER_1018 S1) */
   pointer: ['M12 22 3 12h5V2h8v10h5z', true],
   menu: ['M4 6h16M4 12h16M4 18h16'],
+  event: ['M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z'],
+  attend: ['M4 6h16v14H4zM4 10h16M8 3v5M16 3v5M9 15l2 2 4-4'],
+  pause: ['M8 5v14M16 5v14'],
+  star: ['M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z', true],
 };
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
 /** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
 export const ICON_UI: Record<string, string> = {
-  stamina: 'icons/stamina', gold: 'icons/gold', stardust: 'icons/stardust', lock: 'icons/lock', power: 'icons/power', plusArt: 'icons/plus',
+  lock: 'icons/lock', power: 'icons/power', plusArt: 'icons/plus',
   hp: 'icons/hp', atk: 'icons/atk', def: 'icons/def', crit: 'icons/crit', critDmg: 'icons/critdmg', spd: 'icons/speed', mana: 'icons/mana', levelup: 'icons/levelup',
-  arenaCoin: 'menu/arena', towerCoin: 'menu/tower', exShard: 'icons/slot_exclusive',
-  mail: 'menu/mail', chat: 'menu/chat', heroes: 'menu/heroes', formation: 'menu/formation', content: 'menu/content', bag: 'menu/bag', mission: 'menu/mission', achieve: 'menu/achieve',
-  friend: 'menu/friend', shop: 'menu/shop', event: 'menu/trophy', attend: 'menu/daily', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
 };
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
@@ -537,8 +583,11 @@ export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
   for (const [k, v] of Object.entries(T.fx)) set(`--fx-${k}`, v);
   const kit = (f: string) => `url("${new URL(`${import.meta.env.BASE_URL}art/ui/kit/${f}.png`, location.href).href}")`;
-  for (const [k, [f, slice, w, nofill]] of Object.entries(T.kit)) set(`--kit-${k}`, `${kit(f)} ${slice}${nofill ? '' : ' fill'} / ${w} / 0 stretch`);
-  for (const [k, f] of Object.entries(T.kitImg)) set(`--kimg-${k}`, kit(f));
-  for (const f of T.hudImg) set(`--hud-${f.replace(/_/g, '-')}`, `url("${new URL(`${import.meta.env.BASE_URL}art/ui/battle/${f}.png`, location.href).href}")`);
+  // UI v2: 미드저니 틀·버튼 그림은 쓰지 않음 (변수는 남기고 none → 옛 규칙이 그림을 못 그림)
+  void kit;
+  for (const k of Object.keys(T.kit)) set(`--kit-${k}`, 'none');
+  for (const k of Object.keys(T.kitImg)) set(`--kimg-${k}`, 'none');
+  for (const f of T.hudImg) set(`--hud-${f.replace(/_/g, '-')}`, 'none');
+  for (const [k, v] of Object.entries(T.pa)) set(`--pa-${k}`, v);
   for (const [k, v] of Object.entries(T.shadow)) set(`--sh-${k}`, m === 'light' ? (T.shadowLight[k] ?? v) : v);
 }

@@ -197,12 +197,27 @@ function headHp(ctx: CanvasRenderingContext2D, u: Unit, x: number, y: number, H:
   }
   const marks = ST_ICONS.filter((k) => has(u, k)).slice(0, HH.icons);
   if (!marks.length) return;
-  ctx.textAlign = 'center';
-  ctx.font = canvasFont(F.stun, 'bold', false);
-  ctx.fillStyle = B.stun;
-  const gap = F.stun + 2;
-  marks.forEach((k, i) => ctx.fillText(iconText(k), x + (i - (marks.length - 1) / 2) * gap, top - 4));
+  // 상태 그림 (UI v2): 글자 기호 대신 art/buffs 그림 · 둥근 받침(좋은 것 초록 · 나쁜 것 빨강) · 살짝 떠오름
+  const S = HH.markPx;
+  const bob = Math.sin(performance.now() / 260) * 1.5;
+  marks.forEach((k, i) => {
+    const cx = x + (i - (marks.length - 1) / 2) * (S + 3);
+    const cy = top - S / 2 - 4 + bob;
+    ctx.beginPath();
+    ctx.arc(cx, cy, S / 2 + 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = MARK_BAD.has(k) ? B.markBad : B.markGood;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = B.markEdge;
+    ctx.stroke();
+    const im = stImg(k);
+    if (im.complete && im.naturalWidth) ctx.drawImage(im, cx - S / 2 + 1, cy - S / 2 + 1, S - 2, S - 2);
+  });
 }
+const MARK_ART: Record<(typeof ST_ICONS)[number], string> = { stun: 'stun', silence: 'silence', burn: 'burn', slow: 'freeze', atkDown: 'mark', taunt: 'taunt', guard: 'defUp', atkUp: 'atkUp', spdUp: 'speedUp', critUp: 'mark', regen: 'regen' };
+const MARK_BAD = new Set<string>(['stun', 'silence', 'burn', 'slow', 'atkDown']);
+const stIms: Record<string, HTMLImageElement> = {};
+const stImg = (k: (typeof ST_ICONS)[number]) => (stIms[k] ??= Object.assign(new Image(), { src: `${import.meta.env.BASE_URL}art/buffs/${MARK_ART[k]}.png` }));
 
 // ───────── 배경 (그림 1장을 장마다 색 바꾸기) ─────────
 function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number, key?: string) {

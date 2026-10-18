@@ -26,7 +26,7 @@ import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, 
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, CUR_NAME, esc, fitText, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast, uiPic } from './core';
+import { $, $$, CUR_NAME, esc, fitText, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast, uiPic } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
@@ -93,7 +93,7 @@ export function teamBand(extra = '') {
 //  왼쪽 위 진행 중 2줄(이정표 · 스토리) · 왼쪽 세로 미션·이벤트·출석 · 아래 메뉴 6 + 포탈 · 오른쪽 아래 전투 준비 · 위 가운데 장 이름(누르면 모험)
 const sideBtn = (attr: string, ic: string, name: string, badge: string | number = '') => `<button class="sic" ${attr}>${icon(ic)}<span>${name}</span>${badge ? `<em class="badge">${badge}</em>` : ''}</button>`;
 register('lobby', {
-  title: () => `<span class="prof"><span class="pf"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i>${mapPic('portrait_frame', 'fr')}</span><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
+  title: () => `<span class="prof"><span class="pf"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i></span><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
   enter(root) {
     root.classList.add('mainmap');
     const ns = nextStage();
@@ -111,11 +111,9 @@ register('lobby', {
       // 다음 노드 화살표: 메달 바로 위 · 그 노드에 원정대장(장 첫 노드)이 서 있으면 그 머리 위 (보스는 오른쪽 뒤로 비켜 서서 메달 위가 비어 있음)
       const fig = i === 0 && ns.s === 1 ? CONFIG.ui.mainMap.leadH : 0;
       // 메달·번호판·별 = 그림만 (public/art/ui/map · 형철 10/18 ③④) · 보스는 node_boss 1.3배
-      const medal = isBoss(id) ? 'node_boss' : !open ? 'node_lock' : st === 'now' ? 'node_next' : 'node_clear';
-      const stars = open ? `<span class="mstars">${[0, 1, 2].map((k) => mapPic(k < starsAt(id) ? 'star_on' : 'star_off')).join('')}</span>` : '';
-      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}${mapPic(medal, 'md')}<b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${stars}</button>`;
+      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}${nodeHtml(id, open, st)}</button>`;
     }).join('');
-    root.innerHTML = `<div class="mview pan"><div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div></div>
+    root.innerHTML = `<div class="mview pan"><div class="mlead" style="background-image:url(${fullbodyUrl(lead)})"></div><div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div></div>
       <div class="mhud">
         <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
         <div class="mquest">
@@ -132,7 +130,7 @@ register('lobby', {
             .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
             .join('')}
         </div>
-        <button class="mgo" data-next>${mapPic('battle_btn')}<span>전투 준비</span></button>
+        <button class="mgo btn hi" data-next>${icon('battle')}<span>전투 준비</span></button>
         <div class="mmenu panel col" hidden>
           ${[['mission', 'ach', '업적', 'achieve'], ['ranking', '', '랭킹', 'ranking'], ['mail', '', '우편', 'mail'], ['settings', '', '설정', 'settings']].map(([to, tab, n, ic]) => `<button class="btn qrow" data-go="${to}"${tab ? ` data-tab="${tab}"` : ''}>${icon(ic)} ${n}</button>`).join('')}
         </div>
@@ -160,8 +158,13 @@ register('lobby', {
   },
   tick: (dt) => mainMapTick(dt),
 });
-/** 메인 지도 UI 그림 (public/art/ui/map) */
-const mapPic = (name: string, cls = '') => `<img class="${cls}" src="${import.meta.env.BASE_URL}art/ui/map/${name}.png" alt="">`;
+/** 지도 노드 (UI v2 · 그림 없이 코드): 메달(깬 곳 금 체크 · 지금 파랑 번호 · 잠김 회색 · 보스 빨강) + 번호판 + 별 3 */
+function nodeHtml(id: StageId, open: boolean, st: string) {
+  const n = starsAt(id);
+  const md = isBoss(id) ? 'BOSS' : st === 'done' ? icon('check') : String(id.s);
+  const stars = open && st === 'done' ? `<span class="mstars">${[0, 1, 2].map((k) => `<i class="${k < n ? 'on' : ''}">${icon('star')}</i>`).join('')}</span>` : '';
+  return `<i class="md">${md}</i><b class="pl">${id.c}-${id.s}</b>${stars}`;
+}
 /** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
 export function stageInfo(st: StageId) {
   const R = CONFIG.reward;
@@ -232,8 +235,7 @@ function fieldMap(c: number, d: number, sel: StageId) {
       // 둥근 메달: 깬 곳 금 · 지금 갈 곳 파랑 빛 · 잠김 회색 자물쇠 · 아래 별 3개 (PLAYTEST §8)
       const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
       // 메인 지도와 같은 노드 그림 (FINAL §5): 메달 4종 + 번호판 + 별
-      const medal = isBoss(id) ? 'node_boss' : !open ? 'node_lock' : st === 'now' ? 'node_next' : 'node_clear';
-      return `<button class="node ${st}${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${mapPic(medal, 'md')}<b class="pl">${c}-${i + 1}</b>${open ? `<span class="mstars">${[0, 1, 2].map((k) => mapPic(k < starsAt(id) ? 'star_on' : 'star_off')).join('')}</span>` : ''}</button>`;
+      return `<button class="node mnode ${st}${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${nodeHtml(id, open, st)}</button>`;
     }).join('')}
     ${here ? `<div class="me-pin" style="left:${NODES[here - 1][0]}%;top:${NODES[here - 1][1] - 12}%"><div class="pt s" style="background-image:url(${heroPortrait(lead)})"></div></div>` : ''}
     </div><div class="gates"><button class="btn mini" data-portal="hunt">${icon('battle')} 토벌</button><button class="btn mini" data-portal="dungeon">${icon('bag')} 상급 던전</button><button class="btn mini" data-portal="tower">${icon('tower')} 도전의 탑</button></div>
