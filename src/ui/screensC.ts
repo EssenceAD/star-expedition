@@ -52,6 +52,7 @@ register('portal', {
       } else if (tab === 'day') {
         const k = dayKind();
         body = `<p class="sm dim">${(k === 'all' ? ['exp', 'gold', 'enh'] : [k]).map((x) => icon(x)).join('')} 오늘은 <b class="gold">${DAY_NAME[k]}</b> 던전 · 하루 ${CC.day.tries}번 (남은 ${triesText({ mode: 'day', arg: 1 })}) · 월·목 경험치 물약 / 화·금 금화 / 수·토 강화석 / 일 모두</p>
+          <div class="dayban" style="background-image:url(${import.meta.env.BASE_URL}art/bgs/daily.jpg)"><b>세계수의 시련</b><span class="xs">요일마다 보상이 바뀌는 던전</span></div>
           <div class="cards days">${Array.from({ length: CC.day.levels }, (_, i) => `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'day', arg: i + 1 })}'><b class="hn">${i + 1}단계</b><span class="xs dim">추천 Lv.${Math.round(1 + (i + 1) * CC.day.step * CONFIG.story.recLv)}</span>${(k === 'all' ? ['exp', 'gold', 'enh'] : [k]).map((x) => icon(x)).join('')}</button>`).join('')}</div>`;
       } else if (tab === 'raid') {
         // 보스 그림 크게 + 패턴 아이콘 + 지난 기록 (빈 아래 채우기 · POLISH_1017 ④-2)

@@ -492,3 +492,7 @@ body, #stage { font-weight: normal; }
 #stage .scr[data-screen='shop'] .cards.hscroll { flex: 1 1 0; min-height: 0; grid-template-rows: 100%; }
 #stage .scr[data-screen='shop'] .cards.hscroll > .shopc.hero, #stage .scr[data-screen='shop'] .cards.hscroll > .shopc.costume { height: auto; min-height: 0; }
 #stage .scr[data-screen='shop'] .cards.costumes.hscroll .fbc { flex: 1 1 0; height: auto; min-height: 0; }
+/* 요일 던전: 세계수 전투 배경을 위 띠로 · 단계 칸에 판 그림 (빈 화면처럼 보이던 것 · 10/18) */
+#stage .dayban { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--s-xxs); height: 96px; flex: none; padding: var(--s-sm) var(--s-md); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 / var(--px-edgeSm) stretch; background: center 40% / cover no-repeat; image-rendering: auto; text-shadow: var(--px-outline); }
+#stage .dayban b { color: var(--px-gold); font-size: var(--fs-xxl); }
+#stage .cards.days .shopc { border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; }

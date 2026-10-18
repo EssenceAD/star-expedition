@@ -108,7 +108,8 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
     if (u.mob?.boss) x += Math.sin(u.deadT * 50) * MD.shake;
   }
   if (alpha <= 0) return;
-  shadow(ctx, x + (u.mob?.boss ? 10 : 0), u.y, u.mob?.boss ? 95 : 26 * (H / 100));
+  // 쓰러진 영웅: 누운 몸 길이만큼 그림자를 옆으로 넓게 (발밑 작은 그림자만 떠 보이던 것 · 10/18)
+  shadow(ctx, x + (u.mob?.boss ? 10 : 0), u.y, u.mob?.boss ? 95 : 26 * (H / 100) * (u.hero && u.dead ? 1.8 : 1));
   const k = H / heightOf(art.sheet, ref);
   const fi = frameAt(def, u.at);
   // 그릴 칸: 장 보스 경고 중이면 준비 칸 + 살짝 떨림 · 지역 몹은 맞는 순간 피격 칸
@@ -625,17 +626,11 @@ function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: n
   const { im, own } = bgOf(art, b.setup.bg);
   const tint = `${own ? 'none' : (B.region[b.setup.region] ?? 'none')} ${B.phaseTint[Math.min(r.phase, B.phaseTint.length - 1)]}`.replace(/none ?/g, '').trim() || 'none';
   if (im) {
+    // 한 장만 고정으로 (같은 그림을 여러 겹 반투명으로 겹쳐 흐르게 하던 것 → 겹쳐 보인다는 피드백 · 10/18)
     const fit = bgFit(own ? b.setup.bg : undefined);
-    RA.parallax.forEach(([sp, sc], i) => {
-      // 맨 앞 층 = 땅 띠를 발 띠에 맞춘 크기 · 뒤 층은 그 배율
-      const h = i === 0 ? fit.h : fit.h * sc;
-      const w = (im.width / im.height) * h;
-      const o = -(((b.t * 30 * sp) % w) + w) % w;
-      ctx.globalAlpha = i === 0 ? 1 : 0.55;
-      ctx.filter = `${tint === 'none' ? '' : tint} brightness(${0.7 + i * 0.15})`.trim();
-      for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), i === 0 ? fit.y0 : LH - h + 90 + i * 20, Math.ceil(w) + 1, h);
-    });
-    ctx.globalAlpha = 1;
+    const w = (im.width / im.height) * fit.h;
+    ctx.filter = `${tint === 'none' ? '' : tint} brightness(0.85)`.trim();
+    for (let x = Math.min(0, (W - w) / 2); x < W; x += w) ctx.drawImage(im, Math.floor(x), fit.y0, Math.ceil(w) + 1, fit.h);
     ctx.filter = 'none';
   } else background(ctx, art, b.t * 10, W, b.setup.region, b.setup.bg);
   // 두 줄 바닥 + 경고 줄
