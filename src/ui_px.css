@@ -123,7 +123,6 @@ body, #stage { font-weight: normal; }
 #stage .mgo.btn { position: absolute; display: flex; align-items: center; justify-content: center; gap: var(--s-sm); width: 150px; height: 54px; border-width: var(--px-edge); border-image-width: var(--px-edge); animation: v3Breathe 1.6s ease-in-out infinite; pointer-events: auto; right: max(var(--s-md), var(--safeR)); bottom: var(--s-md); filter: none; }
 #stage .mgo.btn .ic { width: 28px; height: 28px; }
 #stage .mgo.btn span { position: static; height: auto; color: var(--px-text); text-shadow: var(--px-redText); }
-#stage .mlead { position: absolute; right: 160px; bottom: 0; width: 180px; height: 230px; background: center bottom / contain no-repeat; pointer-events: none; transform-origin: 50% 100%; animation: v3Idle 2.2s ease-in-out infinite; }
 #stage .prof .pf .pt { box-shadow: var(--px-ring); }
 
 /* ───── 7. 전투 HUD ───── */
@@ -245,3 +244,15 @@ body, #stage { font-weight: normal; }
 #stage .hcard, #stage .shopc.hero { border-width: var(--b-base); }
 #stage .stats .kv { min-height: 0; padding: 0; line-height: 1.15; }
 #stage .bosscard .bimg { min-height: 0; }
+
+/* ───── 14. 타이틀 (W.I.N.D 도트 로고 · 광원 뺀 키아트) ───── */
+#stage #title .logo { display: flex; flex-direction: column; align-items: center; gap: var(--s-xs); margin-top: var(--s-md); }
+#stage #title .logo .wind { width: min(420px, 62vw); height: auto; image-rendering: pixelated; filter: drop-shadow(0 var(--s-sm) 0 var(--px-veil)); }
+#stage #title .logo .sub { padding: 0 var(--s-lg); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; color: var(--px-gold); font-size: var(--fs-xxl); text-shadow: var(--px-outline); }
+#stage #title .logo small { color: var(--px-text); text-shadow: var(--px-outline); letter-spacing: 0; }
+#stage #title .tapgo { position: absolute; left: 50%; bottom: calc(var(--s-xxl) + var(--s-xl)); transform: translateX(-50%); padding: 0; border: 0; background: none; color: var(--px-text); font-size: var(--fs-xxl); text-shadow: var(--px-outline); animation: v3Blink 1.6s ease-in-out infinite; }
+#stage #title .tapgo::before { content: ''; position: fixed; inset: 0; }
+#stage #title .tpanel { position: absolute; left: var(--s-md); bottom: var(--s-md); padding: 0; border: 0; border-image: none; }
+#stage #title .twinkle { position: absolute; inset: 0; pointer-events: none; }
+#stage #title .twinkle b { position: absolute; width: 4px; height: 4px; background: var(--px-text); box-shadow: 0 0 var(--s-sm) var(--px-gold); animation: v3Blink 1.8s calc(var(--i) * -0.37s) ease-in-out infinite; }
+@keyframes v3Blink { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }

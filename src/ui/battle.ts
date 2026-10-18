@@ -467,11 +467,14 @@ function begin(s: StageId) {
   const ch = CHAPTERS[s.c - 1];
   let lines: Line[] = [];
   if (firstRun) {
-    lines = PROLOGUE;
+    // 첫 진입: 프롤로그 다음 바로 1장 시작 대사 (확정본 1장 시작이 묻히지 않게)
+    lines = [...PROLOGUE, ...(ch.intro ?? [])];
     S.seen[`${s.c}:intro`] = true;
   } else {
-    const key = s.d === 0 && s.s === 1 ? `${s.c}:intro` : s.d === 0 && isBoss(s) ? `${s.c}:preBoss` : '';
-    const ls = key === `${s.c}:intro` ? ch.intro : ch.preBoss;
+    // 보통 난이도 첫 진입만 한 번: x-1 시작 · x-3 · x-6 · x-10 보스 전 (STORY_FINAL_1018)
+    const part = s.d !== 0 ? '' : s.s === 1 ? 'intro' : s.s === 3 ? 'mid3' : s.s === 6 ? 'mid6' : isBoss(s) ? 'preBoss' : '';
+    const key = part ? `${s.c}:${part}` : '';
+    const ls = part ? ch[part as 'intro' | 'mid3' | 'mid6' | 'preBoss'] : undefined;
     if (key && ls && !S.seen[key]) {
       S.seen[key] = true;
       lines = ls;
