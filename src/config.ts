@@ -291,7 +291,7 @@ export const CONFIG = {
     /** 영웅 외전: 영웅마다 3막 (마지막 = 보스) · 강함 = 영웅 레벨 기준 · 클리어 보상: 전용 보물 해금 · 그 영웅 전용 무기 조각 · 별가루 */
     side: { acts: 3, add: 0, shards: 10, dust: 100 },
     /** 이정표 보상 별가루 (단계마다) */
-    milestoneDust: 60,
+    milestoneDust: 30,
   },
   /**
    * D덩어리 소셜·운영 (STAR_PLAN_v2 §4)
@@ -403,6 +403,8 @@ export const CONFIG = {
     loadTipSec: 1.6,
     /** 넘치는 목록 끝 화살표 다시 재는 간격 (MASTER 1-3) */
     scrollHintMs: 300,
+    /** 지도로 돌아왔을 때 알림 카드 하나 초 (RECOVER_1018 S4 · 장 개방 띠는 1.6배) */
+    noticeSec: 1.5, noticeWaitMs: 300,
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */

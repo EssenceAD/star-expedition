@@ -1220,3 +1220,40 @@ input, select, textarea { font-family: inherit; }
 .scrollhint.dn { transform: translate(-50%, -100%); }
 .scrollhint.up svg { transform: rotate(180deg); }
 .scrollhint svg.ic { width: 22px; height: 16px; }
+
+/* 이정표 창 (RECOVER_1018 S5 · 영상 sheet_07 v3_018~020): 왼쪽 안내 NPC + 말풍선 · 오른쪽 장 탭 · 할 일 사슬 · 칸 설명 */
+.mwin .panel.mw { position: relative; width: 780px; max-width: none; height: 350px; max-height: none; display: flex; flex-direction: row; gap: var(--s-md); padding: var(--s-md); overflow: visible; }
+.mwin .mx { position: absolute; right: var(--s-sm); top: var(--s-sm); z-index: 2; }
+.mguide { position: relative; width: 200px; flex: none; }
+.mguide img { position: absolute; left: calc(var(--s-xl) * -1); bottom: calc(var(--s-md) * -1); width: 250px; height: 250px; object-fit: contain; }
+.mguide .say { position: absolute; left: 0; right: 0; top: 0; margin: 0; padding: var(--s-sm) var(--s-md); border-radius: var(--r-md); border: var(--b-base) solid var(--c-gold1); background: var(--c-white); color: var(--c-ink); font-size: var(--fs-md); line-height: 1.45; text-shadow: none; }
+.mmain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s-sm); }
+.mmain .tabs .tab { position: relative; }
+.mtitle { font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-lg); }
+.mtitle span { font-family: var(--f-num); color: var(--c-gold1); }
+.chain { display: flex; align-items: center; gap: 0; }
+.chain .link { flex: 1; min-width: var(--s-sm); height: 4px; border-radius: var(--r-sm); background: var(--c-gold3); }
+.mcell { position: relative; width: 78px; height: 96px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: var(--s-xs); border-radius: var(--r-md); border: var(--b-base) solid var(--c-line); background: var(--c-panelDeep); color: var(--c-text); font-size: var(--fs-xs); }
+.mcell .no { font-style: normal; width: 20px; height: 20px; border-radius: 50%; background: var(--c-panel2); font-family: var(--f-num); line-height: 20px; }
+.mcell .nm { line-height: 1.2; text-align: center; font-size: var(--fs-sm); }
+.mcell .rw { display: flex; align-items: center; gap: var(--s-xxs); font-family: var(--f-num); color: var(--c-gold1); }
+.mcell .rw .ic { width: 14px; height: 14px; }
+.mcell.ready { border-color: var(--c-gold); box-shadow: var(--sh-glowHi); }
+.mcell.ready .no { background: var(--c-gold1); color: var(--c-ink); }
+.mcell.got { opacity: 0.75; }
+.mcell.sel { border-color: var(--c-white); background: var(--c-panelHi); }
+.mcell .stamp { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-14deg); padding: 0 var(--s-sm); border: var(--b-base) solid var(--c-bad); border-radius: var(--r-sm); color: var(--c-bad); font-style: normal; font-family: var(--f-num); font-size: var(--fs-md); background: var(--c-veil2); }
+.mdet { display: flex; align-items: center; gap: var(--s-md); padding: var(--s-sm) var(--s-md); border-radius: var(--r-md); background: var(--c-panelDeep); }
+.mdet b { font-size: var(--fs-lg); }
+.mfoot { justify-content: space-between; margin-top: auto; }
+
+/* 알림 카드 (S4 · 영상 sheet_05 v2_018~020) · 장 개방 띠 (v2_017) */
+.notice { position: absolute; left: 50%; top: 64px; z-index: 60; transform: translateX(-50%); cursor: pointer; animation: noticeIn 0.25s ease-out; }
+.notice.card { min-width: 300px; display: flex; align-items: center; gap: var(--s-md); padding: var(--s-sm) var(--s-xl); border-radius: var(--r-md); border: var(--b-base) solid var(--c-gold1); background: var(--c-glass); color: var(--c-text); box-shadow: var(--sh-drop); }
+.notice.card .ic { width: 30px; height: 30px; }
+.notice.card span { font-size: var(--fs-sm); color: var(--c-gold1); }
+.notice.card b { font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-xl); }
+.notice.chapter { top: 140px; width: 100%; left: 0; transform: none; display: flex; flex-direction: column; align-items: center; padding: var(--s-lg) 0; background: linear-gradient(90deg, transparent, var(--c-glass) 20% 80%, transparent); }
+.notice.chapter b { font-family: var(--f-title); font-weight: var(--fw-title); font-size: var(--fs-h1); color: var(--c-gold1); text-shadow: var(--sh-outline); }
+.notice.chapter span { color: var(--c-text); font-size: var(--fs-lg); }
+@keyframes noticeIn { from { opacity: 0; margin-top: calc(var(--s-lg) * -1); } to { opacity: 1; margin-top: 0; } }
