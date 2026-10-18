@@ -414,7 +414,7 @@ export const CONFIG = {
     /** 전투 배경의 땅 띠(public/art/bgs/_ground.json)를 화면의 이 y 띠에 맞춰 그림 (발 자리 226~342가 땅 위 · FINAL §3-4) */
     groundScreen: [210, 385] as [number, number],
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
-    screenBg: { world: 'map', capital: 'capital', inn: 'lobby', library: 'heroes', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
+    screenBg: { world: 'world', capital: 'capital', inn: 'inn', library: 'library', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
