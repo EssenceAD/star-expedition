@@ -69,11 +69,12 @@ body, #stage { font-weight: normal; }
 #stage .xbar i, #stage .bh i { border-radius: 0; background: var(--px-xp); box-shadow: inset 0 var(--b-base) 0 var(--px-barHi); }
 #stage .gi { border: var(--px-edgeSm) solid transparent; border-radius: 0; border-image: url(/art/ui2/slot.png) 3 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; }
 #stage .gi > *, #stage .gi .ic.img:not(.px) { image-rendering: auto; }
-#stage .gi.g-common { box-shadow: 0 0 0 var(--b-base) var(--px-gradeCommon); }
-#stage .gi.g-uncommon { box-shadow: 0 0 0 var(--b-base) var(--px-gradeUncommon); }
-#stage .gi.g-rare { box-shadow: 0 0 0 var(--b-base) var(--px-gradeRare); }
-#stage .gi.g-epic { box-shadow: 0 0 0 var(--b-base) var(--px-gradeEpic); }
-#stage .gi.g-legend { box-shadow: 0 0 0 var(--b-base) var(--px-gradeLegend); }
+/* 등급 테두리: 바깥 굵은 등급색 + 검은 외곽 + 안쪽 한 줄 (형철 10/18 「테두리 더 확실하게」) */
+#stage .gi.g-common { box-shadow: 0 0 0 var(--b-thick) var(--px-gradeCommon), 0 0 0 calc(var(--b-thick) + var(--b-thin)) var(--px-ink), inset 0 0 0 var(--b-base) var(--px-gradeCommon); }
+#stage .gi.g-uncommon { box-shadow: 0 0 0 var(--b-thick) var(--px-gradeUncommon), 0 0 0 calc(var(--b-thick) + var(--b-thin)) var(--px-ink), inset 0 0 0 var(--b-base) var(--px-gradeUncommon); }
+#stage .gi.g-rare { box-shadow: 0 0 0 var(--b-thick) var(--px-gradeRare), 0 0 0 calc(var(--b-thick) + var(--b-thin)) var(--px-ink), inset 0 0 0 var(--b-base) var(--px-gradeRare); }
+#stage .gi.g-epic { box-shadow: 0 0 0 var(--b-thick) var(--px-gradeEpic), 0 0 0 calc(var(--b-thick) + var(--b-thin)) var(--px-ink), inset 0 0 0 var(--b-base) var(--px-gradeEpic); }
+#stage .gi.g-legend { box-shadow: 0 0 0 var(--b-thick) var(--px-gradeLegend), 0 0 0 calc(var(--b-thick) + var(--b-thin)) var(--px-ink), inset 0 0 0 var(--b-base) var(--px-gradeLegend); }
 #stage .gi.empty, #stage .gi.empty.pic, #stage .gi.slot, #stage .party .pcard.empty, #stage .lfp .pt.s.empty { border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/slot.png) 3 fill / var(--px-edgeSm) stretch; background: none; opacity: 0.85; }
 #stage .gi .slotpic { width: 50%; height: 50%; opacity: 0.45; }
 #stage input:not([type='checkbox']), #stage select, #stage textarea, #stage select.tab { border: var(--b-base) solid var(--px-ink); border-radius: 0; border-image: none; background: var(--px-soft); color: var(--px-ink); text-shadow: none; }
@@ -129,7 +130,7 @@ body, #stage { font-weight: normal; }
 #stage #hud .rb, #stage #hud #bQuit { border: 0; border-image: none; background: none; box-shadow: none; color: var(--px-text); }
 #stage #hud #tl .rb, #stage #hud #tr .rb { width: 36px; height: 36px; display: grid; place-items: center; }
 #stage #hud .rb .ic { width: 28px; height: 28px; filter: var(--px-iconShadow); }
-#stage #hud #bAuto[aria-pressed='true'], #stage #hud #bSpeed.fast { filter: drop-shadow(0 0 var(--s-sm) var(--px-gold)); animation: none; }
+#stage #hud #bAuto[aria-pressed='true'] { filter: drop-shadow(0 0 var(--s-sm) var(--px-gold)); animation: none; }
 #stage #hud #tl .rb span { top: 100%; padding: 0 var(--s-xs); min-width: 0; border: var(--px-edgeXs) solid transparent; border-image: url(/art/ui2/tag.png) 2 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; background: none; color: var(--px-text); text-shadow: var(--px-outlineSm); line-height: 1.1; }
 #stage #wave, #stage #clock { border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outline); }
 #stage #wave { color: var(--px-gold); }
@@ -259,3 +260,93 @@ body, #stage { font-weight: normal; }
 /* 영웅 정보 능력치 판: 「상한까지」 작은 글씨는 판이 좁아 숫자와 겹침 → 이 판에서만 숨김 (상한 넘침 경고는 장비 창에서) */
 #stage .eq .stats .kv .cap { display: none; }
 #stage .eq .stats .kv b { flex-direction: row; }
+
+/* ───── 15. 10/18 플레이 피드백 ───── */
+/* 보스 노드: 번호판 아래 작은 보스 얼굴 (지도 위 보스 그림 대신) */
+#stage .mnode .bface { display: block; width: 34px; height: 34px; margin-top: var(--s-xxs); border: var(--b-base) solid var(--px-ink); background-color: var(--px-veilHi); background-repeat: no-repeat; background-size: cover; background-position: center; box-shadow: 0 0 0 var(--b-base) var(--px-red); }
+/* 위 재화 칸: 글씨 아래가 잘리던 것 → 높이 = 내용 */
+#stage .top .cur { height: auto; min-height: 28px; padding: var(--s-xxs) var(--s-sm); line-height: 1.25; }
+/* 방치 보상 · 출석 창 보상 칸: 작은 칸 한 줄 */
+#stage .modal .rw.gifts { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-md); }
+#stage .modal .rw.gifts .rwc { flex: 0 0 auto; width: 96px; min-width: 0; padding: var(--s-sm); display: flex; flex-direction: column; align-items: center; gap: var(--s-xxs); text-align: center; }
+#stage .modal .rw.gifts .rwc .ic { width: 40px; height: 40px; }
+#stage .modal .panel { max-width: min(520px, 92%); }
+/* 영웅 카드 (상점·미보유): 칩 줄과 이름이 얼굴을 덜 가리게 아래로 */
+#stage .shopc.hero .band { height: auto; grid-template-rows: auto auto auto; padding-bottom: var(--s-xs); }
+/* 작은 버튼: 글씨가 판 아래로 처지던 것 (높이 고정 22px + 테두리 6px) → 높이 = 글씨 */
+#stage .btn.mini { height: auto; min-height: 26px; padding: var(--s-xxs) var(--s-md); line-height: 1.2; }
+#stage #title .tpanel { background: none; box-shadow: none; }
+
+/* ───── 16. 플레이 피드백 2차 (10/18) ───── */
+/* 뒤로 가기: 예전 그림 방식이 아이콘을 숨기던 규칙(visibility) 풀고 나무 버튼 위에 아이콘 */
+#stage .btn[data-back] { width: auto; height: auto; padding: var(--s-xxs) var(--s-md); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/btn_wood.png) 4 fill / var(--px-edgeSm) stretch; }
+#stage .btn[data-back] > * { visibility: visible; }
+#stage .btn[data-back] .ic { width: 22px; height: 22px; filter: none; }
+/* 버튼 글씨 처짐: 나무·붉은 버튼 그림은 아래 테두리가 두꺼워 보여 → 글씨를 살짝 위로 */
+#stage .btn:not(.hcard):not(.shopc):not(.qrow):not(.hrow):not(.skip):not([data-back]) { padding-bottom: var(--s-sm); line-height: 1; }
+#stage .tab { padding-bottom: var(--s-sm); line-height: 1; }
+/* 영웅 카드: 상점 카드와 같은 칩 줄 · 레벨도 같은 칩 모양 */
+#stage .hcard .chips { flex-wrap: nowrap; justify-content: center; gap: var(--s-xxs); max-width: 100%; padding: 0 var(--s-xxs); }
+#stage .hcard .chips .chip { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; padding: 0 var(--s-xxs); gap: 0; }
+#stage .hcard .chips .chip .ic { width: 10px; height: 10px; }
+#stage .hcard .lv.chip { position: absolute; top: var(--s-xs); right: var(--s-xs); height: auto; padding: var(--s-xxs) var(--s-xs); color: var(--px-gold); }
+/* 출석 7일 판 */
+#stage .atth { display: block; margin: var(--s-sm) 0; text-align: center; color: var(--px-gold); text-shadow: var(--px-outline); }
+#stage .attg { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--s-sm); margin-bottom: var(--s-md); }
+#stage .shopc.att { position: relative; align-items: center; justify-content: flex-start; gap: var(--s-sm); padding: var(--s-md) var(--s-xs); min-height: 0; }
+#stage .shopc.att .ag { display: flex; flex-direction: column; align-items: center; gap: var(--s-xs); }
+#stage .shopc.att .ag span { display: flex; flex-direction: column; align-items: center; }
+#stage .shopc.att .ag .ic { width: 36px; height: 36px; }
+#stage .shopc.att.on { filter: brightness(0.6); }
+#stage .shopc.att.now { animation: v3Pulse 1.4s ease-in-out infinite; box-shadow: 0 0 0 var(--b-thick) var(--px-gold); }
+#stage .shopc.att .done { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+#stage .shopc.att .done .ic { width: 40px; height: 40px; }
+/* 편성: 파티 4칸 넘치지 않게 · 인연 칩 = 누르면 설명 */
+#stage .party { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+#stage .party .pcard { min-width: 0; }
+#stage .bondl button.chip { cursor: pointer; font: inherit; }
+/* 영웅 외전: 초상화 칸을 세로로 키워 얼굴이 다 보이게 */
+#stage .shopc.sidec { height: auto; overflow: visible; }
+#stage .shopc.sidec .pt { width: 100%; height: auto; aspect-ratio: 4 / 3; flex: none; background-size: cover; background-position: center top; }
+/* 메인 이정표 = 「다음 할 일」 카드 (가로 띠 → 크게 · 글씨 안 잘리게 · 형철 10/18) */
+#stage .mquest { width: 280px; }
+#stage .mq { height: auto; min-height: 26px; padding: var(--s-xs) var(--s-md); border: var(--px-edgeXs) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; line-height: 1.25; text-align: left; }
+#stage .mq.mile { flex-direction: column; align-items: flex-start; gap: var(--s-xxs); padding: var(--s-sm) var(--s-md); border-width: var(--px-edgeSm); border-image: url(/art/ui2/paper.png) 4 fill / var(--px-edgeSm) stretch; color: var(--px-ink); text-shadow: none; animation: v3Pulse 2s ease-in-out infinite; }
+#stage .mq.mile .mqh { display: flex; align-items: center; gap: var(--s-xs); }
+#stage .mq.mile .tag .ic { width: 12px; height: 12px; vertical-align: middle; transform: rotate(-90deg); }
+#stage .mq.mile b { font-size: var(--fs-xl); color: var(--px-ink); }
+#stage .mq.mile .mqd { font-size: var(--fs-sm); color: var(--px-ink); white-space: normal; }
+/* 가이드 화살표 말풍선 */
+#stage .guide { position: relative; z-index: 6; }
+#stage .guide .gbub { position: absolute; left: 50%; bottom: 100%; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); pointer-events: none; animation: v3Idle 0.9s ease-in-out infinite; }
+#stage .guide .gbub .gtx { padding: var(--s-xs) var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); text-shadow: none; font-size: var(--fs-md); line-height: 1.3; white-space: nowrap; text-align: center; }
+#stage .guide .gbub .ic { width: 28px; height: 28px; }
+#stage .mside .guide .gbub { left: 100%; top: 50%; bottom: auto; flex-direction: row-reverse; transform: translateY(-50%); }
+#stage .mside .guide .gbub .ic { transform: rotate(90deg); }
+/* 오른쪽 위 줄 3개 메뉴: 글씨가 판과 같은 어두운 색이라 안 읽힘 → 밝게 */
+#stage .mmenu .btn.qrow { color: var(--px-text); text-shadow: var(--px-outline); }
+/* 전투 배속: ×1 · ×1.5 · ×2 펼쳐 두기 · 켜진 배속 = 붉은 도트 */
+#stage #hud #bSpeed { display: flex; align-items: center; gap: var(--s-xxs); background: none; }
+#stage #hud #bSpeed .sp { min-width: 38px; height: 26px; padding: 0 var(--s-xs) var(--s-xxs); border: var(--px-edgeXs) solid transparent; border-image: url(/art/ui2/btn_wood.png) 4 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; background: none; color: var(--px-ink); text-shadow: var(--px-lightText); font-size: var(--fs-md); line-height: 1; }
+#stage #hud #bSpeed .sp.on { border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeXs) stretch; color: var(--px-text); text-shadow: var(--px-redText); }
+/* 영웅 성장 · 초월 줄: 단계 | 특성 둘 | (비용은 아랫줄) — 좁은 폰에서 글씨가 겹치지 않게 */
+#stage .trow { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: var(--s-xs); }
+#stage .trow .btn { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#stage .trow > span { grid-column: 2 / -1; }
+/* 결과 보상 칸: 높이 고정이라 숫자가 칸 밖으로 → 내용만큼 · 가운데 정렬 */
+#stage .rcol .rw div.rwc { height: auto; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-xxs); padding: var(--s-sm) var(--s-xs); line-height: 1.2; }
+/* 영웅 정보: 전신 위 빈자리에 대사 한 줄 (말풍선) */
+#stage .fbcol .hvoice { position: absolute; z-index: 2; left: 0; right: 0; top: var(--s-sm); margin: 0; padding: var(--s-xs) var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); text-shadow: none; font-size: var(--fs-md); line-height: 1.35; text-align: center; animation: v3PopIn 0.4s ease-out both; }
+#stage .fbcol .hvoice::after { content: ''; position: absolute; left: 50%; bottom: calc(var(--s-sm) * -1); border: var(--s-sm) solid transparent; border-top-color: var(--px-ink); border-bottom: 0; transform: translateX(-50%); }
+/* 길드: 만들기·새로고침 줄 · 이름 입력 */
+#stage .gtools { align-items: center; gap: var(--s-sm); margin-bottom: var(--s-sm); }
+#stage .gname-in { width: 100%; padding: var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); font: inherit; }
+/* 기능 열림 튜토리얼 (S6): 어둡게 + 밝은 네모 + 손가락 + 설명 2줄 */
+#stage .coach { position: absolute; inset: 0; z-index: 60; cursor: pointer; }
+#stage .coach .hole { position: absolute; border: var(--b-thick) solid var(--px-gold); box-shadow: 0 0 0 calc(var(--s-xxl) * 80) var(--px-veil), 0 0 var(--s-lg) var(--px-gold); animation: v3Pulse 1.2s ease-in-out infinite; pointer-events: none; }
+#stage .coach .finger { position: absolute; transform: translate(-50%, -100%); animation: v3Idle 0.8s ease-in-out infinite; pointer-events: none; }
+#stage .coach .finger.up { transform: translate(-50%, 0) rotate(180deg); }
+#stage .coach .finger .ic { width: 36px; height: 36px; }
+#stage .coach .ctext { position: absolute; left: 50%; top: var(--s-xl); width: min(520px, 80%); display: flex; flex-direction: column; align-items: center; gap: var(--s-xxs); padding: var(--s-md) var(--s-lg); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/paper.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; transform: translateX(-50%); color: var(--px-ink); text-shadow: none; font-size: var(--fs-xl); line-height: 1.4; text-align: center; animation: v3PopIn 0.35s ease-out both; }
+#stage .coach .ctext.low { top: auto; bottom: var(--s-xl); }
+#stage .coach .ctext small { margin-top: var(--s-xs); color: var(--px-ink); opacity: 0.7; font-size: var(--fs-sm); }

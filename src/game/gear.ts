@@ -3,6 +3,7 @@
 import { CONFIG } from '../config';
 import { JOBS } from '../data/jobs';
 import { heroOf } from '../data/heroes';
+import { GEAR_ADJ, GEAR_FROM } from '../data/gearNames';
 import { addCur, dayKey, GEAR_SLOTS, S, spend, track, type Gear, type GearSlot, type Item, type Rune, type Save } from './state';
 
 const G = CONFIG.gear;
@@ -53,18 +54,24 @@ export function rollType(part: Part, s: Save, rnd: () => number): string {
   if (party.length && rnd() < TY.partyBias) return table[jobOf(pick(party, rnd))];
   return pick([...new Set(Object.values(table))], rnd);
 }
-export function makeGear(part: Part, grade: number, ilv: number, s: Save = S, rnd: () => number = Math.random, type?: string): Gear {
+/** 이름 재료 고르기: uid로 정해짐 (rnd를 쓰지 않아 드롭·옵션 결과는 그대로) */
+const byUid = <X>(xs: X[], uid: number, k: number) => xs[(uid * 7 + k * 13) % xs.length];
+const nameOf = (g: Gear, from: string[]) => `${byUid(GEAR_ADJ[g.grade] ?? GEAR_ADJ[0], g.uid, 1)} ${byUid(from, g.uid, 2)}의 ${typeName(g)}`;
+/** from = 얻은 곳 이름 후보 (사냥터 몬스터·보스 · data/gearNames) */
+export function makeGear(part: Part, grade: number, ilv: number, s: Save = S, rnd: () => number = Math.random, type?: string, from: string[] = GEAR_FROM.any): Gear {
   const opts: Gear['opts'] = [];
   for (let i = 0; i < G.grades[grade].opts; i++) opts.push(rollOpt(grade, rnd, opts.map((o) => o.k)));
-  return { uid: s.nextUid++, kind: 'gear', part, type: type ?? rollType(part, s, rnd), grade, ilv: Math.max(0, Math.round(ilv)), star: 1, tier: 1, enh: 0, pity: 0, starPity: 0, opts, runes: Array(G.grades[grade].runes).fill(null), lock: false, by: null };
+  const g: Gear = { uid: s.nextUid++, kind: 'gear', part, type: type ?? rollType(part, s, rnd), grade, ilv: Math.max(0, Math.round(ilv)), star: 1, tier: 1, enh: 0, pity: 0, starPity: 0, opts, runes: Array(G.grades[grade].runes).fill(null), lock: false, by: null };
+  g.nm = nameOf(g, from);
+  return g;
 }
 export function makeRune(grade: number, s: Save = S, rnd: () => number = Math.random): Rune {
   return { uid: s.nextUid++, kind: 'rune', grade, stat: pick(R.kinds, rnd), lock: false, in: null };
 }
 /** 스테이지 드롭 (가방이 가득이면 null) */
-export function dropGear(ilv: number, diff: number, s: Save = S, rnd: () => number = Math.random): Gear | null {
+export function dropGear(ilv: number, diff: number, s: Save = S, rnd: () => number = Math.random, from?: string[]): Gear | null {
   if (rnd() >= G.drop.chance || bagFull(s)) return null;
-  const g = makeGear(pick(PARTS, rnd), weighted(G.drop.weights[diff] ?? G.drop.weights[0], rnd), ilv, s, rnd);
+  const g = makeGear(pick(PARTS, rnd), weighted(G.drop.weights[diff] ?? G.drop.weights[0], rnd), ilv, s, rnd, undefined, from);
   add(g, s);
   return g;
 }
@@ -92,7 +99,7 @@ export const gearPower = (g: Gear) => {
   return Math.round((b.atk ?? 0) * CONFIG.power.atkW + (b.hp ?? 0) * CONFIG.power.hpW + (b.def ?? 0) * CONFIG.power.defW) + g.opts.length * 50 * (g.grade + 1);
 };
 export const optText = (o: { k: string; v: number }) => `${G.opts[o.k]?.name ?? o.k} +${(o.v * 100).toFixed(1)}%`;
-export const gearName = (g: Gear) => `${gradeName(g.grade)} ${typeName(g)}`;
+export const gearName = (g: Gear) => g.nm ?? nameOf(g, GEAR_FROM.any);
 
 // ───────── 강화 (긴 사다리 +0~+max · 구간마다 외형 · 파괴 없음 · B 보강 §1) ─────────
 const E = G.enhance;
@@ -261,7 +268,7 @@ export function summon(n: 1 | 11, ilv: number, s: Save = S, rnd: () => number = 
   track('summon', n, s, now);
   const out: Gear[] = [];
   for (let i = 0; i < n; i++) {
-    const g = makeGear(pick(PARTS, rnd), weighted(G.summon.weights, rnd), ilv, s, rnd);
+    const g = makeGear(pick(PARTS, rnd), weighted(G.summon.weights, rnd), ilv, s, rnd, undefined, GEAR_FROM.summon);
     add(g, s);
     out.push(g);
   }
@@ -272,7 +279,7 @@ export function craft(part: Part, ilv: number, s: Save = S, rnd: () => number = 
   if ((s.cur.enh ?? 0) < G.craft.stones || (s.cur.gold ?? 0) < G.craft.gold) return 'poor';
   addCur('enh', -G.craft.stones, s);
   addCur('gold', -G.craft.gold, s);
-  const g = makeGear(part, G.craft.grade, ilv, s, rnd);
+  const g = makeGear(part, G.craft.grade, ilv, s, rnd, undefined, GEAR_FROM.craft);
   add(g, s);
   return g;
 }

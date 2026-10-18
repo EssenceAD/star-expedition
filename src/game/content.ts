@@ -10,6 +10,7 @@ import { bigBoss, CHAPTER_MOBS, PATTERNS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { addAccExp } from './account';
 import { dropGear, makeGear, makeRune, bagFull } from './gear';
+import { chapterFrom, GEAR_FROM } from '../data/gearNames';
 import { baseStats, heroPower, owned } from './heroes';
 import { bestCleared, buildHeroes, byZone, cleared, mobsAt, powIdx } from './stage';
 import { guildBoss } from './social';
@@ -284,7 +285,7 @@ export function finishRun(r: Run, res: { win: boolean; dealt: number; heroes: st
   switch (r.mode) {
     case 'hunt': {
       give('enh', CC.hunt.enh * (1 + Math.floor(c / 3)), s, o);
-      if (rnd() < CC.hunt.gearChance) pushGear(dropGear(powIdx({ c, s: 10, d: 0 }), CC.hunt.gearDiff, s, () => rnd() * 0.5), o);
+      if (rnd() < CC.hunt.gearChance) pushGear(dropGear(powIdx({ c, s: 10, d: 0 }), CC.hunt.gearDiff, s, () => rnd() * 0.5, chapterFrom(c, false)), o);
       if (rnd() < CC.hunt.shard.chance) give('exShard', CC.hunt.shard.n, s, o);
       break;
     }
@@ -321,7 +322,7 @@ export function finishRun(r: Run, res: { win: boolean; dealt: number; heroes: st
       give('tierMat', CC.raid.tierMat, s, o);
       give('stardust', 30, s, o);
       if (!bagFull(s)) {
-        const g = makeGear((['weapon', 'armor', 'acc'] as const)[Math.floor(rnd() * 3)], CC.raid.gearGrade + (rnd() < 0.15 ? 1 : 0), top(s) + CC.raid.add, s, rnd);
+        const g = makeGear((['weapon', 'armor', 'acc'] as const)[Math.floor(rnd() * 3)], CC.raid.gearGrade + (rnd() < 0.15 ? 1 : 0), top(s) + CC.raid.add, s, rnd, undefined, GEAR_FROM.raid);
         s.items[g.uid] = g;
         o.gear.push(g);
       }
@@ -356,7 +357,7 @@ function forceGear(ilv: number, diff: number, s: Save, rnd: () => number): Gear 
   let x = rnd() * sum;
   let g = 0;
   while (g < w.length - 1 && (x -= w[g]) >= 0) g++;
-  const it = makeGear((['weapon', 'armor', 'acc'] as const)[Math.floor(rnd() * 3)], g, ilv, s, rnd);
+  const it = makeGear((['weapon', 'armor', 'acc'] as const)[Math.floor(rnd() * 3)], g, ilv, s, rnd, undefined, GEAR_FROM.dungeon);
   s.items[it.uid] = it;
   return it;
 }
@@ -418,11 +419,11 @@ const stage = (c: number, n: number): Step => [n === 1 ? `${c}장 진입` : n ==
 const CHAINS: Step[][] = [
   [stage(1, 3), ['장비 끼기', '영웅 정보에서 장비를 하나 껴 봐요. 「자동 장착」을 눌러도 돼요.', (s) => Object.values(s.items).some((x) => x.kind === 'gear' && !!x.by), ['heroes', {}]], stage(1, 6), ['장비 강화 1번', '가방에서 장비를 골라 강화해 봐요.', (s) => ever(s, 'enh') > 0, ['bag', {}]], ['영웅 Lv.5', '전투하면 편성한 영웅이 함께 자라요.', (s) => Object.values(s.heroes).some((h) => h.lv >= 5), ['prep', {}]], stage(1, 10)],
   [stage(2, 1), ['스킬 올리기', '영웅 정보 「스킬」 탭에서 스킬 레벨을 올려 봐요.', (s) => ever(s, 'skill') > 0, ['heroes', {}]], stage(2, 5), ['영웅 영입', '상점 「영웅」에서 새 영웅을 데려와요.', (s) => ever(s, 'hero') > 0, ['shop', { cat: 'hero' }]], ['장비 소환 1번', '상점 「소환」에서 장비를 뽑아 봐요. 하루 한 번은 무료예요.', (s) => ever(s, 'summon') > 0, ['shop', { cat: 'summon' }]], stage(2, 10)],
-  [stage(3, 1), ['결투장 1판', '포탈 > 결투장에서 다른 원정대와 겨뤄요.', (s) => s.arena.win + s.arena.lose > 0, ['portal', { tab: 'arena' }]], stage(3, 5), ['소탕 1번', '별 3개로 깬 스테이지는 정보 창에서 소탕할 수 있어요.', (s) => ever(s, 'repeat') > 0, ['lobby', {}]], ['원정대 Lv.10', '스테이지·미션으로 원정대 경험치를 모아요.', (s) => s.acc.lv >= 10, ['mission', {}]], stage(3, 10)],
-  [stage(4, 1), ['도전의 탑 5층', '포탈 > 도전의 탑을 한 층씩 올라요.', (s) => s.tower.best >= 5, ['portal', { tab: 'tower' }]], stage(4, 5), ['장비 +5 강화', '장비 하나를 +5까지 강화해요.', (s) => gearMax(s, (g) => g.enh) >= 5, ['bag', {}]], ['영웅 8명 모으기', '장을 깨거나 상점에서 영웅을 모아요.', (s) => ownedN(s) >= 8, ['shop', { cat: 'hero' }]], stage(4, 10)],
-  [stage(5, 1), ['레이드 첫 승리', '포탈 > 레이드에서 큰 보스를 쓰러뜨려요.', (s) => (s.wins.raid ?? 0) > 0, ['portal', { tab: 'raid' }]], stage(5, 5), ['결투장 5승', '결투장에서 다섯 번 이겨요.', (s) => s.arena.win >= 5, ['portal', { tab: 'arena' }]], ['영웅 첫 각성', '영웅 정보에서 각성석으로 각성해요.', (s) => Object.values(s.heroes).some((h) => h.awaken > 0), ['heroes', {}]], stage(5, 10)],
-  [stage(6, 1), ['월드 보스 도전', '포탈 > 월드 보스에 한 번 도전해요.', (s) => s.world.my > 0, ['portal', { tab: 'world' }]], stage(6, 5), ['어려움 1장 클리어', '모험에서 난이도를 「어려움」으로 바꿔 1장을 깨요.', (s) => cleared({ c: 1, s: 10, d: 1 }, s), ['adventure', { c: 1, d: 1 }]], ['장비 5성 만들기', '장비를 합성해 5성을 만들어요.', (s) => gearMax(s, (g) => g.star) >= 5, ['bag', {}]], stage(6, 10)],
-  [stage(7, 1), ['도전의 탑 10층', '도전의 탑 10층까지 올라요.', (s) => s.tower.best >= 10, ['portal', { tab: 'tower' }]], stage(7, 5), ['원정대 Lv.20', '원정대 레벨 20을 찍어요.', (s) => s.acc.lv >= 20, ['mission', {}]], ['영웅 외전 하나 끝내기', '포탈 > 영웅 외전을 끝까지 봐요.', (s) => Object.values(s.treasure).some(Boolean), ['portal', { tab: 'side' }]], stage(7, 10)],
+  [stage(3, 1), ['결투장 1판', '콘텐츠 > 결투장에서 다른 원정대와 겨뤄요.', (s) => s.arena.win + s.arena.lose > 0, ['portal', { tab: 'arena' }]], stage(3, 5), ['소탕 1번', '별 3개로 깬 스테이지는 정보 창에서 소탕할 수 있어요.', (s) => ever(s, 'repeat') > 0, ['lobby', {}]], ['원정대 Lv.10', '스테이지·미션으로 원정대 경험치를 모아요.', (s) => s.acc.lv >= 10, ['mission', {}]], stage(3, 10)],
+  [stage(4, 1), ['도전의 탑 5층', '콘텐츠 > 도전의 탑을 한 층씩 올라요.', (s) => s.tower.best >= 5, ['portal', { tab: 'tower' }]], stage(4, 5), ['장비 +5 강화', '장비 하나를 +5까지 강화해요.', (s) => gearMax(s, (g) => g.enh) >= 5, ['bag', {}]], ['영웅 8명 모으기', '장을 깨거나 상점에서 영웅을 모아요.', (s) => ownedN(s) >= 8, ['shop', { cat: 'hero' }]], stage(4, 10)],
+  [stage(5, 1), ['레이드 첫 승리', '콘텐츠 > 레이드에서 큰 보스를 쓰러뜨려요.', (s) => (s.wins.raid ?? 0) > 0, ['portal', { tab: 'raid' }]], stage(5, 5), ['결투장 5승', '결투장에서 다섯 번 이겨요.', (s) => s.arena.win >= 5, ['portal', { tab: 'arena' }]], ['영웅 첫 각성', '영웅 정보에서 각성석으로 각성해요.', (s) => Object.values(s.heroes).some((h) => h.awaken > 0), ['heroes', {}]], stage(5, 10)],
+  [stage(6, 1), ['월드 보스 도전', '콘텐츠 > 월드 보스에 한 번 도전해요.', (s) => s.world.my > 0, ['portal', { tab: 'world' }]], stage(6, 5), ['어려움 1장 클리어', '모험에서 난이도를 「어려움」으로 바꿔 1장을 깨요.', (s) => cleared({ c: 1, s: 10, d: 1 }, s), ['adventure', { c: 1, d: 1 }]], ['장비 5성 만들기', '장비를 합성해 5성을 만들어요.', (s) => gearMax(s, (g) => g.star) >= 5, ['bag', {}]], stage(6, 10)],
+  [stage(7, 1), ['도전의 탑 10층', '도전의 탑 10층까지 올라요.', (s) => s.tower.best >= 10, ['portal', { tab: 'tower' }]], stage(7, 5), ['원정대 Lv.20', '원정대 레벨 20을 찍어요.', (s) => s.acc.lv >= 20, ['mission', {}]], ['영웅 외전 하나 끝내기', '콘텐츠 > 영웅 외전을 끝까지 봐요.', (s) => Object.values(s.treasure).some(Boolean), ['portal', { tab: 'side' }]], stage(7, 10)],
   [stage(8, 1), ['결투장 은 리그', '결투장 점수를 올려 은 리그에 들어가요.', (s) => s.arena.best >= CC.arena.tiers[1][0], ['portal', { tab: 'arena' }]], stage(8, 5), ['장비 +10 강화', '장비 하나를 +10까지 강화해요.', (s) => gearMax(s, (g) => g.enh) >= 10, ['bag', {}]], ['영웅 12명 모으기', '영웅을 12명까지 모아요.', (s) => ownedN(s) >= 12, ['shop', { cat: 'hero' }]], stage(8, 10)],
   [stage(9, 1), ['영웅 첫 초월', '영웅 정보에서 초월석으로 초월해요.', (s) => Object.values(s.heroes).some((h) => h.trans.length > 0), ['heroes', {}]], stage(9, 5), ['도전의 탑 30층', '도전의 탑 30층까지 올라요.', (s) => s.tower.best >= 30, ['portal', { tab: 'tower' }]], ['어려움 3장 클리어', '어려움 난이도 3장을 깨요.', (s) => cleared({ c: 3, s: 10, d: 1 }, s), ['adventure', { c: 3, d: 1 }]], stage(9, 10)],
   [stage(10, 1), ['영웅 20명 모으기', '영웅을 20명까지 모아요.', (s) => ownedN(s) >= 20, ['shop', { cat: 'hero' }]], stage(10, 5), ['길드 출석', '길드에 들어가 출석해요.', (s) => ever(s, 'guildAttend') > 0, ['guild', {}]], ['친구에게 선물', '친구 화면에서 행동력을 선물해요.', (s) => ever(s, 'gift') > 0, ['friends', {}]], stage(10, 10)],

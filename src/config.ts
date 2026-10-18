@@ -301,7 +301,7 @@ export const CONFIG = {
     attend: [{ gold: 10000 }, { stardust: 30 }, { exp: 5 }, { enh: 30 }, { stardust: 60 }, { optTicket: 1 }, { stardust: 150 }] as Record<string, number>[],
     event: { name: '오픈 기념 출석', start: '2026-10-17', days: 14, dust: 50 },
     /** 길드: 출석 코인 · 기여(금화 → 기여 점수·코인) · 길드 레이드(주간 · 하루 2 · 90초 · 준 피해 = 기여) */
-    guild: { attendCoin: 20, donate: [[10000, 10, 10], [50000, 60, 50], [200000, 250, 200]] as number[][], raidTries: 2, raidSec: 90, raidHp: 2e9, raidAdd: 15, raidCoinPer: 2e6, members: 30 },
+    guild: { createGold: 50000, attendCoin: 20, donate: [[10000, 10, 10], [50000, 60, 50], [200000, 250, 200]] as number[][], raidTries: 2, raidSec: 90, raidHp: 2e9, raidAdd: 15, raidCoinPer: 2e6, members: 30 },
     /** 친구: 하루 선물 보내기·받기 (행동력) · 최대 친구 수 */
     friends: { gift: 5, giftsPerDay: 10, max: 30 },
     /** 랭커 칭호: 이 순위 안이면 칭호 */

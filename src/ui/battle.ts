@@ -6,6 +6,8 @@ import { headHpPref, render, renderBg, type Art } from '../battle/render';
 import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, requestSkill, shortNum, starsOf, step, type Battle, type Unit } from '../battle/sim';
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
+import { music } from '../core/audio/music';
+import { jingle } from '../core/audio/sfx';
 import { heroOf } from '../data/heroes';
 import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
@@ -196,8 +198,8 @@ function buildRaid() {
   $('#bDodge').onclick = () => b && raidDodge(b);
 }
 function speedLabel() {
-  $('#bSpeed span').textContent = `×${b!.speed}`;
-  $('#bSpeed').classList.toggle('fast', b!.speed > 1);
+  // 배속 3개를 펼쳐 둠 (×1 · ×1.5 · ×2) · 지금 배속만 켜짐
+  for (const x of document.querySelectorAll<HTMLElement>('#bSpeed [data-sp]')) x.classList.toggle('on', Number(x.dataset.sp) === b!.speed);
 }
 function setPaused(on: boolean) {
   paused = on;
@@ -233,7 +235,8 @@ function syncRaid(bb: Battle) {
 function setup() {
   headHpPref.always = getPref('hpAlways', false);
   const keepAuto = b?.auto ?? getPref('auto', false);
-  const keepSpeed = b?.speed ?? 1;
+  // 배속은 다음 판·다음 스테이지에도 그대로 (설정에 저장)
+  const keepSpeed = b?.speed ?? getPref('speed', 1);
   b = makeBattle(run ? buildRun(run) : buildStage(st), { w: view.w });
   // 이 전투 영웅 시트·컷인을 아직 안 받았으면 받을 때까지 전투를 멈춤 (SPRITE_RES §C)
   const wait = ensureBattleArt(b.setup);
@@ -241,6 +244,9 @@ function setup() {
   if (wait) void wait.then(() => (artWait = false));
   b.auto = keepAuto;
   b.speed = keepSpeed;
+  // 배경음악: 콘텐츠는 모드별 · 스토리는 그 장 지역 · 보스 스테이지는 보스곡
+  const RUN_BGM: Record<string, string> = { raid: 'raid', graid: 'raid', world: 'world', arena: 'arena', tower: 'tower', dungeon: 'dungeon', day: 'dungeon', side: 'story' };
+  music(run ? (RUN_BGM[run.mode] ?? CHAPTERS[(Math.max(1, Number(run.arg) || 1) - 1) % CHAPTERS.length].region) : isBoss(st) ? 'boss' : CHAPTERS[st.c - 1].region);
   b.cutIns = flag('cutIn') && !getPref('cutOff', false) ? 'big' : 'off';
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
   speedLabel();
@@ -356,6 +362,7 @@ function beginRun(r: Run) {
 /** 결과 조건 표시: 됨 = 금색 체크 · 안 됨 = 흐린 X */
 const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${icon(ok ? 'check' : 'cross')}</i>`;
 function showResult() {
+  jingle(b!.phase === 'win' ? 'win' : 'lose');
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
   if (sideEnd) return playTalk(sideEnd, showRunResult);
@@ -518,7 +525,7 @@ register('battle', {
   enter(_root, p) {
     hud().hidden = false;
     // 위 버튼 = 판 없는 아이콘 (UI v2) · 한 번만 넣음
-    for (const [id, ic] of [['#bAuto', 'auto'], ['#bSpeed', 'skip'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('svg')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
+    for (const [id, ic] of [['#bAuto', 'auto'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('svg')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
     applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'glass');
     $('#bAuto').onclick = () => {
       if (!b) return;
@@ -526,12 +533,15 @@ register('battle', {
       setPref('auto', b.auto);
       $('#bAuto').setAttribute('aria-pressed', String(b.auto));
     };
-    $('#bSpeed').onclick = () => {
-      if (!b) return;
-      const sp = CONFIG.ui.speeds as readonly number[];
-      b.speed = sp[(sp.indexOf(b.speed) + 1) % sp.length];
-      speedLabel();
-    };
+    $$('#bSpeed [data-sp]').forEach(
+      (x) =>
+        (x.onclick = () => {
+          if (!b) return;
+          b.speed = Number(x.dataset.sp);
+          setPref('speed', b.speed);
+          speedLabel();
+        }),
+    );
     $('#bPause').onclick = () => setPaused(!paused);
     $('#bDps').onclick = () => {
       dpsOpen = !dpsOpen;
@@ -591,7 +601,8 @@ register('battle', {
     if (paused || artWait || loading) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
-    for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
+    // 한 프레임에 같은 소리는 한 번만 (회복·타격이 몰려도 띵띵띵 없게)
+    for (const s of new Set(b.sounds)) combatSynth(s, s === 'hit' ? 0.45 : s === 'heal' ? 0.5 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
       shown = true;
       setTimeout(showResult, (b.phase === 'win' ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose) * 1000);

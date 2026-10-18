@@ -574,7 +574,7 @@ export const ICON_PX: Record<string, string> = {
   guildCoin: 'guildCoin', arenaCoin: 'arenaCoin', towerCoin: 'towerCoin', tierMat: 'tierMat', exShard: 'exShard', treasureShard: 'treasureShard', bossMat: 'bossMat', token: 'token',
   zone_front: 'zone_front', zone_mid: 'zone_mid', zone_back: 'zone_back', raid: 'power', coop: 'power', world: 'target', worldBoss: 'target', arena: 'atk', day: 'attend', guildRaid: 'guild', acc: 'badge',
 };
-export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
+export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon', exShard: 'm_exshard', guildCoin: 'm_guildcoin', arenaCoin: 'm_arenacoin', towerCoin: 'm_towercoin' };
 export function icon(key: string, cls = 'ic'): string {
   if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
   if (ICON_PX[key]) return `<img class="${cls} img px" src="${import.meta.env.BASE_URL}art/ui2/icons/${ICON_PX[key]}.png" alt="">`;

@@ -10,6 +10,7 @@ import { addExp, join, statsOf } from './heroes';
 import { addCur, dayKey, partyIds, S, track, type Save } from './state';
 import { boostMult, stageCost, useStamina } from './account';
 import { bagFull, dropGear, makeRune } from './gear';
+import { chapterFrom } from '../data/gearNames';
 import type { Gear, Rune } from './state';
 import { JOBS, ZONES } from '../data/jobs';
 
@@ -169,7 +170,7 @@ export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now(), s
   const gear: Gear[] = [];
   const runes: Rune[] = [];
   if (st) {
-    const g = dropGear(powIdx(st), st.d, s, rnd);
+    const g = dropGear(powIdx(st), st.d, s, rnd, chapterFrom(st.c, isBoss(st)));
     if (g) gear.push(g);
     if (isBoss(st) && !bagFull(s) && rnd() < CONFIG.gear.drop.runeBoss) {
       const ru = makeRune(Math.min(5, st.d + (rnd() < 0.2 ? 1 : 0)), s, rnd);

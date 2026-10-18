@@ -11,10 +11,12 @@ import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../gam
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
-import { icon, iconText, T } from '../theme/tokens';
-import { taglineOf } from '../data/taglines';
+import { icon, iconText } from '../theme/tokens';
 import { gachaShow } from './gacha';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
+import { jingle, sfx } from '../core/audio/sfx';
+import { taglineOf } from '../data/taglines';
+import { coach } from './coach';
+import { $, $$, comingSoon, CUR_DESC, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
@@ -27,7 +29,11 @@ const ilvNow = () => {
   const b = bestCleared();
   return b ? powIdx(b) : 0;
 };
-const say = (r: string, m: Record<string, string>) => toast(m[r] ?? r);
+const say = (r: string, m: Record<string, string>) => {
+  // 됐으면 반짝 · 안 됐으면 부드러운 「뚝」
+  sfx(/^(ok|0|great|up)$/.test(r) ? 'item' : 'place_bad', 0.7);
+  toast(m[r] ?? r);
+};
 
 // ───────── 영웅 정보 ─────────
 /** 탭 4개 (FINAL_1018 §4): 일반 · 스킬 · 장비 · 성장 — 글씨만 · 탭마다 예전 칸 묶음 */
@@ -48,7 +54,7 @@ register('hero', {
       const capRow = (name: string, k: 'crit' | 'spd' | 'dmgCut' | 'critDmg', v: number) => `<div class="kv"><span>${name}</span><b>${k === 'critDmg' ? `×${v.toFixed(2)}` : pct(v)} <span class="cap xs ${raw[k] > cap[k] ? 'bad' : 'dim'}">${raw[k] > cap[k] ? `상한 넘침 ${k === 'critDmg' ? (raw[k] - cap[k]).toFixed(2) : pct(raw[k] - cap[k])}` : `상한까지 ${k === 'critDmg' ? (cap[k] - raw[k]).toFixed(2) : pct(cap[k] - raw[k])}`}</span></b></div>`;
       root.innerHTML = `<div class="body">
         <div class="col hlist scroll">${list.map((x) => `<button class="btn hrow${x === id ? ' on' : ''}" data-id="${x}" title="${heroOf(x).name} Lv.${S.heroes[x].lv}"><div class="pt s" style="background-image:url(${heroPortrait(x)})"></div><span class="xs">${heroOf(x).name}</span><span class="hst">${iconText('star').repeat(S.heroes[x].star ?? 1)}</span><b class="hlv">Lv.${S.heroes[x].lv}</b></button>`).join('')}</div>
-        <div class="fbcol"><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
+        <div class="fbcol"><p class="hvoice">「${esc(h.voice?.[Math.floor(Math.random() * h.voice.length)] ?? taglineOf(id, h.concept.split('.')[0]))}」</p><div class="fb" style="background-image:url(${fullbodyUrl(id)})"></div>${hs?.costume ? `<span class="chip xs">${esc(CONFIG.costume[hs.costume]?.name ?? '')}</span>` : ''}</div>
         <div class="col grow">
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
@@ -75,6 +81,8 @@ register('hero', {
       const rb = root.querySelector<HTMLElement>('.preview [data-hero]');
       if (rb) rb.onclick = () => recruitShow(id, () => (persist(), syncBar(), draw()));
       if (!own) return;
+      // 튜토리얼 (S6): 처음 영웅 정보에서 장비가 있으면 「자동 장착」
+      if (Object.values(S.items).some((x) => x.kind === 'gear' && !x.by)) coach('auto', [{ sel: '[data-auto]', text: '「자동 장착」을 누르면\n가방에서 가장 좋은 장비를 알아서 껴요', press: true }]);
       $('[data-auto]', root).onclick = () => {
         const n = autoEquip(id);
         persist();
@@ -161,7 +169,7 @@ function tabHtml(tab: string, id: string): string {
       ${TRAITS.map((pair, i) => {
         const done = i < hs.trans.length;
         const next = i === hs.trans.length;
-        return `<div class="row"><b class="sm">${i + 1}단계</b>${pair.map((t, j) => `<button class="btn mini grow${done && hs.trans[i] === j ? ' on' : ''}" ${done ? `data-re="${i}"` : next && can ? `data-tr="${j}"` : 'disabled'}>${t.name}</button>`).join('')}${next ? `<span class="xs dim">${cost([['transStone', GR.transcend.stones[i]], ['gold', GR.transcend.gold[i]]])}</span>` : ''}</div>`;
+        return `<div class="row trow"><b class="sm">${i + 1}단계</b>${pair.map((t, j) => `<button class="btn mini grow${done && hs.trans[i] === j ? ' on' : ''}" ${done ? `data-re="${i}"` : next && can ? `data-tr="${j}"` : 'disabled'}>${t.name}</button>`).join('')}${next ? `<span class="xs dim">${cost([['transStone', GR.transcend.stones[i]], ['gold', GR.transcend.gold[i]]])}</span>` : ''}</div>`;
       }).join('')}`;
   }
   if (tab === 'ex')
@@ -294,11 +302,12 @@ export function heroShopCard(id: string) {
   const h = heroOf(id);
   const j = JOBS[h.job];
   // 오른쪽 위 직업 아이콘 원 (직업색 · MOBILE_REF §3-C)
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><i class="jobc" style="--jc:${T.battle.jobColor[h.job]}" title="${j.name}">${icon(h.job)}</i><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><span class="one fit" data-min="${CONFIG.ui.fit.desc}">${esc(taglineOf(id, h.title))}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
+  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
 export function recruitShow(id: string, done: () => void) {
+  jingle('recruit');
   const h = heroOf(id);
   const j = JOBS[h.job];
   const el = document.createElement('div');
@@ -344,7 +353,7 @@ register('shop', {
         body = `<div class="cards">${CONFIG.shop.packs.map((pk) => `<div class="panel col shopc"><b>${pk.name}</b><span class="xs dim">${Object.entries(pk.give).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ')}</span>${pk.once ? '<span class="xs mute">한 번만</span>' : ''}<button class="btn hi" data-pack="${pk.id}" ${S.shop.packs.includes(pk.id) ? 'disabled' : ''}>${S.shop.packs.includes(pk.id) ? '샀어요' : `${icon('stardust')}${fmt(pk.dust)}`}</button></div>`).join('')}
           <div class="panel col shopc"><b>오늘의 추천</b><span class="xs dim">${icon('summon')} 장비 무료 소환 ${freeSummonLeft()}회</span><button class="btn" data-cat="summon">가 보기</button></div></div>`;
       else if (cat === 'goods')
-        body = `<div class="cards goods">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><span class="gpic">${icon(Object.keys(it.give)[0])}</span><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
+        body = `<div class="cards goods">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><span class="gpic">${icon(Object.keys(it.give)[0])}</span><b class="sm">${it.name}</b><span class="xs dim use">${CUR_DESC[Object.keys(it.give)[0]] ?? ''}</span><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone)).filter((h) => job === 'all' || heroOf(h.id).job === job);
         rollTrack(S);
@@ -360,7 +369,7 @@ register('shop', {
           return `<div class="panel col shopc costume"><div class="fbc" style="background-image:url(${fullbodyUrl(id, set)})"></div><b class="sm">${esc(heroOf(id).name)}</b><span class="xs dim">${esc(CONFIG.costume[set].name)}</span>${own ? '<span class="xs good">가짐</span>' : `<button class="btn mini hi" data-cbuy="${set}" data-cid="${id}">${icon('stardust')}${fmt(CONFIG.costume[set].dust)}</button>`}</div>`;
         }).join('')}</div>`;
       else
-        body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
+        body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim use">${CUR_DESC[Object.keys(c.give)[0]] ?? ''}</span><span class="xs mute">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인은 길드 상점에서 써요</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n, pic]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
       $$('[data-job]', root).forEach((b) => (b.onclick = () => ((job = b.dataset.job!), draw())));

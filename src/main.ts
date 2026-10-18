@@ -7,6 +7,8 @@ import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
 import { applyTheme } from './theme/tokens';
+import { initAudioEngine } from './core/audio/engine';
+import { sfx } from './core/audio/sfx';
 import { $, currentScreen, go, scrollHints, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
@@ -21,6 +23,13 @@ import { requestSkill } from './battle/sim';
 import { makeGear } from './game/gear';
 
 applyTheme();
+// 소리: 첫 터치에 열림 (타이틀 터치부터 음악) · 버튼마다 「톡」 · 뒤로/닫기는 「닫힘」
+initAudioEngine();
+document.addEventListener('click', (e) => {
+  const b = (e.target as Element).closest('button');
+  if (!b || b.disabled) return;
+  sfx(b.matches('[data-back], .x, [data-close]') ? 'close' : 'tap', 0.5);
+}, { capture: true });
 const stage = $('#stage');
 const cv = $('#cv') as HTMLCanvasElement;
 view.ctx = cv.getContext('2d')!;
@@ -34,6 +43,16 @@ const fit = () => {
 };
 addEventListener('resize', fit);
 addEventListener('orientationchange', fit);
+// 페이지 자체가 손가락 따라 밀리지 않게: 스크롤되는 목록 안이 아니면 touchmove 막기 (지도 끌기는 pointer 이벤트라 그대로)
+const scrollsInside = (el: Element | null) => {
+  if (el?.closest('input, textarea')) return true;
+  for (; el && el !== document.body; el = el.parentElement) {
+    const cs = getComputedStyle(el);
+    if ((/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight) || (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth)) return true;
+  }
+  return false;
+};
+document.addEventListener('touchmove', (e) => !scrollsInside(e.target as Element) && e.cancelable && e.preventDefault(), { passive: false });
 visualViewport?.addEventListener('resize', fit);
 document.addEventListener('focusout', () => setTimeout(fit, 300));
 fitView(stage, cv);

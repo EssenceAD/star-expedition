@@ -1,12 +1,13 @@
 // D덩어리 화면 (STAR_PLAN_v2 §4): 미션(일일·주간·이벤트·레이드·업적·출석 + 바로가기) · 길드 · 친구 · 랭킹 · 우편·공지 · 설정(계정·클라우드·소리·이름·칭호) · 채팅 창
 import { CONFIG } from '../config';
 import { prefs, savePrefs, applyPrefs } from '../core/audio/engine';
+import { sfx } from '../core/audio/sfx';
 import { setPref, getPref } from '../core/save';
 import * as cloud from '../core/net/cloud';
 import { lockOf, triesText } from '../game/content';
 import { attend, attendToday, claim, claimAll, eventLeft, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
 import {
-  addFriend, board, BOARD_NAME, buyGuild, checkTitles, claimAllMail, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
+  addFriend, board, BOARD_NAME, buyGuild, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
 import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { HEROES } from '../data/heroes';
@@ -46,7 +47,11 @@ register('mission', {
         const left = eventLeft();
         body = `<div class="panel col"><b>${SO.event.name}</b><span class="sm dim">${left ? `남은 ${left}일` : '끝났어요'} · 출석할 때마다 별가루 ${SO.event.dust} · 지금까지 ${S.attend.ev}일</span>${left ? '' : '<span class="xs mute">다음 이벤트는 공지로 알려요</span>'}</div>`;
       } else {
-        body = `<div class="cards">${SO.attend.map((g, i) => `<div class="panel col shopc${i < S.attend.n % SO.attend.length || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}"><b>${i + 1}일째</b><span class="xs">${giveText(g)}</span></div>`).join('')}</div>
+        // 7일 판: 받은 날 ✓ · 오늘(받을 날) 빛 · 앞으로 받을 보상도 그림으로 미리 (형철 10/18)
+        const got = S.attend.n % SO.attend.length;
+        const today = attendToday() ? got : -1;
+        const day = attendToday() ? got + 1 : ((S.attend.n - 1) % SO.attend.length) + 1;
+        body = `<b class="atth">오늘은 ${day}일째 출석${attendToday() ? ' · 보상을 받을 수 있어요' : ' · 내일 또 만나요'}</b><div class="attg">${SO.attend.map((g, i) => `<div class="panel col shopc att${i < got || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}${i === today ? ' now' : ''}"><b>${i + 1}일째</b><div class="ag">${Object.entries(g).map(([k, v]) => `<span>${icon(k)}<b>${fmt(v)}</b></span>`).join('')}</div>${i < got ? `<em class="done">${icon('check')}</em>` : ''}</div>`).join('')}</div>
           <button class="btn hi" data-att ${attendToday() ? '' : 'disabled'}>${attendToday() ? '오늘 출석하기' : '오늘 출석 완료'}</button>`;
       }
       root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
@@ -55,6 +60,7 @@ register('mission', {
       $$('[data-claim]', root).forEach((b) => (b.onclick = () => {
         const m = listOf(tab as Kind).find((x) => x.id === b.dataset.claim)!;
         claim(tab as Kind, m.id);
+        sfx('mission');
         after(draw, '');
         giftWin('받았어요', m.give);
       }));
@@ -101,6 +107,13 @@ export function attendPopup() {
 export const missionBadge = () => (['d', 'w', 'r', 'ach'] as Kind[]).reduce((a, k) => a + readyOf(k).length, 0);
 
 // ───────── 길드 ─────────
+/** 추천 길드: 실멤버 길드 + AI 길드 3개 (새로고침마다 다른 3개) */
+let gSeed = 0;
+const shownGuilds = () => {
+  const ai = GUILDS.filter((x) => !x.real);
+  const n = ai.length;
+  return [...GUILDS.filter((x) => x.real), ...[0, 1, 2].map((i) => ai[(gSeed * 3 + i) % n])];
+};
 register('guild', {
   title: () => `${icon('guild')} 길드${guildOf() ? ` · ${guildOf()!.name}` : ''}`,
   enter(root, p) {
@@ -113,7 +126,8 @@ register('guild', {
         const face = (n: string) => heroPortrait(HEROES.find((h) => h.name === n)?.id ?? avatarOf(n));
         const came = (x: (typeof GUILDS)[number]) => 1 + ([...(dayKey() + x.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % x.members.length);
         body = `<p class="sm why band">길드에 들어가면 출석·기여·길드 상점·길드 채팅·길드 레이드가 열려요. 실멤버 길드는 단톡방 원정대, 나머지는 AI 길드예요.</p>
-          <div class="cards gcards">${GUILDS.map((x) => `<div class="panel col shopc gcard"><div class="gem">${icon('guild', 'ic gemi')}</div><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><div class="gface">${x.members.slice(0, 3).map((n) => `<i class="pt s" style="background-image:url(${face(n)})" title="${esc(n)}"></i>`).join('')}</div><span class="xs gold">${x.real ? `멤버 영웅 ${x.members.length}명` : `오늘 출석 ${came(x)}/${x.members.length + 1}`}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
+          <div class="row gtools"><button class="btn hi" data-gmake>${icon('guild')} 길드 만들기 (${icon('gold')}${fmt(SO.guild.createGold)})</button><span class="grow"></span><button class="btn" data-grefresh>${icon('repeat')} 새로고침</button></div>
+          <div class="cards gcards">${shownGuilds().map((x) => `<div class="panel col shopc gcard"><div class="gem">${icon('guild', 'ic gemi')}</div><b>${x.name}${x.real ? ' <span class="chip on">실멤버</span>' : ''}</b><span class="xs dim">Lv.${x.lv} · ${x.members.length + 1}명</span><span class="xs mute">${esc(x.desc)}</span><div class="gface">${x.members.slice(0, 3).map((n) => `<i class="pt s" style="background-image:url(${face(n)})" title="${esc(n)}"></i>`).join('')}</div><span class="xs gold">${x.real ? `멤버 영웅 ${x.members.length}명` : `오늘 출석 ${came(x)}/${x.members.length + 1}`}</span><button class="btn hi" data-join="${x.id}">가입</button></div>`).join('')}</div>`;
       } else if (tab === 'info') {
         const bd = guildBoard();
         body = `<div class="panel col"><b>${g.name} · Lv.${g.lv}</b><span class="xs dim">${esc(g.desc)}</span>
@@ -136,6 +150,19 @@ register('guild', {
       root.innerHTML = `<div class="body">${g ? `<div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}</button>`).join('')}</div>` : ''}<div class="col grow scroll">${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       $$('[data-join]', root).forEach((b) => (b.onclick = () => (joinGuild(b.dataset.join!), after(draw, '길드에 들어왔어요 (우편 확인)'))));
+      // 추천 길드 새로고침 · 길드 만들기 (이름 2~8자 · 금화)
+      root.querySelector<HTMLElement>('[data-grefresh]')?.addEventListener('click', () => (gSeed++, draw()));
+      root.querySelector<HTMLElement>('[data-gmake]')?.addEventListener('click', () =>
+        modal('길드 만들기', `<p class="sm dim">길드 이름 (2~8자) · ${icon('gold')}${fmt(SO.guild.createGold)}</p><input class="gname-in" maxlength="8" placeholder="예) 바람의 원정대">`, [
+          ['그만두기', null],
+          ['만들기', () => {
+            const r = createGuild(document.querySelector<HTMLInputElement>('.gname-in')?.value ?? '');
+            if (r === 'name') return (toast('이름은 2~8자로 지어 주세요'), false);
+            if (r === 'poor') return (toast('금화가 모자라요'), false);
+            after(draw, '길드를 만들었어요');
+          }, true],
+        ]),
+      );
       const at = root.querySelector<HTMLElement>('[data-att]');
       if (at) at.onclick = () => after(draw, guildAttend() ? '길드 출석!' : '오늘은 이미 했어요');
       $$('[data-don]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '기여했어요', poor: '금화가 모자라요', done: '기여는 하루 한 번', none: '' }[donate(+b.dataset.don!)])));

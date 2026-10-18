@@ -48,6 +48,8 @@ export interface Gear {
   lock: boolean;
   /** 장착한 영웅 */
   by: string | null;
+  /** 고유 이름 (얻은 곳·등급으로 지음 · 옛 저장은 비어 있고 gearName이 uid로 지음) */
+  nm?: string;
 }
 export interface Rune {
   uid: number;
@@ -141,7 +143,7 @@ export interface SaveV6 {
   /** 출석 (7일 돌림) · 이벤트 출석 날 수 */
   attend: { last: string; n: number; ev: number; evLast: string };
   /** 길드 (null = 안 듦) · 오늘 출석 · 기여 (모두 · 이번 주) · 길드 레이드 이번 주 피해 */
-  guild: { id: string | null; attendDay: string; donateDay: string; contrib: number; week: string; weekContrib: number; raid: number };
+  guild: { id: string | null; attendDay: string; donateDay: string; contrib: number; week: string; weekContrib: number; raid: number; /** 내가 만든 길드 (id 'mine') */ own?: { name: string; desc: string } | null };
   /** 친구 · 오늘 선물 보낸 사람 · 받은 수 */
   friends: { list: string[]; day: string; sent: string[]; got: number };
   /** 칭호 (랭커 칭호 등) · 단 칭호 */

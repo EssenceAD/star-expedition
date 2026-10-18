@@ -26,17 +26,21 @@ import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, 
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
+import { coach } from './coach';
 import { $, $$, CUR_NAME, esc, fitText, fmt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
 const zoneOf = (id: string): Zone => JOBS[heroOf(id).job].zone;
+/** 인연 설명 (편성 화면 칩을 누르면 · 형철 10/18): 멤버 · 몇 명 · 효과 */
+const BOND_EFF: Record<string, string> = { spd: '공격 속도', dmgCut: '받는 피해 감소', mana: '마나 회복', skillDmg: '스킬 피해', atk: '공격력', heal: '회복량', crit: '치명타 확률' };
+const bondText = (x: (typeof BONDS)[number]) => `${x.name} · ${x.members.map((m) => heroOf(m).name).join('·')} 중 ${x.need}명 · ${BOND_EFF[x.eff.s]} +${Math.round(x.eff.v * 100)}%${x.walkCut ? ' · 첫 이동 빨라짐' : ''}`;
 const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분` : sec >= 60 ? `${Math.floor(sec / 60)}분 ${Math.floor(sec % 60)}초` : `${Math.ceil(sec)}초`);
-/** 영웅 카드 (세로 · 왼쪽 위 직업 원(public/art/jobs) · 오른쪽 위 레벨 · 이름 띠) */
+/** 영웅 카드 (세로 · 오른쪽 위 레벨 · 아래 위치·직업 칩(상점 카드와 같은 모양) · 이름 · 전투력) */
 const card = (id: string, extra = '', cls = '') => {
   const h = heroOf(id);
   const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn job" title="${JOBS[h.job].name}"><img class="px" src="${import.meta.env.BASE_URL}art/ui2/jobs/${h.job}.png" alt=""></span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
+  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}">${own ? `<span class="lv chip">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs chips"><span class="chip">${icon(`zone_${JOBS[h.job].zone}`)} ${ZONE_NAME[JOBS[h.job].zone]}</span><span class="chip">${icon(h.job)} ${JOBS[h.job].name}</span></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span>${extra}</button>`;
 };
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
@@ -46,7 +50,7 @@ register('title', {
   enter(root) {
     root.id = 'title';
     // 타이틀 (UI_KIT_1018 §2·§3): 광원 뺀 키아트 + 도트 로고 W.I.N.D + 「바람의 원정대」 · 화면을 눌러 시작
-    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D"><b class="sub">바람의 원정대</b><small>용사님 체크인 외전</small></div>
+    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D"><b class="sub">바람의 원정대</b></div>
       <i class="twinkle">${Array.from({ length: 12 }, (_, i) => `<b style="--i:${i};left:${6 + i * 7.8}%;top:${4 + ((i * 37) % 23)}%"></b>`).join('')}</i>
       <button class="tapgo" data-go>${S.prologue ? '화면을 눌러 이어서 하기' : '화면을 눌러 시작'}</button>
       <div class="tpanel"><button class="btn mini" data-reset>처음부터</button></div>
@@ -54,8 +58,6 @@ register('title', {
     a2hsBanner(root);
     $('[data-go]', root).onclick = async () => {
       goFullscreen();
-      const { initAudioEngine } = await import('../core/audio/engine');
-      initAudioEngine();
       // 첫 진입: 프롤로그(1-1 필드에서) → 1-1 전투 → 승리 → 로비 (STAR_PLAN_v2 §1-1)
       if (!S.prologue) go('battle', { stage: { c: 1, s: 1, d: 0 }, first: true });
       else go('lobby');
@@ -118,7 +120,7 @@ register('lobby', {
       <div class="mhud">
         <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
         <div class="mquest">
-          <button class="mq" data-miles><em class="tag mile">이정표</em>${mile ? esc(mile.name) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
+          <button class="mq mile${ready ? ' ready' : ''}" data-miles><span class="mqh"><em class="tag mile">${icon('pointer')} 다음 할 일 · 이정표</em>${ready ? `<em class="badge">${ready}</em>` : ''}</span><b>${mile ? esc(mile.name) : '모두 달성'}</b>${mile ? `<span class="mqd">${ready ? '보상을 받을 수 있어요 · 눌러서 받아요' : esc(mile.desc)}</span>` : ''}</button>
           <button class="mq" data-next><em class="tag story">스토리</em>${stageName(ns)} 클리어</button>
         </div>
         <div class="mside">
@@ -127,7 +129,7 @@ register('lobby', {
           ${sideBtn('data-attend', 'attend', '출석', attendToday() ? 'N' : '')}
         </div>
         <div class="mdock">
-          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['portal', '포탈', 'content']]
+          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['portal', '콘텐츠', 'content']]
             .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
             .join('')}
         </div>
@@ -142,8 +144,19 @@ register('lobby', {
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
     $('[data-miles]', root).onclick = () => openMiles();
-    $('[data-attend]', root).onclick = () => (attendToday() ? attendPopup() : toast('오늘 출석 보상은 이미 받았어요'));
-    mainMapStart($('.mlayer', root), c, d, lead, ns.s);
+    // 가이드 화살표 (형철 10/18): 다음 이정표를 하러 갈 버튼 위에 「여기를 눌러요」 말풍선 · 누르면 그 탭으로 바로
+    const gd = mile && !mile.done(S) ? mile.go : null;
+    // 스테이지 깨기(prep)는 오른쪽 아래 「전투 준비」 위에
+    const gb = gd && root.querySelector<HTMLElement>(gd[0] === 'prep' ? '.mgo' : `.mdock [data-go="${gd[0]}"], .mside [data-go="${gd[0]}"]`);
+    if (gd && gb) {
+      gb.classList.add('guide');
+      gb.insertAdjacentHTML('beforeend', `<i class="gbub"><mark class="gtx">「${esc(mile!.name)}」<br>여기를 눌러요</mark>${icon('pointer')}</i>`);
+      // 전투 준비는 원래대로(다음 스테이지) · 나머지는 이정표가 가리키는 탭으로
+      if (gd[0] !== 'prep') gb.onclick = () => go(gd[0] as never, gd[1]);
+    }
+    // 출석: 7일 보상 판 화면으로 (오늘 몇 일째 · 앞으로 받을 보상 미리 보기)
+    $('[data-attend]', root).onclick = () => go('mission', { tab: 'att' });
+    mainMapStart($('.mlayer', root), c, lead, ns.s);
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
     // 새 장에 처음 들어오면 그 장 이정표 창을 한 번 (S5) · 첫 진입(프롤로그 직후)은 1장부터
@@ -154,6 +167,20 @@ register('lobby', {
     }
     // 전투에서 쌓인 알림 카드 (S4)
     playNotices();
+    // 기능 열림 튜토리얼 (S6): 진도에 맞는 것 하나만 · 창·알림이 다 닫힌 뒤
+    const did = (c2: number, s2: number) => starsAt({ c: c2, s: s2, d: 0 }) > 0;
+    if (!S.seen['tut:lobby'])
+      coach('lobby', [
+        { sel: '.mgo', text: '「전투 준비」를 누르면\n다음 스테이지로 바로 가요' },
+        { sel: '.mq.mile', text: '다음에 할 일은 여기 「다음 할 일」 카드에\n늘 떠 있어요' },
+        { sel: '.mside', text: '미션·이벤트·출석 보상도\n잊지 말고 받아요' },
+      ]);
+    else if (did(1, 1) && !S.seen['tut:hero'])
+      coach('hero', [{ sel: '.mdock [data-go="heroes"]', text: '장비를 얻었어요!\n「영웅」에서 장비를 껴 볼까요?', press: true }]);
+    else if (did(1, 3) && !S.seen['tut:shop'])
+      coach('shop', [{ sel: '.mdock [data-go="shop"]', text: '상점 「영웅」에서\n새 영웅을 원정대로 데려올 수 있어요', press: true }]);
+    else if (did(1, 10) && !S.seen['tut:portal'])
+      coach('portal', [{ sel: '.mdock [data-go="portal"]', text: '「콘텐츠」가 열렸어요\n토벌·던전·탑·결투장·레이드를 여기서 해요', press: true }]);
     // 메인이 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },
@@ -164,7 +191,9 @@ function nodeHtml(id: StageId, open: boolean, st: string) {
   const n = starsAt(id);
   const md = isBoss(id) ? 'BOSS' : st === 'done' ? icon('check') : String(id.s);
   const stars = open && st === 'done' ? `<span class="mstars">${[0, 1, 2].map((k) => `<i class="${k < n ? 'on' : ''}">${icon('star')}</i>`).join('')}</span>` : '';
-  return `<i class="md">${md}</i><b class="pl">${id.c}-${id.s}</b>${stars}`;
+  // 보스 노드: 번호판 아래 그 장 보스 얼굴 (지도 위 보스 그림은 화살표를 가려서 뺌 · 형철 10/18)
+  const face = isBoss(id) ? `<i class="bface" style="background-image:url(${import.meta.env.BASE_URL}art/ui2/bossface/${CHAPTERS[id.c - 1].region}.png)"></i>` : '';
+  return `<i class="md">${md}</i><b class="pl">${id.c}-${id.s}</b>${face}${stars}`;
 }
 /** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
 export function stageInfo(st: StageId) {
@@ -212,7 +241,7 @@ function offlinePopup() {
   if (!o) return;
   const r = o.reward;
   modal(`${icon('offline')} 그동안 원정대는…`, `<p class="dim">${fmtTime(o.away)} 동안 ${stageName(o.stage)}에서 사냥했어요${o.away > o.seconds ? ` (최대 ${CONFIG.offline.maxHours}시간까지)` : ''}.</p>
-    <div class="rw row">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="panel col">${icon(k as string)}<span class="xs">${k === 'exp' ? '영웅 경험치' : CUR_NAME[k as string]}</span><b class="gold">+${fmt(v as number)}</b></div>`).join('')}</div>`, [
+    <div class="rw gifts">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="rwc ${k}"><span>${icon(k as string)}</span>${k === 'exp' ? '영웅 경험치' : CUR_NAME[k as string]}<b>+${fmt(v as number)}</b></div>`).join('')}</div>`, [
     ['모두 받기', () => {
       const ups = claimOffline(o);
       persist();
@@ -376,7 +405,7 @@ register('prep', {
                 return id ? `<div class="pcard" data-out="${id}"><div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="xs">${ZONE_NAME[zoneOf(id)]}</span><b class="xs">${heroOf(id).name}</b></div>` : '<div class="pcard empty"><span class="xs mute">비어 있음</span></div>';
               }).join('')}</div>
               <div class="kv"><span>파티 전투력</span><b>${fmt(partyPower())}</b></div>
-              <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<span class="chip${bonds.includes(x) ? ' on' : ''}" title="${x.members.map((m) => heroOf(m).name).join(' · ')} (${x.need}명)">${x.name}</span>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
+              <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<button class="chip${bonds.includes(x) ? ' on' : ''}" data-bond="${x.id}" title="${esc(bondText(x))}">${x.name}</button>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
             </div>
             ${run ? `<div class="panel col">
               <b>${runTitle(run)}</b>
@@ -419,6 +448,7 @@ register('prep', {
         };
       });
       $$('[data-lk]', root).forEach((b) => (b.onclick = () => go('shop', { cat: 'hero' })));
+      $$('[data-bond]', root).forEach((b) => (b.onclick = () => toast(bondText(BONDS.find((x) => x.id === b.dataset.bond)!))));
       $$('[data-out]', root).forEach(
         (b) =>
           (b.onclick = () => {

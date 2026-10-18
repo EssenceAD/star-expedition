@@ -82,7 +82,7 @@ function bell(at: number, dur: number, vol: number, f: number, r = 3.5, depth = 
   o.stop(at + dur + 0.02);
 }
 
-export const COMBAT_SYNTH = new Set(['demolish', 'hit', 'crit', 'block', 'perfect', 'skill', 'skill_knight', 'skill_warrior', 'skill_rogue', 'skill_mage', 'skill_priest', 'skill_hunter']);
+export const COMBAT_SYNTH = new Set(['demolish', 'hit', 'crit', 'block', 'perfect', 'skill', 'skill_knight', 'skill_warrior', 'skill_rogue', 'skill_mage', 'skill_priest', 'skill_hunter', 'death', 'down', 'wave', 'heal', 'warn']);
 
 /** 합성 전투음 한 번 · 너무 많으면(동시 6개) 건너뜀 */
 export function combatSynth(name: string, vol = 1): boolean {
@@ -161,6 +161,36 @@ export function combatSynth(name: string, vol = 1): boolean {
       pulse25(t, 0.05, 0.25 * v, 220 * p);
       noise(t + 0.04, 0.12, 0.35 * v, 'bandpass', 2500 * p, 1200 * p, 3);
       dur = 0.17;
+      break;
+    case 'death':
+      // 몹 쓰러짐 「푸슉」: 낮은 쿵 + 짧은 바람 빠짐
+      osc(t, 0.18, 0.45 * v, 'sine', 140 * p, 50 * p);
+      noise(t, 0.16, 0.25 * v, 'lowpass', 1400 * p, 300 * p, 0.8);
+      dur = 0.2;
+      break;
+    case 'down':
+      // 영웅 쓰러짐: 내려가는 두 음 (단조)
+      osc(t, 0.18, 0.3 * v, 'triangle', 440 * p, 415 * p);
+      osc(t + 0.16, 0.32, 0.3 * v, 'triangle', 330 * p, 262 * p);
+      dur = 0.5;
+      break;
+    case 'wave':
+      // 다음 웨이브 「휘잉」: 위로 쓸어 올리는 노이즈 + 북 한 번
+      noise(t, 0.35, 0.3 * v, 'bandpass', 300 * p, 2400 * p, 1.5);
+      osc(t + 0.3, 0.15, 0.5 * v, 'sine', 110 * p, 60 * p);
+      dur = 0.45;
+      break;
+    case 'heal':
+      // 회복 「띠링」: 맑은 벨 두 음 올라감
+      bell(t, 0.25, 0.08 * v, 1046 * p, 2, 0.5);
+      bell(t + 0.06, 0.25, 0.07 * v, 1568 * p, 2, 0.5);
+      dur = 0.3;
+      break;
+    case 'warn':
+      // 보스 경고: 낮은 사각파 경보 두 번
+      pulse25(t, 0.14, 0.18 * v, 220 * p);
+      pulse25(t + 0.2, 0.14, 0.18 * v, 220 * p);
+      dur = 0.36;
       break;
     default:
       // 이름 없는 skill: 전사 소리
