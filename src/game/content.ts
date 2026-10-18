@@ -123,7 +123,8 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
     case 'hunt':
       return base(s, `${MODE_NAME.hunt} · ${CHAPTERS[c - 1].name}`, mobsAt(powIdx({ c, s: 10, d: 0 }) + CC.hunt.add, 'gw|B', c), c - 1);
     case 'dungeon':
-      return base(s, `${MODE_NAME.dungeon} · ${CHAPTERS[c - 1].name}`, mobsAt(powIdx({ c, s: 10, d: 0 }) + CC.dungeon.add, CC.dungeon.waves.join('|'), c, { hp: 1.5 }), c - 1);
+      // 배경은 그 장 지역 그림 (제목으로 고르면 늘 같은 던전 그림이던 것 · 형철 10/18)
+      return base(s, `${MODE_NAME.dungeon} · ${CHAPTERS[c - 1].name}`, mobsAt(powIdx({ c, s: 10, d: 0 }) + CC.dungeon.add, CC.dungeon.waves.join('|'), c, { hp: 1.5 }), c - 1, { bg: `region_${CHAPTERS[c - 1].region}` });
     case 'tower': {
       const f = +r.arg;
       const boss = f % CC.tower.bossEvery === 0;
