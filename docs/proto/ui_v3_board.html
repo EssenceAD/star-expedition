@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* ── UI v3 시안: 도트 판(어두운 나무) · 굵은 외곽선 도트 아이콘 · 이름표 판 (형철 레퍼런스 5장) ── */
+* { box-sizing: border-box; }
+body { margin: 0; background: #111; font-family: 'Gothic A1', sans-serif; font-weight: 800; color: #fff; word-break: keep-all; }
+.frame { position: relative; width: 844px; height: 390px; overflow: hidden; background: center / cover no-repeat; }
+img, .px { image-rendering: pixelated; }
+.ol { text-shadow: 0 0 2px #1a0f08, 0 0 2px #1a0f08, 0 1px 0 #1a0f08, 1px 0 0 #1a0f08, -1px 0 0 #1a0f08, 0 -1px 0 #1a0f08; }
+/* 판 = 도트 9-slice (가장자리 4칸 → 화면 8px) */
+.plate { border: 8px solid transparent; border-image: url(/public/art/ui2/plate.png) 4 fill / 8px; image-rendering: pixelated; }
+.paper { border: 8px solid transparent; border-image: url(/public/art/ui2/paper.png) 4 fill / 8px; image-rendering: pixelated; color: #3b2614; }
+.tag { display: inline-block; padding: 0 6px; border: 4px solid transparent; border-image: url(/public/art/ui2/tag.png) 2 fill / 4px; image-rendering: pixelated; font-size: 12px; line-height: 14px; }
+.btnr { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 8px solid transparent; border-image: url(/public/art/ui2/btn_red.png) 4 fill / 8px; image-rendering: pixelated; color: #fff; }
+.btnw { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 6px solid transparent; border-image: url(/public/art/ui2/btn_wood.png) 4 fill / 6px; image-rendering: pixelated; color: #2a1606; font-size: 12px; padding: 0 4px; }
+.ic { width: 32px; height: 32px; }
+.ic.l { width: 44px; height: 44px; }
+.ic.s { width: 22px; height: 22px; }
+.bar { position: relative; height: 10px; border: 2px solid #1a0f08; background: #0c0703; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; }
+.bar i::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: rgba(255,255,255,.35); }
+.hp i { background: #4bd46a; } .mp i { background: #3d8cf0; } .xp i { background: #ffc94a; }
+.label { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); z-index: 50; padding: 1px 8px; background: #ff3d6e; color: #fff; font-size: 11px; }
+/* 공통 위 줄 */
+.prof { position: absolute; left: 6px; top: 6px; display: flex; gap: 6px; align-items: center; padding: 2px 8px 2px 2px; }
+.prof .pt { width: 40px; height: 40px; border: 2px solid #1a0f08; outline: 2px solid #d6a260; background: center 15% / cover; }
+.prof b { font-size: 13px; } .prof em { font-style: normal; color: #ffd766; margin-right: 4px; }
+.prof .bar { width: 110px; margin-top: 3px; height: 8px; }
+.curs { position: absolute; right: 74px; top: 8px; display: flex; gap: 4px; }
+.cur { display: flex; align-items: center; gap: 4px; height: 30px; padding: 0 2px 0 0; font-size: 13px; }
+.cur img { width: 24px; height: 24px; margin: -4px 0 -4px -6px; }
+.cur .pl { width: 18px; height: 18px; margin-right: -4px; }
+.tops { position: absolute; right: 6px; top: 6px; display: flex; gap: 2px; }
+.ib { position: relative; display: grid; justify-items: center; }
+.ib .tag { margin-top: -6px; font-size: 11px; }
+.dot { position: absolute; right: 2px; top: 0; width: 10px; height: 10px; background: #e8302a; border: 2px solid #1a0f08; }
+/* B 메인 지도 */
+.quest { position: absolute; right: 6px; top: 50px; width: 270px; display: flex; gap: 8px; align-items: center; padding: 4px 8px; font-size: 12px; }
+.quest .t { color: #ffd766; font-size: 13px; }
+.quest .go { display: grid; justify-items: center; font-size: 11px; color: #fff; }
+.lcol { position: absolute; left: 8px; top: 64px; display: grid; gap: 4px; }
+.dock { position: absolute; left: 4px; right: 160px; bottom: 2px; display: flex; gap: 0; }
+.dock .ib { width: 74px; }
+.dock .ib .tag { min-width: 60px; text-align: center; font-size: 13px; line-height: 16px; }
+.gobtn { position: absolute; right: 8px; bottom: 8px; width: 148px; height: 56px; font-size: 19px; animation: br 1.6s ease-in-out infinite; }
+@keyframes br { 50% { transform: scale(1.04); } }
+.node { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 1px; }
+.node i { width: 30px; height: 30px; display: grid; place-items: center; font-style: normal; font-size: 13px; color: #2a1606; border: 3px solid #1a0f08; background: #ffc94a; box-shadow: inset -3px -3px 0 #c98a2c, inset 3px 3px 0 #fff0b0; }
+.node.now i { background: #4a8cff; color: #fff; box-shadow: inset -3px -3px 0 #2856b8, inset 3px 3px 0 #a8ccff, 0 0 0 3px #fff; }
+.node.lock i { background: #7a7f90; color: #ddd; box-shadow: inset -3px -3px 0 #4e5262, inset 3px 3px 0 #a8acba; }
+.node.boss i { width: 40px; height: 40px; background: #e04a3a; color: #fff; font-size: 11px; box-shadow: inset -3px -3px 0 #9a2618, inset 3px 3px 0 #ff9a80; }
+.node .tag { font-size: 10px; line-height: 12px; }
+.node .st { display: flex; } .node .st b { width: 8px; height: 8px; margin: 0 1px; background: #ffd766; border: 1px solid #1a0f08; } .node .st b.off { background: #3a2a1a; }
+.arw { position: absolute; top: -26px; animation: bob .6s ease-in-out infinite alternate; }
+@keyframes bob { to { transform: translateY(-5px); } }
+.lead { position: absolute; width: 120px; height: 150px; background: center bottom / contain no-repeat; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+/* A 전투 */
+.stg { position: absolute; left: 6px; top: 6px; width: 170px; padding: 2px 8px; }
+.stg .r { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.stg .r span { color: #ffd766; font-size: 12px; }
+.stg .bar { height: 8px; margin-top: 3px; }
+.tm { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); padding: 0 12px; height: 32px; display: flex; align-items: center; gap: 10px; font-size: 16px; }
+.tm small { color: #ffd766; font-size: 12px; }
+.party { position: absolute; left: 6px; right: 6px; bottom: 4px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.hc { display: grid; grid-template-columns: 42px 1fr; column-gap: 6px; padding: 2px 4px 2px 2px; height: 84px; }
+.hc .pt { width: 42px; height: 42px; border: 2px solid #1a0f08; outline: 2px solid #d6a260; outline-offset: -4px; background: center 15% / cover; }
+.hc .nm { font-size: 12px; display: flex; justify-content: space-between; }
+.hc .nm em { font-style: normal; color: #ffd766; font-size: 10px; }
+.hc .bars { display: grid; gap: 2px; margin-top: 2px; } .hc .bar { height: 7px; border-width: 1px; } .hc .bar.mp { height: 5px; }
+.hc .sk { grid-column: 1 / 3; display: flex; gap: 3px; align-items: center; margin-top: 3px; }
+.sk .s { position: relative; width: 30px; height: 30px; border: 2px solid #1a0f08; outline: 1px solid #d6a260; background: center / cover; }
+.sk .s.cd::after { content: attr(data-cd); position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.6); font-size: 12px; }
+.sk .s.ok { outline: 2px solid #ffe08a; box-shadow: 0 0 8px #ffd766; animation: pu 1.2s ease-in-out infinite; }
+@keyframes pu { 50% { box-shadow: 0 0 14px 3px #ffd766; } }
+.sk .au { margin-left: auto; font-size: 10px; padding: 0 3px; }
+.sk .au.on { color: #fff; border-image-source: url(/public/art/ui2/btn_red.png); }
+.buf { position: absolute; display: flex; gap: 2px; animation: bob .7s ease-in-out infinite alternate; }
+.buf b { width: 18px; height: 18px; display: grid; place-items: center; border: 2px solid #1a0f08; background: #2fa84f; }
+.buf b.bad { background: #c8382c; }
+.buf b img { width: 14px; height: 14px; }
+.rgt { position: absolute; right: 6px; top: 6px; display: flex; gap: 2px; }
+/* C 영웅 정보 */
+.bar44 { position: absolute; left: 0; right: 0; top: 0; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 6px; background: linear-gradient(rgba(20,12,6,.92), rgba(20,12,6,.6)); border-bottom: 3px solid #1a0f08; box-shadow: 0 2px 0 #6b4a26; }
+.bar44 h2 { margin: 0; font-size: 17px; flex: 1; }
+.hl { position: absolute; left: 4px; top: 50px; bottom: 4px; width: 58px; display: grid; gap: 4px; align-content: start; justify-items: center; }
+.hl .pt { width: 44px; height: 44px; border: 2px solid #1a0f08; outline: 2px solid #8a6a40; background: center 15% / cover; }
+.hl .pt.on { outline-color: #ffd766; }
+.fb { position: absolute; left: 30px; top: 46px; bottom: -6px; width: 320px; background: center top / contain no-repeat; }
+.info { position: absolute; left: 300px; top: 52px; width: 300px; bottom: 6px; padding: 4px 8px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
+.info h3 { margin: 0; font-size: 19px; color: #ffd766; display: flex; align-items: center; gap: 6px; }
+.info .sub { color: #d8c6a4; font-size: 11px; }
+.tabs { display: flex; gap: 2px; }
+.tabs .btnw { flex: 1; height: 26px; color: #2a1606; }
+.tabs .btnw.on { border-image-source: url(/public/art/ui2/btn_red.png); color: #fff; }
+.row { display: flex; align-items: center; gap: 6px; } .grow { flex: 1; }
+.kv { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed rgba(214,162,96,.35); font-size: 12px; }
+.kv span { color: #d8c6a4; }
+.eq { position: absolute; right: 6px; top: 52px; width: 230px; bottom: 6px; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; justify-items: center; }
+.slot { width: 56px; height: 56px; border: 6px solid transparent; border-image: url(/public/art/ui2/slot.png) 3 fill / 6px; image-rendering: pixelated; display: grid; place-items: center; }
+.slot img { width: 40px; height: 40px; image-rendering: auto; }
+.slot.ep { box-shadow: 0 0 0 2px #b46cff; } .slot.ra { box-shadow: 0 0 0 2px #4aa8ff; } .slot.le { box-shadow: 0 0 0 2px #ffb547; }
+/* D 상점 */
+.side { position: absolute; left: 6px; top: 52px; bottom: 6px; width: 132px; padding: 4px; display: grid; gap: 3px; align-content: start; }
+.side .btnw { justify-content: flex-start; height: 34px; gap: 6px; font-size: 13px; }
+.side .btnw.on { border-image-source: url(/public/art/ui2/btn_red.png); color: #fff; }
+.cards { position: absolute; left: 144px; right: 6px; top: 52px; bottom: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.card { position: relative; border: 3px solid #1a0f08; outline: 2px solid #d6a260; outline-offset: -5px; background: center 15% / cover; }
+.card::after { content: ''; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(20,12,6,.95)); }
+.card .in { position: absolute; left: 4px; right: 4px; bottom: 6px; z-index: 1; display: grid; gap: 3px; justify-items: center; }
+.card .in b { font-size: 16px; } .card .in span { font-size: 11px; color: #d8c6a4; }
+.card .job { position: absolute; left: 6px; top: 6px; z-index: 1; width: 24px; height: 24px; padding: 2px; background: rgba(20,12,6,.8); border: 2px solid #1a0f08; image-rendering: auto; }
+.card .btnr { height: 34px; padding: 0 6px; font-size: 13px; }
+.veil { position: absolute; inset: 0; background: rgba(10,6,2,.55); z-index: 4; }
+.modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; width: 340px; padding: 6px 12px 10px; display: grid; gap: 8px; justify-items: center; animation: pop .4s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes pop { from { transform: translate(-50%, -50%) scale(.7); opacity: 0; } }
+.modal h4 { margin: 0; font-size: 16px; color: #ffd766; }
+.gifts { display: flex; gap: 8px; }
+.gift { display: grid; justify-items: center; gap: 2px; font-size: 11px; color: #d8c6a4; }
+.gift .slot { width: 64px; height: 64px; } .gift b { color: #fff; font-size: 14px; }
+.plate *, .paper *, .btnr *, .btnw *, .slot * { image-rendering: auto; }
+.plate img.px, .btnr img.px, .btnw img.px, .tag img.px, img.px { image-rendering: pixelated; }
+.btnw, .btnw * { text-shadow: 0 1px 0 rgba(255,240,200,.6) !important; color: #2a1606; }
+.btnw.on, .btnw.on * { color: #fff; text-shadow: 0 1px 0 #3c0c04 !important; }
+.sk .au.on { color: #fff; }
+</style></head><body>
+<!-- A 전투 -->
+<div class="frame" id="A" style="background-image:url(/out/proto/field.png)">
+ <div class="stg plate ol"><div class="r"><img class="ic s px" src="/public/art/ui2/icons/team.png">숲 동굴 1-1 <span>WAVE 1/2</span></div><div class="bar xp"><i style="width:45%"></i></div></div>
+ <div class="tm plate ol"><small>남은 시간</small>2:56</div>
+ <div class="rgt">
+  <div class="ib"><img class="ic px" src="/public/art/ui2/icons/auto.png"><span class="tag ol">자동</span></div>
+  <div class="ib"><img class="ic px" src="/public/art/ui2/icons/speed.png"><span class="tag ol">×2</span></div>
+  <div class="ib"><img class="ic px" src="/public/art/ui2/icons/pause.png"><span class="tag ol">멈춤</span></div>
+ </div>
+ <div class="buf" style="left:242px;top:124px"><b><img src="/public/art/buffs/atkUp.png"></b><b><img src="/public/art/buffs/shield.png"></b></div>
+ <div class="buf" style="left:330px;top:120px"><b><img src="/public/art/buffs/regen.png"></b></div>
+ <div class="buf" style="left:590px;top:218px"><b class="bad"><img src="/public/art/buffs/stun.png"></b><b class="bad"><img src="/public/art/buffs/burn.png"></b></div>
+ <div class="party">
+  <div class="hc plate ol"><div class="pt" style="background-image:url(/public/art/portraits_hd/woongs.png)"></div><div><div class="nm">웅스<em>Lv.12</em></div><div class="bars"><div class="bar hp"><i style="width:82%"></i></div><div class="bar mp"><i style="width:40%"></i></div></div></div>
+   <div class="sk"><i class="s cd" data-cd="6" style="background-image:url(/public/art/skills/woongs_0.png)"></i><i class="s ok" style="background-image:url(/public/art/skills/woongs_1.png)"></i><i class="s cd" data-cd="12" style="background-image:url(/public/art/skills/woongs_2.png)"></i><b class="au btnw on">AUTO</b></div></div>
+  <div class="hc plate ol"><div class="pt" style="background-image:url(/public/art/portraits_hd/gonu.png)"></div><div><div class="nm">고느끼<em>Lv.11</em></div><div class="bars"><div class="bar hp"><i style="width:100%"></i></div><div class="bar mp"><i style="width:70%"></i></div></div></div>
+   <div class="sk"><i class="s ok" style="background-image:url(/public/art/skills/gonu_0.png)"></i><i class="s cd" data-cd="4" style="background-image:url(/public/art/skills/gonu_1.png)"></i><i class="s cd" data-cd="20" style="background-image:url(/public/art/skills/gonu_2.png)"></i><b class="au btnw on">AUTO</b></div></div>
+  <div class="hc plate ol"><div class="pt" style="background-image:url(/public/art/portraits_hd/ikamolly.png)"></div><div><div class="nm">이카몰리<em>Lv.10</em></div><div class="bars"><div class="bar hp"><i style="width:64%"></i></div><div class="bar mp"><i style="width:90%"></i></div></div></div>
+   <div class="sk"><i class="s ok" style="background-image:url(/public/art/skills/ikamolly_0.png)"></i><i class="s" style="background-image:url(/public/art/skills/ikamolly_1.png)"></i><i class="s cd" data-cd="9" style="background-image:url(/public/art/skills/ikamolly_2.png)"></i><b class="au btnw">AUTO</b></div></div>
+  <div class="hc plate ol"><div class="pt" style="background-image:url(/public/art/portraits_hd/walwal.png)"></div><div><div class="nm">왈왈콩선생<em>Lv.10</em></div><div class="bars"><div class="bar hp"><i style="width:95%"></i></div><div class="bar mp"><i style="width:20%"></i></div></div></div>
+   <div class="sk"><i class="s cd" data-cd="3" style="background-image:url(/public/art/skills/walwal_0.png)"></i><i class="s" style="background-image:url(/public/art/skills/walwal_1.png)"></i><i class="s cd" data-cd="15" style="background-image:url(/public/art/skills/walwal_2.png)"></i><b class="au btnw on">AUTO</b></div></div>
+ </div>
+ <span class="label">A · 전투</span>
+</div>
+
+<!-- B 메인 지도 -->
+<div class="frame" id="B" style="background-image:url(/public/art/screens/map.jpg)">
+ <div class="prof plate ol"><div class="pt" style="background-image:url(/public/art/portraits_hd/woongs.png)"></div><div><b><em>Lv.12</em>원정대장</b><div class="bar xp"><i style="width:45%"></i></div></div></div>
+ <div class="curs ol">
+  <div class="cur plate"><img src="/public/art/items/m_stamina.png">53/60<img class="pl px" src="/public/art/ui2/icons/plus.png"></div>
+  <div class="cur plate"><img src="/public/art/items/m_gold.png">15,300<img class="pl px" src="/public/art/ui2/icons/plus.png"></div>
+  <div class="cur plate"><img src="/public/art/items/m_stardust.png">182<img class="pl px" src="/public/art/ui2/icons/plus.png"></div>
+ </div>
+ <div class="tops"><div class="ib"><img class="ic px" src="/public/art/ui2/icons/mail.png"><i class="dot"></i></div><div class="ib"><img class="ic px" src="/public/art/ui2/icons/gear.png"></div></div>
+ <div class="quest plate ol"><img class="ic px" src="/public/art/ui2/icons/mission.png"><div class="grow"><div class="t">1-4 클리어 (0/1)</div><div style="color:#d8c6a4">이정표 · 숲 동굴의 길</div></div><div class="go"><img class="ic s px" src="/public/art/ui2/icons/speed.png">바로가기</div></div>
+ <div class="lcol ol">
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/mission.png"><span class="tag">미션</span><i class="dot"></i></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/event.png"><span class="tag">이벤트</span><i class="dot"></i></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/attend.png"><span class="tag">출석</span></div>
+ </div>
+ <div class="node" style="left:20%;top:66%"><i>✓</i><span class="tag ol">1-1</span><span class="st"><b></b><b></b><b></b></span></div>
+ <div class="node" style="left:31%;top:72%"><i>✓</i><span class="tag ol">1-2</span><span class="st"><b></b><b></b><b class="off"></b></span></div>
+ <div class="node" style="left:41%;top:58%"><i>✓</i><span class="tag ol">1-3</span><span class="st"><b></b><b class="off"></b><b class="off"></b></span></div>
+ <div class="node now" style="left:52%;top:52%"><img class="arw ic s px" src="/public/art/ui2/icons/back.png" style="transform:rotate(-90deg)"><i>4</i><span class="tag ol">1-4</span></div>
+ <div class="node lock" style="left:62%;top:44%"><i>5</i><span class="tag ol">1-5</span></div>
+ <div class="node lock" style="left:72%;top:38%"><i>6</i><span class="tag ol">1-6</span></div>
+ <div class="node boss lock" style="left:84%;top:44%"><i>BOSS</i><span class="tag ol">1-10</span></div>
+ <div class="lead" style="left:450px;top:96px;background-image:url(/public/art/fullbody/woongs.png)"></div>
+ <div class="dock ol">
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/hero.png"><span class="tag">영웅</span><i class="dot"></i></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/team.png"><span class="tag">편성</span></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/bag.png"><span class="tag">가방</span></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/shop.png"><span class="tag">상점</span><i class="dot"></i></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/friend.png"><span class="tag">친구</span></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/guild.png"><span class="tag">길드</span></div>
+  <div class="ib"><img class="ic l px" src="/public/art/ui2/icons/portal.png"><span class="tag">콘텐츠</span></div>
+ </div>
+ <div class="gobtn btnr ol"><img class="ic px" src="/public/art/ui2/icons/sword.png">전투 준비</div>
+ <span class="label">B · 메인 지도</span>
+</div>
+
+<!-- C 영웅 정보 -->
+<div class="frame" id="C" style="background-image:url(/public/art/screens/heroes.jpg)">
+ <div class="fb" style="background-image:url(/public/art/fullbody/woongs.png)"></div>
+ <div class="bar44 ol"><img class="ic px" src="/public/art/ui2/icons/back.png"><h2>영웅 정보</h2><div class="cur plate"><img src="/public/art/items/m_gold.png">15,300</div><div class="cur plate"><img src="/public/art/items/m_stardust.png">182</div></div>
+ <div class="hl"><div class="pt on" style="background-image:url(/public/art/portraits_hd/woongs.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/gonu.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/ikamolly.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/walwal.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/warmnight.png)"></div></div>
+ <div class="info plate ol">
+  <h3>웅스 <span class="tag" style="color:#fff">각성 1</span></h3>
+  <div class="sub">첫 번째 칼날 · 전사 · 전방</div>
+  <div>전투력 <span style="color:#ffd766;font-size:15px">30,391</span></div>
+  <div class="tabs"><span class="btnw">일반</span><span class="btnw">스킬</span><span class="btnw">장비</span><span class="btnw on">성장</span></div>
+  <div class="row"><span class="grow">레벨 2 / 30</span><span class="sub">38 / 264</span></div>
+  <div class="bar xp"><i style="width:15%"></i></div>
+  <div class="row"><img src="/public/art/items/m_exp.png" style="width:22px"><span class="grow">경험치 물약 20개</span><span class="btnw" style="height:26px">1개</span><span class="btnw" style="height:26px">10개</span></div>
+  <div class="row"><div class="grow">각성 1/5<div class="sub">레벨 상한 30 → 40 · 레벨 30 필요</div></div><span class="btnr" style="height:32px;padding:0 4px;font-size:13px">각성</span></div>
+ </div>
+ <div class="eq plate ol">
+  <div class="slots"><div class="slot ep"><img src="/public/art/items/w_bow_epic.png"></div><div class="slot ra"><img src="/public/art/items/armor_rare.png"></div><div class="slot le"><img src="/public/art/items/acc_necklace_legend.png"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
+  <div class="row"><span class="btnw grow" style="height:28px">자동 장착</span><span class="btnw grow" style="height:28px">모두 해제</span></div>
+  <div class="kv"><span>체력</span>24,225</div><div class="kv"><span>공격력</span>1,684</div><div class="kv"><span>방어력</span>1,662</div><div class="kv"><span>치명타</span>15%</div>
+ </div>
+ <span class="label">C · 영웅 정보</span>
+</div>
+
+<!-- D 상점 + 보상 -->
+<div class="frame" id="D" style="background-image:url(/public/art/screens/shop.jpg)">
+ <div class="bar44 ol"><img class="ic px" src="/public/art/ui2/icons/back.png"><h2>상점</h2><div class="cur plate"><img src="/public/art/items/m_gold.png">15,300</div><div class="cur plate"><img src="/public/art/items/m_stardust.png">182</div></div>
+ <div class="side plate ol"><span class="btnw"><img class="ic s px" src="/public/art/ui2/icons/trophy.png">스페셜</span><span class="btnw"><img class="ic s px" src="/public/art/ui2/icons/bag.png">재화</span><span class="btnw on"><img class="ic s px" src="/public/art/ui2/icons/hero.png">영웅</span><span class="btnw"><img class="ic s px" src="/public/art/ui2/icons/event.png">코스튬</span><span class="btnw"><img class="ic s px" src="/public/art/ui2/icons/shop.png">장비 소환</span></div>
+ <div class="cards ol">
+  <div class="card" style="background-image:url(/public/art/portraits_hd/hwang.png)"><img class="job" src="/public/art/jobs/druid.png"><div class="in"><b>황짐승</b><span>드루이드 · 중앙</span><span class="btnr"><img src="/public/art/items/m_stardust.png" style="width:18px">3,000</span></div></div>
+  <div class="card" style="background-image:url(/public/art/portraits_hd/kleine.png)"><img class="job" src="/public/art/jobs/mage.png"><div class="in"><b>클레이네</b><span>마법사 · 후방</span><span class="btnr"><img src="/public/art/items/m_stardust.png" style="width:18px">3,000</span></div></div>
+  <div class="card" style="background-image:url(/public/art/portraits_hd/panda.png)"><img class="job" src="/public/art/jobs/knight.png"><div class="in"><b>팬더</b><span>기사 · 전방</span><span class="btnr"><img src="/public/art/items/m_stardust.png" style="width:18px">3,000</span></div></div>
+  <div class="card" style="background-image:url(/public/art/portraits_hd/warmnight.png)"><img class="job" src="/public/art/jobs/archer.png"><div class="in"><b>따뜻한밤</b><span>궁수 · 후방</span><span class="btnr"><img src="/public/art/items/m_stardust.png" style="width:18px">3,000</span></div></div>
+ </div>
+ <div class="veil"></div>
+ <div class="modal plate ol"><h4>보상을 받았어요</h4><div class="gifts"><div class="gift"><div class="slot"><img src="/public/art/items/m_stardust.png"></div><b>+20</b>별가루</div><div class="gift"><div class="slot"><img src="/public/art/items/m_gold.png"></div><b>+10,000</b>금화</div></div><span class="btnr" style="height:40px;padding:0 24px;font-size:15px">확인</span></div>
+ <span class="label" style="z-index:9">D · 상점 + 보상</span>
+</div>
+</body></html>
