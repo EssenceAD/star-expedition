@@ -14,8 +14,8 @@ import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/acco
 import { freeSummonLeft } from '../game/gear';
 import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
-import { lobbyLifeStart, lobbyLifeTick } from './lobbyLife';
-import { attendPopup, dailyText, missionBadge } from './screensD';
+import { mainMapStart, mainMapTick, NODES } from './mainMap';
+import { attendPopup, missionBadge } from './screensD';
 import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
@@ -23,7 +23,7 @@ import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, re
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
+import { $, $$, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
@@ -85,46 +85,64 @@ export function teamBand(extra = '') {
   return `<div class="tband"><div class="row"><span class="tl">팀 레벨</span><b class="lv">${S.acc.lv}</b><div class="xbar grow"><i style="width:${p}%"></i><em>${Math.floor(p)}%</em></div>${extra}</div><div class="buffs">${buffChips() || '<span class="xs mute">켜진 버프 없음</span>'}</div></div>`;
 }
 
-// ───────── 로비 (원정대 거점 = 여관 · 킹스레이드 0-2 배치) ─────────
+// ───────── 메인 = 모험 지도 (RECOVER_1018 S1·S2 배치 · 킹스레이드 영상 그대로) ─────────
+//  지도 위 길 따라 노드(메달 + 번호판 + 별 3개) · 다음 노드에 원정대장이 서고 화살표가 통통 · 보스 노드에 장 보스
+//  왼쪽 위 진행 중 2줄(이정표 · 스토리) · 왼쪽 세로 미션·이벤트·출석 · 아래 메뉴 6 + 포탈 · 오른쪽 아래 전투 준비 · 위 가운데 장 이름(누르면 모험)
+const sideBtn = (attr: string, ic: string, name: string, badge: string | number = '') => `<button class="sic" ${attr}>${icon(ic)}<span>${name}</span>${badge ? `<em class="badge">${badge}</em>` : ''}</button>`;
 register('lobby', {
-  title: '원정대 여관',
+  title: () => `<span class="prof"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
   enter(root) {
-    root.classList.add('lobby');
+    root.classList.add('mainmap');
     const ns = nextStage();
+    const { c, d } = ns;
+    const ch = CHAPTERS[c - 1];
     const lead = partyIds()[0] ?? 'woongs';
-    root.innerHTML = `
-      <div class="me panel"><div class="pt" style="background-image:url(${heroPortrait(lead)})"></div><div class="col grow"><b>${S.titles.on ? `<span class="chip on">${esc(S.titles.on)}</span> ` : ''}${esc(S.acc.name)} <span class="gold">Lv.${S.acc.lv}</span></b>
-        ${teamBand(`<span class="xs pwr">${icon('power')} <b class="pw">${fmt(partyPower())}</b></span>`)}</div></div>
-      <div class="quest panel col">
-        <b class="sm">${icon('mission')} 진행 중</b>
-        <button class="btn qrow" data-next>${icon('adventure')} 다음: ${stageName(ns)} ${CHAPTERS[ns.c - 1].name}</button>
-        <button class="btn qrow" data-mis="d">${icon('mission')} 일일 미션 ${dailyText()}${missionBadge() ? ` <em class="badge">${missionBadge()}</em>` : ''}</button>
-        <button class="btn qrow" data-portal="miles">${icon('star')} 이정표 ${S.miles.length}/${MILESTONES.length}${milesReady().length ? ` <em class="badge">${milesReady().length}</em>` : ''}</button>
-        <span class="sm b">${icon('star')} 이벤트</span>
-        <button class="btn qrow" data-mis="ev">${CONFIG.social.event.name} ${eventLeft() ? `남은 ${eventLeft()}일` : '(끝)'}</button>
-      </div>
-      <div class="bigs">
-        <button class="medal" data-portal="world">${icon('world')}<span>월드 보스</span></button>
-        <button class="medal" data-portal="raid">${icon('raid')}<span>레이드</span></button>
-        <button class="medal main" data-go="adventure">${icon('adventure')}<span>모험</span></button>
-      </div>
-      <div class="dock">
-        ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['portal', '콘텐츠', 'content'], ['bag', '가방', 'bag'], ['mission', '미션', 'mission'], ['mission:ach', '업적', 'achieve'], ['friends', '친구', 'friend'], ['shop', '상점', 'shop'], ['guild', '길드', 'guild'], ['ranking', '랭킹', 'ranking'], ['settings', '설정', 'settings']]
-          .map(([to, n, ic]) => `<button class="dk" ${to.startsWith('soon:') ? `data-soon="${to.slice(5)}"` : to.includes(':') ? `data-mis="${to.split(':')[1]}"` : `data-go="${to}"`}>${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : to === 'mission' && missionBadge() ? `<em class="badge">${missionBadge()}</em>` : ''}</button>`)
-          .join('')}
+    const stars = NODES.reduce((a, _, i) => a + starsAt({ c, s: i + 1, d }), 0);
+    const mile = MILESTONES.find((m) => !S.miles.includes(m.id));
+    const ready = milesReady().length;
+    const nodes = NODES.map(([x, y], i) => {
+      const id = { c, s: i + 1, d };
+      const open = unlocked(id);
+      const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
+      // 다음 노드 화살표: 메달 바로 위 · 그 노드에 원정대장(장 첫 노드)이 서 있으면 그 머리 위 (보스는 오른쪽 뒤로 비켜 서서 메달 위가 비어 있음)
+      const fig = i === 0 && ns.s === 1 ? CONFIG.ui.mainMap.leadH : 0;
+      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}<i class="md">${icon(open ? 'battle' : 'lock')}</i><b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
+    }).join('');
+    root.innerHTML = `<div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div>
+      <div class="mhud">
+        <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
+        <div class="mquest">
+          <button class="mq" data-portal="miles"><em class="tag mile">이정표</em>${mile ? esc(mile.name.replace(/^스토리 /, '')) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
+          <button class="mq" data-next><em class="tag story">스토리</em>${stageName(ns)} 클리어</button>
+        </div>
+        <div class="mside">
+          ${sideBtn('data-go="mission"', 'mission', '미션', missionBadge())}
+          ${sideBtn('data-mis="ev"', 'event', '이벤트', eventLeft() ? 'N' : '')}
+          ${sideBtn('data-attend', 'attend', '출석', attendToday() ? 'N' : '')}
+        </div>
+        <div class="mdock">
+          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['portal', '포탈', 'content']]
+            .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
+            .join('')}
+        </div>
+        <button class="mgo" data-next>${icon('battle')}<span>전투 준비</span></button>
+        <div class="mmenu panel col" hidden>
+          ${[['mission', 'ach', '업적', 'achieve'], ['ranking', '', '랭킹', 'ranking'], ['mail', '', '우편', 'mail'], ['settings', '', '설정', 'settings']].map(([to, tab, n, ic]) => `<button class="btn qrow" data-go="${to}"${tab ? ` data-tab="${tab}"` : ''}>${icon(ic)} ${n}</button>`).join('')}
+        </div>
       </div>`;
-    $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never)));
-    $('[data-next]', root).onclick = () => go('prep', { stage: ns });
+    $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never, b.dataset.tab ? { tab: b.dataset.tab } : {})));
+    $$('[data-next]', root).forEach((b) => (b.onclick = () => go('prep', { stage: ns })));
+    $$('[data-s]', root).forEach((b) => (b.onclick = () => go('adventure', { c, d, s: +b.dataset.s! })));
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
-    $$('[data-soon]', root).forEach((b) => (b.onclick = () => comingSoon(...(b.dataset.soon!.split('|') as [string, string]))));
+    $('[data-attend]', root).onclick = () => (attendToday() ? attendPopup() : toast('오늘 출석 보상은 이미 받았어요'));
+    mainMapStart($('.mlayer', root), c, d, lead, ns.s);
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
-    lobbyLifeStart();
-    // 로비가 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
+    // 메인이 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },
-  tick: (dt) => lobbyLifeTick(dt),
+  tick: (dt) => mainMapTick(dt),
 });
 let offlineChecked = false;
 /** 로비에 처음 들어올 때 한 번: 방치 보상 */
@@ -146,8 +164,6 @@ function offlinePopup() {
 }
 
 // ───────── 모험: 필드 지도 (STAR_PLAN_v2 §3 · 스테이지 = 길 위 노드 · 지금 위치에 영웅 · 지도 안 토벌·상급 던전·탑 입구) ─────────
-/** 노드 자리 (지도 그림 map.jpg 안 % · 그림의 길 위) — 왼쪽 아래 항구에서 다리를 건너 오른쪽 위 폐성(보스)까지 */
-const NODES: [number, number][] = [[18, 78], [30, 68], [37, 58], [47, 55], [57, 48], [63, 39], [69, 34], [77, 31], [83, 23], [87, 16]];
 function fieldMap(c: number, d: number, sel: StageId) {
   const ns = nextStage();
   const here = ns.c === c && d === 0 ? ns.s : null;

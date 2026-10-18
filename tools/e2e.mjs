@@ -49,7 +49,7 @@ await p.goto(URL);
 await p.waitForFunction(() => window.__ready, null, { timeout: 15000 });
 await p.waitForTimeout(300);
 await shot('title');
-// 첫 진입: 원정 출발 → 1-1 필드에서 프롤로그 → 전투 → 승리 → 원정대 여관
+// 첫 진입: 원정 출발 → 1-1 필드에서 프롤로그 → 전투 → 승리 → 메인(모험 지도)
 await click('[data-go]');
 async function playStage(label) {
   await p.waitForSelector('[data-screen="battle"]');
@@ -273,6 +273,8 @@ await click('[data-add]');
 await click('[data-gift]');
 await shot('friends');
 await click('[data-back]');
+// 메인 지도: 랭킹·설정은 상단 바 ≡ 메뉴 안
+await click('#topbar [data-menu]');
 await click('[data-go="ranking"]');
 await shot('ranking');
 await click('[data-back]');
@@ -284,6 +286,7 @@ await click('#ticker');
 await shot('chat');
 await click('.modal [data-x]');
 await click('[data-back]');
+await click('#topbar [data-menu]');
 await click('[data-go="settings"]');
 await p.waitForTimeout(300);
 await shot('settings');

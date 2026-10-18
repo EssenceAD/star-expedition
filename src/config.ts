@@ -396,8 +396,9 @@ export const CONFIG = {
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
-    /** 로비 걸어 다니는 영웅 (DENSITY §3 · FONT_FINAL2 §1 1.4배): 몇 명 · 발 y · 줄 간격 · 크기(전투 배율 대비) · 서로 떨어질 최소 간격(px) · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
-    lobbyLife: { walkers: 5, y: 300, yStep: 18, scale: 0.63, minGap: 78, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], toastSec: 1.5,
+    /** 메인 모험 지도 (RECOVER_1018 S1 · 형철 10/18): 화면 덮는 크기의 몇 배 · 끌기 시작 거리(px) · 노드 메달 가운데가 올 safe 띠(위 HUD 밑 ~ 아래 메뉴 위 · px)
+     *  노드 위 그림: 원정대장·보스 키(메달 32px의 2배 남짓) · 그림 캔버스 너비 · 머리 위 여백 · 발밑 그림자 높이 · 보스는 노드에서 오른쪽·뒤(위)로 비켜 섬(px · 1-9 원정대장과 안 겹치게) */
+    mainMap: { zoom: 1, dragPx: 6, nodeTop: 118, nodeBottom: 264, leadH: 64, bossH: 72, figW: 110, figPad: 14, figFoot: 6, boss: [34, 14] as [number, number] }, speeds: [1, 1.5, 2], toastSec: 1.5,
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */

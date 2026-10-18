@@ -486,6 +486,9 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
   bossMat: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.5M14.5 10h.5M9 15c2 1 4 1 6 0'],
   rotate: ['M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5'],
   sweep: ['M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5'],
+  /** 메인 지도 다음 노드 화살표 · 장 이름 펼침 (RECOVER_1018 S1) */
+  pointer: ['M12 22 3 12h5V2h8v10h5z', true],
+  menu: ['M4 6h16M4 12h16M4 18h16'],
 };
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
 /** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
@@ -494,7 +497,7 @@ export const ICON_UI: Record<string, string> = {
   hp: 'icons/hp', atk: 'icons/atk', def: 'icons/def', crit: 'icons/crit', critDmg: 'icons/critdmg', spd: 'icons/speed', mana: 'icons/mana', levelup: 'icons/levelup',
   arenaCoin: 'menu/arena', towerCoin: 'menu/tower', exShard: 'icons/slot_exclusive',
   mail: 'menu/mail', chat: 'menu/chat', heroes: 'menu/heroes', formation: 'menu/formation', content: 'menu/content', bag: 'menu/bag', mission: 'menu/mission', achieve: 'menu/achieve',
-  friend: 'menu/friend', shop: 'menu/shop', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
+  friend: 'menu/friend', shop: 'menu/shop', event: 'menu/trophy', attend: 'menu/daily', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
 };
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
