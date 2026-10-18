@@ -209,14 +209,17 @@ function setPaused(on: boolean) {
   $('#bPause').setAttribute('aria-pressed', String(on));
   $('#pausedTag').hidden = !on;
 }
+const DPS_TAB = { dealt: '피해', healed: '회복', taken: '받음' } as const;
 function dpsLabel() {
   $('#dps').classList.toggle('open', dpsOpen);
-  $('#bDps').textContent = '';
+  // 손잡이: 화살표 + 접기/펼치기 글씨 (아무 글씨 없던 것 · 10/18)
+  $('#bDps').innerHTML = `${icon(dpsOpen ? 'back' : 'next')}<span>${dpsOpen ? '접기' : '펼치기'}</span>`;
   $('#bDps').title = dpsOpen ? '피해 판 접기' : '피해 판 펼치기';
   $('#dpsL .dname').textContent = b?.raid && dpsTab === 'dealt' ? '피해 순위' : DPS_HEAD[dpsTab];
   $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => {
     t.classList.toggle('on', t.dataset.dt === dpsTab);
-    t.textContent = t.dataset.dt === 'dealt' && b?.raid ? '피해 순위' : DPS_HEAD[t.dataset.dt as typeof dpsTab].replace('량', '');
+    // 탭 글씨는 두 글자 (좁은 판에서 「받은 피해」가 줄바꿈되던 것)
+    t.textContent = t.dataset.dt === 'dealt' && b?.raid ? '순위' : DPS_TAB[t.dataset.dt as typeof dpsTab];
   });
 }
 function syncRaid(bb: Battle) {
