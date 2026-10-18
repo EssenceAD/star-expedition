@@ -10,30 +10,31 @@ import { heroStock } from '../game/shop';
 import { heroShopCard } from './screensB';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
-import { accNeed, boostLeft, buyBooster, stageCost, stamina } from '../game/account';
+import { accNeed, boostLeft, boostMult, buyBooster, stageCost, stamina } from '../game/account';
 import { freeSummonLeft } from '../game/gear';
 import { arenaOpps, autoLast, buildRun, gloryBanOf, lastParties, lockOf, MILESTONES, milesReady, triesText, validLast, type Run } from '../game/content';
 import { runTitle } from './screensC';
+import { view } from './view';
 import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
 import { attendPopup, missionBadge } from './screensD';
 import { attendToday, eventLeft } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, owned } from '../game/heroes';
-import { buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, unlocked, type StageId } from '../game/stage';
+import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, CUR_NAME, esc, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
+import { $, $$, CUR_NAME, esc, fitText, fmt, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast, uiPic } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
 const zoneOf = (id: string): Zone => JOBS[heroOf(id).job].zone;
 const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분` : sec >= 60 ? `${Math.floor(sec / 60)}분 ${Math.floor(sec % 60)}초` : `${Math.ceil(sec)}초`);
-/** 영웅 카드 (세로 · 왼쪽 위 위치 문장 · 오른쪽 위 레벨 · 이름 띠) */
+/** 영웅 카드 (세로 · 왼쪽 위 직업 원(public/art/jobs) · 오른쪽 위 레벨 · 이름 띠) */
 const card = (id: string, extra = '', cls = '') => {
   const h = heroOf(id);
   const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn">${icon(`zone_${zoneOf(id)}`)}</span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
+  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn job" title="${JOBS[h.job].name}"><img src="${import.meta.env.BASE_URL}art/jobs/${h.job}.png" alt=""></span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
 };
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
@@ -132,8 +133,8 @@ register('lobby', {
         </div>
       </div>`;
     $$('[data-go]', root).forEach((b) => (b.onclick = () => go(b.dataset.go as never, b.dataset.tab ? { tab: b.dataset.tab } : {})));
-    $$('[data-next]', root).forEach((b) => (b.onclick = () => go('prep', { stage: ns })));
-    $$('[data-s]', root).forEach((b) => (b.onclick = () => go('adventure', { c, d, s: +b.dataset.s! })));
+    $$('[data-next]', root).forEach((b) => (b.onclick = () => go('prep', { stage: ns, from: 'lobby' })));
+    $$('[data-s]', root).forEach((b) => (b.onclick = () => stageInfo({ c, s: +b.dataset.s!, d })));
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
     $('[data-attend]', root).onclick = () => (attendToday() ? attendPopup() : toast('오늘 출석 보상은 이미 받았어요'));
@@ -145,6 +146,43 @@ register('lobby', {
   },
   tick: (dt) => mainMapTick(dt),
 });
+/** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
+export function stageInfo(st: StageId) {
+  const R = CONFIG.reward;
+  const base = baseReward(st, () => 1);
+  const gold = Math.round(base.gold * taperAt(S.day.runs + 1) * boostMult());
+  const rl = recLevel(st);
+  const myLv = Math.round(partyIds().reduce((a, id) => a + S.heroes[id].lv, 0) / Math.max(1, partyIds().length));
+  // 적 카드: 얼굴(대기 첫 칸) + 이름 · 보스는 맨 앞에 BOSS
+  const mobs = [...new Map(buildMobs(st).flat().map((m) => [m.name, m])).values()].sort((a, b) => +b.boss - +a.boss);
+  const enemy = mobs.map((m) => `<div class="ecard${m.boss ? ' boss' : ''}"><i style="background-image:url(${import.meta.env.BASE_URL}art/${m.kind.anims.idle!.frames[0].replace(':', '/')}.png)"></i>${m.boss ? '<em>BOSS</em>' : ''}<span class="fit" data-min="${CONFIG.ui.fit.tiny}">${esc(m.name)}</span></div>`).join('');
+  const pct = (p: number) => `${Math.round(p * 100)}%`;
+  const drops: [string, string, string][] = [['gold', '금화', '늘'], ['stardust', '별가루', pct(R.dust.chance)], ['enh', '강화석', pct(R.enh.chance)], ['gear', '장비', pct(CONFIG.gear.drop.chance)], ...(isBoss(st) ? [['rune', '룬', pct(CONFIG.gear.drop.runeBoss)] as [string, string, string]] : [])];
+  const dropHtml = drops.map(([k, n, p]) => `<div class="dcell">${k === 'gear' ? uiPic('icons/slot_weapon', 'ic img') : icon(k)}<span>${n}</span><b>${p}</b></div>`).join('');
+  const rep = canRepeat(st);
+  const m = modal(`${stageName(st)} · ${esc(CHAPTERS[st.c - 1].name)} ${starsHtml(starsAt(st))}`, `<div class="sinfo">
+      <div class="row kvs"><span>추천 레벨 <b class="${myLv >= rl ? 'good' : 'bad'}">${rl}</b> <i class="xs mute">(내 평균 ${myLv})</i></span><span>행동력 ${icon('stamina')} <b>${stageCost(st.d)}</b></span></div>
+      <b class="sm">얻는 것 <i class="xs mute">(한 판${boostMult() > 1 ? ' · 부스터 2배' : ''})</i></b>
+      <div class="row gains"><span>${icon('exp')} 영웅 경험치 <b>+${fmt(base.exp)}</b></span><span>${icon('gold')} 금화 <b>+${fmt(gold)}</b></span></div>
+      <b class="sm">나오는 적</b><div class="row enemies">${enemy}</div>
+      <b class="sm">떨어지는 것 <i class="xs mute">(확률)</i></b><div class="row drops">${dropHtml}</div>
+    </div>`, [
+    [`${icon('repeat')} 소탕 ×${CONFIG.repeat.choices[0]}`, () => {
+      if (!rep) return (toast(`별 ${CONFIG.repeat.minStars}개로 깨면 소탕할 수 있어요`), false);
+      const h = repeatBattle(st, CONFIG.repeat.choices[0]);
+      if (!h) return (toast('행동력이 모자라요'), false);
+      persist();
+      syncBar();
+      toast(repeatText(h));
+    }],
+    [`${icon('battle')} 전투 준비`, () => go('prep', { stage: { ...st }, from: 'lobby' }), true],
+  ]);
+  m.classList.add('stagewin');
+  if (view.scale >= CONFIG.ui.pcWin.minScale) $('.panel', m).style.transform = `scale(${CONFIG.ui.pcWin.scale})`;
+  fitText(m);
+  if (!rep) m.querySelector<HTMLButtonElement>('button[data-i="0"]')!.classList.add('off');
+}
+
 let offlineChecked = false;
 /** 로비에 처음 들어올 때 한 번: 방치 보상 */
 function offlinePopup() {
@@ -286,7 +324,7 @@ function lastForm(done: () => void) {
 
 register('prep', {
   title: (p) => (p.run ? `${icon('battle')} 전투 준비 · ${runTitle(p.run as Run)}` : p.stage ? `${icon('battle')} 전투 준비 · ${stageName(p.stage as StageId)}` : `${icon('formation')} 편성`),
-  back: (p) => (p.run ? go('portal', { tab: (p.run as Run).mode }, false) : p.stage ? go('adventure', { ...(p.stage as StageId) }, false) : go('lobby', {}, false)),
+  back: (p) => (p.run ? go('portal', { tab: (p.run as Run).mode }, false) : p.stage && p.from !== 'lobby' ? go('adventure', { ...(p.stage as StageId) }, false) : go('lobby', {}, false)),
   enter(root, p) {
     const st = p.stage as StageId | undefined;
     const run = p.run as Run | undefined;

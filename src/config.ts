@@ -399,6 +399,8 @@ export const CONFIG = {
     /** 메인 모험 지도 (RECOVER_1018 S1 · 형철 10/18): 화면 덮는 크기의 몇 배 · 끌기 시작 거리(px) · 노드 메달 가운데가 올 safe 띠(위 HUD 밑 ~ 아래 메뉴 위 · px)
      *  노드 위 그림: 원정대장·보스 키(메달 32px의 2배 남짓) · 그림 캔버스 너비 · 머리 위 여백 · 발밑 그림자 높이 · 보스는 노드에서 오른쪽·뒤(위)로 비켜 섬(px · 1-9 원정대장과 안 겹치게) */
     mainMap: { zoom: 1, dragPx: 6, nodeTop: 118, nodeBottom: 264, leadH: 64, bossH: 72, figW: 110, figPad: 14, figFoot: 6, boss: [34, 14] as [number, number] }, speeds: [1, 1.5, 2], toastSec: 1.5,
+    /** 전투 전 로딩 팁 화면 초 (누르면 넘김 · RECOVER_1018 S3) */
+    loadTipSec: 1.6,
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */
@@ -407,6 +409,8 @@ export const CONFIG = {
     loadStallSec: 5,
     loadItemSec: 12,
     /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */
-    fit: { step: 0.5, name: 13, desc: 10 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    fit: { step: 0.5, name: 13, desc: 10, tiny: 7 },
+    /** 큰 화면(PC · 게임 배율 이 값 이상)에서 정보 창을 이만큼 줄여 그림 (형철 10/18: PC에서 너무 커 보임) */
+    pcWin: { minScale: 1.8, scale: 0.72 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;
