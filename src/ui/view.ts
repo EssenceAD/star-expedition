@@ -31,7 +31,8 @@ export const viewportSize = () => ({ w: Math.round(visualViewport?.width ?? inne
 export function fitView(stage: HTMLElement, cv: HTMLCanvasElement, iw = viewportSize().w, ih = viewportSize().h) {
   const V = CONFIG.view;
   // 세로로 들고 있으면 게임을 시계 방향 90° 돌려서 그림 → 폰을 눕히기만 하면 바로 가로 화면 (창 높이 = 게임 너비)
-  const rot = ih > iw;
+  //  정사각형에 가까운 화면(폴드 펼침 등 · 세로/가로 < 1.2)은 돌리지 않고 가로 그대로 (돌리면 좌우가 잘리던 것 · 웅스 10/18 폴드7)
+  const rot = ih > iw * 1.2;
   view.rotated = rot;
   document.documentElement.classList.toggle('rot', rot);
   // 돌린 화면(세로로 든 폰): 위 상태 표시줄(시간·배터리)·아래 홈 막대 자리는 빼고 그 안에 맞춤 → 게임 왼쪽·오른쪽이 가려지지 않게

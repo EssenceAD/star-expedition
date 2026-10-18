@@ -515,3 +515,7 @@ body, #stage { font-weight: normal; }
 #stage #dps #bDps { width: 26px; height: auto; min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-xxs); padding: var(--s-xs) 0; }
 #stage #dps #bDps .ic { width: 14px; height: 14px; }
 #stage #dps #bDps span { writing-mode: vertical-rl; font-size: var(--fs-xs); line-height: 1; letter-spacing: var(--s-xxs); }
+/* 좁은 화면(폴드 펼침·패드 · .narrow) 전투 아래 영웅 칸: 스킬 줄이 칸 밖으로 삐져나가던 것 → 왼쪽 여백 없애고 스킬·AUTO 작게 (웅스 10/18) */
+#stage.narrow #bar .hc .sk { padding-left: 0; gap: var(--s-xxs); justify-content: center; }
+#stage.narrow #bar .sk button { width: 24px; height: 24px; }
+#stage.narrow #bar .sk .au { width: 30px; padding: 0; font-size: var(--fs-xs); letter-spacing: 0; }
