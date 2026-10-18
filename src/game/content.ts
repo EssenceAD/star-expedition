@@ -1,6 +1,7 @@
 // C덩어리 콘텐츠 로직 (STAR_PLAN_v2 §3): 하루 도전 수 · 토벌 · 상급 던전 · 도전의 탑 · 요일 던전 · 레이드(8인) · 월드 보스(공용 체력, 1단계는 로컬 + AI)
 //  · 결투장 3리그(AI 덱) · 영웅 외전(전용 보물) · 이정표 — 각 콘텐츠는 BattleSetup을 만들고(build) 끝나면 보상(finish)
 import { CONFIG } from '../config';
+import { REAL } from './real';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
 import { activeBonds } from '../data/bonds';
 import { CHAT_NAMES } from '../data/chat';
@@ -387,13 +388,12 @@ export function worldBoss(s: Save = S, now = Date.now()) {
   const my = s.world.week === wk ? s.world.my : 0;
   return { week: wk, max, hp: Math.max(0, max - ai - my), my, name: `월드 보스 · ${WORLD_BOSS}` };
 }
-/** 이번 주 랭킹 (AI 플레이어 + 나) */
+/** 이번 주 랭킹 (실유저 + 나) */
 export function worldBoard(s: Save = S, now = Date.now()) {
   const wb = worldBoss(s, now);
-  const r = seeded(hashStr(wb.week));
-  const hours = (now - (Date.parse(wb.week) - KST)) / 3600e3;
-  const ais = CHAT_NAMES.map((name) => ({ name, dmg: Math.round(wb.max * 0.01 * (0.2 + r() * 1.6) * Math.min(1, hours / 120)), me: false }));
-  return [...ais, { name: s.acc.name, dmg: Math.round(wb.my), me: true }].sort((a, b) => b.dmg - a.dmg);
+  // 실유저만 (이번 주 준 피해 · 형철 10/18)
+  const others = REAL.filter((x) => x.world_week === wb.week && x.world > 0).map((x) => ({ name: x.name, dmg: x.world, me: false, av: x.avatar as string | null }));
+  return [...others, { name: s.acc.name, dmg: Math.round(wb.my), me: true, av: (s.acc.avatar ?? null) as string | null }].sort((a, b) => b.dmg - a.dmg);
 }
 export function worldRank(s: Save = S, now = Date.now()) {
   const b = worldBoard(s, now);

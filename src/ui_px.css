@@ -553,3 +553,23 @@ body, #stage { font-weight: normal; }
 #stage .pside .party .pcard { min-height: 0; padding: var(--s-xxs); gap: 0; }
 #stage .pside .party .pcard .pt { width: 100%; aspect-ratio: 1; height: auto; }
 #stage .pside .party .pcard.empty { aspect-ratio: 1; }
+#ticker:empty { display: none; }
+/* 내 프로필 (왼쪽 위 프로필 누르면) */
+#stage [data-prof] { cursor: pointer; }
+#stage .profwin .panel { width: min(560px, calc(100% - var(--s-xl))); }
+#stage .profwin .ptop { align-items: center; gap: var(--s-md); }
+#stage .profwin .pt.big { position: relative; width: 84px; height: 84px; flex: none; padding: 0; border: var(--b-base) solid var(--c-gold); background: center 14% / cover no-repeat; cursor: pointer; }
+#stage .profwin .pt.big em { position: absolute; left: 0; right: 0; bottom: 0; font-style: normal; font-size: var(--fs-xxs); text-align: center; color: var(--px-text); text-shadow: var(--px-outlineSm); background: var(--px-barBg); }
+#stage .profwin .xbar { height: 8px; }
+#stage .profwin .avpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: var(--s-sm); }
+#stage .profwin .avpick .pt { width: 100%; aspect-ratio: 1; height: auto; padding: 0; border: var(--b-base) solid var(--c-line); background: center 14% / cover no-repeat; cursor: pointer; }
+#stage .profwin .avpick .pt.on { border-color: var(--c-gold); box-shadow: var(--px-glow); }
+#stage .kv.rank .rav { display: inline-block; width: 22px; height: 22px; vertical-align: middle; background: center 14% / cover no-repeat; }
+#stage .profwin .pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-sm); }
+#stage .profwin .pgrid .panel { gap: var(--s-xxs); }
+#stage .profwin .pgrid > .panel { min-width: 0; }
+#stage .profwin .pgrid .kv { gap: var(--s-sm); }
+#stage .profwin .pgrid .kv span { flex: none; }
+#stage .profwin .pgrid .kv b { min-width: 0; text-align: right; }
+/* 메인 지도: 한 줄 채팅이 가운데 장 이름과 겹치지 않게 오른쪽만 */
+#stage #topbar.onmap ~ #ticker { max-width: 36%; }

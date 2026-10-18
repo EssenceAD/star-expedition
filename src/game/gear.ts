@@ -4,7 +4,7 @@ import { CONFIG } from '../config';
 import { JOBS } from '../data/jobs';
 import { heroOf } from '../data/heroes';
 import { GEAR_ADJ, GEAR_FROM } from '../data/gearNames';
-import { addCur, dayKey, GEAR_SLOTS, S, spend, track, type Gear, type GearSlot, type Item, type Rune, type Save } from './state';
+import { addCur, dayKey, GEAR_SLOTS, news, S, spend, track, type Gear, type GearSlot, type Item, type Rune, type Save } from './state';
 
 const G = CONFIG.gear;
 const R = CONFIG.rune;
@@ -63,6 +63,8 @@ export function makeGear(part: Part, grade: number, ilv: number, s: Save = S, rn
   for (let i = 0; i < G.grades[grade].opts; i++) opts.push(rollOpt(grade, rnd, opts.map((o) => o.k)));
   const g: Gear = { uid: s.nextUid++, kind: 'gear', part, type: type ?? rollType(part, s, rnd), grade, ilv: Math.max(0, Math.round(ilv)), star: 1, tier: 1, enh: 0, pity: 0, starPity: 0, opts, runes: Array(G.grades[grade].runes).fill(null), lock: false, by: null };
   g.nm = nameOf(g, from);
+  // 전설 장비를 얻으면 소식 (제작은 확정이라 빼고 · 드롭·소환·레이드·던전)
+  if (grade === G.grades.length - 1 && from !== GEAR_FROM.craft) news(`${s.acc.name}님, 전설 장비 「${g.nm}」 획득!`, s);
   return g;
 }
 export function makeRune(grade: number, s: Save = S, rnd: () => number = Math.random): Rune {
@@ -150,6 +152,7 @@ export function starUp(g: Gear, food: Gear, s: Save = S, rnd: () => number = Mat
   if (rnd() < starRate(g)) {
     g.star++;
     g.starPity = 0;
+    if (g.grade === G.grades.length - 1) news(`${s.acc.name}님, 전설 「${g.nm ?? ''}」 ${g.star}성 달성!`, s);
     return 'ok';
   }
   g.starPity += G.starUp.rates[g.star - 1] * G.starUp.pityMult;
@@ -165,6 +168,7 @@ export function tierUp(g: Gear, s: Save = S): 'max' | 'star' | 'poor' | 'ok' {
   addCur('tierMat', -c.mats, s);
   addCur('gold', -c.gold, s);
   g.tier++;
+  if (g.grade === G.grades.length - 1) news(`${s.acc.name}님, 전설 「${g.nm ?? ''}」 T${g.tier} 달성!`, s);
   return 'ok';
 }
 // ───────── 옵션 바꾸기 (한 줄 · 기존 vs 새 옵션 고르기) ─────────

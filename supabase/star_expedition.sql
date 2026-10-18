@@ -36,3 +36,27 @@ drop policy if exists star_chat_read on public.star_chat;
 create policy star_chat_read on public.star_chat for select to authenticated using (created_at > now() - interval '3 days');
 drop policy if exists star_chat_write on public.star_chat;
 create policy star_chat_write on public.star_chat for insert to authenticated with check (auth.uid() = user_id);
+
+-- 3) 실유저 랭킹·윈드 길드 (v1.0.22 · 형철 10/18 「랭킹에 실유저」): 최근 30일 저장에서 랭킹에 쓰는 값만 꺼내 줌
+--    다른 사람 저장 전체는 못 보고(RLS 그대로) 이름·아바타·레벨·주간 기록만 · 숫자가 아닌 값은 0 (남의 저장이 이상해도 함수가 안 깨지게)
+create or replace function public.star_num(j jsonb) returns numeric language sql immutable as $$
+  select case when jsonb_typeof(j) = 'number' then j::text::numeric else 0 end
+$$;
+create or replace function public.star_board()
+returns table (me boolean, name text, avatar text, lv int, tower_week text, tower int, arena int, world_week text, world bigint, guild text, contrib_week text, contrib int, raid bigint)
+language sql stable security definer set search_path = public as $$
+  select s.user_id = auth.uid(),
+         left(coalesce(nullif(s.data->'acc'->>'name', ''), '원정대장'), 16),
+         left(s.data->'acc'->>'avatar', 24),
+         star_num(s.data->'acc'->'lv')::int,
+         s.data->'tower'->>'week', star_num(s.data->'tower'->'weekBest')::int,
+         star_num(s.data->'arena'->'score')::int,
+         s.data->'world'->>'week', star_num(s.data->'world'->'my')::bigint,
+         s.data->'guild'->>'id', s.data->'guild'->>'week', star_num(s.data->'guild'->'weekContrib')::int, star_num(s.data->'guild'->'raid')::bigint
+  from public.star_saves s
+  where s.updated_at > now() - interval '30 days'
+  order by s.updated_at desc
+  limit 300
+$$;
+revoke all on function public.star_board() from public;
+grant execute on function public.star_board() to anon, authenticated;

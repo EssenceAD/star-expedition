@@ -5,6 +5,8 @@ import { CHAT_LINES, CHAT_NAMES } from '../data/chat';
 import { HEROES } from '../data/heroes';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { worldBoard } from './content';
+import { getPref } from '../core/save';
+import { REAL } from './real';
 import { addCur, capLeft, dayKey, S, spend, track, weekOf, type ChatLine, type Mail, type Save } from './state';
 
 const SO = CONFIG.social;
@@ -21,9 +23,9 @@ export interface Guild {
   /** 멤버 이름 (실멤버 길드는 멤버 영웅 17명 · docs/MEMBERS.md · AI 길드는 AI 이름) */
   members: string[];
 }
-const MEMBERS = HEROES.filter((h) => h.origin === 'founder').map((h) => h.name);
 export const GUILDS: Guild[] = [
-  { id: 'real', name: '윈드', real: true, desc: '단톡방 멤버 길드', lv: 1, members: MEMBERS },
+  // 윈드 = 실유저 길드: 멤버는 서버에서 윈드에 든 실유저 (가짜 멤버 영웅 이름 목록이던 것 · 형철 10/18)
+  { id: 'real', name: '윈드', real: true, desc: '실유저 길드', lv: 1, get members() { return REAL.filter((r) => r.guild === 'real').map((r) => r.name); } },
   { id: 'ai1', name: '새벽등불 상단', real: false, desc: '매일 출석하는 성실파 AI 길드', lv: 7, members: CHAT_NAMES.slice(0, 6) },
   { id: 'ai2', name: '심연낚시 동호회', real: false, desc: '탑과 월드 보스에 진심인 AI 길드', lv: 9, members: CHAT_NAMES.slice(6, 12) },
   { id: 'ai3', name: '느긋한 여관', real: false, desc: '천천히 즐기는 AI 길드', lv: 4, members: [...CHAT_NAMES.slice(3, 9)] },
@@ -86,7 +88,8 @@ export function guildBoard(s: Save = S, now = Date.now()) {
   rollGuild(s, now);
   const r = seeded(hashStr(g.id + weekOf(now)));
   const days = Math.min(7, ((now - Date.parse(`${weekOf(now)}T00:00:00+09:00`)) / 86400e3) | 0) + 1;
-  const others = g.real ? g.members.map((name) => ({ name, pts: 0, raid: 0, me: false })) : g.members.map((name) => ({ name, pts: Math.round((20 + r() * 60) * days), raid: Math.round(SO.guild.raidCoinPer * (0.3 + r() * 2) * days), me: false }));
+  const wk = weekOf(now);
+  const others = g.real ? REAL.filter((x) => x.guild === 'real').map((x) => ({ name: x.name, pts: x.contrib_week === wk ? x.contrib : 0, raid: x.contrib_week === wk ? x.raid : 0, me: false })) : g.members.map((name) => ({ name, pts: Math.round((20 + r() * 60) * days), raid: Math.round(SO.guild.raidCoinPer * (0.3 + r() * 2) * days), me: false }));
   return [...others, { name: s.acc.name, pts: s.guild.weekContrib, raid: Math.round(s.guild.raid), me: true }].sort((a, b) => b.pts + b.raid / 1e5 - (a.pts + a.raid / 1e5));
 }
 /** 길드 레이드 보스: 이번 주 공용 체력 (길드원 피해 + 내 피해) */
@@ -167,13 +170,14 @@ export function restBonus(s: Save = S, now = Date.now()): number {
 export type Board = 'tower' | 'world' | 'arena' | 'guild';
 export const BOARD_NAME: Record<Board, string> = { tower: '도전의 탑 (주간)', world: '월드 보스 (주간)', arena: '결투장', guild: '길드 기여 (주간)' };
 export const TITLE_OF: Record<Board, string> = { tower: '탑 정복자', world: '별 사냥꾼', arena: '결투의 별', guild: '길드의 기둥' };
-export function board(b: Board, s: Save = S, now = Date.now()): { name: string; v: number; me: boolean }[] {
-  if (b === 'world') return worldBoard(s, now).map((x) => ({ name: x.name, v: x.dmg, me: x.me }));
+export function board(b: Board, s: Save = S, now = Date.now()): { name: string; v: number; me: boolean; av?: string | null }[] {
+  if (b === 'world') return worldBoard(s, now).map((x) => ({ name: x.name, v: x.dmg, me: x.me, av: x.av }));
   if (b === 'guild') return guildBoard(s, now).map((x) => ({ name: x.name, v: x.pts, me: x.me }));
-  const r = seeded(hashStr(b + weekOf(now)));
-  const ais = CHAT_NAMES.map((name) => ({ name, v: b === 'tower' ? Math.round(3 + r() * 40) : Math.round(950 + r() * 600), me: false }));
+  // 탑·결투장: 실유저만 (AI 이름 없음) · 탑은 이번 주 기록만
+  const wk = weekOf(now);
+  const others = b === 'tower' ? REAL.filter((x) => x.tower_week === wk && x.tower > 0).map((x) => ({ name: x.name, v: x.tower, me: false, av: x.avatar })) : REAL.map((x) => ({ name: x.name, v: x.arena, me: false, av: x.avatar }));
   const mine = b === 'tower' ? (s.tower.week === weekOf(now) ? s.tower.weekBest : 0) : s.arena.score;
-  return [...ais, { name: s.acc.name, v: mine, me: true }].sort((a, c) => c.v - a.v);
+  return [...others, { name: s.acc.name, v: mine, me: true, av: s.acc.avatar ?? null }].sort((a, c) => c.v - a.v);
 }
 /** 내 순위 (0 = 없음 · 길드에 안 들었을 때) */
 export const myRank = (b: Board, s: Save = S, now = Date.now()) => board(b, s, now).findIndex((x) => x.me) + 1;
@@ -217,8 +221,12 @@ export function aiLine(ch: ChatLine['ch'] = 'world', s: Save = S, now = Date.now
   const name = ch === 'guild' && g && !g.real && g.members.length ? pick(g.members) : pick(CHAT_NAMES);
   const text = pick(CHAT_LINES).replace('{영웅}', pick(HEROES).name).replace('{보스}', pick(CHAPTER_MOBS.slice(0, 3)).boss).replace('{장}', '숲 동굴');
   const top = (Object.keys(BOARD_NAME) as Board[]).find((b) => board(b, s, now).slice(0, SO.titleTop).some((x) => x.name === name));
-  return { name, text, at: now, ch, title: top ? TITLE_OF[top] : undefined };
+  return { name, text, at: now, ch, title: top ? TITLE_OF[top] : undefined, ai: true };
 }
+/** AI 줄인지 (예전 저장 줄은 ai 표시가 없어서 AI 이름으로 봄) */
+export const isAiLine = (l: ChatLine) => l.ai ?? (!l.me && !l.news && CHAT_NAMES.includes(l.name));
+/** AI 채팅 켜짐 (「체크인」처럼 채팅 창에서 켜고 끔 · 기본 켜짐) */
+export const aiChatOn = () => getPref('aiChat', true);
 export function pushChat(line: ChatLine, s: Save = S) {
   s.chat.push(line);
   if (s.chat.length > SO.chat.keep) s.chat.splice(0, s.chat.length - SO.chat.keep);

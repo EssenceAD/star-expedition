@@ -604,6 +604,8 @@
 
 - v1.0.21: combat.frameScale (황짐승 m2 1.08~1.18 · 웅스 m2r1c1·c2) · tools/soften_edges.py (m2 칸 바깥 25% 안 일직선 잘림 → 알파 26px 페이드 · 34장 · 왈왈 빛기둥 제외) · fx 그림 가장자리 14% destination-in 그라데이션
 
+- v1.0.22: star_board RPC(security definer · 랭킹 값만) · game/real.ts REAL · 탑/결투장/월드/윈드 길드 실유저만 · ensureSession 자동 게스트(새 게스트일 때만 즉시 올림) · AI 채팅 토글(pref aiChat · ChatLine.ai) · #ticker 다시 · profile.ts(acc.avatar) · newsBus(전설 획득·별·티어·초월·각성5 → 소식 줄 + 서버 월드 채팅)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
