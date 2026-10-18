@@ -107,7 +107,9 @@ const top = (s: Save) => {
 
 // ───────── 전투 입력 ─────────
 function base(s: Save, title: string, waves: MobSpec[][], region: number, extra: Partial<BattleSetup> = {}): BattleSetup {
-  return { bg: CONFIG.ui.battleBg[title.split(' · ')[0]], heroes: buildHeroes(s), waves, limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime, bonds: activeBonds(partyIds(s)), region, title, ...extra };
+  // 전투 배경: 제목 앞부분이 표의 이름으로 시작하면 (「도전의 탑 2층」처럼 이름 뒤에 층이 붙어도)
+  const bgKey = Object.keys(CONFIG.ui.battleBg).find((k) => title.startsWith(k));
+  return { bg: bgKey ? CONFIG.ui.battleBg[bgKey] : undefined, heroes: buildHeroes(s), waves, limit: CONFIG.combat.limit, starTime: CONFIG.combat.starTime, bonds: activeBonds(partyIds(s)), region, title, ...extra };
 }
 export const towerP = (floor: number) => CC.tower.base + (floor - 1);
 export const dayKind = (now = Date.now()) => CC.day.kinds[kstDay(now)];

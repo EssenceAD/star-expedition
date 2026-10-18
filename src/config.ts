@@ -382,8 +382,6 @@ export const CONFIG = {
     dodgeBonus: { atk: 0.2, dur: 5 },
     /** 카메라: 필살기 줌 · 페이즈 전환 클로즈업 */
     zoom: { ult: 1.15, ultSec: 0.55, phase: 1.4 },
-    /** 다층 배경: 겹 수 · 겹마다 흐르는 속도 · 크기 */
-    parallax: [[0.03, 1.25], [0.08, 1.1], [0.18, 1.0]] as number[][],
     /** 보스 그림 두 장 (부서지기 전·후) — 이제 메뉴 썸네일에만 씀 · 전투는 anim1·anim2 시트 (ANIM_1017 ④) */
     art: { have: true as boolean, intact: 'raidboss/intact.png', broken: 'raidboss/broken.png' },
     /** 레이드·월드 보스 동작 (ANIM_1017 ④): 대기 칸 바뀌는 빠르기 · 부위 파괴 움찔 초 · 쓰러짐→잔해 초 · 그 뒤 사라지는 초 */
