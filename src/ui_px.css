@@ -549,3 +549,7 @@ body, #stage { font-weight: normal; }
 #stage #bar .hc .hp { height: 15px; overflow: visible; }
 #stage #bar .hc .mp { height: 13px; overflow: visible; }
 #stage #bar .hc .hp em, #stage #bar .hc .mp em { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; font-style: normal; font-size: var(--fs-xxs); line-height: 1; color: var(--px-text); text-shadow: var(--px-outlineSm); }
+/* 전투 준비 오른쪽 파티 4칸 (눌러서 빼기 · 작게 — 행동력 칸 스크롤 없이) */
+#stage .pside .party .pcard { min-height: 0; padding: var(--s-xxs); gap: 0; }
+#stage .pside .party .pcard .pt { width: 100%; aspect-ratio: 1; height: auto; }
+#stage .pside .party .pcard.empty { aspect-ratio: 1; }
