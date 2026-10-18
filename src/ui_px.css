@@ -533,3 +533,7 @@ body, #stage { font-weight: normal; }
 #stage.narrow .rcol { left: 34%; gap: var(--s-xs); justify-content: safe center; overflow-y: auto; }
 #stage.narrow .rcol .rw div.rwc { width: 64px; min-width: 64px; height: 78px; }
 #stage.narrow .rcol > .row { gap: var(--s-xs); }
+/* 전투 준비 오른쪽 (고느끼 10/18 「전투시작 두 줄」·형철 「팀 정보는 간략하게 · 행동력 칸 스크롤 없이」): 팀 = 레벨·전투력·인연만 · 전투 시작은 한 줄로 가로 꽉 */
+#stage .body > .side.pside { overflow: visible; gap: var(--s-sm); }
+#stage .pside .tsum { gap: var(--s-xs); }
+#stage .pside .pstart { width: 100%; white-space: nowrap; }

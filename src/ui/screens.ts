@@ -20,13 +20,13 @@ import { runTitle } from './screensC';
 import { view } from './view';
 import { mainMapStart, mainMapTick, mapUrl, nodesOf } from './mainMap';
 import { attendPopup, missionBadge } from './screensD';
-import { attendToday, eventLeft, eventToday } from '../game/missions';
+import { attendToday, eventToday } from '../game/missions';
 import { claimOffline, computeOffline } from '../game/idle';
 import { heroPower, join, owned } from '../game/heroes';
-import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
+import { baseReward, buildMobs, canRepeat, diffOpen, isBoss, nextStage, recLevel, repeatBattle, stageName, starsAt, taperAt, unlocked, type StageId } from '../game/stage';
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
-import { repeatText } from './battle';
+import { repeatAsk, repeatText } from './battle';
 import { coach, whenFree } from './coach';
 import { ready as audioReady } from '../core/audio/engine';
 import { openReport, opsOnLobby } from './ops';
@@ -85,22 +85,6 @@ register('title', {
       ]);
   },
 });
-
-/** 지금 켜진 버프 (팀 레벨 띠 아래 아이콘 줄): 부스터 · 출석 보너스 · 이벤트 · 인연 */
-function buffChips() {
-  const bl = boostLeft();
-  const out: string[] = [];
-  if (bl) out.push(`<span class="chip on" title="부스터: 전리품 2배">${icon('booster')} ${fmtTime(bl)}</span>`);
-  if (!attendToday()) out.push(`<span class="chip on" title="오늘 출석 보상을 받았어요">${icon('check')} 출석</span>`);
-  if (eventLeft()) out.push(`<span class="chip on" title="${esc(CONFIG.social.event.name)}">${icon('star')} 이벤트</span>`);
-  for (const x of activeBonds(partyIds())) out.push(`<span class="chip on" title="인연: ${x.members.map((m) => heroOf(m).name).join(' · ')}">${icon('heroes')} ${esc(x.name)}</span>`);
-  return out.join('');
-}
-/** 「팀 레벨」 띠 (로비·편성 · MOBILE_REF §3-C-3): 원정대 레벨 · 경험치 % 막대 · 켜진 버프 */
-export function teamBand(extra = '') {
-  const p = Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100);
-  return `<div class="tband"><div class="row"><span class="tl">팀 레벨</span><b class="lv">${S.acc.lv}</b><div class="xbar grow"><i style="width:${p}%"></i></div><em class="tpct">${Math.floor(p)}%</em>${extra}</div><div class="buffs">${buffChips() || '<span class="xs mute">켜진 버프 없음</span>'}</div></div>`;
-}
 
 // ───────── 메인 = 모험 지도 (RECOVER_1018 S1·S2 배치 · 킹스레이드 영상 그대로) ─────────
 //  지도 위 길 따라 노드(메달 + 번호판 + 별 3개) · 다음 노드에 원정대장이 서고 화살표가 통통 · 보스 노드에 장 보스
@@ -430,14 +414,10 @@ register('prep', {
             <div class="roster grow scroll">${mine.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ids.includes(h.id) ? 'in' : '')).join('')}${notMine.map((h) => card(h.id, `<span class="lk">${icon('lock')}</span>`).replace('data-h=', 'data-lk=')).join('')}</div>
             <span class="xs mute fdesc">카드를 눌러 넣고 빼요 (최대 ${PARTY_MAX}명) · 길게 누르면 영웅 정보</span>
           </div>
-          <div class="col side scroll">
-            <div class="panel col">
-              ${teamBand()}
-              <div class="party">${[0, 1, 2, 3].map((i) => {
-                const id = byZone(ids)[i];
-                return id ? `<div class="pcard" data-out="${id}"><div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="xs">${ZONE_NAME[zoneOf(id)]}</span><b class="xs">${heroOf(id).name}</b></div>` : '<div class="pcard empty"><span class="xs mute">비어 있음</span></div>';
-              }).join('')}</div>
-              <div class="kv"><span>파티 전투력</span><b>${fmt(partyPower())}</b></div>
+          <div class="col side pside">
+            <div class="panel col tsum">
+              <div class="kv"><span>팀 레벨</span><b>Lv.${S.acc.lv}</b></div>
+              <div class="kv"><span>파티 전투력</span><b class="gold">${fmt(partyPower())}</b></div>
               <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<button class="chip${bonds.includes(x) ? ' on' : ''}" data-bond="${x.id}" title="${esc(bondText(x))}">${x.name}</button>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
             </div>
             ${run ? `<div class="panel col">
@@ -452,11 +432,10 @@ register('prep', {
             </div>` : ''}
             ${st ? `<div class="panel col">
               <div class="kv"><span>행동력</span><b>${icon('stamina')} ${cost} / 보유 ${stamina()}</b></div>
+              <button class="btn hi big pstart" data-start ${ids.length ? '' : 'disabled'}>전투 시작</button>
               <div class="row"><select data-n class="tab">${CONFIG.repeat.choices.map((n) => `<option value="${n}" ${n === rep ? 'selected' : ''}>${n}회</option>`).join('')}</select>
-                <button class="btn grow" data-repeat ${canRepeat(st) ? '' : 'disabled'} title="${canRepeat(st) ? '바로 끝나요' : '별 3개면 열려요'}">${icon('repeat')} 반복 전투</button>
-                <button class="btn hi grow big" data-start ${ids.length ? '' : 'disabled'}>전투 시작</button></div>
+                <button class="btn grow" data-repeat ${canRepeat(st) ? '' : 'disabled'} title="${canRepeat(st) ? `행동력 ${cost} × 횟수 · 바로 끝나요` : '별 3개면 열려요'}">${icon('repeat')} 반복 전투</button></div>
               <div class="row"><span class="grow xs dim">${icon('booster')} 부스터 (전리품 ${CONFIG.booster.mult}배 1시간)</span><button class="btn mini${bl ? ' on' : ''}" data-boost>${bl ? fmtTime(bl) : `${icon('gold')}${fmt(CONFIG.booster.gold)}`}</button></div>
-              <span class="xs mute">${canRepeat(st) ? `반복 전투 = 행동력 ${cost} × 횟수 · 바로 끝나요` : '반복 전투는 별 3개 스테이지만'}</span>
             </div>` : ''}
           </div>
         </div>`;
@@ -482,15 +461,6 @@ register('prep', {
       });
       $$('[data-lk]', root).forEach((b) => (b.onclick = () => go('shop', { cat: 'hero' })));
       $$('[data-bond]', root).forEach((b) => (b.onclick = () => toast(bondText(BONDS.find((x) => x.id === b.dataset.bond)!))));
-      $$('[data-out]', root).forEach(
-        (b) =>
-          (b.onclick = () => {
-            if (S.party.length <= 1) return toast('한 명은 있어야 해요');
-            S.party = S.party.filter((x) => x !== b.dataset.out);
-            persist();
-            draw();
-          }),
-      );
       const rs = root.querySelector<HTMLElement>('[data-runstart]');
       if (rs && run) rs.onclick = () => go('battle', { run: run.arg === 'glory' ? { ...run, ban: ban || undefined, swap: swap || undefined } : run });
       $$('[data-ban]', root).forEach((b) => (b.onclick = () => ((ban = b.dataset.ban!), draw())));
@@ -507,14 +477,7 @@ register('prep', {
         draw();
       };
       $('[data-start]', root).onclick = () => go('battle', { stage: { ...st } });
-      $('[data-repeat]', root).onclick = () => {
-        const h = repeatBattle(st, rep);
-        if (!h) return toast('행동력이 모자라요');
-        persist();
-        syncBar();
-        toast(repeatText(h));
-        draw();
-      };
+      $('[data-repeat]', root).onclick = () => repeatAsk(st, rep, draw);
     };
     draw();
   },
