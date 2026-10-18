@@ -422,6 +422,8 @@ export const CONFIG = {
     battleBg: { '도전의 탑': 'tower', 레이드: 'raid', '월드 보스': 'world', '길드 레이드': 'graid', 결투장: 'arena', '상급 던전': 'dungeon', '토벌 전투': 'hunt', '요일 던전': 'daily', '영웅 외전': 'side' } as Record<string, string>,
     /** 전투 배경의 땅 띠(public/art/bgs/_ground.json)를 화면의 이 y 띠에 맞춰 그림 (발 자리 226~342가 땅 위 · FINAL §3-4) */
     groundScreen: [210, 385] as [number, number],
+    /** 화면이 기본보다 높을 때 배경 땅 띠를 늘어난 높이의 이 비율만큼만 내림 (캐릭터는 다 내림 · v1.0.15) */
+    bgDyRate: 0.5,
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
     screenBg: { tower: 'tower', world: 'world', capital: 'capital', inn: 'inn', library: 'library', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */

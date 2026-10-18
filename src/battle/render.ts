@@ -33,10 +33,12 @@ const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[
 const GR = groundJson as unknown as Record<string, [number, number]>;
 /** 화면이 기본(CONFIG.view.h)보다 높을 때(폴드 등) 전장을 그만큼 아래로 → 영웅 발밑과 스킬 칸 사이가 늘 같은 간격 (고느끼 10/18 「캐릭터들이 밑으로 좀」) */
 export const fieldDy = () => Math.max(0, view.h - CONFIG.view.h);
+/** 배경 땅 띠는 그 절반만 내림 → 캐릭터가 숲 끝선이 아니라 땅 안쪽에 섬 (웅스 10/18 토벌 「아직 위에 있어요」 · 형철 「뒷 배경을 위로 조금」) */
+const bgDy = () => Math.round(fieldDy() * CONFIG.ui.bgDyRate);
 export function bgFit(key?: string) {
   const [t, bt] = (key && GR[key]) || GR._default;
-  const sy0 = CONFIG.ui.groundScreen[0] + fieldDy();
-  const sy1 = CONFIG.ui.groundScreen[1] + fieldDy();
+  const sy0 = CONFIG.ui.groundScreen[0] + bgDy();
+  const sy1 = CONFIG.ui.groundScreen[1] + bgDy();
   let h = (sy1 - sy0) / (bt - t);
   let y0 = sy0 - t * h;
   if (y0 > 0) ((h = sy0 / t), (y0 = 0));
@@ -241,7 +243,7 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
   }
   // 전용 배경 그림은 그 그림의 땅 그대로 (덧칠 길·자갈·풀 막대 없음 · FINAL §3-1 「초록 세로 막대」)
   if (own) return;
-  const gy = GROUND - 30 + fieldDy();
+  const gy = GROUND - 30 + bgDy();
   const road = ctx.createLinearGradient(0, gy, 0, view.h);
   road.addColorStop(0, B.road0);
   road.addColorStop(0.15, B.road1);

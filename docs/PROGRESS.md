@@ -590,6 +590,8 @@
 
 - v1.0.14: 장비 창 강화 비용 옆 (보유 N) · 충분 good / 모자람 bad (웅스 10/18)
 
+- v1.0.15: 배경 땅 띠는 fieldDy의 절반(ui.bgDyRate 0.5)만 내림 · 캐릭터는 그대로 (웅스 토벌 피드백)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
