@@ -124,11 +124,11 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
     case 'tower': {
       const f = +r.arg;
       const boss = f % CC.tower.bossEvery === 0;
-      return base(s, `${MODE_NAME.tower} ${f}층`, mobsAt(towerP(f), boss ? 'gwg|B' : 'ggw|wgww', ((f - 1) % 10) + 1, { boss: boss ? `탑의 파수꾼 (${f}층)` : undefined }), 4);
+      return base(s, `${MODE_NAME.tower} ${f}층`, mobsAt(towerP(f), boss ? 'gwg|B' : 'ggw|wgww', ((f - 1) % 10) + 1, { boss: boss ? `탑의 파수꾼 (${f}층)` : undefined, region: 'tower' }), 4);
     }
     case 'day': {
       const L = +r.arg;
-      return base(s, `${MODE_NAME.day} · ${DAY_NAME[dayKind(now)]} ${L}단계`, mobsAt(L * CC.day.step, 'sss|gsg|wgw', 1 + (kstDay(now) % 3), { hp: 1.2 }), kstDay(now) % 10);
+      return base(s, `${MODE_NAME.day} · ${DAY_NAME[dayKind(now)]} ${L}단계`, mobsAt(L * CC.day.step, 'sss|gsg|wgw', 1 + (kstDay(now) % 3), { hp: 1.2, region: 'daily' }), kstDay(now) % 10);
     }
     case 'raid': {
       const p = top(s) + CC.raid.add;
@@ -173,15 +173,15 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
       const gb = guildBoss(s, now);
       const mobs = mobsAt(top(s) + CONFIG.social.guild.raidAdd, 'B', 6, { hp: 1000, boss: gb.name, patterns: [PATTERNS.slam, PATTERNS.focus, PATTERNS.quake] });
       mobs[0][0].partBase = mobs[0][0].hp / 1000 * CC.world.partBase;
-      // 월드 보스는 자기 그림 (불꽃 날개 마왕 · 레이드·골렘 그림 같이 쓰던 것 · ANIM_1017 ④)
-      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('worldboss') };
+      // 길드 레이드는 자기 그림 「서리 용」 (FINAL_1018 §6 · 레이드와 같은 배치)
+      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('graidboss') };
       return base(s, `${MODE_NAME.graid} · ${CONFIG.social.guild.raidSec}초 동안 피해 주기`, mobs, 6, { limit: CONFIG.social.guild.raidSec, timeUp: 'win', arena: true });
     }
     case 'side': {
       const id = String(r.arg);
       const act = r.sub ?? (s.side[id] ?? 0) + 1;
       const p = pOfLv(s.heroes[id]?.lv ?? 1) + CC.side.add;
-      const set = base(s, `${MODE_NAME.side} · ${heroOf(id).name} ${act}막`, mobsAt(p, act === CC.side.acts ? 'gw|B' : 'gsg|wgw', 1 + (hashStr(id) % 3), { boss: act === CC.side.acts ? `${heroOf(id).name}의 그림자` : undefined }), hashStr(id) % 10);
+      const set = base(s, `${MODE_NAME.side} · ${heroOf(id).name} ${act}막`, mobsAt(p, act === CC.side.acts ? 'gw|B' : 'gsg|wgw', 1 + (hashStr(id) % 3), { boss: act === CC.side.acts ? `${heroOf(id).name}의 그림자` : undefined, region: 'side' }), hashStr(id) % 10);
       // 외전은 그 영웅이 꼭 파티에 (모자라면 첫 자리를 바꿈)
       const ids = partyIds(s).includes(id) ? partyIds(s) : [id, ...partyIds(s).slice(0, 3)];
       set.heroes = buildHeroes({ ...s, party: ids });
@@ -397,33 +397,44 @@ export function worldRank(s: Save = S, now = Date.now()) {
   return { rank, total: b.length, pct: rank / b.length };
 }
 
-// ───────── 이정표 ─────────
+// ───────── 이정표 (RECOVER_1018 S5): 장마다 할 일 사슬 6칸 · 스테이지 + 새 기능 써 보기 · 칸마다 바로가기 ─────────
 export interface Milestone {
   id: string;
+  /** 몇 장 사슬 */
+  c: number;
   name: string;
+  /** 칸을 눌렀을 때 설명 한 줄 */
+  desc: string;
   done: (s: Save) => boolean;
+  /** 바로가기 [화면, 인자] */
+  go: [string, Record<string, unknown>];
 }
 const gearMax = (s: Save, f: (g: Gear) => number) => Math.max(0, ...Object.values(s.items).filter((x): x is Gear => x.kind === 'gear').map(f));
 const ownedN = (s: Save) => Object.keys(s.heroes).length;
-export const MILESTONES: Milestone[] = [
-  ...[1, 2, 3, 5, 7, 10].map((c) => ({ id: `ch${c}`, name: `스토리 ${c}장 클리어`, done: (s: Save) => cleared({ c, s: 10, d: 0 }, s) })),
-  ...[1, 3].map((c) => ({ id: `hard${c}`, name: `어려움 ${c}장 클리어`, done: (s: Save) => cleared({ c, s: 10, d: 1 }, s) })),
-  ...[5, 10, 20].map((n) => ({ id: `acc${n}`, name: `원정대 레벨 ${n}`, done: (s: Save) => s.acc.lv >= n })),
-  ...[8, 12, 20].map((n) => ({ id: `own${n}`, name: `영웅 ${n}명 모으기`, done: (s: Save) => ownedN(s) >= n })),
-  ...[5, 10].map((n) => ({ id: `enh${n}`, name: `장비 +${n} 강화`, done: (s: Save) => gearMax(s, (g) => g.enh) >= n })),
-  { id: 'star5', name: '장비 5성 만들기', done: (s: Save) => gearMax(s, (g) => g.star) >= 5 },
-  ...[10, 30].map((n) => ({ id: `tower${n}`, name: `도전의 탑 ${n}층`, done: (s: Save) => s.tower.best >= n })),
-  { id: 'raid1', name: '레이드 첫 승리', done: (s: Save) => (s.wins.raid ?? 0) > 0 },
-  { id: 'arena5', name: '결투장 5승', done: (s: Save) => s.arena.win >= 5 },
-  { id: 'arena2', name: '결투장 은 리그', done: (s: Save) => s.arena.best >= CC.arena.tiers[1][0] },
-  { id: 'side1', name: '영웅 외전 하나 끝내기', done: (s: Save) => Object.values(s.treasure).some(Boolean) },
-  { id: 'awaken1', name: '영웅 첫 각성', done: (s: Save) => Object.values(s.heroes).some((h) => h.awaken > 0) },
-  { id: 'trans1', name: '영웅 첫 초월', done: (s: Save) => Object.values(s.heroes).some((h) => h.trans.length > 0) },
-  { id: 'world1', name: '월드 보스 도전', done: (s: Save) => s.world.my > 0 },
+const ever = (s: Save, ev: string) => s.track?.all?.[ev] ?? 0;
+type Step = [string, string, (s: Save) => boolean, [string, Record<string, unknown>]];
+const stage = (c: number, n: number): Step => [n === 1 ? `${c}장 진입` : n === 10 ? `${c}장 보스 쓰러뜨리기` : `${c}-${n} 클리어`, n === 10 ? `${c}-10 보스를 쓰러뜨리면 다음 장이 열려요.` : `${c}-${n} 스테이지를 깨요.`, (s) => cleared({ c, s: n, d: 0 }, s), ['prep', { stage: { c, s: n, d: 0 }, from: 'lobby' }]];
+/** 장별 할 일 (가운데 칸은 그 장쯤 열리는 기능 써 보기 · 형철 확인용 초안) */
+const CHAINS: Step[][] = [
+  [stage(1, 3), ['장비 끼기', '영웅 정보에서 장비를 하나 껴 봐요. 「자동 장착」을 눌러도 돼요.', (s) => Object.values(s.items).some((x) => x.kind === 'gear' && !!x.by), ['heroes', {}]], stage(1, 6), ['장비 강화 1번', '가방에서 장비를 골라 강화해 봐요.', (s) => ever(s, 'enh') > 0, ['bag', {}]], ['영웅 Lv.5', '전투하면 편성한 영웅이 함께 자라요.', (s) => Object.values(s.heroes).some((h) => h.lv >= 5), ['prep', {}]], stage(1, 10)],
+  [stage(2, 1), ['스킬 올리기', '영웅 정보 「스킬」 탭에서 스킬 레벨을 올려 봐요.', (s) => ever(s, 'skill') > 0, ['heroes', {}]], stage(2, 5), ['영웅 영입', '상점 「영웅」에서 새 영웅을 데려와요.', (s) => ever(s, 'hero') > 0, ['shop', { cat: 'hero' }]], ['장비 소환 1번', '상점 「소환」에서 장비를 뽑아 봐요. 하루 한 번은 무료예요.', (s) => ever(s, 'summon') > 0, ['shop', { cat: 'summon' }]], stage(2, 10)],
+  [stage(3, 1), ['결투장 1판', '포탈 > 결투장에서 다른 원정대와 겨뤄요.', (s) => s.arena.win + s.arena.lose > 0, ['portal', { tab: 'arena' }]], stage(3, 5), ['소탕 1번', '별 3개로 깬 스테이지는 정보 창에서 소탕할 수 있어요.', (s) => ever(s, 'repeat') > 0, ['lobby', {}]], ['원정대 Lv.10', '스테이지·미션으로 원정대 경험치를 모아요.', (s) => s.acc.lv >= 10, ['mission', {}]], stage(3, 10)],
+  [stage(4, 1), ['도전의 탑 5층', '포탈 > 도전의 탑을 한 층씩 올라요.', (s) => s.tower.best >= 5, ['portal', { tab: 'tower' }]], stage(4, 5), ['장비 +5 강화', '장비 하나를 +5까지 강화해요.', (s) => gearMax(s, (g) => g.enh) >= 5, ['bag', {}]], ['영웅 8명 모으기', '장을 깨거나 상점에서 영웅을 모아요.', (s) => ownedN(s) >= 8, ['shop', { cat: 'hero' }]], stage(4, 10)],
+  [stage(5, 1), ['레이드 첫 승리', '포탈 > 레이드에서 큰 보스를 쓰러뜨려요.', (s) => (s.wins.raid ?? 0) > 0, ['portal', { tab: 'raid' }]], stage(5, 5), ['결투장 5승', '결투장에서 다섯 번 이겨요.', (s) => s.arena.win >= 5, ['portal', { tab: 'arena' }]], ['영웅 첫 각성', '영웅 정보에서 각성석으로 각성해요.', (s) => Object.values(s.heroes).some((h) => h.awaken > 0), ['heroes', {}]], stage(5, 10)],
+  [stage(6, 1), ['월드 보스 도전', '포탈 > 월드 보스에 한 번 도전해요.', (s) => s.world.my > 0, ['portal', { tab: 'world' }]], stage(6, 5), ['어려움 1장 클리어', '모험에서 난이도를 「어려움」으로 바꿔 1장을 깨요.', (s) => cleared({ c: 1, s: 10, d: 1 }, s), ['adventure', { c: 1, d: 1 }]], ['장비 5성 만들기', '장비를 합성해 5성을 만들어요.', (s) => gearMax(s, (g) => g.star) >= 5, ['bag', {}]], stage(6, 10)],
+  [stage(7, 1), ['도전의 탑 10층', '도전의 탑 10층까지 올라요.', (s) => s.tower.best >= 10, ['portal', { tab: 'tower' }]], stage(7, 5), ['원정대 Lv.20', '원정대 레벨 20을 찍어요.', (s) => s.acc.lv >= 20, ['mission', {}]], ['영웅 외전 하나 끝내기', '포탈 > 영웅 외전을 끝까지 봐요.', (s) => Object.values(s.treasure).some(Boolean), ['portal', { tab: 'side' }]], stage(7, 10)],
+  [stage(8, 1), ['결투장 은 리그', '결투장 점수를 올려 은 리그에 들어가요.', (s) => s.arena.best >= CC.arena.tiers[1][0], ['portal', { tab: 'arena' }]], stage(8, 5), ['장비 +10 강화', '장비 하나를 +10까지 강화해요.', (s) => gearMax(s, (g) => g.enh) >= 10, ['bag', {}]], ['영웅 12명 모으기', '영웅을 12명까지 모아요.', (s) => ownedN(s) >= 12, ['shop', { cat: 'hero' }]], stage(8, 10)],
+  [stage(9, 1), ['영웅 첫 초월', '영웅 정보에서 초월석으로 초월해요.', (s) => Object.values(s.heroes).some((h) => h.trans.length > 0), ['heroes', {}]], stage(9, 5), ['도전의 탑 30층', '도전의 탑 30층까지 올라요.', (s) => s.tower.best >= 30, ['portal', { tab: 'tower' }]], ['어려움 3장 클리어', '어려움 난이도 3장을 깨요.', (s) => cleared({ c: 3, s: 10, d: 1 }, s), ['adventure', { c: 3, d: 1 }]], stage(9, 10)],
+  [stage(10, 1), ['영웅 20명 모으기', '영웅을 20명까지 모아요.', (s) => ownedN(s) >= 20, ['shop', { cat: 'hero' }]], stage(10, 5), ['길드 출석', '길드에 들어가 출석해요.', (s) => ever(s, 'guildAttend') > 0, ['guild', {}]], ['친구에게 선물', '친구 화면에서 행동력을 선물해요.', (s) => ever(s, 'gift') > 0, ['friends', {}]], stage(10, 10)],
 ];
+export const MILESTONES: Milestone[] = CHAINS.flatMap((steps, i) => steps.map(([name, desc, done, go], k) => ({ id: `m${i + 1}-${k + 1}`, c: i + 1, name, desc, done, go })));
+export const milesOf = (c: number) => MILESTONES.filter((m) => m.c === c);
+/** 지금 할 이정표 (안 받은 것 중 맨 앞) */
+export const nextMile = (s: Save = S) => MILESTONES.find((m) => !s.miles.includes(m.id));
 export const milesReady = (s: Save = S) => MILESTONES.filter((m) => !s.miles.includes(m.id) && m.done(s));
-export function claimMiles(s: Save = S): number {
-  const ready = milesReady(s);
+/** 받을 수 있는 이정표 모두 받기 (ids 주면 그것만) → 받은 개수 */
+export function claimMiles(s: Save = S, ids?: string[]): number {
+  const ready = milesReady(s).filter((m) => !ids || ids.includes(m.id));
   for (const m of ready) s.miles.push(m.id);
   addCur('stardust', ready.length * CC.milestoneDust, s);
   return ready.length;

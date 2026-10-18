@@ -35,7 +35,7 @@ register('mission', {
       if (tab === 'd' || tab === 'w' || tab === 'r' || tab === 'ach') {
         const k = tab as Kind;
         const list = listOf(k);
-        body = `<div class="row"><span class="grow sm dim">${k === 'd' ? '매일 KST 0시에 새로' : k === 'w' ? '매주 월요일에 새로' : k === 'r' ? '레이드·길드 레이드 (매일)' : '모두 세는 업적'}</span><button class="btn hi" data-all ${readyOf(k).length ? '' : 'disabled'}>모두 받기 (${readyOf(k).length})</button></div>
+        body = `<div class="row"><span class="grow sm dim">${k === 'd' ? '매일 0시 초기화' : k === 'w' ? '매주 월요일에 새로' : k === 'r' ? '레이드·길드 레이드 (매일)' : '모두 세는 업적'}</span>${readyOf(k).length ? `<button class="btn hi" data-all>모두 받기 (${readyOf(k).length})</button>` : ''}</div>
           <div class="col">${list.map((m) => {
             const done = isDone(k, m);
             const got = isClaimed(k, m);
@@ -51,13 +51,25 @@ register('mission', {
       }
       root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
-      $$('[data-claim]', root).forEach((b) => (b.onclick = () => (claim(tab as Kind, b.dataset.claim!), after(draw, '받았어요'))));
+      // 받기 → 보상 창 (아이콘·수량 크게 · FINAL §5)
+      $$('[data-claim]', root).forEach((b) => (b.onclick = () => {
+        const m = listOf(tab as Kind).find((x) => x.id === b.dataset.claim)!;
+        claim(tab as Kind, m.id);
+        after(draw, '');
+        giftWin('받았어요', m.give);
+      }));
       $$('[data-go]', root).forEach((b) => (b.onclick = () => {
         const [to, prm] = JSON.parse(b.dataset.go!) as [string, Record<string, unknown>];
         go(to as never, prm);
       }));
       const all = root.querySelector<HTMLElement>('[data-all]');
-      if (all) all.onclick = () => after(draw, `${claimAll(tab as Kind)}개 받았어요`);
+      if (all) all.onclick = () => {
+        const sum: Record<string, number> = {};
+        for (const m of readyOf(tab as Kind)) for (const [c, v] of Object.entries(m.give)) sum[c] = (sum[c] ?? 0) + v;
+        const n = claimAll(tab as Kind);
+        after(draw, '');
+        giftWin(`${n}개 받았어요`, sum);
+      };
       const att = root.querySelector<HTMLElement>('[data-att]');
       if (att) att.onclick = () => {
         const r = attend();
@@ -67,6 +79,10 @@ register('mission', {
     draw();
   },
 });
+/** 받은 보상 창: 칸 카드(아이콘 + 수량) 크게 */
+function giftWin(title: string, give: Record<string, number>) {
+  modal(title, `<div class="rw gifts big">${Object.entries(give).map(([k, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${esc(CUR_NAME[k] ?? k)}<b>+${fmt(v)}</b></div>`).join('')}</div>`, [['확인', null, true]]);
+}
 /** 로비 첫 진입: 출석 창 (하루 한 번) */
 export function attendPopup() {
   if (!attendToday()) return;
@@ -101,7 +117,7 @@ register('guild', {
       } else if (tab === 'info') {
         const bd = guildBoard();
         body = `<div class="panel col"><b>${g.name} · Lv.${g.lv}</b><span class="xs dim">${esc(g.desc)}</span>
-            <div class="row"><button class="btn hi" data-att ${S.guild.attendDay === dayKey() ? 'disabled' : ''}>출석 (${icon('guildCoin')}${SO.guild.attendCoin})</button>${SO.guild.donate.map(([gold, pts, coin], i) => `<button class="btn" data-don="${i}">기여 ${icon('gold')}${fmt(gold)} = ${pts}점 · ${icon('guildCoin')}${coin}</button>`).join('')}</div>
+            <div class="row gbtns"><button class="btn hi" data-att ${S.guild.attendDay === dayKey() ? 'disabled' : ''}>출석 (${icon('guildCoin')}${SO.guild.attendCoin})</button>${SO.guild.donate.map(([gold, pts, coin], i) => `<button class="btn" data-don="${i}">기여 ${icon('gold')}${fmt(gold)} = ${pts}점 · ${icon('guildCoin')}${coin}</button>`).join('')}</div>
             <span class="xs mute">기여는 하루 한 번 · 내 기여 이번 주 ${fmt(S.guild.weekContrib)} · 모두 ${fmt(S.guild.contrib)}</span></div>
           <div class="panel col"><b class="sm">이번 주 기여 순위</b>${bd.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${i + 1}. ${esc(x.name)}</span><b>${fmt(x.pts)}점 · 레이드 ${fmt(x.raid)}</b></div>`).join('')}${g.real ? '<span class="xs mute">실멤버 기록은 서버(클라우드)가 붙으면 보여요</span>' : ''}</div>
           <button class="btn mini" data-leave>길드 나가기</button>`;
@@ -144,7 +160,7 @@ register('friends', {
       root.innerHTML = `<div class="body"><div class="col grow scroll">
           <div class="row"><b class="grow">친구 ${S.friends.list.length}/${SO.friends.max}</b><span class="xs dim">하루 한 번씩 선물(행동력 ${SO.friends.gift}) · 받기 하루 ${SO.friends.giftsPerDay}번</span></div>
           ${S.friends.list.map((n) => `<div class="panel row frow"><div class="pt s" style="background-image:url(${heroPortrait(avatarOf(n))})"></div><b class="hn grow">${esc(n)} <span class="chip">Lv.${friendLv(n)}</span></b><button class="btn mini" data-gift="${esc(n)}" ${S.friends.sent.includes(n) && S.friends.day === dayKey() ? 'disabled' : ''}>선물</button><button class="btn mini" data-del="${esc(n)}">삭제</button></div>`).join('') || '<span class="mute">아직 친구가 없어요</span>'}
-        </div><div class="col side scroll"><b class="sm">추천 원정대 (실유저는 서버 연결 뒤)</b>${friendSuggest().map((n) => `<div class="row"><span class="grow xs">${esc(n)} · Lv.${friendLv(n)}</span><button class="btn mini" data-add="${esc(n)}">추가</button></div>`).join('')}<span class="xs mute">친구 영웅 빌려 쓰기는 선택 기능 — 나중에</span></div></div>`;
+        </div><div class="col side scroll"><b class="sm">추천 원정대</b>${friendSuggest().map((n) => `<div class="row"><span class="grow xs">${esc(n)} · Lv.${friendLv(n)}</span><button class="btn mini" data-add="${esc(n)}">추가</button></div>`).join('')}<span class="xs mute">친구 영웅 빌려 쓰기는 선택 기능 — 나중에</span></div></div>`;
       $$('[data-gift]', root).forEach((b) => (b.onclick = () => after(draw, { ok: '선물을 보냈어요 (답례 행동력)', done: '오늘은 이미 보냈어요', none: '' }[gift(b.dataset.gift!)])));
       $$('[data-del]', root).forEach((b) => (b.onclick = () => (removeFriend(b.dataset.del!), after(draw, ''))));
       $$('[data-add]', root).forEach((b) => (b.onclick = () => after(draw, addFriend(b.dataset.add!) ? '친구가 됐어요' : '친구가 가득 찼어요')));
@@ -165,9 +181,8 @@ register('ranking', {
       if (got.length) persist();
       const bd = board(tab).slice(0, 13);
       root.innerHTML = `<div class="body"><div class="col shopcats">${(Object.keys(BOARD_NAME) as Board[]).map((k) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(BOARD_PIC[k], BOARD_NAME[k])}</button>`).join('')}</div>
-        <div class="col grow scroll"><div class="panel col">${bd.map((x, i) => `<div class="kv rank${x.me ? ' gold' : ''}"><span>${medal(i)} <b class="hn">${esc(x.name)}</b>${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div>
-          <span class="xs dim">내 순위 ${myRank(tab) || '-'}위 · ${SO.titleTop}위 안이면 랭커 칭호 「${TITLE_OF[tab]}」 (채팅 이름 옆) · 칭호 달기는 설정</span>
-          <span class="xs mute">1단계: AI 원정대 + 나 · 실유저 순위는 서버 연결 뒤</span></div></div>`;
+        <div class="col grow"><span class="xs dim">내 순위 ${myRank(tab) || '-'}위 · ${SO.titleTop}위 안이면 랭커 칭호 「${TITLE_OF[tab]}」 (채팅 이름 옆) · 칭호 달기는 설정</span>
+          <div class="panel col grow scroll">${bd.map((x, i) => `<div class="kv rank${x.me ? ' gold' : ''}"><span>${medal(i)} <b class="hn">${esc(x.name)}</b>${i < SO.titleTop ? ` <span class="chip on">${TITLE_OF[tab]}</span>` : ''}</span><b>${fmt(x.v)}</b></div>`).join('')}</div></div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab as Board), draw())));
       if (got.length) toast(`랭커 칭호 「${got.join('」「')}」을 얻었어요!`);
     };
@@ -204,7 +219,7 @@ const QUICK = SO.quick;
 export const quickHtml = () => `<div class="qpop" hidden>${QUICK.phrases.map((t) => `<button class="tab" data-q="${esc(t)}">${esc(t)}</button>`).join('')}${QUICK.emotes.map((k) => `<button class="tab emo" data-qe="${k}">${icon(k)}</button>`).join('')}</div>`;
 export function chatHtml(ch: ChatLine['ch']) {
   const lines = S.chat.filter((l) => l.ch === ch).slice(-30);
-  return `<div class="chatbox"><div class="chatlog" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
+  return `<div class="chatbox"><div class="chatlog scroll" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
     ${quickHtml()}<div class="row chatrow"><button class="btn mini qbtn" data-quick title="빠른 채팅">${icon('emote')}</button><input class="tab grow chatin" data-in maxlength="${SO.chat.max}" enterkeyhint="send" placeholder="${ch === 'world' ? '월드 채팅' : '길드 채팅'} (로그인하면 다른 사람에게도)"><button class="btn mini hi" data-send>보내기</button></div></div>`;
 }
 /** 키보드가 가린 만큼 (게임 좌표 px) → 채팅 판을 남은 자리에 꽉 차게 (돌린 화면이면 게임 오른쪽·왼쪽이 화면 아래·위) */
@@ -284,8 +299,7 @@ register('settings', {
       root.innerHTML = `<div class="body"><div class="col grow scroll">
           <div class="panel col"><b>계정 (「체크인」과 같은 계정)</b>
             ${w ? `<span class="sm">${w.guest ? '게스트' : `아이디 ${esc(w.login ?? '')}`} 로그인 중</span><div class="row"><button class="btn" data-push>${icon('next')} 클라우드에 올리기</button><button class="btn" data-pull>클라우드에서 받기</button><button class="btn mini" data-out>로그아웃</button></div>`
-              : `<span class="xs dim">「체크인」 아이디·비밀번호로 로그인하면 클라우드 저장·실유저 채팅이 켜져요</span><div class="row"><input class="tab" data-id placeholder="아이디"><input class="tab" data-pw type="password" placeholder="비밀번호"><button class="btn hi" data-login>로그인</button><button class="btn" data-guest>게스트로</button></div>`}
-            <span class="xs mute">서버 테이블(supabase/star_expedition.sql)을 형철이 적용해야 클라우드 저장이 돼요 · 그 전에는 이 기기에만 저장</span></div>
+              : `<span class="xs dim">「체크인」 아이디·비밀번호로 로그인하면 클라우드 저장·실유저 채팅이 켜져요</span><div class="row"><input class="tab" data-id placeholder="아이디"><input class="tab" data-pw type="password" placeholder="비밀번호"><button class="btn hi" data-login>로그인</button><button class="btn" data-guest>게스트로</button></div>`}</div>
           <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
           <div class="panel col"><b>소리 · 화면</b>

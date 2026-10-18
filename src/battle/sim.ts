@@ -758,7 +758,8 @@ export function step(b: Battle, dtReal: number) {
   }
 
   if (b.phase === 'walk') {
-    for (const h of alive(b.heroes)) if (!h.busy && h.act !== 'walk') ((h.act = 'walk'), (h.at = 0));
+    // busy는 동작이 끝나면 0 아래(-dt)로 남을 수 있어 「<= 0」으로 봄 — 「!busy」면 2웨이브부터 멈춘 채 미끄러짐 (FINAL §3-4)
+    for (const h of alive(b.heroes)) if (h.busy <= 0 && h.act !== 'walk') ((h.act = 'walk'), (h.at = 0));
     b.scroll += K.walkScroll * dt;
     b.walkLeft -= dt;
     if (b.walkLeft <= 0) {

@@ -30,12 +30,14 @@ const ilvNow = () => {
 const say = (r: string, m: Record<string, string>) => toast(m[r] ?? r);
 
 // ───────── 영웅 정보 ─────────
+/** 탭 4개 (FINAL_1018 §4): 일반 · 스킬 · 장비 · 성장 — 글씨만 · 탭마다 예전 칸 묶음 */
+const HERO_TABS: [string, string, string[]][] = [['info', '일반', ['info', 'costume']], ['skill', '스킬', ['skill']], ['gear', '장비', ['ex']], ['grow', '성장', ['grow', 'trans']]];
 register('hero', {
   title: (p) => `${icon('heroes')} 영웅 정보 · ${heroOf(p.id as string).name}`,
   back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : p.shop ? go('shop', { cat: 'hero' }, false) : go('heroes', {}, false)),
   enter(root, p) {
     let id = p.id as string;
-    let tab = (p.tab as string) ?? 'grow';
+    let tab = HERO_TABS.some(([k]) => k === p.tab) ? (p.tab as string) : 'grow';
     const draw = () => {
       const h = heroOf(id);
       const own = owned(id);
@@ -50,17 +52,18 @@ register('hero', {
         <div class="col grow">
           <div class="row panel"><div class="pt l" style="background-image:url(${heroPortrait(id)})"></div>
             <div class="col grow"><b>${h.name} <span class="stars">${iconText('star').repeat(hs?.star ?? 1)}</span>${hs?.awaken ? ` <span class="chip">각성 ${hs.awaken}</span>` : ''}</b>
-              <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]} · 전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
+              <span class="xs dim">${h.title} · ${JOBS[h.job].name} · ${ZONE_NAME[JOBS[h.job].zone]}</span>
+              <span class="xs dim">전투력 <b class="gold">${fmt(heroPower(id))}</b></span>
               <span class="xs mute fit2 fit" data-min="${CONFIG.ui.fit.desc}">${esc(h.concept)}</span></div></div>
-          <div class="tabs">${[['grow', '성장', 'hero_growth'], ['skill', '스킬', 'hero_skill'], ['trans', '초월', 'hero_trans'], ['ex', '전용 무기', 'hero_exclusive'], ['costume', '코스튬', 'hero_costume'], ['info', '능력·인연', 'hero_bond']].map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div>
-          <div class="panel col grow scroll">${!own ? previewHtml(id) : tabHtml(tab, id)}</div>
+          <div class="tabs htabs">${HERO_TABS.map(([k, n]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
+          <div class="panel col grow scroll">${!own ? previewHtml(id) : HERO_TABS.find(([k]) => k === tab)![2].map((t) => tabHtml(t, id)).join('<hr class="tsep">')}</div>
         </div>
         <div class="col eq">
           <div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k], k === 'weapon' ? 'slot_weapon' : k === 'armor' ? 'slot_armor' : 'slot_acc')}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
-            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="ex" title="전용 무기">${hs?.ex ? icon('exShard') : uiPic('icons/slot_exclusive', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
+            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="gear" title="전용 무기">${hs?.ex ? icon('exShard') : uiPic('icons/slot_exclusive', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
             <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${uiPic('icons/lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
           <div class="row"><button class="btn mini grow" data-auto ${own ? '' : 'disabled'}>자동 장착</button><button class="btn mini grow" data-off ${own ? '' : 'disabled'}>모두 해제</button></div>
-          <div class="panel col stats scroll">
+          <div class="panel col stats">
             <div class="kv"><span>${icon('hp')}체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>${icon('atk')}공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>${icon('def')}방어력</span><b>${fmt(st.def)}</b></div>
             ${capRow(`${icon('crit')}치명타`, 'crit', st.crit)}${capRow(`${icon('critDmg')}치명 피해`, 'critDmg', st.critDmg)}${capRow(`${icon('spd')}공격 속도`, 'spd', st.spd)}${capRow(`${icon('def')}받는 피해 감소`, 'dmgCut', st.dmgCut)}
           </div>
@@ -120,7 +123,7 @@ register('hero', {
 /** 아직 없는 영웅 미리보기 (PLAYTEST §12): 스킬 3개 + 패시브 · 능력치는 오른쪽 판(1레벨 기준) · 영입 버튼 */
 function previewHtml(id: string): string {
   const h = heroOf(id);
-  return `<div class="row preview"><span class="grow sm">아직 없는 영웅이에요 · 능력치는 1레벨 기준</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))} 영입</button></div>
+  return `<div class="row preview"><span class="grow sm">미보유 · Lv.1 기준</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))} 영입</button></div>
     <div class="panel col"><b class="sm">패시브 · ${h.passive.name}</b><span class="xs dim">${descPassive(h.passive)}</span></div>
     ${h.skills.map((s, i) => `<div class="skl"><div class="si ski" style="background-image:url(${skillIconUrl(id, i)})"></div><div class="col grow"><b class="skn">${s.name}<span class="skm">마나 <i>${s.cost}</i> · <i>${s.cd}</i>초</span></b><span class="skd">${descSkill(s)}</span></div></div>`).join('')}`;
 }
@@ -135,12 +138,13 @@ function tabHtml(tab: string, id: string): string {
     const HC = CONFIG.hero;
     const steps = [`Lv.${HC.levelCap[0]}`, ...HC.levelCap.slice(1).map((_, i) => `각성${i + 1}`), ...GR.transcend.stones.map((_, i) => `초월${i + 1}`)];
     // 칩 줄 대신: 별 5개 + 각성 점 5개 + 초월 (HARMONY §2)
-    const dots = (n: number, on: number) => Array.from({ length: n }, (_, i) => `<i class="${i < on ? 'on' : ''}"></i>`).join('');
-    const road = `<div class="road2" title="${steps.join(` ${iconText('next')} `)}"><span class="stp">${Array.from({ length: 5 }, (_, i) => uiPic('icons/star', `stpic${i < hs.star ? '' : ' off'}`)).join('')}</span><span class="dots">각성 ${dots(5, hs.awaken)}</span><span class="dots">초월 ${dots(5, hs.trans.length)}</span><b>만렙 ${levelMax()}</b></div>`;
+    // ◇ 대신 지도 별 그림 (FINAL_1018 §4 · ui/map/star_on·star_off)
+    const dots = (n: number, on: number) => Array.from({ length: n }, (_, i) => uiPic(`map/star_${i < on ? 'on' : 'off'}`, 'stpic')).join('');
+    const road = `<div class="road2" title="${steps.join(` ${iconText('next')} `)}"><span class="stp">${dots(5, hs.star)}</span><span class="dots">각성 ${dots(5, hs.awaken)}</span><span class="dots">초월 ${dots(5, hs.trans.length)}</span><b>만렙 ${levelMax()}</b></div>`;
     return `${road}<div class="kv"><span>레벨</span><b>${hs.lv} / ${cap} <span class="xs dim">(${fmt(hs.exp)} / ${fmt(expNeed(hs.lv))})</span></b></div>
       <div class="xbar"><i style="width:${Math.min(100, (hs.exp / expNeed(hs.lv)) * 100)}%"></i></div>
       <div class="row"><span class="grow md">${icon('exp')} 경험치 물약 ${S.cur.exp ?? 0}개 <span class="xs dim">(1개 = ${fmt(GR.potionExp)})</span></span><button class="btn mini" data-pot="1">1개</button><button class="btn mini" data-pot="10">10개</button></div>
-      <div class="row"><span class="grow md">각성 ${hs.awaken}/5 <span class="xs dim">레벨 상한 ${cap}${ac ? ` ${iconText('next')} ${cap + CONFIG.hero.levelCap[hs.awaken + 1] - CONFIG.hero.levelCap[hs.awaken]} · 레벨 ${cap} 필요 · ${cost([['awakenStone', ac.stones], ['gold', ac.gold]])}` : ''}</span></span><button class="btn mini hi" data-g="awaken" ${ac ? '' : 'disabled'}>각성</button></div>
+      <div class="row"><span class="grow md col">각성 ${hs.awaken}/5 <span class="xs dim">레벨 상한 ${cap}${ac ? ` ${iconText('next')} ${cap + CONFIG.hero.levelCap[hs.awaken + 1] - CONFIG.hero.levelCap[hs.awaken]} · 레벨 ${cap} 필요</span><span class="xs dim">${cost([['awakenStone', ac.stones], ['gold', ac.gold]])}` : ''}</span></span><button class="btn mini hi" data-g="awaken" ${ac ? '' : 'disabled'}>각성</button></div>
       <div class="row"><span class="grow md">별 ${hs.star}/5 <span class="xs dim">별마다 능력 +${pct(GR.star.stat)}${sc ? ` · ${cost([['stardust', sc.dust], ['gold', sc.gold]])}` : ''}</span></span><button class="btn mini" data-g="star" ${sc ? '' : 'disabled'}>별 올리기</button></div>`;
   }
   if (tab === 'skill')

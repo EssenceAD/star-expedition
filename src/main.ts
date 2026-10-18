@@ -7,7 +7,7 @@ import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
 import { applyTheme } from './theme/tokens';
-import { $, currentScreen, go, tickChat, watchFit } from './ui/core';
+import { $, currentScreen, go, scrollHints, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
 import './ui/screensB';
@@ -92,6 +92,7 @@ view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: await critP, fx: n
 void loadFxArt().then((a) => (view.art.fx = a));
 // 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)
 watchFit($('#stage'));
+setInterval(() => scrollHints($('#stage')), CONFIG.ui.scrollHintMs);
 addEventListener('pagehide', () => persist());
 document.addEventListener('visibilitychange', () => document.hidden && persist());
 go('title', {}, false);

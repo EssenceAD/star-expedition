@@ -10,7 +10,8 @@ import { owned } from '../game/heroes';
 import { cleared } from '../game/stage';
 import { persist, S } from '../game/state';
 import { icon } from '../theme/tokens';
-import { $$, esc, fmt, go, heroPortrait, medal, register, syncBar, tabLabel, toast } from './core';
+import { $$, esc, fmt, framedPt, go, heroPortrait, medal, register, syncBar, tabLabel, toast } from './core';
+import { openMiles } from './milestones';
 
 const CC = CONFIG.content;
 const TABS: [string, string, string][] = [
@@ -46,7 +47,7 @@ register('portal', {
       } else if (tab === 'tower') {
         const f = S.tower.best + 1;
         body = `<p class="sm dim">층마다 강해져요 (×${CC.tower.grow}) · ${CC.tower.bossEvery}층마다 보스 · 처음 깬 층은 별가루 · ${CC.tower.runeEvery}층마다 룬 · 탑 코인 · 주간 최고 층은 랭킹(D)</p>
-          <div class="panel col tower"><div class="tstat"><div><small>최고 층</small><b>${S.tower.best}층</b></div><div><small>이번 주</small><b>${S.tower.weekBest}층</b></div></div>
+          <div class="panel col tower"><div class="tstat"><div><small>지금 층</small><b>${f}층</b></div><div><small>다음 보상</small><b class="tgift">${icon('stardust')}${CC.tower.dust[0] + CC.tower.dust[1] * f} ${icon('towerCoin')}${f % CC.tower.bossEvery === 0 ? CC.tower.bossCoin : CC.tower.coin}${f % CC.tower.runeEvery === 0 ? ` ${icon('rune')}` : ''}</b></div><div><small>주간 최고</small><b>${S.tower.weekBest}층</b></div></div>
           <div class="row"><button class="btn hi big" data-run='${JSON.stringify({ mode: 'tower', arg: f })}'>${f}층 도전</button>${S.tower.best ? `<button class="btn" data-run='${JSON.stringify({ mode: 'tower', arg: S.tower.best })}'>${S.tower.best}층 다시</button>` : ''}</div></div>`;
       } else if (tab === 'day') {
         const k = dayKind();
@@ -59,15 +60,15 @@ register('portal', {
       } else if (tab === 'world') {
         const wb = worldBoss();
         const board = worldBoard().slice(0, 8);
-        body = `<p class="sm dim">전 서버 공용 체력 (1단계는 이 기기 + AI 원정대 기여) · 하루 ${CC.world.tries}번 (남은 ${triesText({ mode: 'world', arg: 0 })}) · 한 판 ${CC.world.sec}초 · 준 피해만큼 보상 · 주간 랭킹으로 랭커 칭호(D)</p>
+        body = `<p class="sm dim">전 서버 공용 체력 · 하루 ${CC.world.tries}번 (남은 ${triesText({ mode: 'world', arg: 0 })}) · 한 판 ${CC.world.sec}초 · 준 피해만큼 보상 · 주간 랭킹으로 랭커 칭호(D)</p>
           ${bossCard('worldboss', esc(wb.name), `${CC.world.sec}초 동안 피해 주기`, [['sk_bolt', '광선'], ['warn', '포효'], ['sk_smash', '내려찍기']], [['남은 체력', `${fmt(wb.hp)} / ${fmt(wb.max)}`], ['이번 주 내 피해', fmt(wb.my)], ['한 판 최고', fmt(S.world.best)]], `<button class="btn hi big" data-run='${JSON.stringify({ mode: 'world', arg: 0 })}'>월드 보스 도전</button>`, bar(wb.hp, wb.max))}
-          <div class="panel col board">${board.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${medal(i)} ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div>`;
+          <div class="panel col board scroll">${board.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${medal(i)} ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div>`;
       } else if (tab === 'arena') {
         const opps = arenaOpps();
         body = `<div class="tabs">${(['victory', 'glory', 'last'] as League[]).map((l) => `<button class="tab${league === l ? ' on' : ''}" data-league="${l}">${LEAGUE_NAME[l]}</button>`).join('')}</div>
-          <p class="sm dim">${league === 'victory' ? '기본 리그 · AI 덱(실유저 덱은 D)과 자동 전투' : league === 'glory' ? `서로 영웅 1명씩 금지하고 싸워요 (전투 준비에서 막을 영웅·대신할 영웅을 직접 골라요) · ${CC.arena.gloryHours.map(([a, b]) => `${a}~${b}시`).join(' · ')}만 · 지금 ${gloryOpen() ? '<b class="good">열림</b>' : '<b class="bad">닫힘</b>'}` : `파티 3개로 3판 (2판 먼저 이기면 승리 · 파티 2·3은 전투 준비에서 직접 편성) · 점수 ${CC.arena.lastUnlock} 이상 · 내 파티: ${lastParties().map((p) => p.length).join(' / ')}명`}</p>
-          <div class="kv"><span>점수</span><b>${S.arena.score} · ${tierOf(S.arena.score)} 리그 · ${S.arena.win}승 ${S.arena.lose}패 · 남은 ${triesText({ mode: 'arena', arg: league })}</b></div>
-          <div class="cards">${opps.map((o, i) => `<div class="panel col shopc"><b>${esc(o.name)}</b><span class="xs dim">점수 ${o.score} · 전투력 ${fmt(o.power)}</span><div class="row">${o.party.map((h) => `<div class="pt s" title="${h.def.name}" style="background-image:url(${heroPortrait(h.def.id)})"></div>`).join('')}</div><button class="btn hi" data-run='${JSON.stringify({ mode: 'arena', arg: league, sub: i })}'>도전</button></div>`).join('')}</div>
+          <p class="sm dim">${league === 'victory' ? '기본 리그 · 자동 전투' : league === 'glory' ? `서로 영웅 1명씩 금지하고 싸워요 (전투 준비에서 막을 영웅·대신할 영웅을 직접 골라요) · ${CC.arena.gloryHours.map(([a, b]) => `${a}~${b}시`).join(' · ')}만 · 지금 ${gloryOpen() ? '<b class="good">열림</b>' : '<b class="bad">닫힘</b>'}` : `파티 3개로 3판 (2판 먼저 이기면 승리 · 파티 2·3은 전투 준비에서 직접 편성) · 점수 ${CC.arena.lastUnlock} 이상 · 내 파티: ${lastParties().map((p) => p.length).join(' / ')}명`}</p>
+          <div class="kv"><span>점수</span><b>${S.arena.score} · ${tierOf(S.arena.score)} 리그</b></div><div class="kv"><span>전적</span><b>${S.arena.win}승 ${S.arena.lose}패 · 남은 ${triesText({ mode: 'arena', arg: league })}</b></div>
+          <div class="cards">${opps.map((o, i) => `<div class="panel col shopc"><b>${esc(o.name)}</b><span class="xs dim">점수 ${o.score} · 전투력 ${fmt(o.power)}</span><div class="row fpts">${o.party.map((h) => framedPt(heroPortrait(h.def.id))).join('')}</div><button class="btn hi" data-run='${JSON.stringify({ mode: 'arena', arg: league, sub: i })}'>도전</button></div>`).join('')}</div>
           <span class="xs mute">리그 상점(결투장 코인 ${S.cur.arenaCoin ?? 0})은 상점 「특수 재화」</span>`;
       } else if (tab === 'side') {
         const mine = HEROES.filter((h) => owned(h.id));
@@ -82,7 +83,8 @@ register('portal', {
           <div class="col">${MILESTONES.map((m) => `<div class="kv"><span>${S.miles.includes(m.id) ? icon('check') : ready.includes(m) ? icon('badge') : icon('lock')} ${m.name}</span><b>${icon('stardust')}${CC.milestoneDust}</b></div>`).join('')}</div>`;
       }
       root.innerHTML = `<div class="body"><div class="col shopcats">${TABS.map(([k, n, ic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(ic, n)}${k === 'miles' && milesReady().length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
-      $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
+      // 이정표는 장별 사슬 창으로 (S5)
+      $$('[data-tab]', root).forEach((b) => (b.onclick = () => (b.dataset.tab === 'miles' ? openMiles() : ((tab = b.dataset.tab!), draw()))));
       $$('[data-league]', root).forEach((b) => (b.onclick = () => ((league = b.dataset.league as League), draw())));
       $$('[data-run]', root).forEach((b) => (b.onclick = () => goRun(JSON.parse(b.dataset.run!) as Run)));
       const cl = root.querySelector<HTMLElement>('[data-claim]');

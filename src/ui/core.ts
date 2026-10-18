@@ -24,6 +24,8 @@ export const skillIconUrl = (id: string, k: number) => `${BASE}art/skills/${id}_
 export const uiPic = (path: string, cls = 'up') => `<img class="${cls}" src="${BASE}art/ui/${path}.png" alt="">`;
 /** 탭 = 아이콘 + 글씨 */
 export const tabLabel = (pic: string, text: string) => `${uiPic(pic, 'ti')}<span>${text}</span>`;
+/** 틀 구조 (FINAL §1): .framed > .framed-in(초상 · 틀 구멍 모양으로 잘림) + .framed-frame(원형 틀 그림 · 맨 위) */
+export const framedPt = (url: string, cls = '') => `<span class="fpt framed ${cls}"><i class="framed-in" style="background-image:url(${url})"></i><img class="framed-frame" src="${BASE}art/ui/map/portrait_frame.png" alt=""></span>`;
 export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -99,7 +101,8 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
   bar.hidden = !s.title;
   // 메인 지도: 바 바탕 없이 지도 위에 · 채팅 한 줄은 숨김 (채팅은 바 오른쪽 버튼)
   bar.classList.toggle('onmap', id === 'lobby');
-  tk.hidden = !s.title || id === 'lobby';
+  // 위 채팅 띠는 모든 화면에서 숨김 (MASTER 1-7) · 채팅은 상단 바 채팅 버튼
+  tk.hidden = true;
   if (!s.title) return;
   const title = typeof s.title === 'function' ? s.title(p) : s.title;
   const backBtn = s.back === false || id === 'lobby' ? '' : `<button class="btn mini" data-back>${icon('back')}</button>`;
@@ -227,17 +230,72 @@ export function fitText(root: ParentNode = document) {
     }
   }
 }
+/** 말줄임 없애기 (FINAL_1018 §2): 글씨가 칸을 넘치면 90%까지만 줄이고, 그래도 넘치면 두 줄로 · 글씨가 그대로면 다시 안 잼 */
+export function noClip(root: ParentNode = document) {
+  for (const el of $$('span, b, small, em, strong, p, label, h2, h3, button, div, td, a', root)) {
+    const t = el.textContent ?? '';
+    if (el.dataset.nc === t || el.closest('.fit:not(:scope), canvas')) continue;
+    if (!el.clientWidth || el.scrollWidth <= el.clientWidth + 1) continue;
+    if (![...el.childNodes].some((k) => k.nodeType === 3 && k.textContent!.trim())) continue;
+    el.dataset.nc = t;
+    // .fit은 fitText가 이미 줄였음 → 그래도 넘치면 두 줄
+    if (el.classList.contains('fit')) {
+      el.classList.add('two');
+      continue;
+    }
+    el.style.fontSize = el.style.whiteSpace = '';
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    const min = base * CONFIG.ui.fit.shrink;
+    let size = base;
+    while (el.scrollWidth > el.clientWidth + 1 && size > min) ((size = Math.max(min, size - CONFIG.ui.fit.step)), (el.style.fontSize = `${size}px`));
+    if (el.scrollWidth > el.clientWidth + 1) el.classList.add('two');
+  }
+}
 /** 화면이 바뀔 때마다 (DOM이 바뀐 다음 프레임에) 한 번 */
 export function watchFit(root: HTMLElement) {
   let queued = false;
   const run = () => {
     queued = false;
     fitText(root);
+    noClip(root);
   };
   new MutationObserver(() => {
     if (!queued) ((queued = true), requestAnimationFrame(run));
   }).observe(root, { childList: true, subtree: true });
   void document.fonts?.ready.then(run);
+}
+/** 넘치는 목록 끝 화살표 (MASTER 1-3 · FINAL §0): 스크롤 목록(.scroll)의 안쪽 위·아래 끝에만 · 더 있을 때만 · 그림 ui/battle/scroll_up·down
+ *  #stage 위에 겹쳐 그리고 목록 사각형 안쪽에 둠 (목록과 같이 스크롤되지 않게) */
+const hints = new Map<HTMLElement, HTMLElement[]>();
+export function scrollHints(stage: HTMLElement) {
+  for (const [el, hs] of hints) if (!el.isConnected) (hs.forEach((h) => h.remove()), hints.delete(el));
+  for (const el of $$('.scroll', stage)) {
+    let hs = hints.get(el);
+    const over = el.scrollHeight > el.clientHeight + 1 && el.offsetParent !== null;
+    if (!over && !hs) continue;
+    if (!hs) {
+      hs = ['up', 'down'].map((d) => {
+        const h = document.createElement('img');
+        h.className = `scrollhint ${d}`;
+        h.src = `${BASE}art/ui/battle/scroll_${d}.png`;
+        h.alt = '';
+        stage.append(h);
+        return h;
+      });
+      hints.set(el, hs);
+    }
+    // #stage 안 자리 = offset 합 − 조상 스크롤 (배율·세로 돌림과 상관없음)
+    let x = 0;
+    let y = 0;
+    for (let e: HTMLElement | null = el; e && e !== stage; e = e.offsetParent as HTMLElement | null) ((x += e.offsetLeft), (y += e.offsetTop));
+    for (let e = el.parentElement; e && e !== stage; e = e.parentElement) ((x -= e.scrollLeft), (y -= e.scrollTop));
+    const [up, dn] = hs;
+    up.hidden = !over || el.scrollTop <= 1;
+    dn.hidden = !over || el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+    up.style.left = dn.style.left = `${x + el.offsetWidth / 2}px`;
+    up.style.top = `${y + 2}px`;
+    dn.style.top = `${y + el.offsetHeight - 2}px`;
+  }
 }
 /** 순위 표시: 1~3 금·은·동 메달 · 그 밖은 숫자 (PLAYTEST §7) */
 export const medal = (i: number) => `<i class="rk r${Math.min(i + 1, 4)}">${i + 1}</i>`;
@@ -245,7 +303,7 @@ export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t=
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 
 export const syncCur = (root: ParentNode = document) => $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));
-export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓' };
+export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓', guildCoin: '길드 코인' };
 export const starsHtml = (n: number, max = 3) => `<span class="stars">${iconText('star').repeat(n)}<i>${iconText('star').repeat(Math.max(0, max - n))}</i></span>`;
 
 /** 대화 재생: 탭으로 넘기기 · 스킵 → 끝나면 done */
