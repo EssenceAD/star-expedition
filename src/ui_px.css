@@ -473,3 +473,8 @@ body, #stage { font-weight: normal; }
 #stage .scr[data-screen='shop'] .jobbar { flex-wrap: wrap; align-items: flex-start; gap: var(--s-xs); }
 #stage .scr[data-screen='shop'] .jobbar .tabs.zones { flex: none; }
 #stage .scr[data-screen='shop'] .cards.hscroll:has(> .mute) { display: block; }
+/* 로비 (10/18 PC 피드백): 전투력 숫자 = 도트 외곽선 (번지는 그림자 대신) · 이정표 판 낮게(설명 줄은 받을 게 있을 때만) · 장 이름은 이정표 판 오른쪽으로 */
+#stage .prof .pwr { color: var(--px-gold); text-shadow: var(--px-outline); }
+#stage .mq.mile:not(.ready) .mqd { display: none; }
+#stage .mainmap .mhud .mch { left: calc(max(var(--s-md), var(--safeL)) + 50px + 280px + var(--s-md)); }
+#stage.narrow .mainmap .mhud .mch { left: calc(max(var(--s-md), var(--safeL)) + 50px + 230px + var(--s-md)); }
