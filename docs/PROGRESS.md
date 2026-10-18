@@ -564,6 +564,8 @@
 
 - v1.0.1 앱 아이콘 새 로고 (tools/make_icons.py · wind-*.png · maskable 추가)
 
+- v1.0.2 채팅 입력 안 되던 것 (onkeydown이 false를 돌려줘 모든 키가 막힘) · PC 채팅 배치 · 한글 조합 Enter
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

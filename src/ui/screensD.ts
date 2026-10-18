@@ -276,13 +276,21 @@ function wireChat(root: HTMLElement, ch: ChatLine['ch'], draw: () => void) {
     persist();
     void cloud.postChat({ ch, guild: S.guild.id, name: line.name, title: line.title, text: line.text });
     draw();
+    // 다시 그린 뒤에도 이어서 쓸 수 있게 입력칸에 커서
+    root.querySelector<HTMLInputElement>('[data-in]')?.focus();
   };
   send.onclick = () => say(inp.value);
-  inp.onkeydown = (e) => e.key === 'Enter' && say(inp.value);
+  // 한글 조합 중 Enter는 글자 확정만 (조합 중에 보내면 마지막 글자가 깨짐)
+  //  꼭 블록으로: on* 처리기가 false를 돌려주면 그 키 입력이 막힘 → Enter 말고 모든 키가 안 써지던 것 (10/18 PC 채팅)
+  inp.onkeydown = (e) => {
+    if (e.key === 'Enter' && !e.isComposing) say(inp.value);
+  };
   // 입력 중 전용 배치: 최근 몇 줄 + 입력줄만 키보드 바로 위에 (보내거나 키보드 닫으면 원래대로)
   const box = (root.querySelector<HTMLElement>('.chatp') ?? root.querySelector<HTMLElement>('.chatbox'))!;
   const st = $('#stage');
   inp.onfocus = () => {
+    // 화면 키보드가 없는 PC(마우스)에서는 원래 배치 그대로 (탭·닫기 버튼이 사라지던 것 · 10/18)
+    if (!matchMedia('(pointer: coarse)').matches) return;
     kbFit();
     box.classList.add('kb');
     st.classList.add('typing');
