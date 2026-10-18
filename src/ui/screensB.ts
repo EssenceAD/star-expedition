@@ -393,14 +393,14 @@ register('shop', {
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone)).filter((h) => job === 'all' || heroOf(h.id).job === job);
         rollTrack(S);
-        body = `<div class="xs dim capline">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="row jobbar"><div class="tabs grow jobs">${[['all', '전체'], ...JOB_IDS.map((k) => [k, JOBS[k].name])].map(([k, n]) => `<button class="tab${job === k ? ' on' : ''}" data-job="${k}">${n}</button>`).join('')}</div><select class="tab" data-zsel>${[['all', '전체 보기'], ...ZONES.map((z) => [z, `${ZONE_NAME[z]}만`])].map(([k, n]) => `<option value="${k}" ${zone === k ? 'selected' : ''}>${n}</option>`).join('')}</select></div><div class="cards hcards">${stock.map((h) => heroShopCard(h.id)).join('') || '<span class="mute">모든 영웅을 모았어요!</span>'}</div>`;
+        body = `<div class="xs dim capline">이번 주 별가루 획득 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)} <span class="mute">(상한을 채워도 사냥은 계속 · 금화·경험치·장비는 그대로)</span></div><div class="row jobbar"><div class="tabs grow jobs">${[['all', '전체'], ...JOB_IDS.map((k) => [k, JOBS[k].name])].map(([k, n]) => `<button class="tab${job === k ? ' on' : ''}" data-job="${k}">${n}</button>`).join('')}</div><div class="tabs zones">${[['all', '모든 위치'], ...ZONES.map((z) => [z, ZONE_NAME[z]])].map(([k, n]) => `<button class="tab${zone === k ? ' on' : ''}" data-zone="${k}">${n}</button>`).join('')}</div></div><div class="cards hcards hscroll">${stock.map((h) => heroShopCard(h.id)).join('') || `<span class="mute">${heroStock(S).length ? '이 직업·위치에 살 수 있는 영웅이 없어요 · 위에서 다른 직업이나 위치를 골라 보세요' : '모든 영웅을 모았어요!'}</span>`}</div>`;
       } else if (cat === 'summon') {
         const sm = CONFIG.gear.summon;
         body = `<div class="cards"><div class="panel col shopc"><b>장비 소환 1회</b><span class="xs dim">등급: ${CONFIG.gear.grades.map((g, i) => (sm.weights[i] ? `${g.name} ${sm.weights[i]}%` : '')).filter(Boolean).join(' · ')}</span><button class="btn hi" data-sum="1">${freeSummonLeft() ? '오늘 무료!' : `${icon('stardust')}${sm.one}`}</button></div>
           <div class="panel col shopc"><b>장비 소환 10+1회</b><span class="xs dim">11개 · 같은 확률</span><button class="btn hi" data-sum="11">${icon('stardust')}${fmt(sm.ten)}</button></div></div>
           <span class="xs mute">뽑기는 장비·코스튬만, 게임 재화로만 (영웅 뽑기 없음) · 전용 무기 조각은 재화·소모품</span><div class="pk" data-out></div>`;
       } else if (cat === 'costume')
-        body = `<div class="capline xs">${Object.values(CONFIG.costume).map((c) => `「${esc(c.name)}」 ${c.heroes.length}벌`).join(' · ')} — 산 코스튬은 영웅 정보 「코스튬」에서 입어요 (전신 그림이 바뀌어요)</div><div class="cards costumes">${costumeStock().map(({ set, id }) => {
+        body = `<div class="capline xs">${Object.values(CONFIG.costume).map((c) => `「${esc(c.name)}」 ${c.heroes.length}벌`).join(' · ')} — 산 코스튬은 영웅 정보 「코스튬」에서 입어요 (전신 그림이 바뀌어요)</div><div class="cards costumes hscroll">${costumeStock().map(({ set, id }) => {
           const own = hasCostume(set, id);
           return `<div class="panel col shopc costume"><div class="fbc" style="background-image:url(${fullbodyUrl(id, set)})"></div><b class="sm">${esc(heroOf(id).name)}</b><span class="xs dim">${esc(CONFIG.costume[set].name)}</span>${own ? '<span class="xs good">가짐</span>' : `<button class="btn mini hi" data-cbuy="${set}" data-cid="${id}">${icon('stardust')}${fmt(CONFIG.costume[set].dust)}</button>`}</div>`;
         }).join('')}</div>`;
@@ -409,8 +409,7 @@ register('shop', {
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n, pic]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
       $$('[data-job]', root).forEach((b) => (b.onclick = () => ((job = b.dataset.job!), draw())));
-      const zs = root.querySelector<HTMLSelectElement>('[data-zsel]');
-      if (zs) zs.onchange = () => ((zone = zs.value), draw());
+      $$('[data-zone]', root).forEach((b) => (b.onclick = () => ((zone = b.dataset.zone!), draw())));
       const after = (r: string, m: Record<string, string>) => {
         persist();
         syncBar();
