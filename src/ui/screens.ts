@@ -165,7 +165,7 @@ function nodeHtml(id: StageId, open: boolean, st: string) {
   const md = isBoss(id) ? 'BOSS' : st === 'done' ? icon('check') : String(id.s);
   const stars = open && st === 'done' ? `<span class="mstars">${[0, 1, 2].map((k) => `<i class="${k < n ? 'on' : ''}">${icon('star')}</i>`).join('')}</span>` : '';
   // 보스 노드: 번호판 아래 그 장 보스 얼굴 (지도 위 보스 그림은 화살표를 가려서 뺌 · 형철 10/18)
-  const face = isBoss(id) ? `<i class="bface" style="background-image:url(${import.meta.env.BASE_URL}art/bosses2/${CHAPTERS[id.c - 1].region}/face.png)"></i>` : '';
+  const face = isBoss(id) ? `<i class="bface" style="background-image:url(${import.meta.env.BASE_URL}art/ui2/bossface/${CHAPTERS[id.c - 1].region}.png)"></i>` : '';
   return `<i class="md">${md}</i><b class="pl">${id.c}-${id.s}</b>${face}${stars}`;
 }
 /** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
