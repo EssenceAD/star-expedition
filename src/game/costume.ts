@@ -1,5 +1,6 @@
-// 코스튬 (docs/ART_DONE_1017_3.md §3): 별가루로 사고 · 영웅 정보에서 입기 → 전신 그림이 코스튬 그림으로 (전투 도트는 그대로)
+// 코스튬 (docs/ART_DONE_1017_3.md §3): 별가루로 사고 · 영웅 정보에서 입기 → 전신·초상화·전투 도트·컷인이 코스튬 그림으로 (경로는 data/heroes artPath 하나)
 import { CONFIG } from '../config';
+import { artPath } from '../data/heroes';
 import { owned } from './heroes';
 import { S, spend, track, type Save } from './state';
 
@@ -26,6 +27,5 @@ export function wearCostume(id: string, set: string | null, s: Save = S): boolea
 }
 /** 전신 그림 경로 (public/art 아래) — 입은 코스튬이 있으면 그것 */
 export function fullbodyPath(id: string, s: Save = S, set?: string | null): string {
-  const k = set === undefined ? s.heroes[id]?.costume : set;
-  return k && CO[k] ? `${CO[k].dir}/${id}.png` : `fullbody/${id}.png`;
+  return artPath(id, 'fullbody', set === undefined ? s.heroes[id]?.costume : set);
 }

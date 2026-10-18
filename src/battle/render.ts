@@ -542,7 +542,7 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
     ctx.lineTo(xx + 120, yy);
     ctx.stroke();
   }
-  const im = art.cutin[c.u.hero!.def.id];
+  const im = art.cutin[c.u.hero!.art.cutin];
   // 컷인 그림은 고화질 일러스트 → 부드럽게 줄임 (도트 전투와 다름)
   ctx.imageSmoothingEnabled = true;
   if (im) {
@@ -811,7 +811,7 @@ function drawDuo(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
     g.addColorStop(1, B.cutEdge);
     ctx.fillStyle = g;
     ctx.fillRect(-bw / 2 + off, -bh / 2, bw, bh);
-    const im = art.cutin[unit.hero!.def.id];
+    const im = art.cutin[unit.hero!.art.cutin];
     if (im) {
       const ih = bh * 1.5;
       const iw = (im.width / im.height) * ih;

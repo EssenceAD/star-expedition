@@ -535,6 +535,8 @@
 
 - v0.17.3 타이틀 로고: 굵은 기울임 글씨 도트 로고 + 풀네임 + 「바람의 원정대」 (tools/pixel_logo_font.py · Playfair Display OFL)
 
+- v0.18.0 코스튬 초상화·전투 도트·컷인 (data/heroes artPath 하나) + PC 플레이 피드백 (아이콘 중복·상점 그림·지도 움직임·보스/결투장 바·VS 카드·이정표 Lv.3·창 움직임)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

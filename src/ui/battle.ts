@@ -557,7 +557,7 @@ register('battle', {
   enter(_root, p) {
     hud().hidden = false;
     // 위 버튼 = 판 없는 아이콘 (UI v2) · 한 번만 넣음
-    for (const [id, ic] of [['#bAuto', 'auto'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('svg')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
+    for (const [id, ic] of [['#bAuto', 'auto'], ['#bPause', 'pause']] as const) if (!$(id).querySelector('.ic')) $(id).insertAdjacentHTML('afterbegin', icon(ic));
     applyTheme(p.run && CONFIG.ui.darkModes.includes((p.run as Run).mode) ? 'dark' : 'glass');
     $('#bAuto').onclick = () => {
       if (!b) return;

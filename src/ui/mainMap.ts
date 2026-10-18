@@ -4,7 +4,8 @@
 import { CONFIG } from '../config';
 import { artOf, heroOf } from '../data/heroes';
 import { CHAPTERS } from '../data/story';
-import { animOf, drawFrame, frameAt, heightOf } from '../sprite/sheet';
+import { S } from '../game/state';
+import { animOf, drawFrame, frameAt, heightOf, loadInto } from '../sprite/sheet';
 import { T } from '../theme/tokens';
 import { view } from './view';
 
@@ -107,7 +108,8 @@ export function mainMapStart(el: HTMLElement, c: number, leadId: string, next: n
   if (!img.complete) img.addEventListener('load', fit, { once: true });
   fit();
   // 원정대장: 마지막으로 깬 노드 (장 처음이면 1번 노드)
-  const art = artOf(heroOf(leadId));
+  const art = artOf(heroOf(leadId), S.heroes[leadId]?.costume);
+  if (view.art?.sheet) void loadInto(view.art.sheet, [art.dir]);
   const { def } = animOf(art.anims, 'idle');
   addFig(Math.max(1, next - 1), M.leadH, 1, { key: art.anims.idle!.frames[0], frames: def.frames, def });
   // 끌어서 둘러보기 (조금만 움직이면 누름으로 봄)

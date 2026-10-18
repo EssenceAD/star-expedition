@@ -185,4 +185,28 @@ describe('코스튬 (그림 3차)', () => {
     delete old.costumes;
     expect(migrate({ ...old, version: 7 }).costumes).toEqual([]);
   });
+  it('입으면 초상화·전투 도트·컷인도 코스튬 쪽 (artPath 하나) · 묶음에 없는 영웅은 기본 · 묶음 영웅은 그림 파일이 다 있음', async () => {
+    const { existsSync } = await import('node:fs');
+    const { artOf, artPath, heroOf } = await import('../src/data/heroes');
+    const { CONFIG } = await import('../src/config');
+    const { buildHeroes } = await import('../src/game/stage');
+    const { buyCostume, wearCostume } = await import('../src/game/costume');
+    expect(artPath('woongs', 'portrait', 'festival')).toBe('costume_festival/portraits_hd/woongs.png');
+    expect(artPath('woongs', 'px2', 'festival')).toBe('costume_festival/px2/woongs');
+    expect(artPath('woongs', 'cutin', 'festival')).toBe('costume_festival/portraits_hd/woongs.png');
+    expect(artPath('woongs', 'cutin', null)).toBe('cutin/woongs.png');
+    expect(artPath('aria', 'px2', 'festival')).toBe('px2/aria');
+    const a = artOf(heroOf('woongs'), 'festival');
+    expect(a.dir).toBe('costume_festival/px2/woongs');
+    expect(a.anims.idle!.frames[0]).toBe('costume_festival/px2/woongs:m1r1c0');
+    expect(artOf(heroOf('woongs')).anims.idle!.frames[0]).toBe('px2/woongs:m1r1c0');
+    for (const [k, c] of Object.entries(CONFIG.costume))
+      for (const id of c.heroes) for (const f of [artPath(id, 'fullbody', k), artPath(id, 'portrait', k), `${artPath(id, 'px2', k)}/_parts.json`]) expect(existsSync(`public/art/${f}`), f).toBe(true);
+    const s = newSave(0);
+    s.cur.stardust = 5000;
+    buyCostume('festival', 'woongs', s);
+    wearCostume('woongs', 'festival', s);
+    const w = buildHeroes(s).find((h) => h.def.id === 'woongs');
+    if (w) expect(w.art.dir).toBe('costume_festival/px2/woongs');
+  });
 });

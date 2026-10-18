@@ -2,7 +2,7 @@
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
-import { heroDirs, HEROES, setPxHeights } from './data/heroes';
+import { artPath, HEROES, setPxHeights } from './data/heroes';
 import { loadSave, newSave, PARTY_MAX, partyIds, persist, S } from './game/state';
 import { loadInto } from './sprite/sheet';
 import { img } from './ui/assets';
@@ -114,7 +114,7 @@ if (bar) bar.classList.add('real');
 track(setPxHeights());
 // 도트 글꼴 (갈무리 · public/fonts) — 캔버스 글씨가 첫 프레임부터 도트로
 track(Promise.all(['400 12px Galmuri11', '700 12px Galmuri11'].map((f) => document.fonts.load(f))).catch(() => null));
-track(loadInto(sheet, heroDirs(firstHeroes)));
+track(loadInto(sheet, firstHeroes.map((id) => artPath(id, 'px2', S.heroes[id]?.costume))));
 const bgP = track(img(`${B}art/bg.jpg`).catch(() => null));
 track(img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null));
 await Promise.all(jobs);

@@ -93,10 +93,14 @@ export function loadInto(s: Sheet, dirs: string[]) {
   return Promise.all(
     dirs.map((d) =>
       (loading[d] ??= (async () => {
-        const meta = await loadParts(d);
+        // 코스튬 시트(…/px2/<id>)가 없으면 기본 시트(px2/<id>)를 같은 이름으로 넣음 → 그림이 빠져도 기본 옷으로 보임
+        const alt = d.replace(/^.+\/(px2\/[^/]+)$/, '$1');
+        let src = d;
+        let meta = await loadParts(d);
+        if (!meta && alt !== d) meta = await loadParts((src = alt));
         if (!meta) return;
         const keys = Object.keys(meta);
-        const ims = await Promise.all(keys.map((k) => loadImg(`${B}art/${d}/${k}.png`).catch(() => null)));
+        const ims = await Promise.all(keys.map((k) => loadImg(`${B}art/${src}/${k}.png`).catch(() => null)));
         keys.forEach((k, i) => {
           if (!ims[i]) return;
           s.img[`${d}:${k}`] = ims[i]!;
