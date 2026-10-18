@@ -392,6 +392,8 @@ export const T = {
   } as Record<string, string>,
   /** 전투 캔버스 */
   battle: {
+    /** 이펙트 가장자리 가림 (destination-in): 투명 · 불투명 */
+    maskOff: 'rgba(0,0,0,0)', maskOn: 'rgba(0,0,0,1)',
     shadow: 'rgba(25,30,20,0.3)',
     road0: 'rgba(190,156,100,0)',
     road1: 'rgba(200,164,108,0.12)',
