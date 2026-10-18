@@ -105,6 +105,8 @@ export function teamBand(extra = '') {
 // ───────── 메인 = 모험 지도 (RECOVER_1018 S1·S2 배치 · 킹스레이드 영상 그대로) ─────────
 //  지도 위 길 따라 노드(메달 + 번호판 + 별 3개) · 다음 노드에 원정대장이 서고 화살표가 통통 · 보스 노드에 장 보스
 //  왼쪽 위 진행 중 2줄(이정표 · 스토리) · 왼쪽 세로 미션·이벤트·출석 · 아래 메뉴 6 + 포탈 · 오른쪽 아래 전투 준비 · 위 가운데 장 이름(누르면 모험)
+/** 감춘 가이드 말풍선 (이정표 id · 이번 실행 동안) */
+const guideOff = new Set<string>();
 const sideBtn = (attr: string, ic: string, name: string, badge: string | number = '') => `<button class="sic" ${attr}>${icon(ic)}<span>${name}</span>${badge ? `<em class="badge">${badge}</em>` : ''}</button>`;
 register('lobby', {
   title: () => `<span class="prof"><span class="pf"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i></span><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
@@ -158,12 +160,14 @@ register('lobby', {
     $('[data-report]', root).onclick = () => void openReport();
     opsOnLobby();
     // 가이드 화살표 (형철 10/18): 다음 이정표를 하러 갈 버튼 위에 「여기를 눌러요」 말풍선 · 누르면 그 탭으로 바로
-    const gd = mile && !mile.done(S) ? mile.go : null;
+    const gd = mile && !mile.done(S) && !guideOff.has(mile.id) ? mile.go : null;
     // 스테이지 깨기(prep)는 오른쪽 아래 「전투 준비」 위에
     const gb = gd && root.querySelector<HTMLElement>(gd[0] === 'prep' ? '.mgo' : gd[0] === 'portal' ? '.mdock [data-go="world"]' : `.mdock [data-go="${gd[0]}"], .mside [data-go="${gd[0]}"]`);
     if (gd && gb) {
       gb.classList.add('guide');
-      gb.insertAdjacentHTML('beforeend', `<i class="gbub"><mark class="gtx">「${esc(mile!.name)}」<br>여기를 눌러요</mark>${icon('pointer')}</i>`);
+      gb.insertAdjacentHTML('beforeend', `<i class="gbub" title="눌러서 감추기"><mark class="gtx">「${esc(mile!.name)}」<br>여기를 눌러요</mark>${icon('pointer')}</i>`);
+      // 말풍선을 누르면 이 할 일 안내는 감춤 (다음 할 일이 되면 다시 · 앱을 다시 켜면 다시)
+      $('.gbub', gb).onclick = (e) => (e.stopPropagation(), guideOff.add(mile!.id), gb.classList.remove('guide'), (e.currentTarget as HTMLElement).remove());
       // 전투 준비는 원래대로(다음 스테이지) · 나머지는 이정표가 가리키는 탭으로
       if (gd[0] !== 'prep') gb.onclick = () => go(gd[0] as never, gd[1]);
     }
