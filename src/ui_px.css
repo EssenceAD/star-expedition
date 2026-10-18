@@ -256,3 +256,6 @@ body, #stage { font-weight: normal; }
 #stage #title .twinkle { position: absolute; inset: 0; pointer-events: none; }
 #stage #title .twinkle b { position: absolute; width: 4px; height: 4px; background: var(--px-text); box-shadow: 0 0 var(--s-sm) var(--px-gold); animation: v3Blink 1.8s calc(var(--i) * -0.37s) ease-in-out infinite; }
 @keyframes v3Blink { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+/* 영웅 정보 능력치 판: 「상한까지」 작은 글씨는 판이 좁아 숫자와 겹침 → 이 판에서만 숨김 (상한 넘침 경고는 장비 창에서) */
+#stage .eq .stats .kv .cap { display: none; }
+#stage .eq .stats .kv b { flex-direction: row; }
