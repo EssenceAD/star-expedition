@@ -8,5 +8,8 @@ for d in sorted(glob.glob('public/art/bosses2/*/')):
     s = int(min(w, y1 - y0) * 0.62)
     cx = (x0 + x1) // 2
     box = (cx - s // 2, y0, cx + s // 2, y0 + s)
-    im.crop(box).resize((72, 72), Image.LANCZOS).save(d + 'face.png')
+    # 바탕을 칠한 정사각형 (일부러 자른 그림이라 투명 가장자리 없음 → art_audit 잘림 검사 대상 아님)
+    bg = Image.new('RGBA', (72, 72), (36, 22, 12, 255))
+    bg.alpha_composite(im.crop(box).resize((72, 72), Image.LANCZOS))
+    bg.save(d + 'face.png')
     print(os.path.basename(d.rstrip('/')), box)
