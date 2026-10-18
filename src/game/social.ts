@@ -159,7 +159,7 @@ export function restBonus(s: Save = S, now = Date.now()): number {
   if (!prev) return 0;
   const days = Math.min(7, Math.round((Date.parse(today) - Date.parse(prev)) / 86400000) - 1);
   if (days <= 0) return 0;
-  addMail(s, '여관 주인', `${days}일 쉬었다 왔네요!`, '푹 쉬고 온 원정대에게 작은 보너스를 넣었어요.', { stardust: 30 * days, gold: 10000 * days }, now);
+  addMail(s, '황짐승 (여관 주인)', `${days}일 만이네, 대장!`, '푹 쉬고 왔으면 됐어. 사장님이 작은 보너스 넣어 뒀어.', { stardust: 30 * days, gold: 10000 * days }, now);
   return days;
 }
 

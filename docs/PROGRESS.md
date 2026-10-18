@@ -519,6 +519,12 @@
 - 제보·건의: src/ui/ops.ts openReport → cloud.sendLetter → 체크인 bug_letters (본문 앞 [W.I.N.D] · app_version wind-vX) · 운영자 답장 my_letter_replies → 우편 「운영자의 답장」 (W.I.N.D 편지만) · 손님 하루 3통
 - 새 버전 띠 (version.json 10분마다 · 앱으로 돌아올 때 · 전투 중엔 미룸) · 업데이트 뒤 패치노트 카드 · 오류 기록 log_events (p_version wind-…) · 하루 백업 3개 + 설정 「세이브 백업」
 
+### v0.17.0 (10/18) — ASSET_SPEC 그림·글 반영
+- 그림(36a03fa): world·capital·inn·library · f_* 음식 · m_friendpt → ICON_IMG friendPt · 월드맵·수도는 .wmap(1672:940 그대로 맞춤)에 그림 · 좌표 docs/ASSET_DONE_1018.md (중심가만 y 88→82, 이름표가 아래로 잘려서)
+- 글: src/data/saga.ts (SAGA_LINES) · src/data/innLines.ts (INN_LINES · 인연 구간별) · 튜토리얼 13문구 (INN_LINES_1018 §B3)
+- 여관 주인 = 황짐승(hwang 전신 · 인사) · 휴식 보너스·환영 우편 보낸 이도 황짐승 · innkeeper.png는 지금 안 씀
+- e2e: 튜토리얼 손가락·시작 컷씬·튜토리얼 보상 합류를 1.2초 뒤 눌러 넘김 · 끊긴 음악 받기(.mp3 ABORTED)는 오류에서 뺌
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

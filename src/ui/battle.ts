@@ -494,9 +494,9 @@ function begin(s: StageId) {
     if (!firstRun) return;
     talking = true;
     coach('battle', [
-      { sel: '#bar .hc .sk', text: '영웅 카드의 스킬을 누르면 바로 써요\n마나가 차면 반짝여요' },
-      { sel: '#bAuto', text: '「자동」을 켜면 스킬도 알아서 써요' },
-      { sel: '#bSpeed', text: '배속을 고르면 다음 판에도 그대로예요' },
+      { sel: '#bar .hc .sk', text: '영웅 카드의 스킬을 누르면 바로 써요.\n반짝이면 마나가 다 찬 거예요!' },
+      { sel: '#bAuto', text: '「자동」을 켜 두면\n스킬까지 알아서 써 줘요.' },
+      { sel: '#bSpeed', text: '배속을 눌러 골라 보세요.\n다음 전투에도 그대로 기억해 둘게요.' },
     ], undefined, () => (talking = false));
   });
   const talk = () => {

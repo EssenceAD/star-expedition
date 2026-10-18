@@ -182,7 +182,7 @@ export function newSave(now = Date.now()): Save {
     arena: { score: CONFIG.content.arena.start, best: CONFIG.content.arena.start, win: 0, lose: 0, log: [] }, side: {}, treasure: {}, miles: [], wins: {},
     track: { day: '', week: '', d: {}, w: {}, all: {} }, claimed: { d: [], w: [], ach: [], ev: [] }, attend: { last: '', n: 0, ev: 0, evLast: '' },
     guild: { id: null, attendDay: '', donateDay: '', contrib: 0, week: '', weekContrib: 0, raid: 0 }, friends: { list: [], day: '', sent: [], got: 0 }, titles: { own: [], on: null },
-    costumes: [], mail: { list: [{ id: 1, from: '여관 주인', title: '원정대에 온 걸 환영해요!', body: '작은 선물을 넣었어요. 별을 되찾으러 가 볼까요?', give: { stardust: 200, gold: 20000 }, at: now, got: false }], next: 2 }, chat: [], cloud: { pushedAt: 0 },
+    costumes: [], mail: { list: [{ id: 1, from: '황짐승 (여관 주인)', title: '원정대에 온 걸 환영해요!', body: '작은 선물을 넣었어요. 별을 되찾으러 가 볼까요?', give: { stardust: 200, gold: 20000 }, at: now, got: false }], next: 2 }, chat: [], cloud: { pushedAt: 0 },
   };
 }
 /** 옛 저장 → 지금 버전 (없거나 망가지면 새로) */

@@ -85,7 +85,7 @@ register('hero', {
       if (rb) rb.onclick = () => recruitShow(id, () => (persist(), syncBar(), draw()));
       if (!own) return;
       // 튜토리얼 (S6): 처음 영웅 정보에서 장비가 있으면 「자동 장착」
-      if (Object.values(S.items).some((x) => x.kind === 'gear' && !x.by)) coach('auto', [{ sel: '[data-auto]', text: '「자동 장착」을 누르면\n가방에서 가장 좋은 장비를 알아서 껴요', press: true }]);
+      if (Object.values(S.items).some((x) => x.kind === 'gear' && !x.by)) coach('auto', [{ sel: '[data-auto]', text: '「자동 장착」을 눌러 보세요.\n가방에서 가장 좋은 장비를 알아서 껴 줘요.', press: true }]);
       $('[data-auto]', root).onclick = () => {
         const n = autoEquip(id);
         persist();
@@ -363,7 +363,7 @@ export function recruitShow(id: string, done: () => void, gift = false) {
     el.innerHTML = `<div class="rc-circle"></div><div class="rc-frame"><div class="rc-face" style="background-image:url(${heroPortrait(id)})"></div></div><div class="rc-fb rise" style="background-image:url(${fullbodyUrl(id, null)})"></div><div class="rc-join">${fxt(`${h.name} 합류!`)}</div><span class="xs rc-tap">눌러서 계속</span>`;
     el.onclick = () => (el.remove(), gift && done());
   };
-  if (gift) joined();
+  if (gift) (joined(), el.classList.add('gift'));
   else stage();
   $('#stage').append(el);
 }
