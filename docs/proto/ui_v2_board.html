@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8">
+<html lang="ko"><script>document.documentElement.className = new URLSearchParams(location.search).get("t") || "";</script><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 /* ── 새 UI 시스템 시안: 틀 그림 0장 · 전부 코드로 그림 ── */
@@ -167,6 +167,96 @@ body { margin: 0; background: #0b0e1c; font-family: 'Gothic A1', sans-serif; fon
 .go { position: absolute !important; box-shadow: 0 0 0 1px #7a4c10, 0 4px 0 #5a3508, 0 0 22px rgba(255,206,110,.65), inset 0 1px 0 #fff !important; }
 .topbar { border-bottom: 1px solid #c9973f; box-shadow: 0 1px 0 rgba(255,224,150,.25), 0 4px 12px rgba(0,0,0,.4); }
 .quest em { box-shadow: 0 0 6px rgba(243,205,114,.6); }
+
+/* ════ 테마 1: 모험 수첩 (양피지 · 갈색 잉크 · 붉은 밀랍) ════ */
+html.t1 { --ink: #3b2614; --mute: #7a5a3a; --dim: #a08060; --gold: #b5832d; --gold-d: #8a5a18; --line-soft: rgba(90,60,30,.18); }
+html.t1 .glass { background: linear-gradient(#fbf1dc, #ecd9b4); border: 1px solid #8a5a18; box-shadow: 0 8px 20px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,250,235,.7), inset 0 0 0 3px rgba(138,90,24,.35), inset 0 0 26px rgba(150,100,40,.25); color: var(--ink); }
+html.t1 .glass::after { background: linear-gradient(90deg, transparent, #b5832d, transparent); box-shadow: none; }
+html.t1 .info h3 > .nmx, html.t1 .topbar h2, html.t1 .modal h4, html.t1 .hud-top .w { background: none; color: #6b2e12; -webkit-text-fill-color: #6b2e12; filter: none; }
+html.t1 .topbar { background: linear-gradient(#f6e7c6, #e6cf9f); border-bottom: 2px solid #8a5a18; }
+html.t1 .topbar h2 { color: #6b2e12; }
+html.t1 .btn { background: linear-gradient(#fdf6e6, #e3cc9c); color: #4a2e12; border: 1px solid #8a5a18; text-shadow: none; }
+html.t1 .btn.gold { background: linear-gradient(#d0503a, #9a2618); color: #fff4e0; border-color: #5e1408; box-shadow: 0 0 0 1px #3c0c04, 0 3px 0 #3c0c04, inset 0 1px 0 #ff9a80; text-shadow: 0 1px 0 #3c0c04; }
+html.t1 .bar { background: #d9c39a; box-shadow: 0 0 0 1px #8a5a18, inset 0 1px 2px rgba(0,0,0,.3); }
+html.t1 .tabs b { color: var(--mute); } html.t1 .tabs b.on { color: #6b2e12; box-shadow: inset 0 -2px 0 #9a2618; }
+html.t1 .side b.on { background: rgba(154,38,24,.12); box-shadow: inset 3px 0 0 #9a2618; color: #6b2e12; }
+html.t1 .chip { background: rgba(138,90,24,.15); color: #6b2e12; }
+html.t1 .quest em { background: #9a2618; color: #fff4e0; box-shadow: none; } html.t1 .quest em.st { background: #2f5d8a; }
+html.t1 .node b { background: #fbf1dc; color: #3b2614; border-color: #8a5a18; }
+html.t1 .card .in b { background: none; color: #fff4e0; -webkit-text-fill-color: #fff4e0; filter: drop-shadow(0 1px 1px #000); }
+html.t1 .card { border: 2px solid #e8d2a6; box-shadow: 0 0 0 1px #8a5a18, 0 8px 18px rgba(0,0,0,.5); }
+html.t1 .slot { background: #e3cfa6; } html.t1 .slot.empty::after { color: #8a6a40; }
+html.t1 .scr-bg::before { background: rgba(40,24,10,.35); }
+html.t1 .hc .nm em, html.t1 .info .sub, html.t1 .kv span { color: var(--mute); }
+html.t1 .pt { box-shadow: 0 0 0 2px #fbf1dc, 0 0 0 3px #8a5a18, 0 3px 6px rgba(0,0,0,.5); }
+html.t1 .sk .s { box-shadow: 0 0 0 1.5px #8a5a18; }
+html.t1 .cur .plus { background: #9a2618; color: #fff; }
+html.t1 .dock div .ic { color: #6b2e12; } html.t1 .dock div { color: #6b2e12; }
+html.t1 .rbtn.on { color: #9a2618; }
+html.t1 .gift { background: rgba(138,90,24,.12); } html.t1 .gift b { color: #3b2614; }
+html.t1 .veil { background: rgba(40,24,10,.5); }
+
+/* ════ 테마 2: 별빛 성좌 (보랏빛 밤하늘 · 별가루 · 분홍·하늘 무지갯빛) ════ */
+html.t2 { --gold: #ffd7f2; --gold-d: #b48cff; --ink: #f7f2ff; --mute: #c6b7ef; --dim: #8f7fc4; --line-soft: rgba(220,200,255,.14); }
+html.t2 .glass { background:
+    radial-gradient(1px 1px at 20% 30%, #fff 50%, transparent), radial-gradient(1px 1px at 70% 60%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 40% 80%, #ffe6ff 50%, transparent), radial-gradient(1px 1px at 85% 20%, #fff 50%, transparent),
+    linear-gradient(160deg, rgba(58,32,110,.93), rgba(20,14,52,.93) 60%, rgba(34,22,80,.93));
+  border: 1px solid transparent; border-image: linear-gradient(120deg, #ffb3e6, #b8a2ff, #8ee8ff, #ffb3e6) 1; box-shadow: 0 8px 24px rgba(20,0,60,.5), 0 0 16px rgba(180,140,255,.25); }
+html.t2 .glass::before { display: none; }
+html.t2 .glass::after { background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 8px #e0c8ff; }
+html.t2 .rbtn.glass, html.t2 .cur.glass, html.t2 .back.glass, html.t2 .dmg-h.glass { border-image: none; border: 1px solid #c8a8ff; }
+html.t2 .info h3 > .nmx, html.t2 .topbar h2, html.t2 .modal h4, html.t2 .card .in b, html.t2 .hud-top .w { background: linear-gradient(90deg, #ffd1f0, #fff, #b9ecff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(220,180,255,.6)); }
+html.t2 .btn { background: linear-gradient(#4a2f8e, #2a1a5e); border: 1px solid #b48cff; }
+html.t2 .btn.gold { background: linear-gradient(110deg, #ff9ad8, #c9a2ff 45%, #8ee0ff); color: #2a1050; border: 1px solid #fff; box-shadow: 0 0 16px rgba(220,160,255,.7), inset 0 1px 0 #fff; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+html.t2 .bar { background: #120a2e; box-shadow: 0 0 0 1px #6a4fb0; }
+html.t2 .bar.hp i { background: linear-gradient(90deg, #4be0a0, #b0ffd8); } html.t2 .bar.mp i { background: linear-gradient(90deg, #6aa8ff, #d6b6ff); }
+html.t2 .tabs b.on { color: #fff; box-shadow: inset 0 -2px 0 #ff9ad8, 0 6px 10px -6px #ff9ad8; }
+html.t2 .side b.on { background: linear-gradient(90deg, rgba(255,154,216,.25), transparent); box-shadow: inset 3px 0 0 #ff9ad8; }
+html.t2 .pt { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #b48cff, 0 0 12px rgba(200,160,255,.7); }
+html.t2 .sk .s.ready { box-shadow: 0 0 0 2px #fff, 0 0 14px 3px rgba(255,170,230,.9); }
+html.t2 .quest em { background: #ff9ad8; color: #2a1050; } html.t2 .quest em.st { background: #8ee0ff; color: #0e2a40; }
+html.t2 .topbar { background: linear-gradient(rgba(40,20,90,.95), rgba(20,12,50,.7)); border-bottom: 1px solid #b48cff; box-shadow: 0 0 14px rgba(180,140,255,.35); }
+html.t2 .node i { background: radial-gradient(circle at 40% 35%, #fff, #ffc2ec 45%, #b48cff); box-shadow: 0 0 0 2px #fff, 0 0 12px #ffb3e6; color: #4a1f7a; }
+html.t2 .node.now i { background: radial-gradient(circle at 40% 35%, #fff, #8ee0ff 50%, #4a7cff); }
+html.t2 .node b { background: rgba(30,16,70,.9); border-color: #b48cff; }
+html.t2 .card { border: 1px solid #c8a8ff; box-shadow: 0 0 14px rgba(180,140,255,.45); }
+html.t2 .scr-bg::before { background: linear-gradient(rgba(30,10,70,.55), rgba(10,6,30,.65)); }
+html.t2 .cur .plus { background: rgba(255,154,216,.3); color: #fff; }
+html.t2 .go { box-shadow: 0 0 26px rgba(255,170,230,.8) !important; }
+
+/* ════ 테마 3: 하얀 유리 (밝은 반투명 흰 판 · 하늘색 포인트 · 기울어진 띠) ════ */
+html.t3 { --ink: #1c2a44; --mute: #5b6b8c; --dim: #8a98b6; --gold: #2b8cff; --gold-d: #1f6fd6; --line-soft: rgba(30,60,120,.12); }
+html.t3 .glass { background: linear-gradient(rgba(255,255,255,.9), rgba(236,244,255,.86)); border: 0; border-radius: 12px; box-shadow: 0 10px 24px rgba(10,30,80,.3), inset 0 0 0 1px rgba(255,255,255,.9), inset 0 -3px 0 rgba(43,140,255,.25); color: var(--ink); backdrop-filter: blur(10px); }
+html.t3 .glass::before { display: none; }
+html.t3 .glass::after { left: 12px; right: auto; top: 0; width: 36px; height: 3px; border-radius: 0 0 3px 3px; background: #2b8cff; box-shadow: none; }
+html.t3 .rbtn.glass::after, html.t3 .cur.glass::after, html.t3 .back.glass::after, html.t3 .dmg-h.glass::after, html.t3 .quest .glass::after { display: none; }
+html.t3 .info h3 > .nmx, html.t3 .topbar h2, html.t3 .modal h4, html.t3 .hud-top .w { background: none; color: #12305e; -webkit-text-fill-color: #12305e; filter: none; }
+html.t3 .card .in b { background: none; color: #fff; -webkit-text-fill-color: #fff; filter: drop-shadow(0 1px 2px #000); }
+html.t3 .topbar { background: linear-gradient(90deg, rgba(255,255,255,.95), rgba(235,244,255,.85)); border-bottom: 0; box-shadow: 0 4px 14px rgba(10,30,80,.25); }
+html.t3 .topbar h2 { font-style: italic; letter-spacing: -.5px; }
+html.t3 .btn { background: #fff; color: #1f4f9a; border: 1px solid #b8d4ff; border-radius: 8px; transform: skewX(-8deg); text-shadow: none; box-shadow: 0 2px 0 #a8c4ee; }
+html.t3 .btn.gold { background: linear-gradient(#4aa2ff, #1f6fd6); color: #fff; border: 0; box-shadow: 0 3px 0 #164d9c, 0 6px 14px rgba(31,111,214,.45); text-shadow: none; }
+html.t3 .btn::after { display: none; }
+html.t3 .bar { background: #dbe6f7; box-shadow: none; }
+html.t3 .tabs b { color: var(--mute); } html.t3 .tabs b.on { color: #12305e; box-shadow: inset 0 -3px 0 #2b8cff; }
+html.t3 .side b { color: var(--mute); } html.t3 .side b.on { background: #2b8cff; color: #fff; box-shadow: none; transform: skewX(-8deg); }
+html.t3 .chip { background: #e4eefc; color: #1f4f9a; }
+html.t3 .pt { box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(10,30,80,.4); }
+html.t3 .sk .s { box-shadow: 0 0 0 2px #fff; } html.t3 .sk .s.ready { box-shadow: 0 0 0 2px #2b8cff, 0 0 10px rgba(43,140,255,.8); }
+html.t3 .sk .au { background: #e4eefc; color: #5b6b8c; } html.t3 .sk .au.on { background: #2b8cff; color: #fff; }
+html.t3 .hc .nm em, html.t3 .info .sub, html.t3 .kv span { color: var(--mute); }
+html.t3 .quest em { background: #ffb020; color: #fff; box-shadow: none; } html.t3 .quest em.st { background: #2b8cff; }
+html.t3 .node i { box-shadow: 0 0 0 3px #fff, 0 4px 8px rgba(0,0,0,.4); }
+html.t3 .node b { background: #fff; color: #1c2a44; border: 0; }
+html.t3 .slot { background: #eef4fc; box-shadow: inset 0 0 0 1px #cddcf2; } html.t3 .slot.empty::after { color: #9fb2d2; }
+html.t3 .card { border: 3px solid #fff; border-radius: 12px; box-shadow: 0 8px 18px rgba(10,30,80,.35); }
+html.t3 .scr-bg::before { background: rgba(200,220,255,.25); }
+html.t3 .cur .plus { background: #2b8cff; color: #fff; }
+html.t3 .dock div .ic, html.t3 .dock div { color: #1f4f9a; }
+html.t3 .rbtn.on { color: #2b8cff; }
+html.t3 .gift { background: #eef4fc; } html.t3 .gift b { color: #12305e; }
+html.t3 .veil { background: rgba(20,40,90,.35); }
+html.t3 .hud-top .t { color: #12305e; }
 </style></head><body>
 <!-- SVG 아이콘 묶음 -->
 <svg width="0" height="0" style="position:absolute">
