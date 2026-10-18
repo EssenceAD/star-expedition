@@ -146,7 +146,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   ctx.globalAlpha = 1;
   if (u.dead) return;
   // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
-  if (sp && (u.ai || u.pvp)) tag(ctx, u.ai ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
+  if (sp && (u.ai || u.pvp)) tag(ctx, u.ai && !sp.def.name.endsWith('(AI)') ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
   // 보호막 · 기절 · 침묵 · 화상
   // 보호막이 남아 있는 동안: 그림 1↔2를 shieldLoopSec마다 · 알파 0.7로 몸에 겹침 (그림이 없으면 예전 타원)
   const FA = CONFIG.combat.fxArt;
@@ -473,7 +473,7 @@ function drawEmotes(ctx: CanvasRenderingContext2D, b: Battle) {
     ctx.lineTo(x, y + 23 * k);
     ctx.lineTo(x + 5, y + 14 * k);
     ctx.fill();
-    ctx.font = canvasFace(Math.round(20 * k), 'num');
+    ctx.font = canvasFace(Math.round(20 * k));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(iconText(e.key), x, y + 1);
@@ -540,9 +540,9 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.fillRect(-bw / 2, bh / 2, bw * ein, 3);
   // 스킬 이름: 화면 오른쪽 안에 들어오게 (오른쪽 여백 · 길면 글씨를 줄임 · POLISH_1017 ③-3)
   const room = W * CONFIG.combat.cutText.maxW;
-  ctx.font = canvasFace(F.cutName, 'title');
+  ctx.font = canvasFace(F.cutName);
   const tw = ctx.measureText(c.skill.name).width;
-  if (tw > room) ctx.font = canvasFace(Math.floor((F.cutName * room) / tw), 'title');
+  if (tw > room) ctx.font = canvasFace(Math.floor((F.cutName * room) / tw));
   ctx.textAlign = 'right';
   ctx.lineWidth = 10;
   ctx.lineJoin = 'round';
@@ -551,7 +551,7 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   ctx.strokeText(c.skill.name, tx, 22);
   ctx.fillStyle = B.white;
   ctx.fillText(c.skill.name, tx, 22);
-  ctx.font = canvasFace(F.cutHero + 3, 'hero');
+  ctx.font = canvasFace(F.cutHero + 3);
   ctx.lineWidth = 6;
   ctx.strokeText(c.u.name, tx, -14);
   ctx.fillStyle = B.cutName;
@@ -819,7 +819,7 @@ function drawDuo(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   };
   side(d.a, true, B.duoA);
   side(d.b, false, B.duoB);
-  ctx.font = canvasFont(F.cutName);
+  ctx.font = canvasFace(F.cutName);
   ctx.textAlign = 'center';
   ctx.lineWidth = 8;
   ctx.lineJoin = 'round';

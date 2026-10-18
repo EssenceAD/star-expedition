@@ -219,18 +219,13 @@ export const T = {
   /** 속성 색 (스킬 이펙트 · 영웅 상징색 · 데이터는 키로만 부른다) */
   elem: { fire: '#ff6b3d', ice: '#8fe3ff', holy: '#fff3a8', light: '#ffd36b', nature: '#9dffb0', wind: '#8fd0ff', shadow: '#c79bff', steel: '#ffffff', ember: '#ffa040', pink: '#ff8ac8', earth: '#ff7a3d', gold: '#ffe08a', wave: '#5fa8ff', blood: '#ff4a6a', beast: '#c8a060' },
   font: {
-    /** 글씨 (모두 OFL · index.html에서 Google Fonts) — T7(10/17) 뒤 FONT_FINAL_1017로 바꿈 */
-    /** 글씨 3종 (FONT_FINAL_1017 §1): 본문·버튼·탭 = Noto Serif KR 600 · 제목·이름 = Hahmlet · 숫자 = Cinzel (IBM Plex는 폴백만) */
-    base: '"Noto Serif KR", "Hahmlet", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", serif',
-    title: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
-    menu: '"Noto Serif KR", "Hahmlet", "IBM Plex Sans KR", serif',
-    hero: '"Hahmlet", "Nanum Myeongjo", "IBM Plex Sans KR", serif',
+    /** 글씨 하나 (MASTER_1018 1-2 · 형철 10/18 견본 A): 화면·캔버스 모든 글씨 = Gothic A1 800 · 예외는 전투 피해 숫자 하나(dmg)
+     *  index.html에서 Google Fonts(OFL)로 이 둘만 받음 · 숫자는 전역 tabular-nums */
+    ui: '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
     /** 전투 피해 숫자 (캔버스 · 타격감) */
-    num: '"Luckiest Guy", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
-    /** 메뉴·재화·능력치 숫자 (UI_POLISH §1 · HARMONY §0) — 한글은 Hahmlet */
-    numUi: '"Cinzel", "Hahmlet", "IBM Plex Sans KR", system-ui, sans-serif',
-    /** 꾸밈 글씨 굵기 */
-    face: { title: '900', menu: '600', hero: '700', num: '600' },
+    dmg: '"Luckiest Guy", "Gothic A1", sans-serif',
+    /** 굵기 하나 (Gothic A1 800) */
+    w: '800',
     size: { xxs: '8px', xs: '9px', sm: '12px', md: '12px', base: '12px', lg: '14px', xl: '14px', xxl: '17px', h2: '20px', h1: '40px', logo: '54px' },
     weight: { normal: '600', bold: '700', black: '700' },
     /** 캔버스 글자 크기 (px 숫자) */
@@ -513,9 +508,9 @@ export const iconText = (key: string) => T.icon[key] ?? '·';
 export const gradeColor = (g: keyof typeof T.grade) => T.grade[g];
 export const elemColor = (e: string) => (T.elem as Record<string, string>)[e] ?? T.color.text;
 /** 캔버스 글꼴 문자열 */
-export const canvasFont = (px: number, weight: keyof typeof T.font.weight = 'black', num = true) => (num ? canvasFace(px, 'num') : `${T.font.weight[weight]} ${px}px ${T.font.base}`);
-/** 캔버스 꾸밈 글씨 (제목·메뉴·영웅 이름·숫자 — 굵기 하나짜리 글씨라 굵기 안 줌) */
-export const canvasFace = (px: number, face: 'title' | 'menu' | 'hero' | 'num') => `${T.font.face[face]} ${px}px ${T.font[face]}`;
+export const canvasFont = (px: number, _weight?: unknown, num = true) => (num ? `${px}px ${T.font.dmg}` : canvasFace(px));
+/** 캔버스 UI 글씨 (이름·경고·페이즈·부위·컷인 · 피해 숫자 말고 전부) */
+export const canvasFace = (px: number) => `${T.font.w} ${px}px ${T.font.ui}`;
 
 /** :root 에 CSS 변수로 쓰기 — 화면의 모든 색·크기는 여기서 */
 export type Mode = 'light' | 'dark' | 'glass';
@@ -528,14 +523,9 @@ export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(m === 'light' ? T.color : m === 'dark' ? T.colorDark : { ...T.colorDark, ...T.colorGlass })) set(`--c-${k}`, v);
   for (const [k, v] of Object.entries(T.grade)) set(`--g-${k}`, v);
   for (const [k, v] of Object.entries(T.elem)) set(`--e-${k}`, v);
-  set('--f-base', T.font.base);
-  set('--f-num', T.font.numUi);
-  set('--f-title', T.font.title);
-  set('--f-menu', T.font.menu);
-  set('--f-hero', T.font.hero);
-  for (const [k, v] of Object.entries(T.font.face)) set(`--fw-${k}`, v);
+  set('--f-ui', T.font.ui);
+  set('--fw-ui', T.font.w);
   for (const [k, v] of Object.entries(T.font.size)) set(`--fs-${k}`, v);
-  for (const [k, v] of Object.entries(T.font.weight)) set(`--fw-${k}`, v);
   for (const [k, v] of Object.entries(T.space)) set(`--s-${k}`, v);
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);

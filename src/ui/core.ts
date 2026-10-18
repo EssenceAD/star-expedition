@@ -99,7 +99,8 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
   bar.hidden = !s.title;
   // 메인 지도: 바 바탕 없이 지도 위에 · 채팅 한 줄은 숨김 (채팅은 바 오른쪽 버튼)
   bar.classList.toggle('onmap', id === 'lobby');
-  tk.hidden = !s.title || id === 'lobby';
+  // 위 채팅 띠는 모든 화면에서 숨김 (MASTER 1-7) · 채팅은 상단 바 채팅 버튼
+  tk.hidden = true;
   if (!s.title) return;
   const title = typeof s.title === 'function' ? s.title(p) : s.title;
   const backBtn = s.back === false || id === 'lobby' ? '' : `<button class="btn mini" data-back>${icon('back')}</button>`;
@@ -239,13 +240,43 @@ export function watchFit(root: HTMLElement) {
   }).observe(root, { childList: true, subtree: true });
   void document.fonts?.ready.then(run);
 }
+/** 넘치는 목록 끝 화살표 (MASTER 1-3 · 스크롤바 대신): 위·아래로 더 있을 때만 · #stage 위에 겹쳐 그림
+ *  그림(ui/battle/scroll_up·down.png, MASTER §9-4)이 오기 전까지는 금색 화살표 아이콘 */
+const hints = new Map<HTMLElement, HTMLElement[]>();
+export function scrollHints(stage: HTMLElement) {
+  for (const [el, hs] of hints) if (!el.isConnected) (hs.forEach((h) => h.remove()), hints.delete(el));
+  for (const el of $$('*', stage)) {
+    if (el.scrollHeight <= el.clientHeight + 1 || !/auto|scroll/.test(getComputedStyle(el).overflowY)) continue;
+    let hs = hints.get(el);
+    if (!hs) {
+      hs = ['up', 'dn'].map((k) => {
+        const h = document.createElement('i');
+        h.className = `scrollhint ${k}`;
+        h.innerHTML = icon('pointer');
+        stage.append(h);
+        return h;
+      });
+      hints.set(el, hs);
+    }
+    // #stage 안 자리 (돌린 화면·배율과 상관없이 offset 합)
+    let x = 0;
+    let y = 0;
+    for (let e: HTMLElement | null = el; e && e !== stage; e = e.offsetParent as HTMLElement | null) ((x += e.offsetLeft), (y += e.offsetTop));
+    const [up, dn] = hs;
+    up.hidden = el.scrollTop <= 1;
+    dn.hidden = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+    up.style.left = dn.style.left = `${x + el.offsetWidth / 2}px`;
+    up.style.top = `${y}px`;
+    dn.style.top = `${y + el.offsetHeight}px`;
+  }
+}
 /** 순위 표시: 1~3 금·은·동 메달 · 그 밖은 숫자 (PLAYTEST §7) */
 export const medal = (i: number) => `<i class="rk r${Math.min(i + 1, 4)}">${i + 1}</i>`;
 export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t="${esc(text)}"><span>${esc(text)}</span></span>`;
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 
 export const syncCur = (root: ParentNode = document) => $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));
-export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓' };
+export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓', guildCoin: '길드 코인' };
 export const starsHtml = (n: number, max = 3) => `<span class="stars">${iconText('star').repeat(n)}<i>${iconText('star').repeat(Math.max(0, max - n))}</i></span>`;
 
 /** 대화 재생: 탭으로 넘기기 · 스킵 → 끝나면 done */

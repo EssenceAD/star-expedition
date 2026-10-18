@@ -401,6 +401,8 @@ export const CONFIG = {
     mainMap: { zoom: 1, dragPx: 6, nodeTop: 118, nodeBottom: 264, leadH: 64, bossH: 72, figW: 110, figPad: 14, figFoot: 6, boss: [34, 14] as [number, number] }, speeds: [1, 1.5, 2], toastSec: 1.5,
     /** 전투 전 로딩 팁 화면 초 (누르면 넘김 · RECOVER_1018 S3) */
     loadTipSec: 1.6,
+    /** 넘치는 목록 끝 화살표 다시 재는 간격 (MASTER 1-3) */
+    scrollHintMs: 300,
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */

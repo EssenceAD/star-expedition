@@ -47,7 +47,7 @@ export function vsIntro(b: Battle, r: Run, done: () => void) {
   el.onclick = end;
   setTimeout(end, A.vsSec * 1000);
 }
-/** 3 · 2 · 1 (가운데 큰 금색 숫자 · Cinzel · 커졌다 줄어듦) */
+/** 3 · 2 · 1 (가운데 큰 금색 숫자 · 커졌다 줄어듦) */
 export function countdown(done: () => void) {
   const el = document.createElement('div');
   el.className = 'cdown';

@@ -43,7 +43,7 @@ const zoneTabs = (on: string, withUnowned = false) =>
 register('title', {
   enter(root) {
     root.id = 'title';
-    root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>${fxt('별의 원정대')}</b><i>(가제) · 1단계 시스템 시험판</i></div>
+    root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>${fxt('별의 원정대')}</b></div>
       <button class="btn hi big" data-go>원정 출발</button>
       <p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
       <div class="row"><button class="btn mini" data-reset>처음부터</button></div>
@@ -161,11 +161,11 @@ export function stageInfo(st: StageId) {
   const dropHtml = drops.map(([k, n, p]) => `<div class="dcell">${k === 'gear' ? uiPic('icons/slot_weapon', 'ic img') : icon(k)}<span>${n}</span><b>${p}</b></div>`).join('');
   const rep = canRepeat(st);
   const m = modal(`${stageName(st)} · ${esc(CHAPTERS[st.c - 1].name)} ${starsHtml(starsAt(st))}`, `<div class="sinfo">
-      <div class="row kvs"><span>추천 레벨 <b class="${myLv >= rl ? 'good' : 'bad'}">${rl}</b> <i class="xs mute">(내 평균 ${myLv})</i></span><span>행동력 ${icon('stamina')} <b>${stageCost(st.d)}</b></span></div>
-      <b class="sm">얻는 것 <i class="xs mute">(한 판${boostMult() > 1 ? ' · 부스터 2배' : ''})</i></b>
+      <div class="row kvs"><span>추천 레벨 <b class="${myLv >= rl ? 'good' : 'bad'}">${rl}</b></span><span>행동력 ${icon('stamina')} <b>${stageCost(st.d)}</b></span></div>
+      <b class="sm">얻는 것${boostMult() > 1 ? ' · 부스터 2배' : ''}</b>
       <div class="row gains"><span>${icon('exp')} 영웅 경험치 <b>+${fmt(base.exp)}</b></span><span>${icon('gold')} 금화 <b>+${fmt(gold)}</b></span></div>
       <b class="sm">나오는 적</b><div class="row enemies">${enemy}</div>
-      <b class="sm">떨어지는 것 <i class="xs mute">(확률)</i></b><div class="row drops">${dropHtml}</div>
+      <b class="sm">떨어지는 것</b><div class="row drops">${dropHtml}</div>
     </div>`, [
     [`${icon('repeat')} 소탕 ×${CONFIG.repeat.choices[0]}`, () => {
       if (!rep) return (toast(`별 ${CONFIG.repeat.minStars}개로 깨면 소탕할 수 있어요`), false);
@@ -244,14 +244,14 @@ register('adventure', {
       root.innerHTML = `<div class="body">
           <div class="col grow">
             <div class="tabs">${CHAPTERS.map((x) => `<button class="tab${x.n === c ? ' on' : ''}" data-c="${x.n}" ${unlocked({ c: x.n, s: 1, d: 0 }) ? '' : 'disabled'}>${x.n}장</button>`).join('')}</div>
-            <div class="row"><b class="grow">${c}장 · ${ch.name}${ch.waves ? '' : ' <span class="xs mute">(자리표시자)</span>'}</b>
+            <div class="row"><b class="grow">${c}장 · ${ch.name}</b>
               <div class="tabs">${C.diffName.map((n, i) => `<button class="tab${i === d ? ' on' : ''}" data-d="${i}" ${diffOpen(c, i) ? '' : 'disabled'}>${diffOpen(c, i) ? '' : icon('lock')}${n}</button>`).join('')}</div></div>
             ${chOpen ? fieldMap(c, d, sel) : `<div class="panel mute">이전 장을 깨면 열려요</div>`}
             <div class="xs mute note">${ch.star} · 장을 깨면 별이 하나 다시 켜지고 지역 전설 영웅이 합류해요</div>
           </div>
           <div class="panel col side">
             <b class="b">${stageName(sel)}${isBoss(sel) ? ` · ${CHAPTER_MOBS[c - 1].boss}` : ''}</b>
-            <div class="kv"><span>추천 레벨</span><b class="${myLv >= rl ? 'good' : 'bad'}">${rl} (내 평균 ${myLv})</b></div>
+            <div class="kv"><span>추천 레벨</span><b class="${myLv >= rl ? 'good' : 'bad'}">${rl}</b></div>
             <div class="kv"><span>행동력</span><b>${icon('stamina')} ${stageCost(d)}</b></div>
             <div class="kv"><span>웨이브</span><b>${mobs.length}</b></div>
             <div class="mobs">${faces.map(([n, f]) => `<span class="chip mob"><i style="background-image:url(${import.meta.env.BASE_URL}art/${f})"></i>${esc(n)}</span>`).join('')}</div>

@@ -3,7 +3,7 @@
 import { chromium } from 'playwright-core';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 const out = process.argv[2] ?? 'out/e2e';
@@ -40,7 +40,46 @@ p.on('console', (m) => m.type() === 'error' && !m.text().startsWith('Failed to l
 p.on('response', (r) => r.status() >= 400 && !r.url().endsWith('/favicon.ico') && errors.push(`${r.status()} ${r.url()}`));
 p.on('requestfailed', (r) => errors.push(`실패 ${r.url()}`));
 let n = 0;
-const shot = async (name) => p.screenshot({ path: `${out}/${String(++n).padStart(2, '0')}_${name}.png` });
+// MASTER_1018 자동 시험: 화면을 찍을 때마다 그 화면에서 어긋난 요소 수를 셈 → out/tests.json
+//  T2 글꼴: 보이는 글씨 요소의 글꼴 첫 이름이 UI 글꼴(Gothic A1)이 아님 (전투 피해 숫자 Luckiest Guy는 캔버스라 제외)
+//  T3 스크롤바: 실제 기기라면 스크롤바가 보일 요소 (아래 설명)
+const UI_FONT = 'Gothic A1';
+const report = [];
+const measure = () =>
+  p.evaluate((UI_FONT) => {
+    const vis = (e) => {
+      const r = e.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      for (let x = e; x; x = x.parentElement) {
+        const c = getComputedStyle(x);
+        if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity === 0) return false;
+      }
+      return true;
+    };
+    const name = (e) => `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).join('.') : ''}`;
+    const t2 = [], t3 = [];
+    for (const e of document.querySelectorAll('body *')) {
+      if (!(e instanceof HTMLElement) || !vis(e)) continue;
+      const c = getComputedStyle(e);
+      const own = [...e.childNodes].some((k) => k.nodeType === 3 && k.textContent.trim());
+      if (own && c.fontFamily.split(',')[0].replace(/["']/g, '').trim() !== UI_FONT) t2.push(`${name(e)} ${c.fontFamily.split(',')[0]}`);
+      if (c.display === 'inline' || c.display === 'contents') continue;
+      // 시험 브라우저(헤드리스)는 스크롤바를 숨겨서 그리므로, 「실제 기기라면 스크롤바가 보일 곳」을 셈:
+      //  넘치는 내용 + overflow auto/scroll + scrollbar-width가 none이 아님 (가로·세로 따로)
+      const sb = c.scrollbarWidth !== 'none';
+      const ox = /auto|scroll/.test(c.overflowX) && e.scrollWidth > e.clientWidth + 1;
+      const oy = /auto|scroll/.test(c.overflowY) && e.scrollHeight > e.clientHeight + 1;
+      if (sb && (ox || oy || c.overflowX === 'scroll' || c.overflowY === 'scroll')) t3.push(`${name(e)}${ox ? ' 가로' : ''}${oy ? ' 세로' : ''}`);
+    }
+    return { t2, t3 };
+  }, UI_FONT);
+const shot = async (name) => {
+  const file = `${String(++n).padStart(2, '0')}_${name}`;
+  await p.screenshot({ path: `${out}/${file}.png` });
+  report.push({ file, ...(await measure()) });
+  // 중간에 멈춰도 결과가 남게 매번 씀
+  writeFileSync(`${out}/tests.json`, JSON.stringify(report, null, 1));
+};
 const click = async (sel) => p.locator(sel).first().click();
 const skipTalk = async () => {
   if (await p.locator('.talk .skip').count()) await click('.talk .skip');
@@ -232,7 +271,8 @@ async function content(tab, label, sel = '[data-run]') {
     await p.waitForFunction(() => window.__b()?.raid?.phase >= 1 || window.__b()?.phase !== 'fight', null, { timeout: 90000 });
     await shot(`${label}_phase`);
   }
-  await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 150000 });
+  // PC 1920은 그리기가 느려 실제 시간이 더 걸림
+  await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 400000 });
   if (await p.locator('#result [data-a="leg"]').count()) return shot(`${label}_leg`);
   await shot(`${label}_result`);
   await click('#result [data-a="portal"]');
@@ -274,7 +314,8 @@ await p.evaluate(() => {
   b.auto = true;
   b.speed = 2;
 });
-await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 120000 });
+// PC 1920은 그리기가 느려 실제 시간이 더 걸림
+await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 400000 });
 await shot('graid_result');
 await click('#result [data-a="lobby"]');
 await p.waitForSelector('[data-screen="lobby"]');
@@ -292,7 +333,7 @@ await click('#topbar [data-ic="mail"]');
 await p.waitForSelector('[data-screen="mail"]');
 await shot('mail');
 await click('[data-all]');
-await click('#ticker');
+await click('#topbar [data-ic="chat"]');
 await shot('chat');
 await click('.modal [data-x]');
 await click('[data-back]');
@@ -311,6 +352,10 @@ await click('[data-lastform]');
 await click('.lfr [data-h]');
 await shot('last_form');
 await click('.modal .btn.hi');
+writeFileSync(`${out}/tests.json`, JSON.stringify(report, null, 1));
+const sum = (k) => report.reduce((a, r) => a + r[k].length, 0);
+const bad = (k) => report.filter((r) => r[k].length).length;
+console.log(`T2 글꼴 어긋남 ${sum('t2')}개 (${bad('t2')}/${report.length}화면) · T3 스크롤바 ${sum('t3')}개 (${bad('t3')}/${report.length}화면)`);
 await br.close();
 srv.close();
 console.log(errors.length ? `오류 ${errors.length}개:\n${errors.join('\n')}` : '오류 없음', `· 사진 ${n}장 → ${out}`);

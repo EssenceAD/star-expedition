@@ -1,0 +1,317 @@
+[
+ {
+  "file": "01_title",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "02_1-1_talk",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "03_1-1_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "04_1-1_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "05_lobby",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "06_stage_info",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "07_adventure",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "08_prep",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "09_1-2_loading",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "10_1-2_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "11_1-2_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "12_1-3_loading",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "13_1-3_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "14_1-3_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "15_formation_back_tab",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "16_heroes_unowned",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "17_hero_hwang",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "18_shop_hero",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "19_recruit_stage",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "20_recruit_join",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "21_shop_costume",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "22_shop_summon",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "23_bag",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "24_gear_panel",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "25_enhance_fx",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "26_enhance_break",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "27_hero_info",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "28_hero_skill",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "29_hero_costume",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "30_field_map",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "31_portal_tower",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "32_portal_raid",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "33_raid_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "34_raid_warn",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "35_raid_dodge",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "36_raid_phase",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "37_raid_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "38_portal_arena",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "39_arena_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "40_arena_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "41_portal_world",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "42_world_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "43_world_warn",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "44_world_dodge",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "45_world_phase",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "46_world_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "47_portal_side",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "48_side_battle",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "49_side_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "50_portal_miles",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "51_lobby_d",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "52_mission",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "53_mission_ach",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "54_guild",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "55_guild_chat",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "56_graid_result",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "57_friends",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "58_ranking",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "59_mail",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "60_chat",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "61_settings",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "62_glory_banpick",
+  "t2": [],
+  "t3": []
+ },
+ {
+  "file": "63_last_form",
+  "t2": [],
+  "t3": []
+ }
+]

@@ -59,13 +59,13 @@ register('portal', {
       } else if (tab === 'world') {
         const wb = worldBoss();
         const board = worldBoard().slice(0, 8);
-        body = `<p class="sm dim">전 서버 공용 체력 (1단계는 이 기기 + AI 원정대 기여) · 하루 ${CC.world.tries}번 (남은 ${triesText({ mode: 'world', arg: 0 })}) · 한 판 ${CC.world.sec}초 · 준 피해만큼 보상 · 주간 랭킹으로 랭커 칭호(D)</p>
+        body = `<p class="sm dim">전 서버 공용 체력 · 하루 ${CC.world.tries}번 (남은 ${triesText({ mode: 'world', arg: 0 })}) · 한 판 ${CC.world.sec}초 · 준 피해만큼 보상 · 주간 랭킹으로 랭커 칭호(D)</p>
           ${bossCard('worldboss', esc(wb.name), `${CC.world.sec}초 동안 피해 주기`, [['sk_bolt', '광선'], ['warn', '포효'], ['sk_smash', '내려찍기']], [['남은 체력', `${fmt(wb.hp)} / ${fmt(wb.max)}`], ['이번 주 내 피해', fmt(wb.my)], ['한 판 최고', fmt(S.world.best)]], `<button class="btn hi big" data-run='${JSON.stringify({ mode: 'world', arg: 0 })}'>월드 보스 도전</button>`, bar(wb.hp, wb.max))}
           <div class="panel col board">${board.map((x, i) => `<div class="kv${x.me ? ' gold' : ''}"><span>${medal(i)} ${esc(x.name)}</span><b>${fmt(x.dmg)}</b></div>`).join('')}</div>`;
       } else if (tab === 'arena') {
         const opps = arenaOpps();
         body = `<div class="tabs">${(['victory', 'glory', 'last'] as League[]).map((l) => `<button class="tab${league === l ? ' on' : ''}" data-league="${l}">${LEAGUE_NAME[l]}</button>`).join('')}</div>
-          <p class="sm dim">${league === 'victory' ? '기본 리그 · AI 덱(실유저 덱은 D)과 자동 전투' : league === 'glory' ? `서로 영웅 1명씩 금지하고 싸워요 (전투 준비에서 막을 영웅·대신할 영웅을 직접 골라요) · ${CC.arena.gloryHours.map(([a, b]) => `${a}~${b}시`).join(' · ')}만 · 지금 ${gloryOpen() ? '<b class="good">열림</b>' : '<b class="bad">닫힘</b>'}` : `파티 3개로 3판 (2판 먼저 이기면 승리 · 파티 2·3은 전투 준비에서 직접 편성) · 점수 ${CC.arena.lastUnlock} 이상 · 내 파티: ${lastParties().map((p) => p.length).join(' / ')}명`}</p>
+          <p class="sm dim">${league === 'victory' ? '기본 리그 · 자동 전투' : league === 'glory' ? `서로 영웅 1명씩 금지하고 싸워요 (전투 준비에서 막을 영웅·대신할 영웅을 직접 골라요) · ${CC.arena.gloryHours.map(([a, b]) => `${a}~${b}시`).join(' · ')}만 · 지금 ${gloryOpen() ? '<b class="good">열림</b>' : '<b class="bad">닫힘</b>'}` : `파티 3개로 3판 (2판 먼저 이기면 승리 · 파티 2·3은 전투 준비에서 직접 편성) · 점수 ${CC.arena.lastUnlock} 이상 · 내 파티: ${lastParties().map((p) => p.length).join(' / ')}명`}</p>
           <div class="kv"><span>점수</span><b>${S.arena.score} · ${tierOf(S.arena.score)} 리그 · ${S.arena.win}승 ${S.arena.lose}패 · 남은 ${triesText({ mode: 'arena', arg: league })}</b></div>
           <div class="cards">${opps.map((o, i) => `<div class="panel col shopc"><b>${esc(o.name)}</b><span class="xs dim">점수 ${o.score} · 전투력 ${fmt(o.power)}</span><div class="row">${o.party.map((h) => `<div class="pt s" title="${h.def.name}" style="background-image:url(${heroPortrait(h.def.id)})"></div>`).join('')}</div><button class="btn hi" data-run='${JSON.stringify({ mode: 'arena', arg: league, sub: i })}'>도전</button></div>`).join('')}</div>
           <span class="xs mute">리그 상점(결투장 코인 ${S.cur.arenaCoin ?? 0})은 상점 「특수 재화」</span>`;
