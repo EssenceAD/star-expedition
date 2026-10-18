@@ -31,12 +31,15 @@ import { $, $$, CUR_NAME, esc, fitText, fmt, go, heroPortrait, modal, refresh, r
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
 const zoneOf = (id: string): Zone => JOBS[heroOf(id).job].zone;
+/** 인연 설명 (편성 화면 칩을 누르면 · 형철 10/18): 멤버 · 몇 명 · 효과 */
+const BOND_EFF: Record<string, string> = { spd: '공격 속도', dmgCut: '받는 피해 감소', mana: '마나 회복', skillDmg: '스킬 피해', atk: '공격력', heal: '회복량', crit: '치명타 확률' };
+const bondText = (x: (typeof BONDS)[number]) => `${x.name} · ${x.members.map((m) => heroOf(m).name).join('·')} 중 ${x.need}명 · ${BOND_EFF[x.eff.s]} +${Math.round(x.eff.v * 100)}%${x.walkCut ? ' · 첫 이동 빨라짐' : ''}`;
 const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간 ${Math.floor((sec % 3600) / 60)}분` : sec >= 60 ? `${Math.floor(sec / 60)}분 ${Math.floor(sec % 60)}초` : `${Math.ceil(sec)}초`);
-/** 영웅 카드 (세로 · 왼쪽 위 직업 원(public/art/jobs) · 오른쪽 위 레벨 · 이름 띠) */
+/** 영웅 카드 (세로 · 오른쪽 위 레벨 · 아래 위치·직업 칩(상점 카드와 같은 모양) · 이름 · 전투력) */
 const card = (id: string, extra = '', cls = '') => {
   const h = heroOf(id);
   const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn job" title="${JOBS[h.job].name}"><img class="px" src="${import.meta.env.BASE_URL}art/ui2/jobs/${h.job}.png" alt=""></span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
+  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}">${own ? `<span class="lv chip">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><div class="row xs chips"><span class="chip">${icon(`zone_${JOBS[h.job].zone}`)} ${ZONE_NAME[JOBS[h.job].zone]}</span><span class="chip">${icon(h.job)} ${JOBS[h.job].name}</span></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span>${extra}</button>`;
 };
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
@@ -118,7 +121,7 @@ register('lobby', {
       <div class="mhud">
         <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
         <div class="mquest">
-          <button class="mq" data-miles><em class="tag mile">이정표</em>${mile ? esc(mile.name) : '모두 달성'}${ready ? `<em class="badge">${ready}</em>` : ''}</button>
+          <button class="mq mile${ready ? ' ready' : ''}" data-miles><span class="mqh"><em class="tag mile">${icon('pointer')} 다음 할 일 · 이정표</em>${ready ? `<em class="badge">${ready}</em>` : ''}</span><b>${mile ? esc(mile.name) : '모두 달성'}</b>${mile ? `<span class="mqd">${ready ? '보상을 받을 수 있어요 · 눌러서 받아요' : esc(mile.desc)}</span>` : ''}</button>
           <button class="mq" data-next><em class="tag story">스토리</em>${stageName(ns)} 클리어</button>
         </div>
         <div class="mside">
@@ -127,7 +130,7 @@ register('lobby', {
           ${sideBtn('data-attend', 'attend', '출석', attendToday() ? 'N' : '')}
         </div>
         <div class="mdock">
-          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['portal', '포탈', 'content']]
+          ${[['heroes', '영웅', 'heroes'], ['prep', '편성', 'formation'], ['bag', '가방', 'bag'], ['shop', '상점', 'shop'], ['friends', '친구', 'friend'], ['guild', '길드', 'guild'], ['portal', '콘텐츠', 'content']]
             .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
             .join('')}
         </div>
@@ -142,7 +145,18 @@ register('lobby', {
     $$('[data-portal]', root).forEach((b) => (b.onclick = () => go('portal', { tab: b.dataset.portal })));
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
     $('[data-miles]', root).onclick = () => openMiles();
-    $('[data-attend]', root).onclick = () => (attendToday() ? attendPopup() : toast('오늘 출석 보상은 이미 받았어요'));
+    // 가이드 화살표 (형철 10/18): 다음 이정표를 하러 갈 버튼 위에 「여기를 눌러요」 말풍선 · 누르면 그 탭으로 바로
+    const gd = mile && !mile.done(S) ? mile.go : null;
+    // 스테이지 깨기(prep)는 오른쪽 아래 「전투 준비」 위에
+    const gb = gd && root.querySelector<HTMLElement>(gd[0] === 'prep' ? '.mgo' : `.mdock [data-go="${gd[0]}"], .mside [data-go="${gd[0]}"]`);
+    if (gd && gb) {
+      gb.classList.add('guide');
+      gb.insertAdjacentHTML('beforeend', `<i class="gbub"><mark class="gtx">「${esc(mile!.name)}」<br>여기를 눌러요</mark>${icon('pointer')}</i>`);
+      // 전투 준비는 원래대로(다음 스테이지) · 나머지는 이정표가 가리키는 탭으로
+      if (gd[0] !== 'prep') gb.onclick = () => go(gd[0] as never, gd[1]);
+    }
+    // 출석: 7일 보상 판 화면으로 (오늘 몇 일째 · 앞으로 받을 보상 미리 보기)
+    $('[data-attend]', root).onclick = () => go('mission', { tab: 'att' });
     mainMapStart($('.mlayer', root), c, lead, ns.s);
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
@@ -378,7 +392,7 @@ register('prep', {
                 return id ? `<div class="pcard" data-out="${id}"><div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="xs">${ZONE_NAME[zoneOf(id)]}</span><b class="xs">${heroOf(id).name}</b></div>` : '<div class="pcard empty"><span class="xs mute">비어 있음</span></div>';
               }).join('')}</div>
               <div class="kv"><span>파티 전투력</span><b>${fmt(partyPower())}</b></div>
-              <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<span class="chip${bonds.includes(x) ? ' on' : ''}" title="${x.members.map((m) => heroOf(m).name).join(' · ')} (${x.need}명)">${x.name}</span>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
+              <div class="bondl">${BONDS.filter((x) => x.members.some((m) => ids.includes(m))).map((x) => `<button class="chip${bonds.includes(x) ? ' on' : ''}" data-bond="${x.id}" title="${esc(bondText(x))}">${x.name}</button>`).join('') || '<span class="xs mute">인연 없음</span>'}</div>
             </div>
             ${run ? `<div class="panel col">
               <b>${runTitle(run)}</b>
@@ -421,6 +435,7 @@ register('prep', {
         };
       });
       $$('[data-lk]', root).forEach((b) => (b.onclick = () => go('shop', { cat: 'hero' })));
+      $$('[data-bond]', root).forEach((b) => (b.onclick = () => toast(bondText(BONDS.find((x) => x.id === b.dataset.bond)!))));
       $$('[data-out]', root).forEach(
         (b) =>
           (b.onclick = () => {

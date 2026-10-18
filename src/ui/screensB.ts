@@ -13,7 +13,7 @@ import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
 import { gachaShow } from './gacha';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
+import { $, $$, comingSoon, CUR_DESC, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
@@ -343,7 +343,7 @@ register('shop', {
         body = `<div class="cards">${CONFIG.shop.packs.map((pk) => `<div class="panel col shopc"><b>${pk.name}</b><span class="xs dim">${Object.entries(pk.give).map(([k, v]) => `${icon(k)}${fmt(v)}`).join(' ')}</span>${pk.once ? '<span class="xs mute">한 번만</span>' : ''}<button class="btn hi" data-pack="${pk.id}" ${S.shop.packs.includes(pk.id) ? 'disabled' : ''}>${S.shop.packs.includes(pk.id) ? '샀어요' : `${icon('stardust')}${fmt(pk.dust)}`}</button></div>`).join('')}
           <div class="panel col shopc"><b>오늘의 추천</b><span class="xs dim">${icon('summon')} 장비 무료 소환 ${freeSummonLeft()}회</span><button class="btn" data-cat="summon">가 보기</button></div></div>`;
       else if (cat === 'goods')
-        body = `<div class="cards goods">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><span class="gpic">${icon(Object.keys(it.give)[0])}</span><b class="sm">${it.name}</b><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
+        body = `<div class="cards goods">${CONFIG.shop.items.map((it) => `<div class="panel col shopc"><span class="gpic">${icon(Object.keys(it.give)[0])}</span><b class="sm">${it.name}</b><span class="xs dim use">${CUR_DESC[Object.keys(it.give)[0]] ?? ''}</span><button class="btn" data-item="${it.id}">${it.gold ? `${icon('gold')}${fmt(it.gold)}` : `${icon('stardust')}${fmt(it.dust ?? 0)}`}</button></div>`).join('')}</div>`;
       else if (cat === 'hero') {
         const stock = heroStock(S, zone === 'all' ? undefined : (zone as Zone)).filter((h) => job === 'all' || heroOf(h.id).job === job);
         rollTrack(S);
@@ -359,7 +359,7 @@ register('shop', {
           return `<div class="panel col shopc costume"><div class="fbc" style="background-image:url(${fullbodyUrl(id, set)})"></div><b class="sm">${esc(heroOf(id).name)}</b><span class="xs dim">${esc(CONFIG.costume[set].name)}</span>${own ? '<span class="xs good">가짐</span>' : `<button class="btn mini hi" data-cbuy="${set}" data-cid="${id}">${icon('stardust')}${fmt(CONFIG.costume[set].dust)}</button>`}</div>`;
         }).join('')}</div>`;
       else
-        body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인 상점은 D덩어리</span>`;
+        body = `<div class="cards">${CONFIG.shop.coins.map((c) => `<div class="panel col shopc"><b class="sm">${c.name}</b><span class="xs dim use">${CUR_DESC[Object.keys(c.give)[0]] ?? ''}</span><span class="xs mute">${c.coin === 'arenaCoin' ? '결투장' : '탑'} 코인 상점</span><button class="btn" data-coin="${c.id}">${icon(c.coin)}${c.price}</button></div>`).join('')}</div><span class="xs mute">보유: ${icon('arenaCoin')}${S.cur.arenaCoin ?? 0} · ${icon('towerCoin')}${S.cur.towerCoin ?? 0} · 길드 코인은 길드 상점에서 써요</span>`;
       root.innerHTML = `<div class="body"><div class="col shopcats">${cats.map(([k, n, pic]) => `<button class="tab${cat === k ? ' on' : ''}" data-cat="${k}">${tabLabel(`tabs/${pic}`, n)}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-cat]', root).forEach((b) => (b.onclick = () => ((cat = b.dataset.cat!), draw())));
       $$('[data-job]', root).forEach((b) => (b.onclick = () => ((job = b.dataset.job!), draw())));

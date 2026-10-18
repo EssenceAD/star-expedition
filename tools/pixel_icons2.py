@@ -46,9 +46,10 @@ def coin(c1, c2, mark):
         r = list(rows[y]); r[x] = 'K'; rows[y] = ''.join(r)
     return rows
 ring = [(6,5),(7,5),(8,5),(9,5),(5,6),(10,6),(5,7),(10,7),(5,8),(10,8),(6,9),(7,9),(8,9),(9,9)]
-I['guildCoin'] = coin('n', 'B', [(7,5),(8,5),(6,6),(9,6),(6,7),(7,7),(8,7),(9,7),(7,8),(8,8),(7,9),(8,9)])
-I['arenaCoin'] = coin('d', 'R', [(5,5),(10,5),(6,6),(9,6),(7,7),(8,7),(6,8),(9,8),(5,9),(10,9)])
-I['towerCoin'] = coin('k', 'h', [(7,4),(8,4),(7,5),(8,5),(6,6),(9,6),(6,7),(9,7),(6,8),(9,8),(6,9),(7,9),(8,9),(9,9)])
+# 길드 코인 = 파란 동전 + 노란 방패 · 결투장 코인 = 금화 + 세운 칼 (예전 X자는 「취소」처럼 보여 바꿈 · 형철 10/18 #15) · 탑 코인 = 동전 + 탑
+I['guildCoin'] = ['................', '.....KKKKKK.....', '...KKnnnnnnKK...', '..KnnBBBBBBnnK..', '..KnBKKKKKKBnK..', '.KnBBKyyyyKBBnK.', '.KnBBKyRRyKBBnK.', '.KnBBKyRRyKBBnK.', '.KnBBKyyyyKBBnK.', '.KnBBBKyyKBBBnK.', '..KnBBBKKBBBnK..', '..KnnBBBBBBnnK..', '...KKnnnnnnKK...', '.....KKKKKK.....', '................', '................']
+I['arenaCoin'] = ['................', '.....KKKKKK.....', '...KKooooooKK...', '..KooyyyyyyooK..', '..KoyyyKKyyyoK..', '.KoyyyKSSKyyyoK.', '.KoyyyKSsKyyyoK.', '.KoyyyKSsKyyyoK.', '.KoyKKKSsKKKyoK.', '.KoyKRRRRRRKyoK.', '..KoyKKwwKKyoK..', '..KooyKwwKyooK..', '...KKoKKKKoKK...', '.....KKKKKK.....', '................', '................']
+I['towerCoin'] = ['................', '.....KKKKKK.....', '...KKkkkkkkKK...', '..KkkhhKKhhkkK..', '..KkhhKyyKhhkK..', '.KkhhKyyyyKhhkK.', '.KkhKKKKKKKKhkK.', '.KkhhKyyyyKhhkK.', '.KkhhKyyyyKhhkK.', '.KkhhKyKKyKhhkK.', '..KkhKyKKyKhkK..', '..KkkKKKKKKkkK..', '...KKkkkkkkKK...', '.....KKKKKK.....', '................', '................']
 I['tierMat'] = ['................','......KKKK......','....KKBBBBKK....','...KBCBBBBBnK...','..KBCBBBBBBBnK..','..KKKKKKKKKKKK..','..KBBBBBBBBBnK..','...KBBBBBBBnK...','....KBBBBBnK....','.....KBBBnK.....','......KBnK......','.......KK.......','................','................','................','................']
 I['exShard'] = ['................','.........KK.....','........KPPK....','.......KPCPK....','......KPCPPK....','.....KPCPPK.....','....KPPPPK......','...KPPPPK.......','..KqPPPK........','..KqqPK.........','..KKKK..........','................','................','................','................','................']
 I['bossMat'] = coin('d', 'r', [(6,6),(9,6),(6,7),(9,7),(6,9),(7,9),(8,9),(9,9)])

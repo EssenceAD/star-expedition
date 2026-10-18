@@ -46,7 +46,11 @@ register('mission', {
         const left = eventLeft();
         body = `<div class="panel col"><b>${SO.event.name}</b><span class="sm dim">${left ? `남은 ${left}일` : '끝났어요'} · 출석할 때마다 별가루 ${SO.event.dust} · 지금까지 ${S.attend.ev}일</span>${left ? '' : '<span class="xs mute">다음 이벤트는 공지로 알려요</span>'}</div>`;
       } else {
-        body = `<div class="cards">${SO.attend.map((g, i) => `<div class="panel col shopc${i < S.attend.n % SO.attend.length || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}"><b>${i + 1}일째</b><span class="xs">${giveText(g)}</span></div>`).join('')}</div>
+        // 7일 판: 받은 날 ✓ · 오늘(받을 날) 빛 · 앞으로 받을 보상도 그림으로 미리 (형철 10/18)
+        const got = S.attend.n % SO.attend.length;
+        const today = attendToday() ? got : -1;
+        const day = attendToday() ? got + 1 : ((S.attend.n - 1) % SO.attend.length) + 1;
+        body = `<b class="atth">오늘은 ${day}일째 출석${attendToday() ? ' · 보상을 받을 수 있어요' : ' · 내일 또 만나요'}</b><div class="attg">${SO.attend.map((g, i) => `<div class="panel col shopc att${i < got || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}${i === today ? ' now' : ''}"><b>${i + 1}일째</b><div class="ag">${Object.entries(g).map(([k, v]) => `<span>${icon(k)}<b>${fmt(v)}</b></span>`).join('')}</div>${i < got ? `<em class="done">${icon('check')}</em>` : ''}</div>`).join('')}</div>
           <button class="btn hi" data-att ${attendToday() ? '' : 'disabled'}>${attendToday() ? '오늘 출석하기' : '오늘 출석 완료'}</button>`;
       }
       root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;

@@ -75,7 +75,7 @@ register('portal', {
         body = `<p class="sm dim">영웅을 골라 외전(${CC.side.acts}막)을 봐요 · 끝까지 깨면 <b class="gold">전용 보물</b> 해금(공격력 +${CONFIG.treasure.atkPct * 100}%) + 그 영웅 전용 무기 조각 ${CC.side.shards} · 대사는 자리표시자</p>
           <div class="cards sides">${mine.map((h) => {
             const n = S.side[h.id] ?? 0;
-            return `<button class="btn panel col shopc" data-run='${JSON.stringify({ mode: 'side', arg: h.id, sub: Math.min(CC.side.acts, n + 1) })}'><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div><b class="hn fit" data-min="${CONFIG.ui.fit.desc}">${h.name}</b><span class="xs ${S.treasure[h.id] ? 'gold' : 'dim'}">${S.treasure[h.id] ? '보물 해금' : `진행 ${n}/${CC.side.acts}막`}</span></button>`;
+            return `<button class="btn panel col shopc sidec" data-run='${JSON.stringify({ mode: 'side', arg: h.id, sub: Math.min(CC.side.acts, n + 1) })}'><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div><b class="hn fit" data-min="${CONFIG.ui.fit.desc}">${h.name}</b><span class="xs ${S.treasure[h.id] ? 'gold' : 'dim'}">${S.treasure[h.id] ? '보물 해금' : `진행 ${n}/${CC.side.acts}막`}</span></button>`;
           }).join('')}</div>`;
       } else if (tab === 'miles') {
         const ready = milesReady();

@@ -48,6 +48,8 @@ export interface Gear {
   lock: boolean;
   /** 장착한 영웅 */
   by: string | null;
+  /** 고유 이름 (얻은 곳·등급으로 지음 · 옛 저장은 비어 있고 gearName이 uid로 지음) */
+  nm?: string;
 }
 export interface Rune {
   uid: number;
