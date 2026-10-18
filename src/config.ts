@@ -155,8 +155,9 @@ export const CONFIG = {
   },
   /** 행동력 (KR 문법): 최대 = base + perLv × (원정대 레벨 − 1) · regenSec초마다 1 · 원정대 레벨업 때 가득 · 최대를 넘겨 쌓일 수 있음(보상·구매) */
   stamina: { base: 60, perLv: 2, regenSec: 300, cost: [6, 8, 10] as number[], buyDust: 50, buyN: 60 },
-  /** 원정대(계정) 레벨: 쓴 행동력 1 = 경험치 1 · 다음 레벨 = round(base × lv^pow) — 초반 레벨업(=행동력 가득)이 잦게 30·1.35 → 10·1.5 (v1.0.10) */
-  account: { exp: { base: 10, pow: 1.5 }, max: 99 },
+  /** 원정대(계정) 레벨: 쓴 행동력 1 = 경험치 perSta · 다음 레벨 = round(base × lv^pow)
+   *  v1.0.23 (형철 10/18 「5장인데 Lv.6 · 3장 이정표 Lv.10이 안 됨」): 10·1.5 · 1배 → 10·1.2 · 3배 = Lv.10 ≈ 행동력 214(3~4장) · Lv.20 ≈ 1,040(7장) */
+  account: { exp: { base: 10, pow: 1.2 }, perSta: 3, max: 99 },
   /** 첫 클리어는 쓴 행동력을 돌려받음 (초반 행동력 모자람 · v1.0.10) */
   firstRefund: false,
   /** 반복 전투: 별 3개 스테이지 · 즉시 끝남 · 행동력 n × 비용 */

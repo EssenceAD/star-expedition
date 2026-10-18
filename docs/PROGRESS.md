@@ -606,6 +606,8 @@
 
 - v1.0.22: star_board RPC(security definer · 랭킹 값만) · game/real.ts REAL · 탑/결투장/월드/윈드 길드 실유저만 · ensureSession 자동 게스트(새 게스트일 때만 즉시 올림) · AI 채팅 토글(pref aiChat · ChatLine.ai) · #ticker 다시 · profile.ts(acc.avatar) · newsBus(전설 획득·별·티어·초월·각성5 → 소식 줄 + 서버 월드 채팅)
 
+- v1.0.23: 원정대 곡선 10·1.2 · perSta 3 · recalcAccount(accRev 2 · track.all.sta) · runeBox/autoRunes/spareRunes · .pick sticky 아래 · bulkEquip/gearLock · 시험 equip.test.ts
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

@@ -32,7 +32,7 @@ export function useStamina(n: number, s: Save = S, now = Date.now()): { ok: bool
   if (cur >= staMax(s)) s.sta.at = now;
   s.sta.n = cur - n;
   track('sta', n, s, now);
-  return { ok: true, up: addAccExp(n, s, now) };
+  return { ok: true, up: addAccExp(n * AC.perSta, s, now) };
 }
 export function addAccExp(n: number, s: Save = S, now = Date.now()): number {
   let up = 0;
@@ -65,4 +65,14 @@ export function buyBooster(s: Save = S, now = Date.now()): boolean {
   if (!spend('gold', CONFIG.booster.gold, s)) return false;
   s.boostUntil = Math.max(now, s.boostUntil) + CONFIG.booster.sec * 1000;
   return true;
+}
+
+/** 지금까지 쓴 행동력(track.all.sta)으로 원정대 레벨을 다시 셈 (곡선을 바꾼 v1.0.23 · 한 번 · 내려가지는 않음) */
+export function recalcAccount(s: Save = S) {
+  if (s.accRev === 2) return;
+  s.accRev = 2;
+  let lv = 1;
+  let exp = (s.track?.all?.sta ?? 0) * AC.perSta;
+  while (lv < AC.max && exp >= accNeed(lv)) ((exp -= accNeed(lv)), lv++);
+  if (lv > s.acc.lv || (lv === s.acc.lv && exp > s.acc.exp)) ((s.acc.lv = lv), (s.acc.exp = exp));
 }

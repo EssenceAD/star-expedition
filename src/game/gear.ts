@@ -193,6 +193,20 @@ export function socket(g: Gear, idx: number, r: Rune | null, s: Save = S): boole
   g.runes[idx] = r?.uid ?? null;
   return true;
 }
+/** 남는 룬 (어디에도 안 꽂힌 것 · 등급 높은 순) */
+export const spareRunes = (s: Save = S) => Object.values(s.items).filter((x): x is Rune => x.kind === 'rune' && x.in == null).sort((a, b) => b.grade - a.grade || runeValue(b) - runeValue(a));
+/** 빈 룬 칸을 남는 룬 중 좋은 것부터 채움 → 꽂은 개수 */
+export function autoRunes(g: Gear, s: Save = S): number {
+  let n = 0;
+  for (let i = 0; i < g.runes.length; i++) {
+    if (g.runes[i] != null) continue;
+    const r = spareRunes(s)[0];
+    if (!r) break;
+    socket(g, i, r, s);
+    n++;
+  }
+  return n;
+}
 /** 합성: 같은 등급 룬 fuse개 (안 꽂히고 안 잠긴 것) → 다음 등급 1개 */
 export function fuseRunes(grade: number, s: Save = S, rnd: () => number = Math.random): Rune | null {
   if (grade >= R.value.length - 1) return null;
@@ -320,5 +334,16 @@ export function autoEquip(id: string, s: Save = S): number {
   }
   return n;
 }
+/** 일괄 장착 (형철 10/18 · 「체크인」처럼): 고른 영웅들(파티)에게 가장 좋은 장비를 한 번에
+ *  파티 밖 영웅이 낀 장비도 가져와 씀 — 단 「장비 고정」 영웅은 가져가지도 바꾸지도 않음 · 전투력 높은 영웅부터 좋은 장비 → 바꾼 칸 수 */
+export function bulkEquip(ids: string[], s: Save = S): number {
+  const free = (id: string) => s.heroes[id] && !s.heroes[id].gearLock;
+  for (const id of Object.keys(s.heroes)) if (!ids.includes(id) && free(id)) unequipAll(id, s);
+  const order = ids.filter(free).sort((a, b) => partPower(b, s) - partPower(a, s));
+  let n = 0;
+  for (const id of order) n += autoEquip(id, s);
+  return n;
+}
+const partPower = (id: string, s: Save) => s.heroes[id].lv * 100 + s.heroes[id].star * 10;
 /** 직업별 무기 이름 (장비 이름 보조) */
 export const weaponFor = (id: string) => JOBS[heroOf(id).job].weapon;

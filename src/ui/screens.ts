@@ -8,7 +8,7 @@ import { HEROES, heroOf } from '../data/heroes';
 import { JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { heroStock } from '../game/shop';
 import { restBonus } from '../game/social';
-import { heroShopCard } from './screensB';
+import { bulkAsk, heroShopCard } from './screensB';
 import { CHAPTER_MOBS } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { accNeed, boostLeft, boostMult, buyBooster, stageCost, stamina } from '../game/account';
@@ -421,7 +421,7 @@ register('prep', {
           <div class="col side pside">
             <div class="panel col tsum">
               <div class="kv"><span>팀 레벨</span><b>Lv.${S.acc.lv}</b></div>
-              <div class="kv"><span>파티 전투력</span><b class="gold">${fmt(partyPower())}</b></div>
+              <div class="kv"><span>파티 전투력 <b class="gold">${fmt(partyPower())}</b></span><button class="btn mini" data-bulkeq title="파티 장비 일괄 장착">일괄 장착</button></div>
               <div class="party">${[0, 1, 2, 3].map((i) => {
                 const id = byZone(ids)[i];
                 // 누르면 파티에서 빼기 (편성 바꾸기 · v1.0.11에서 뺐다가 되돌림 · 형철 10/18)
@@ -470,6 +470,7 @@ register('prep', {
       });
       $$('[data-lk]', root).forEach((b) => (b.onclick = () => go('shop', { cat: 'hero' })));
       $$('[data-bond]', root).forEach((b) => (b.onclick = () => toast(bondText(BONDS.find((x) => x.id === b.dataset.bond)!))));
+      root.querySelector<HTMLElement>('[data-bulkeq]')!.onclick = () => bulkAsk(draw);
       $$('[data-out]', root).forEach(
         (b) =>
           (b.onclick = () => {

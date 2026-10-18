@@ -573,3 +573,10 @@ body, #stage { font-weight: normal; }
 #stage .profwin .pgrid .kv b { min-width: 0; text-align: right; }
 /* 메인 지도: 한 줄 채팅이 가운데 장 이름과 겹치지 않게 오른쪽만 */
 #stage #topbar.onmap ~ #ticker { max-width: 36%; }
+/* 장비 창 룬 칸 (칸마다 한 줄 · 꽂힌 효과 + 바꾸기·빼기 / 빈 칸 + 룬 꽂기) */
+#stage .gp .runebox { gap: var(--s-xxs); }
+#stage .gp .rrow { align-items: center; gap: var(--s-xs); }
+#stage .gp .rrow .gi { width: 34px; height: 34px; flex: none; }
+/* 장비 창 고르기 목록(룬·먹일 장비·전수): 창 아래쪽에 붙어 늘 보이게 (스크롤 아래에 숨어 있던 것 · 형철 10/18) */
+#stage .modal .gp .pick:not([hidden]) { position: sticky; bottom: calc(-1 * var(--s-md)); z-index: 5; margin: 0 calc(-1 * var(--s-md)); padding: var(--s-sm) var(--s-md); background: var(--px-barBg); border-top: var(--b-base) solid var(--c-gold); box-shadow: 0 calc(-1 * var(--s-md)) var(--s-lg) var(--c-shade); }
+#stage .gp .rrow .xs { line-height: 1.2; }
