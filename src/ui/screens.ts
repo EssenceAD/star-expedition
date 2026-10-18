@@ -93,7 +93,7 @@ export function teamBand(extra = '') {
 //  왼쪽 위 진행 중 2줄(이정표 · 스토리) · 왼쪽 세로 미션·이벤트·출석 · 아래 메뉴 6 + 포탈 · 오른쪽 아래 전투 준비 · 위 가운데 장 이름(누르면 모험)
 const sideBtn = (attr: string, ic: string, name: string, badge: string | number = '') => `<button class="sic" ${attr}>${icon(ic)}<span>${name}</span>${badge ? `<em class="badge">${badge}</em>` : ''}</button>`;
 register('lobby', {
-  title: () => `<span class="prof"><span class="pf"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i>${mapPic('portrait_frame', 'fr')}</span><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
+  title: () => `<span class="prof"><i class="pt" style="background-image:url(${heroPortrait(partyIds()[0] ?? 'woongs')})"></i><span class="col"><b><em>Lv.${S.acc.lv}</em> ${esc(S.acc.name)}</b><span class="xbar"><i style="width:${Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100)}%"></i></span></span><span class="pwr">${icon('power')}<b>${fmt(partyPower())}</b></span></span>`,
   enter(root) {
     root.classList.add('mainmap');
     const ns = nextStage();
@@ -110,10 +110,7 @@ register('lobby', {
       const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
       // 다음 노드 화살표: 메달 바로 위 · 그 노드에 원정대장(장 첫 노드)이 서 있으면 그 머리 위 (보스는 오른쪽 뒤로 비켜 서서 메달 위가 비어 있음)
       const fig = i === 0 && ns.s === 1 ? CONFIG.ui.mainMap.leadH : 0;
-      // 메달·번호판·별 = 그림만 (public/art/ui/map · 형철 10/18 ③④) · 보스는 node_boss 1.3배
-      const medal = isBoss(id) ? 'node_boss' : !open ? 'node_lock' : st === 'now' ? 'node_next' : 'node_clear';
-      const stars = open ? `<span class="mstars">${[0, 1, 2].map((k) => mapPic(k < starsAt(id) ? 'star_on' : 'star_off')).join('')}</span>` : '';
-      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}${mapPic(medal, 'md')}<b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${stars}</button>`;
+      return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}<i class="md">${icon(open ? 'battle' : 'lock')}</i><b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
     }).join('');
     root.innerHTML = `<div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div>
       <div class="mhud">
@@ -132,7 +129,7 @@ register('lobby', {
             .map(([to, n, ic]) => `<button class="dk" data-go="${to}">${icon(ic)}<span>${n}</span>${to === 'shop' && freeSummonLeft() ? '<em class="badge">FREE</em>' : ''}</button>`)
             .join('')}
         </div>
-        <button class="mgo" data-next>${mapPic('battle_btn')}<span>전투 준비</span></button>
+        <button class="mgo" data-next>${icon('battle')}<span>전투 준비</span></button>
         <div class="mmenu panel col" hidden>
           ${[['mission', 'ach', '업적', 'achieve'], ['ranking', '', '랭킹', 'ranking'], ['mail', '', '우편', 'mail'], ['settings', '', '설정', 'settings']].map(([to, tab, n, ic]) => `<button class="btn qrow" data-go="${to}"${tab ? ` data-tab="${tab}"` : ''}>${icon(ic)} ${n}</button>`).join('')}
         </div>
@@ -160,8 +157,6 @@ register('lobby', {
   },
   tick: (dt) => mainMapTick(dt),
 });
-/** 메인 지도 UI 그림 (public/art/ui/map) */
-const mapPic = (name: string, cls = '') => `<img class="${cls}" src="${import.meta.env.BASE_URL}art/ui/map/${name}.png" alt="">`;
 /** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
 export function stageInfo(st: StageId) {
   const R = CONFIG.reward;
