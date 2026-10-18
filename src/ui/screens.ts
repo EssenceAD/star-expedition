@@ -26,7 +26,7 @@ import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, 
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
-import { $, $$, CUR_NAME, esc, fitText, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast, uiPic } from './core';
+import { $, $$, CUR_NAME, esc, fitText, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
 const C = CONFIG.story;
 const partyPower = () => partyIds().reduce((a, id) => a + heroPower(id), 0);
@@ -36,7 +36,7 @@ const fmtTime = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)}시간
 const card = (id: string, extra = '', cls = '') => {
   const h = heroOf(id);
   const own = owned(id);
-  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn job" title="${JOBS[h.job].name}"><img src="${import.meta.env.BASE_URL}art/jobs/${h.job}.png" alt=""></span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
+  return `<button class="btn hcard${own ? '' : ' lock'} ${cls}" data-h="${id}"><span class="zn job" title="${JOBS[h.job].name}"><img class="px" src="${import.meta.env.BASE_URL}art/ui2/jobs/${h.job}.png" alt=""></span>${own ? `<span class="lv">Lv.${S.heroes[id].lv}</span>` : ''}<div class="pt" style="background-image:url(${heroPortrait(id)})"></div><span class="nm fit" data-min="${CONFIG.ui.fit.name}">${h.name}</span><span class="xs dim">${JOBS[h.job].name}</span>${extra}</button>`;
 };
 const zoneTabs = (on: string, withUnowned = false) =>
   `<div class="tabs">${[['all', '전체'], ...ZONES.map((z) => [z, ZONE_NAME[z]]), ...(withUnowned ? [['none', '미보유']] : [])].map(([k, n]) => `<button class="tab${on === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>`;
@@ -177,7 +177,7 @@ export function stageInfo(st: StageId) {
   const enemy = mobs.map((m) => `<div class="ecard${m.boss ? ' boss' : ''}"><i style="background-image:url(${import.meta.env.BASE_URL}art/${m.kind.anims.idle!.frames[0].replace(':', '/')}.png)"></i>${m.boss ? '<em>BOSS</em>' : ''}<span class="fit" data-min="${CONFIG.ui.fit.tiny}">${esc(m.name)}</span></div>`).join('');
   const pct = (p: number) => `${Math.round(p * 100)}%`;
   const drops: [string, string, string][] = [['gold', '금화', '늘'], ['stardust', '별가루', pct(R.dust.chance)], ['enh', '강화석', pct(R.enh.chance)], ['gear', '장비', pct(CONFIG.gear.drop.chance)], ...(isBoss(st) ? [['rune', '룬', pct(CONFIG.gear.drop.runeBoss)] as [string, string, string]] : [])];
-  const dropHtml = drops.map(([k, n, p]) => `<div class="dcell">${k === 'gear' ? uiPic('icons/slot_weapon', 'ic img') : icon(k)}<span>${n}</span><b>${p}</b></div>`).join('');
+  const dropHtml = drops.map(([k, n, p]) => `<div class="dcell">${k === 'gear' ? icon('weapon') : icon(k)}<span>${n}</span><b>${p}</b></div>`).join('');
   const rep = canRepeat(st);
   const m = modal(`${stageName(st)} · ${esc(CHAPTERS[st.c - 1].name)} ${starsHtml(starsAt(st))}`, `<div class="sinfo">
       <div class="row kvs"><span>추천 레벨 <b class="${myLv >= rl ? 'good' : 'bad'}">${rl}</b></span><span>행동력 ${icon('stamina')} <b>${stageCost(st.d)}</b></span></div>

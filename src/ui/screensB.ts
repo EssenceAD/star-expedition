@@ -14,7 +14,7 @@ import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type G
 import { icon, iconText, T } from '../theme/tokens';
 import { taglineOf } from '../data/taglines';
 import { gachaShow } from './gacha';
-import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast, uiPic } from './core';
+import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
 import { gearCell, gearPanel, runeCell, runeText } from './gearui';
 
@@ -60,8 +60,8 @@ register('hero', {
         </div>
         <div class="col eq">
           <div class="slots">${GEAR_SLOTS.map((k) => `<div class="col sl">${gearCell(gearOf(hs?.gear[k]), `data-slot="${k}"`, SLOT_NAME[k], k === 'weapon' ? 'slot_weapon' : k === 'armor' ? 'slot_armor' : 'slot_acc')}<span class="xs mute">${SLOT_NAME[k]}</span></div>`).join('')}
-            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="gear" title="전용 무기">${hs?.ex ? icon('exShard') : uiPic('icons/slot_exclusive', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
-            <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${uiPic('icons/lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
+            <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="gear" title="전용 무기">${hs?.ex ? icon('exShard') : icon('exShard', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
+            <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${icon('lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
           <div class="row"><button class="btn mini grow" data-auto ${own ? '' : 'disabled'}>자동 장착</button><button class="btn mini grow" data-off ${own ? '' : 'disabled'}>모두 해제</button></div>
           <div class="panel col stats">
             <div class="kv"><span>${icon('hp')}체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>${icon('atk')}공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>${icon('def')}방어력</span><b>${fmt(st.def)}</b></div>

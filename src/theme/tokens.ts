@@ -227,15 +227,16 @@ export const T = {
   font: {
     /** 글씨 하나 (MASTER_1018 1-2 · 형철 10/18 견본 A): 화면·캔버스 모든 글씨 = Gothic A1 800 · 예외는 전투 피해 숫자 하나(dmg)
      *  index.html에서 Google Fonts(OFL)로 이 둘만 받음 · 숫자는 전역 tabular-nums */
-    ui: '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
-    /** 전투 피해 숫자 (캔버스 · 타격감) */
-    dmg: '"Luckiest Guy", "Gothic A1", sans-serif',
-    /** 굵기 하나 (Gothic A1 800) */
-    w: '800',
-    size: { xxs: '8px', xs: '9px', sm: '12px', md: '12px', base: '12px', lg: '14px', xl: '14px', xxl: '17px', h2: '20px', h1: '40px', logo: '54px' },
+    ui: '"Galmuri11", "Galmuri9", monospace',
+    /** 전투 피해 숫자 (캔버스 · 도트 굵은 글씨) */
+    dmg: '"Galmuri11", monospace',
+    /** 굵기: 본문 = 보통 · 제목·숫자는 <b> 로 Bold 얼굴 */
+    w: '400',
+    /** 도트 글꼴은 12px 배수에서 칸이 또렷 (갈무리 11 = 12px 칸) */
+    size: { xxs: '12px', xs: '12px', sm: '12px', md: '12px', base: '12px', lg: '12px', xl: '12px', xxl: '24px', h2: '24px', h1: '36px', logo: '48px' },
     weight: { normal: '600', bold: '700', black: '700' },
     /** 캔버스 글자 크기 (px 숫자) */
-    canvas: { num: 20, numBig: 26, numCrit: 34, critLabel: 13, cutName: 38, cutHero: 15, stun: 13, tag: 10 },
+    canvas: { num: 24, numBig: 24, numCrit: 36, critLabel: 12, cutName: 36, cutHero: 12, stun: 12, tag: 12 },
   },
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
   radius: { sm: '3px', md: '8px', pill: '999px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
@@ -266,6 +267,27 @@ export const T = {
   kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
   /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
   hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
+  /** UI v3 도트 (형철 10/18 확정 · docs/proto/ui_v3_board.png): 어두운 나무 도트 판 · 붉은 도트 버튼 · 크림 글씨 + 1칸 외곽선 → var(--px-이름) */
+  px: {
+    ink: '#1a0f08', text: '#fff4dc', soft: '#e3cfa6', mute: '#b8a080', dim: '#8a7458', gold: '#ffd766', goldDeep: '#c98a2c', red: '#e8473a', blue: '#4a8cff', green: '#4bd46a',
+    edge: '8px', edgeSm: '6px', edgeXs: '4px',
+    outline: '1px 0 0 #1a0f08, -1px 0 0 #1a0f08, 0 1px 0 #1a0f08, 0 -1px 0 #1a0f08, 1px 1px 0 #1a0f08, -1px 1px 0 #1a0f08, 1px -1px 0 #1a0f08, -1px -1px 0 #1a0f08',
+    outlineSm: '1px 0 0 #1a0f08, -1px 0 0 #1a0f08, 0 1px 0 #1a0f08, 0 -1px 0 #1a0f08',
+    lightText: '0 1px 0 rgba(255,240,200,0.6)',
+    redText: '0 1px 0 #3c0c04, 1px 0 0 #3c0c04, -1px 0 0 #3c0c04, 0 -1px 0 #3c0c04',
+    iconShadow: 'drop-shadow(1px 0 0 #1a0f08) drop-shadow(-1px 0 0 #1a0f08) drop-shadow(0 1px 0 #1a0f08) drop-shadow(0 -1px 0 #1a0f08) drop-shadow(0 2px 0 rgba(0,0,0,0.45))',
+    well: 'rgba(12,7,3,0.55)', veil: 'rgba(10,6,2,0.55)', veilHi: 'rgba(10,6,2,0.72)', lineSoft: 'rgba(214,162,96,0.3)',
+    barBg: '#0c0703', barHi: 'rgba(255,255,255,0.35)',
+    hp: '#4bd46a', mp: '#3d8cf0', xp: '#ffc94a', cd: 'rgba(0,0,0,0.62)',
+    glow: '0 0 0 2px #ffe08a, 0 0 10px #ffd766', glowHi: '0 0 0 2px #ffe08a, 0 0 16px 3px #ffd766',
+    ring: '0 0 0 2px #1a0f08, 0 0 0 4px #d6a260', ringOn: '0 0 0 2px #1a0f08, 0 0 0 4px #ffd766',
+    nodeDone: '#ffc94a', nodeDoneSh: 'inset -3px -3px 0 #c98a2c, inset 3px 3px 0 #fff0b0',
+    nodeNow: '#4a8cff', nodeNowSh: 'inset -3px -3px 0 #2856b8, inset 3px 3px 0 #a8ccff, 0 0 0 3px #fff',
+    nodeOff: '#7a7f90', nodeOffSh: 'inset -3px -3px 0 #4e5262, inset 3px 3px 0 #a8acba',
+    nodeBoss: '#e04a3a', nodeBossSh: 'inset -3px -3px 0 #9a2618, inset 3px 3px 0 #ff9a80',
+    gradeCommon: '#a89a80', gradeUncommon: '#4fb36a', gradeRare: '#4aa8ff', gradeEpic: '#b46cff', gradeLegend: '#ffb547',
+    good: 'rgba(40,150,70,0.9)', bad: 'rgba(190,40,40,0.9)',
+  } as Record<string, string>,
   /** UI v2 「모험 수첩」 (형철 10/18 확정 · docs/proto/theme_t1c.png): 틀 그림 없이 코드로 그린 양피지 판 · 갈색 잉크 · 붉은 밀랍 버튼 → var(--pa-이름) */
   pa: {
     ink: '#3b2614', ink2: '#6b2e12', mute: '#7a5a3a', dim: '#a08060', line: '#8a5a18', lineSoft: 'rgba(90,60,30,0.18)', gold: '#b5832d', goldHi: '#ffd77a', wax: '#9a2618', blue: '#2f5d8a', white: '#ffffff', cream: '#fff4e0',
@@ -542,14 +564,20 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
 };
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
 /** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
-export const ICON_UI: Record<string, string> = {
-  lock: 'icons/lock', power: 'icons/power', plusArt: 'icons/plus',
-  hp: 'icons/hp', atk: 'icons/atk', def: 'icons/def', crit: 'icons/crit', critDmg: 'icons/critdmg', spd: 'icons/speed', mana: 'icons/mana', levelup: 'icons/levelup',
+/** 도트 아이콘 (UI v3 · tools/pixel_ui.py · pixel_icons2.py → public/art/ui2/icons) — 키 → 파일 이름 */
+export const ICON_PX: Record<string, string> = {
+  heroes: 'hero', recruit: 'hero', formation: 'team', bag: 'bag', shop: 'shop', friend: 'friend', guild: 'guild', content: 'portal', mission: 'mission', event: 'event', attend: 'attend',
+  mail: 'mail', settings: 'gear', chat: 'chat', ranking: 'trophy', achieve: 'trophy', back: 'back', next: 'next', close: 'close', cross: 'close', check: 'check', lock: 'lock', star: 'star', join: 'star',
+  repeat: 'repeat', auto: 'auto', rotate: 'repeat', adventure: 'adventure', story: 'story', sk_hammer: 'sk_hammer', craft: 'sk_hammer', rune: 'rune', pointer: 'pointer', open: 'pointer', warn: 'warn',
+  tower: 'tower', target: 'target', summon: 'summon', skip: 'skip', sweep: 'skip', power: 'power', offline: 'offline', menu: 'menu', emote: 'emote', badge: 'badge', chest: 'chest', booster: 'booster',
+  hp: 'hp', atk: 'atk', battle: 'atk', weapon: 'atk', def: 'def', armor: 'def', spd: 'spd', crit: 'crit', critDmg: 'critDmg', mana: 'mana', pause: 'pause', plusArt: 'plus', levelup: 'pointer',
+  guildCoin: 'guildCoin', arenaCoin: 'arenaCoin', towerCoin: 'towerCoin', tierMat: 'tierMat', exShard: 'exShard', treasureShard: 'treasureShard', bossMat: 'bossMat', token: 'token',
+  zone_front: 'zone_front', zone_mid: 'zone_mid', zone_back: 'zone_back', raid: 'power', coop: 'power', world: 'target', worldBoss: 'target', arena: 'atk', day: 'attend', guildRaid: 'guild', acc: 'badge',
 };
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
-  if (ICON_UI[key]) return `<img class="${cls} img ui" src="${import.meta.env.BASE_URL}art/ui/${ICON_UI[key]}.png" alt="">`;
   if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
+  if (ICON_PX[key]) return `<img class="${cls} img px" src="${import.meta.env.BASE_URL}art/ui2/icons/${ICON_PX[key]}.png" alt="">`;
   const sv = ICON_SVG[key];
   if (sv) return `<svg class="${cls} svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${sv[0]}" fill="${sv[1] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   const v = T.icon[key] ?? '·';
@@ -560,7 +588,7 @@ export const iconText = (key: string) => T.icon[key] ?? '·';
 export const gradeColor = (g: keyof typeof T.grade) => T.grade[g];
 export const elemColor = (e: string) => (T.elem as Record<string, string>)[e] ?? T.color.text;
 /** 캔버스 글꼴 문자열 */
-export const canvasFont = (px: number, _weight?: unknown, num = true) => (num ? `${px}px ${T.font.dmg}` : canvasFace(px));
+export const canvasFont = (px: number, _weight?: unknown, num = true) => (num ? `700 ${px}px ${T.font.dmg}` : canvasFace(px));
 /** 캔버스 UI 글씨 (이름·경고·페이즈·부위·컷인 · 피해 숫자 말고 전부) */
 export const canvasFace = (px: number) => `${T.font.w} ${px}px ${T.font.ui}`;
 
@@ -582,12 +610,11 @@ export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
   for (const [k, v] of Object.entries(T.fx)) set(`--fx-${k}`, v);
-  const kit = (f: string) => `url("${new URL(`${import.meta.env.BASE_URL}art/ui/kit/${f}.png`, location.href).href}")`;
-  // UI v2: 미드저니 틀·버튼 그림은 쓰지 않음 (변수는 남기고 none → 옛 규칙이 그림을 못 그림)
-  void kit;
+  // UI v3: 미드저니 틀·버튼 그림은 지움 (변수는 남기고 none → 옛 규칙이 그림을 못 그림)
   for (const k of Object.keys(T.kit)) set(`--kit-${k}`, 'none');
   for (const k of Object.keys(T.kitImg)) set(`--kimg-${k}`, 'none');
   for (const f of T.hudImg) set(`--hud-${f.replace(/_/g, '-')}`, 'none');
   for (const [k, v] of Object.entries(T.pa)) set(`--pa-${k}`, v);
+  for (const [k, v] of Object.entries(T.px)) set(`--px-${k}`, v);
   for (const [k, v] of Object.entries(T.shadow)) set(`--sh-${k}`, m === 'light' ? (T.shadowLight[k] ?? v) : v);
 }

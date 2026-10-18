@@ -80,14 +80,15 @@ const stall = setInterval(() => {
 }, 1000);
 if (bar) bar.classList.add('real');
 track(setPxHeights());
+// 도트 글꼴 (갈무리 · public/fonts) — 캔버스 글씨가 첫 프레임부터 도트로
+track(Promise.all(['400 12px Galmuri11', '700 12px Galmuri11'].map((f) => document.fonts.load(f))).catch(() => null));
 track(loadInto(sheet, heroDirs(firstHeroes)));
 const bgP = track(img(`${B}art/bg.jpg`).catch(() => null));
-const critP = track(img(`${B}art/ui/battle/crit_burst.png`).catch(() => null));
 track(img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null));
 await Promise.all(jobs);
 const bgs: Record<string, HTMLImageElement> = {};
 for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
-view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: await critP, fx: null };
+view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: null, fx: null };
 // 스킬 이펙트 그림은 뒤에서 (오기 전까진 선 그리기 · ANIM_1017 ②)
 void loadFxArt().then((a) => (view.art.fx = a));
 // 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)

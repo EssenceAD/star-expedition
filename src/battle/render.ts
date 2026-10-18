@@ -217,7 +217,7 @@ function headHp(ctx: CanvasRenderingContext2D, u: Unit, x: number, y: number, H:
 const MARK_ART: Record<(typeof ST_ICONS)[number], string> = { stun: 'stun', silence: 'silence', burn: 'burn', slow: 'freeze', atkDown: 'mark', taunt: 'taunt', guard: 'defUp', atkUp: 'atkUp', spdUp: 'speedUp', critUp: 'mark', regen: 'regen' };
 const MARK_BAD = new Set<string>(['stun', 'silence', 'burn', 'slow', 'atkDown']);
 const stIms: Record<string, HTMLImageElement> = {};
-const stImg = (k: (typeof ST_ICONS)[number]) => (stIms[k] ??= Object.assign(new Image(), { src: `${import.meta.env.BASE_URL}art/buffs/${MARK_ART[k]}.png` }));
+const stImg = (k: (typeof ST_ICONS)[number]) => (stIms[k] ??= Object.assign(new Image(), { src: `${import.meta.env.BASE_URL}art/ui2/buffs/${MARK_ART[k]}.png` }));
 
 // ───────── 배경 (그림 1장을 장마다 색 바꾸기) ─────────
 function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number, key?: string) {
@@ -615,8 +615,8 @@ const RA = CONFIG.raidArena;
 const BW = 760;
 const BH = 640;
 /** 전투 표시 그림 (조준 · 부위 파괴) */
-const markImg = (n: string) => Object.assign(new Image(), { src: `${import.meta.env.BASE_URL}art/ui/battle/${n}.png` });
-const MARK = { tgt: markImg('target'), brk: markImg('part_break') };
+const markImg = (n: string) => Object.assign(new Image(), { src: `${import.meta.env.BASE_URL}art/ui2/icons/${n}.png` });
+const MARK = { tgt: markImg('target'), brk: markImg('crit') };
 const bossCv = document.createElement('canvas');
 const bx = bossCv.getContext('2d')!;
 /** 다층 배경 (멀수록 느리게 · 페이즈마다 색) */

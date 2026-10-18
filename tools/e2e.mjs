@@ -42,11 +42,11 @@ p.on('requestfailed', (r) => errors.push(`실패 ${r.url()}`));
 let n = 0;
 // FINAL_1018 §7 자동 시험: 화면을 찍을 때마다 그 화면에서 어긋난 요소 수를 셈 → out/tests.json
 //  T1 틀 밖 튀어나옴: .framed-in 자식이 그 창 사각형 밖으로 나감
-//  T2 글꼴: 보이는 글씨 요소의 글꼴 첫 이름이 UI 글꼴(Gothic A1)이 아님 (전투 피해 숫자 Luckiest Guy는 캔버스라 제외)
+//  T2 글꼴: 보이는 글씨 요소의 글꼴 첫 이름이 UI 글꼴(갈무리 11 도트)이 아님
 //  T3 의도치 않은 넘침: 스크롤 목록(.scroll)·끌어서 보는 지도(.pan)가 아닌 상자(overflow ≠ visible)에서 scroll > client (글씨 요소는 T4)
 //  T4 잘린 글씨: 글씨를 가진 요소의 scrollWidth > clientWidth
 //  T5 화면 밖: 보이는 요소(잘라 내는 조상 안쪽 부분)가 화면 사각형 밖으로 나감
-const UI_FONT = 'Gothic A1';
+const UI_FONT = 'Galmuri11';
 const report = [];
 const measure = () =>
   p.evaluate((UI_FONT) => {

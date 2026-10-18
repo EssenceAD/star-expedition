@@ -25,11 +25,11 @@ import { view } from './view';
 import { aiEmote, countdown, emote, pvpHudHtml, resetAiEmote, syncPvpHud, vsIntro } from './arena';
 
 const C = CONFIG.story;
-/** 승리·패배 엠블럼 (public/art/ui · 리본은 비어 있음 → 글자는 금박 글씨로 얹음) */
-const UI_ART = `${import.meta.env.BASE_URL}art/ui/`;
+/** 도트 그림 (UI v3 · public/art/ui2) */
+const PX_ART = `${import.meta.env.BASE_URL}art/ui2/`;
 /** 승리·패배 엠블럼 · stars를 주면 엠블럼 위로 별 3개가 하나씩 「쾅」 + 뒤에서 금빛 햇살이 돎 (MOBILE_REF §3-A-5) */
 const emb = (text: string, win: boolean, stars?: number) =>
-  `<div class="emb${stars !== undefined ? ' starred' : ''}" style="background-image:url(${UI_ART}${win ? 'victory' : 'defeat'}.png)">${stars !== undefined ? `<i class="rays"></i><div class="stars3">${[0, 1, 2].map((i) => `<img class="${i < stars ? 'on' : ''}" style="--i:${i}" src="${UI_ART}icons/star.png" alt="">`).join('')}</div>` : ''}${fxt(text, win ? '' : 'lose')}</div>`;
+  `<div class="emb px${stars !== undefined ? ' starred' : ''}${win ? '' : ' lose'}">${stars !== undefined ? `<i class="rays"></i><div class="stars3">${[0, 1, 2].map((i) => `<img class="px${i < stars ? ' on' : ''}" style="--i:${i}" src="${PX_ART}icons/star.png" alt="">`).join('')}</div>` : ''}${fxt(text, win ? '' : 'lose')}</div>`;
 let b: Battle | null = null;
 let st: StageId = { c: 1, s: 1, d: 0 };
 /** 콘텐츠 전투 (없으면 스토리) */
@@ -62,7 +62,7 @@ const BUFF = (u: Unit): [string, string][] =>
     [u.shield > 0, 'shield', '보호막'], [has(u, 'guard'), 'guard', '받는 피해 감소'], [has(u, 'taunt'), 'taunt', '도발'], [has(u, 'regen'), 'regen', '회복'], [has(u, 'atkUp'), 'atkUp', '공격력 증가'],
     [has(u, 'spdUp'), 'spdUp', '공격 속도 증가'], [has(u, 'critUp'), 'critUp', '치명타 증가'], [has(u, 'atkDown'), 'atkDown', '공격력 감소'], [has(u, 'stun'), 'stun', '기절'], [has(u, 'silence'), 'silence', '침묵'], [has(u, 'slow'), 'slow', '둔화'], [has(u, 'burn'), 'burn', '화상'],
   ] as [boolean, string, string][]).filter((x) => x[0]).map(([, k, t]) => [BUFF_ART[k], t]);
-const buffImg = (k: string, t: string) => `<img src="${import.meta.env.BASE_URL}art/buffs/${k}.png" alt="" title="${t}">`;
+const buffImg = (k: string, t: string) => `<img class="px" src="${PX_ART}buffs/${k}.png" alt="" title="${t}">`;
 
 function buildBar() {
   const bar = $('#bar');
@@ -396,7 +396,7 @@ function showResult() {
   const show = () => {
     r.innerHTML = `${emb('승리!', true, stars)}<div class="rcol"><p class="why band">클리어 ${ck(true)} · 아무도 안 쓰러짐 ${ck(allUp)} · ${bb.setup.starTime}초 안 ${ck(bb.stats.time <= bb.setup.starTime)}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP <b class="hn">${mvp.name}</b> ${shortNum(mvp.dealt)}
-      ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl" style="background-image:url(${UI_ART}levelup.png)">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
+      ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl px">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
       <div class="rw">${items.map(([k, n, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
       ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}</div>`;
     r.hidden = false;

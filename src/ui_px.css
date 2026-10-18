@@ -1,0 +1,241 @@
+/* ═════════ UI v3 「도트」 (형철 10/18 확정 · docs/proto/ui_v3_board.png) ═════════
+ * 글씨 = 갈무리 11 (OFL · public/fonts) · 판·버튼·이름표·칸 = 코드로 찍은 도트 그림 (tools/pixel_ui.py → public/art/ui2)
+ * 미드저니 HUD 그림은 쓰지 않음 · 그대로 쓰는 그림 = 일러스트·초상·스킬 아이콘·배경·아이템
+ * 색·그림자는 tokens.ts T.px (var(--px-…)) · style.css 다음에 읽음 (화면 꾸밈의 마지막 한 벌)
+ */
+@font-face { font-family: 'Galmuri11'; src: url(/fonts/Galmuri11.woff2) format('woff2'); font-weight: normal; font-display: swap; }
+@font-face { font-family: 'Galmuri11'; src: url(/fonts/Galmuri11-Bold.woff2) format('woff2'); font-weight: bold; font-display: swap; }
+@font-face { font-family: 'Galmuri9'; src: url(/fonts/Galmuri9.woff2) format('woff2'); font-weight: normal; font-display: swap; }
+
+/* ───── 0. 글씨: 전부 도트 · 굵게는 Bold 얼굴 · 외곽선 1칸 ───── */
+html, body, #stage, button, input, select, textarea, .btn, .tab, .fxt, h2, h3, b, strong { font-family: var(--f-ui); -webkit-font-smoothing: none; font-smooth: never; }
+body, #stage { font-weight: normal; }
+#stage b, #stage strong, #stage h2, #stage h3, #stage .btn, #stage .tab, #stage .fxt, #stage .nm, #stage .hn, #stage .skn, #stage .gname { font-weight: bold; }
+#stage img.px, #stage .px img, #stage .ic.px, #stage img.ic.px { image-rendering: pixelated; }
+#stage .scr, #stage #hud, #stage .toast, #stage .notice, #stage .talk, #stage .bload, #stage #title { color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .fxt { letter-spacing: 0; }
+#stage .fxt::before { -webkit-text-stroke: 0; color: transparent; text-shadow: var(--px-outline); }
+#stage .fxt > span { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--px-gold); }
+#stage .fxt.lose > span { background: none; color: var(--px-soft); }
+* { letter-spacing: 0; }
+
+/* ───── 1. 도트 판: 어두운 나무 · 반투명 안쪽 · 안에서는 글자색 변수를 크림으로 ───── */
+#stage .panel, #stage .modal .panel, #stage #pausedTag, #stage .gp, #stage .mrow, #stage .frow, #stage #dpsL, #stage .mw, #stage .mmenu, #stage .shopcats, #stage #bar .hc, #stage .rcol .why.band, #stage .rtable, #stage .toast, #stage .notice.card, #stage .mq, #stage .tpanel, #stage .talk .tx, #stage .rw .rwc, #stage .rcol .rw div.rwc, #stage .shopc:not(.hero), #stage .pcard, #stage .chatbox, #stage #title .tpanel {
+  --c-text: var(--px-text); --c-textDim: var(--px-soft); --c-textMute: var(--px-mute); --c-textSoft: var(--px-soft);
+  --c-star: var(--px-gold); --c-gold: var(--px-gold); --c-gold1: var(--px-gold); --c-gold2: var(--px-goldDeep); --c-logoSub: var(--px-gold);
+  --c-line: var(--px-lineSoft); --c-panel: var(--px-well); --c-panel2: var(--px-well); --c-panelDeep: var(--px-well); --c-panelHi: var(--px-well);
+  --c-chip: var(--px-well); --c-glass: transparent; --c-tagBg: var(--px-well); --c-cardShade: var(--px-well);
+  --sh-outlineSm: var(--px-outlineSm); --sh-navyText: var(--px-outlineSm); --sh-titleText: var(--px-outline); --sh-textSm: var(--px-outlineSm);
+  border: var(--px-edge) solid transparent; border-radius: 0; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edge) stretch; image-rendering: pixelated;
+  background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outlineSm); -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+#stage .panel > *, #stage .modal .panel > *, #stage .gp > *, #stage .mw > * { image-rendering: auto; }
+#stage .panel::before, #stage .panel::after, #stage .modal .panel::before, #stage .modal .panel::after, #stage .gp::before, #stage .gp::after, #stage .mw::before, #stage .mw::after, #stage #pausedTag::before { display: none; }
+#stage .modal { background: var(--px-veil); }
+#stage .modal h3, #stage .gp .gname, #stage .panel > b:first-child, #stage .mtitle { color: var(--px-gold); text-shadow: var(--px-outline); }
+#stage .kv { border-bottom: var(--b-thin) dashed var(--px-lineSoft); }
+#stage .dim, #stage .mute, #stage .xs.dim, #stage .xs.mute { text-shadow: var(--px-outlineSm); }
+#stage .scr.veiled .body :is(p, #stage .col > .kv, #stage .col > span.xs, #stage .col > span.mute, #stage .col > .row > span.xs):not(.panel *):not(.modal *):not(.hcard *):not(.shopc *) {
+  background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--px-text); text-shadow: var(--px-outline);
+}
+#stage .scr.artbg.veiled::before { background-image: linear-gradient(var(--px-veil), var(--px-veil)), var(--scr-art); }
+
+/* ───── 2. 버튼: 기본 = 나무 · 강조 = 붉은 도트 · 눌림 ───── */
+#stage .btn { border: var(--px-edgeSm) solid transparent; border-radius: 0; border-image: url(/art/ui2/btn_wood.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; color: var(--px-ink); text-shadow: var(--px-lightText); transition: transform 0.06s; }
+#stage .btn.hi, #stage .btn:is([data-buy], #stage [data-hero], #stage [data-pack], #stage [data-sum], #stage [data-cbuy], #stage [data-exup], #stage [data-g='awaken'], #stage [data-sk], #stage [data-coin], #stage [data-g='star'], #stage [data-next], #stage [data-prep], #stage [data-go-battle]) {
+  border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeSm) stretch; color: var(--px-text); text-shadow: var(--px-redText);
+}
+#stage .btn > *, #stage .btn .ic.img:not(.px) { image-rendering: auto; }
+#stage .btn:active:not(:disabled) { transform: translateY(1px); }
+#stage .btn:disabled { filter: saturate(0.3) brightness(0.75); opacity: 1; }
+#stage .btn.qrow, #stage .btn.hrow, #stage .btn.hcard, #stage .btn.shopc, #stage .btn.skip { border-image: none; border: 0; }
+#stage .btn[data-back] { width: 32px; height: 32px; padding: 0; border: 0; border-image: none; background: none; }
+#stage .btn[data-back] .ic { width: 28px; height: 28px; filter: var(--px-iconShadow); }
+
+/* ───── 3. 탭: 나무 버튼 · 켜진 탭 = 붉은 도트 ───── */
+#stage .tab, #stage .tab.on, #stage .shopcats .tab, #stage .shopcats .tab.on, #stage #dpsL .dtabs button {
+  border: var(--px-edgeSm) solid transparent; border-radius: 0; border-image: url(/art/ui2/btn_wood.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated;
+  background: none; box-shadow: none; filter: none; color: var(--px-ink); text-shadow: var(--px-lightText); -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+#stage .tab.on, #stage .shopcats .tab.on, #stage #dpsL .dh.dtabs button.on { border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeSm) stretch; color: var(--px-text); text-shadow: var(--px-redText); }
+#stage .tab:disabled { filter: saturate(0.3) brightness(0.7); opacity: 1; }
+#stage .shopcats .tab { justify-content: flex-start; }
+#stage .badge, #stage .tab .badge { right: 0; top: 0; border-radius: 0; border: var(--b-thin) solid var(--px-ink); background: var(--px-red); color: var(--px-text); text-shadow: var(--px-outlineSm); }
+
+/* ───── 4. 작은 부품 ───── */
+#stage .chip { border: 0; border-radius: 0; background: var(--px-well); color: var(--px-soft); text-shadow: var(--px-outlineSm); box-shadow: 0 0 0 var(--b-thin) var(--px-ink); }
+#stage .chip.on, #stage .bondl .chip.on, #stage .tband .chip.on { background: var(--px-red); color: var(--px-text); }
+#stage .xbar, #stage .bar, #stage #bar .hc .hp, #stage #bar .hc .mp, #stage .tband .xbar, #stage .bh { position: relative; border: var(--b-base) solid var(--px-ink); border-radius: 0; border-image: none; background: var(--px-barBg); box-shadow: none; overflow: hidden; }
+#stage .xbar i, #stage .bh i { border-radius: 0; background: var(--px-xp); box-shadow: inset 0 var(--b-base) 0 var(--px-barHi); }
+#stage .gi { border: var(--px-edgeSm) solid transparent; border-radius: 0; border-image: url(/art/ui2/slot.png) 3 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; }
+#stage .gi > *, #stage .gi .ic.img:not(.px) { image-rendering: auto; }
+#stage .gi.g-common { box-shadow: 0 0 0 var(--b-base) var(--px-gradeCommon); }
+#stage .gi.g-uncommon { box-shadow: 0 0 0 var(--b-base) var(--px-gradeUncommon); }
+#stage .gi.g-rare { box-shadow: 0 0 0 var(--b-base) var(--px-gradeRare); }
+#stage .gi.g-epic { box-shadow: 0 0 0 var(--b-base) var(--px-gradeEpic); }
+#stage .gi.g-legend { box-shadow: 0 0 0 var(--b-base) var(--px-gradeLegend); }
+#stage .gi.empty, #stage .gi.empty.pic, #stage .gi.slot, #stage .party .pcard.empty, #stage .lfp .pt.s.empty { border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/slot.png) 3 fill / var(--px-edgeSm) stretch; background: none; opacity: 0.85; }
+#stage .gi .slotpic { width: 50%; height: 50%; opacity: 0.45; }
+#stage input:not([type='checkbox']), #stage select, #stage textarea, #stage select.tab { border: var(--b-base) solid var(--px-ink); border-radius: 0; border-image: none; background: var(--px-soft); color: var(--px-ink); text-shadow: none; }
+#stage input[type='checkbox'] { position: relative; width: 32px; height: 16px; border: var(--b-base) solid var(--px-ink); border-radius: 0; background: var(--px-barBg); }
+#stage input[type='checkbox']::after { content: ''; position: absolute; left: 0; top: 0; width: 12px; height: 12px; background: var(--px-mute); }
+#stage input[type='checkbox']:checked { background: var(--px-red); }
+#stage input[type='checkbox']:checked::after { left: 16px; background: var(--px-text); }
+#stage .pt { border-radius: 0; box-shadow: var(--px-ring); }
+#stage .ic.svg { color: var(--px-text); }
+#stage .toast { animation: toast 2.2s forwards; }
+#stage .scrollhint { position: absolute; z-index: 25; width: 20px; height: 20px; transform: translate(-50%, 0); pointer-events: none; }
+#stage .scrollhint.down { transform: translate(-50%, -100%) rotate(0deg); }
+#stage .scrollhint.up .ic { transform: rotate(180deg); }
+#stage .scrollhint .ic { width: 20px; height: 20px; filter: var(--px-iconShadow); }
+
+/* ───── 5. 위 바 ───── */
+#stage #topbar.top, #stage .top { border: 0; border-bottom: var(--b-thick) solid var(--px-ink); border-image: none; background: linear-gradient(var(--px-veilHi), var(--px-veil)); box-shadow: 0 var(--b-base) 0 var(--px-goldDeep); color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .top h2 { color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .top .cur { border: var(--px-edgeXs) solid transparent; border-radius: 0; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage .top .cur > * { image-rendering: auto; }
+#stage .top .cur .pl, #stage .top .cur .plus { background: none; border: 0; box-shadow: none; }
+#stage .top .cur .pl.px, #stage .top .cur .plus .ic { image-rendering: pixelated; width: 16px; height: 16px; }
+#stage .top .ic.px, #stage .top .ic.svg { filter: var(--px-iconShadow); }
+#stage:has(.scr[data-screen='lobby']) #topbar { border: 0; background: none; box-shadow: none; }
+
+/* ───── 6. 메인 지도 ───── */
+#stage .mainmap .mhud .mch { border: 0; border-image: none; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .mainmap .mhud .mch span, #stage .mainmap .mhud .mch .ic { color: var(--px-gold); }
+#stage .mq { color: var(--px-text); }
+#stage .mq em.tag.mile { border-radius: 0; background: var(--px-red); color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage .mq em.tag.story { border-radius: 0; background: var(--px-blue); color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage .mside .sic, #stage .mdock .dk { border: 0; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .mside .sic .ic, #stage .mdock .dk .ic { width: 40px; height: 40px; filter: var(--px-iconShadow); }
+#stage .mside .sic > span, #stage .mdock .dk > span { margin-top: calc(var(--s-sm) * -1); padding: 0 var(--s-sm); border: var(--px-edgeXs) solid transparent; border-image: url(/art/ui2/tag.png) 2 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; line-height: 1.2; }
+#stage .mdock { border: 0; background: none; box-shadow: none; }
+#stage .mnode .md { display: grid; place-items: center; width: 30px; height: 30px; border: var(--b-thick) solid var(--px-ink); border-radius: 0; background: var(--px-nodeDone); box-shadow: var(--px-nodeDoneSh); color: var(--px-ink); font-style: normal; text-shadow: none; }
+#stage .mnode .md .ic { width: 18px; height: 18px; }
+#stage .mnode.now .md { background: var(--px-nodeNow); box-shadow: var(--px-nodeNowSh); color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage .mnode.off .md { background: var(--px-nodeOff); box-shadow: var(--px-nodeOffSh); color: var(--px-soft); }
+#stage .mnode.boss .md { width: 40px; height: 40px; background: var(--px-nodeBoss); box-shadow: var(--px-nodeBossSh); color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage .mnode .pl { margin-top: var(--s-xxs); padding: 0 var(--s-xs); border: var(--px-edgeXs) solid transparent; border-radius: 0; border-image: url(/art/ui2/tag.png) 2 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; background: none; color: var(--px-text); text-shadow: var(--px-outlineSm); line-height: 1.1; }
+#stage .mnode .mstars { display: flex; gap: var(--s-xxs); }
+#stage .mnode .mstars i { display: block; width: 8px; height: 8px; border: var(--b-thin) solid var(--px-ink); background: var(--px-barBg); }
+#stage .mnode .mstars i.on { background: var(--px-gold); }
+#stage .mnode .mstars i .ic { display: none; }
+#stage .mnode .arw .ic { filter: var(--px-iconShadow); }
+#stage .mgo.btn { position: absolute; display: flex; align-items: center; justify-content: center; gap: var(--s-sm); width: 150px; height: 54px; border-width: var(--px-edge); border-image-width: var(--px-edge); animation: v3Breathe 1.6s ease-in-out infinite; pointer-events: auto; right: max(var(--s-md), var(--safeR)); bottom: var(--s-md); filter: none; }
+#stage .mgo.btn .ic { width: 28px; height: 28px; }
+#stage .mgo.btn span { position: static; height: auto; color: var(--px-text); text-shadow: var(--px-redText); }
+#stage .mlead { position: absolute; right: 160px; bottom: 0; width: 180px; height: 230px; background: center bottom / contain no-repeat; pointer-events: none; transform-origin: 50% 100%; animation: v3Idle 2.2s ease-in-out infinite; }
+#stage .prof .pf .pt { box-shadow: var(--px-ring); }
+
+/* ───── 7. 전투 HUD ───── */
+#stage #hud .rb, #stage #hud #bQuit { border: 0; border-image: none; background: none; box-shadow: none; color: var(--px-text); }
+#stage #hud #tl .rb, #stage #hud #tr .rb { width: 36px; height: 36px; display: grid; place-items: center; }
+#stage #hud .rb .ic { width: 28px; height: 28px; filter: var(--px-iconShadow); }
+#stage #hud #bAuto[aria-pressed='true'], #stage #hud #bSpeed.fast { filter: drop-shadow(0 0 var(--s-sm) var(--px-gold)); animation: none; }
+#stage #hud #tl .rb span { top: 100%; padding: 0 var(--s-xs); min-width: 0; border: var(--px-edgeXs) solid transparent; border-image: url(/art/ui2/tag.png) 2 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; background: none; color: var(--px-text); text-shadow: var(--px-outlineSm); line-height: 1.1; }
+#stage #wave, #stage #clock { border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outline); }
+#stage #wave { color: var(--px-gold); }
+#stage #clock.low { color: var(--px-red); }
+#stage #stg { color: var(--px-text); text-shadow: var(--px-outline); }
+#stage #bar .hc { display: grid; grid-template-columns: 42px minmax(0, 1fr); grid-template-rows: 14px 18px 32px; column-gap: var(--s-sm); row-gap: var(--s-xxs); width: auto; height: auto; padding: 0; }
+#stage #bar .hc .pt { position: relative; left: auto; top: auto; grid-row: 1 / 3; width: 42px; height: 42px; border: 0; overflow: hidden; }
+#stage #bar .hc .pt i { position: absolute; inset: 0; background: center 15% / cover no-repeat; image-rendering: auto; }
+#stage #bar .hc .nm { position: static; height: 14px; line-height: 14px; color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage #bar .hc .bars { position: static; display: grid; gap: var(--s-xxs); align-content: center; }
+#stage #bar .hc .hp { height: 8px; } #bar .hc .mp { height: 6px; }
+#stage #bar .hc .hp i, #stage #bar .hc .mp i, #stage #bar .hc .hp s { left: 0; top: 0; bottom: 0; max-width: 100%; border-radius: 0; }
+#stage #bar .hc .hp i { background: var(--px-hp); box-shadow: inset 0 var(--b-base) 0 var(--px-barHi); }
+#stage #bar .hc .mp i { background: var(--px-mp); box-shadow: inset 0 var(--b-thin) 0 var(--px-barHi); }
+#stage #bar .hc .bf { position: absolute; left: 0; top: 46px; right: auto; height: 14px; display: flex; gap: var(--s-xxs); }
+#stage #bar .hc .bf img { width: 14px; height: 14px; image-rendering: pixelated; }
+#stage #bar .hc .sk { position: static; grid-column: 1 / 3; display: flex; align-items: center; justify-content: flex-end; gap: var(--s-xs); height: 32px; padding-left: calc(var(--s-xxl) + var(--s-lg) + var(--s-sm)); }
+#stage #bar .sk button { position: relative; width: 30px; height: 30px; padding: 0; border: var(--b-base) solid var(--px-ink); border-radius: 0; background: var(--px-barBg); box-shadow: 0 0 0 var(--b-thin) var(--px-goldDeep); overflow: visible; transform: none; animation: none; filter: none; }
+#stage #bar .sk button i { position: absolute; inset: 0; border-radius: 0; background: center / cover no-repeat; }
+#stage #bar .sk button::before { content: ''; position: absolute; inset: 0; z-index: 1; display: block; border-radius: 0; background: conic-gradient(var(--px-cd) calc(var(--cd, 0) * 360deg), transparent 0); }
+#stage #bar .sk button.cd::before { inset: 0; }
+#stage #bar .sk button b { position: absolute; inset: 0; z-index: 2; display: none; place-items: center; border-radius: 0; background: none; color: var(--px-text); text-shadow: var(--px-outline); }
+#stage #bar .sk button.cd b { display: grid; }
+#stage #bar .sk button.ok { box-shadow: var(--px-glow); animation: v3Pulse 1.2s ease-in-out infinite; }
+#stage #bar .sk button.ok i { box-shadow: none; }
+#stage #bar .sk button.nomana i { filter: saturate(0.2) brightness(0.7); }
+#stage #bar .sk .au { width: 38px; height: 22px; border: var(--px-edgeXs) solid transparent; border-radius: 0; border-image: url(/art/ui2/btn_wood.png) 4 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; background: none; box-shadow: none; }
+#stage #bar .sk .au i { position: static; display: grid; place-items: center; height: 100%; background: none; color: var(--px-ink); font-style: normal; text-shadow: none; }
+#stage #bar .sk .au[aria-pressed='true'] { border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeXs) stretch; filter: none; animation: none; }
+#stage #bar .sk .au[aria-pressed='true'] i { color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage #bar .hc.dead { filter: grayscale(1) brightness(0.65); }
+#stage #dpsL .dname { color: var(--px-gold); }
+#stage #dpsL .dr .g { border-radius: 0; background: var(--px-barBg); }
+#stage #dps #bDps { width: 22px; height: 52px; border: var(--px-edgeXs) solid transparent; border-left: 0; border-radius: 0; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeXs) stretch; background: none; box-shadow: none; color: var(--px-text); }
+#stage #boss { color: var(--px-text); text-shadow: var(--px-outline); }
+#stage #boss .bp { border-radius: 0; box-shadow: var(--px-ring); }
+#stage #boss .bp::after { display: none; }
+#stage #hud.raid #boss .bs, #stage #rParts button span, #stage #pvpHud .tclock { border: 0; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outline); }
+#stage #bDodge, #stage #bEmote { border: var(--px-edgeSm) solid transparent; border-radius: 0; border-image: url(/art/ui2/btn_wood.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; color: var(--px-ink); text-shadow: var(--px-lightText); }
+#stage #pvpHud .cap .framed-in, #stage .fpt .framed-in { border-radius: 0; box-shadow: var(--px-ring); }
+#stage #pausedTag b { color: var(--px-gold); }
+
+/* ───── 8. 결과 ───── */
+#stage #result { background: var(--c-resultVeil); }
+#stage .emb.px { width: auto; height: auto; min-width: 220px; padding: var(--s-xl) var(--s-xxl); background: none; display: grid; place-items: center; }
+#stage .emb.px .fxt { position: static; top: auto; font-size: var(--fs-h1); }
+#stage .emb.px .fxt > span { color: var(--px-gold); }
+#stage .emb.px.lose .fxt > span { color: var(--px-soft); }
+#stage .emb.px .rays { opacity: 0.5; }
+#stage .emb.px .stars3 img { width: 36px; height: 36px; filter: grayscale(1) brightness(0.5); }
+#stage .emb.px .stars3 img.on { filter: none; }
+#stage .emb.lv.inl.px { display: inline-block; min-width: 0; padding: 0; background: none; }
+#stage .emb.lv.inl.px .fxt { font-size: var(--fs-base); }
+#stage .rw .rwc b { color: var(--px-gold); }
+#stage .rw.gifts .rwc .ic.img { animation: v3GiftIn 0.5s 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.4) both; }
+
+/* ───── 9. 영웅 정보: 전신이 위 바 아래 ~ 화면 아래 꽉 (전신 36장 = 900 안 세로 30~890) ───── */
+#stage .fbcol { position: relative; margin: 0; overflow: visible; }
+#stage .fbcol .fb { position: absolute; left: 50%; top: calc(var(--s-sm) - var(--fbH) * 0.0333); height: var(--fbH); width: auto; aspect-ratio: 1; bottom: auto; max-width: none; transform: translateX(-50%); background-position: center top; background-size: contain; --fbH: calc((100% - var(--s-sm)) / 0.9556); }
+#stage .hrow { border: 0; background: none; box-shadow: none; color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .hrow .pt.s { box-shadow: var(--px-ring); }
+#stage .hrow.on .pt.s { box-shadow: var(--px-ringOn); }
+#stage .road2 .stpic { display: inline-block; width: 12px; height: 12px; margin: 0 var(--s-xxs); border: var(--b-thin) solid var(--px-ink); background: var(--px-barBg); }
+#stage .road2 .stpic.on { background: var(--px-gold); }
+#stage .road2 .stpic .ic { display: none; }
+#stage .road2 { flex-wrap: wrap; row-gap: var(--s-xxs); max-width: 100%; }
+
+/* ───── 10. 카드 ───── */
+#stage .hcard, #stage .shopc.hero { border: var(--b-thick) solid var(--px-ink); border-radius: 0; border-image: none; box-shadow: inset 0 0 0 var(--b-base) var(--px-goldDeep); }
+#stage .hcard .pt, #stage .shopc.hero .pt.card { border-radius: 0; box-shadow: none; }
+#stage .hcard.in { box-shadow: inset 0 0 0 var(--b-thick) var(--px-gold); }
+#stage .hcard.in::after, #stage .hcard.in::before { display: none; }
+#stage .hcard .zn.job { padding: var(--s-xs); border: var(--b-base) solid var(--px-ink); border-radius: 0; background: var(--px-veilHi); box-shadow: none; }
+#stage .hcard .zn.job img { image-rendering: pixelated; }
+#stage .hcard .nm, #stage .shopc.hero b { color: var(--px-text); text-shadow: var(--px-outline); }
+#stage .hcard .lv { border-radius: 0; background: var(--px-veilHi); }
+#stage .pcard .pt { box-shadow: none; }
+
+/* ───── 11. 대화 · 로딩 · 타이틀 · 알림 ───── */
+#stage .talk .tx { padding: var(--s-md) var(--s-lg); }
+#stage .talk .who { display: inline-block; margin-top: calc(var(--s-xxl) * -1); padding: 0 var(--s-md); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; color: var(--px-text); text-shadow: var(--px-redText); }
+#stage .talk .say { color: var(--px-text); text-shadow: var(--px-outlineSm); }
+#stage .bload .ld-bar { border: var(--b-base) solid var(--px-ink); border-radius: 0; background: var(--px-barBg); }
+#stage .bload .ld-bar i { border-radius: 0; background: var(--px-xp); }
+#stage .bload .bl-tx p em { border-radius: 0; background: var(--px-red); color: var(--px-text); }
+#stage .bload .bl-tx b { color: var(--px-gold); }
+#stage .jframe, #stage .rc-frame { border-radius: 0; background: none; box-shadow: var(--px-ringOn); }
+#stage .notice.chapter b { color: var(--px-gold); text-shadow: var(--px-outline); }
+#stage .notice.card .ic { filter: var(--px-iconShadow); }
+
+/* ───── 12. 움직임 ───── */
+@keyframes v3Pulse { 50% { box-shadow: var(--px-glowHi); } }
+@keyframes v3Breathe { 50% { transform: scale(1.04); } }
+@keyframes v3Idle { 50% { transform: translateY(-3px); } }
+@keyframes v3PopIn { 0% { transform: scale(0.8); opacity: 0; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes v3GiftIn { 0% { transform: scale(0); } 80% { transform: scale(1.15); } 100% { transform: scale(1); } }
+#stage .modal .panel, #stage .mw { animation: v3PopIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ───── 13. 1차 캡처 뒤 ───── */
+#stage .fxt::before { display: none; }
+#stage .fxt > span { text-shadow: var(--px-outline); }
+#stage .stats .kv { flex-wrap: wrap; }
+#stage .stats .kv .cap { flex-basis: 100%; text-align: right; }
+#stage .fmap-in .mnode .pl, #stage .fmap-in .mnode .mstars { display: none; }
+#stage .mgo.btn { border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edge) stretch; }
+#stage .stats .kv b { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+#stage .stats .kv .cap { flex-basis: auto; }
