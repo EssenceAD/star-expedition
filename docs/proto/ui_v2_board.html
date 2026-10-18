@@ -257,6 +257,23 @@ html.t3 .rbtn.on { color: #2b8cff; }
 html.t3 .gift { background: #eef4fc; } html.t3 .gift b { color: #12305e; }
 html.t3 .veil { background: rgba(20,40,90,.35); }
 html.t3 .hud-top .t { color: #12305e; }
+
+/* ════ 1번 확정 + 만족도 아이디어 (t1b) ════ */
+.leadfb { display: none; }
+html.t1b .leadfb { display: block; position: absolute; right: 118px; bottom: 0; width: 230px; height: 300px; background: center bottom / contain no-repeat; filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)); pointer-events: none; }
+html.t1b .leadfb::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 2px; height: 14px; border-radius: 50%; background: radial-gradient(rgba(0,0,0,.45), transparent 70%); z-index: -1; }
+/* 아래 메뉴: 판 없이 아이콘 + 글씨만 (진한 외곽선·그림자로 어떤 배경에서도 읽힘) */
+html.t1b .dock { background: none; border: 0; box-shadow: none; backdrop-filter: none; gap: 2px; }
+html.t1b .dock::before, html.t1b .dock::after { display: none; }
+html.t1b .dock div { color: #fff; font-size: 12px; font-weight: 800; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000, 0 0 6px rgba(0,0,0,.6); }
+html.t1b .dock div .ic { width: 28px; height: 28px; color: #fff; stroke-width: 2.4; filter: drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 2px 3px rgba(0,0,0,.7)); }
+/* 정보 적은 곳은 판 없이 그림자 글씨 */
+html.t1b .chap { background: none; border: 0; box-shadow: none; backdrop-filter: none; color: #fff; font-size: 15px; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 2px 4px #000; }
+html.t1b .chap::before, html.t1b .chap::after { display: none; }
+html.t1b .chap span { color: #ffd77a; }
+/* 영웅 정보: 전신을 더 크게 (일러스트가 주인공) */
+html.t1b #C .fb { left: 60px; top: 30px; width: 260px; }
+html.t1b #C .info { left: 300px; width: 300px; }
 </style></head><body>
 <!-- SVG 아이콘 묶음 -->
 <svg width="0" height="0" style="position:absolute">
@@ -311,6 +328,7 @@ html.t3 .hud-top .t { color: #12305e; }
  <div class="dock glass">
   <div><svg class="ic"><use href="#i-hero"/></svg>영웅</div><div><svg class="ic"><use href="#i-team"/></svg>편성</div><div><svg class="ic"><use href="#i-bag"/></svg>가방</div><div><svg class="ic"><use href="#i-shop"/></svg>상점</div><div><svg class="ic"><use href="#i-friend"/></svg>친구</div><div><svg class="ic"><use href="#i-guild"/></svg>길드</div><div><svg class="ic"><use href="#i-portal"/></svg>콘텐츠</div>
  </div>
+ <div class="leadfb" style="background-image:url(/public/art/fullbody/woongs.png)"></div>
  <div class="btn gold go"><svg class="ic"><use href="#i-sword"/></svg>전투 준비</div>
 </div>
 
