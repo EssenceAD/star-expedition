@@ -448,11 +448,11 @@ register('prep', {
               ${run.mode === 'arena' && run.arg === 'last' ? lastHtml() : ''}
             </div>` : ''}
             ${st ? `<div class="panel col">
-              <div class="row"><span class="grow sm">${icon('booster')} 부스터 (전리품 ${CONFIG.booster.mult}배 1시간)</span><button class="btn mini${bl ? ' on' : ''}" data-boost>${bl ? fmtTime(bl) : `${icon('gold')}${fmt(CONFIG.booster.gold)}`}</button></div>
               <div class="kv"><span>행동력</span><b>${icon('stamina')} ${cost} / 보유 ${stamina()}</b></div>
               <div class="row"><select data-n class="tab">${CONFIG.repeat.choices.map((n) => `<option value="${n}" ${n === rep ? 'selected' : ''}>${n}회</option>`).join('')}</select>
                 <button class="btn grow" data-repeat ${canRepeat(st) ? '' : 'disabled'} title="${canRepeat(st) ? '바로 끝나요' : '별 3개면 열려요'}">${icon('repeat')} 반복 전투</button>
-                <button class="btn hi grow" data-start ${ids.length ? '' : 'disabled'}>전투 시작</button></div>
+                <button class="btn hi grow big" data-start ${ids.length ? '' : 'disabled'}>전투 시작</button></div>
+              <div class="row"><span class="grow xs dim">${icon('booster')} 부스터 (전리품 ${CONFIG.booster.mult}배 1시간)</span><button class="btn mini${bl ? ' on' : ''}" data-boost>${bl ? fmtTime(bl) : `${icon('gold')}${fmt(CONFIG.booster.gold)}`}</button></div>
               <span class="xs mute">${canRepeat(st) ? `반복 전투 = 행동력 ${cost} × 횟수 · 바로 끝나요` : '반복 전투는 별 3개 스테이지만'}</span>
             </div>` : ''}
           </div>

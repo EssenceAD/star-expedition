@@ -1,4 +1,4 @@
-// 화면 크기 · 캔버스 · 그림 (main.ts가 채움) — 화면 꽉 채우기: 높이 390 고정, 너비는 창 비율(wMin~wMax)
+// 화면 크기 · 캔버스 · 그림 (main.ts가 채움) — 화면 꽉 채우기: 높이 CONFIG.view.h 고정, 너비는 창 비율(wMin~wMax)
 //  wMin 720 (10/18 폴드·패드): 정사각형에 가까운 화면도 전장을 넓게 → 위아래 여백은 늘지만 영웅·몹이 몰려 보이지 않게 (웅스·고느끼 피드백)
 import { CONFIG } from '../config';
 import type { Art } from '../battle/render';
@@ -44,6 +44,7 @@ export function fitView(stage: HTMLElement, cv: HTMLCanvasElement, iw = viewport
   view.w = w;
   view.scale = k;
   stage.style.width = `${w}px`;
+  stage.style.setProperty('--viewH', `${V.h}px`);
   // 패드(4:3 · 5:4)처럼 폭이 좁은 화면: 꽉 채우고 메뉴는 촘촘하게 (.narrow)
   stage.classList.toggle('narrow', w < V.narrow);
   stage.style.transform = `translate(-50%, -50%)${rot ? ` translateY(${Math.round((s.t - s.b) / 2)}px) rotate(90deg)` : ''} scale(${k})`;

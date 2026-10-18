@@ -225,13 +225,14 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
   let gaps = 0;
   const all = [...setup.heroes, ...(setup.allies ?? [])];
   const places = setup.allies?.length ? K.places8 : K.places;
-  // 좁은 화면(폴드 펼침·패드처럼 정사각형에 가까운 창 · 너비 < wBase): 영웅 줄을 왼쪽으로 물려 적과 겹치지 않게 (웅스 10/18 폴드7)
-  const shift = Math.max(0, (CONFIG.view.wBase - (o.w ?? CONFIG.view.wBase)) * 0.5);
+  // 영웅 자리는 화면 너비에 맞춰 늘이고 줄임: 전방(places[0])은 늘 첫 몹 앞 frontGap에 붙고, 뒤쪽은 그 비율로 왼쪽에 (넓은 화면에서 전방이 몹과 멀어지던 것 · 형철 10/18)
+  const W = o.w ?? CONFIG.view.wBase;
+  const fit = (W - K.mobSlots[0][0] - K.frontGap) / K.places[0][0];
   const heroes = all.map((h, i): Unit => {
     const zone = ZONES.indexOf(h.zone);
     if (i > 0 && h.zone !== all[i - 1].zone && !setup.allies?.length) gaps++;
     const [px, y] = places[i % places.length];
-    const x = px - gaps * K.zoneGap - shift;
+    const x = Math.round(setup.allies?.length ? px : px * fit) - gaps * K.zoneGap;
     const u = unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone, ai: i >= setup.heroes.length });
     if (setup.arena) {
       // 보스 전장: 파티 A(내 4) 위 줄 · 파티 B(AI 4) 아래 줄 — AI가 없으면 내 파티를 2명씩 나눔
@@ -299,7 +300,7 @@ function spawnWave(b: Battle) {
     const hs = m.hero;
     const u = hs
       ? unit('mob', m.name, { mob: m, pvp: hs, anims: hs.art.anims, h: hs.art.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, crit: hs.st.crit, critDmg: hs.st.critDmg, x: x + K.mobEnterFrom, y, zone: ZONES.indexOf(hs.zone), flip: true })
-      : unit('mob', m.name, { mob: m, anims: m.kind.anims, h: m.kind.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, x: x + K.mobEnterFrom, y });
+      : unit('mob', m.name, { mob: m, anims: m.kind.anims, h: m.kind.h * K.mobScale, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, x: x + K.mobEnterFrom, y });
     if (hs) specMods(u);
     u.tx = x;
     if (b.setup.arena && m.boss) {
