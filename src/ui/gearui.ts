@@ -4,11 +4,11 @@ import { jingle, sfx } from '../core/audio/sfx';
 import { haptic } from '../core/haptic';
 import { heroOf } from '../data/heroes';
 import {
-  enhance, enhBand, enhCost, enhRate, feedable, gearBase, gearName, gearOf, gearPower, gradeName, optText, PART_NAME, removeItem, rerollKeep, rerollRoll, RUNE_GRADE, runeOf, runeValue, socket, starRate, starUp, tierCost, tierUp, transfer, transferPreview,
+  autoRunes, enhance, enhBand, spareRunes, enhCost, enhRate, feedable, gearBase, gearName, gearOf, gearPower, gradeName, optText, PART_NAME, removeItem, rerollKeep, rerollRoll, RUNE_GRADE, runeOf, runeValue, socket, starRate, starUp, tierCost, tierUp, transfer, transferPreview,
 } from '../game/gear';
 import { addCur, persist, S, type Gear, type Rune } from '../game/state';
 import { icon, iconText } from '../theme/tokens';
-import { $, $$, fmt, fxt, syncBar, toast } from './core';
+import { $, $$, esc, fmt, fxt, syncBar, toast } from './core';
 
 const G = CONFIG.gear;
 const PART_IC: Record<string, string> = { weapon: 'weapon', armor: 'armor', acc: 'acc' };
@@ -44,6 +44,19 @@ function enhShow(host: HTMLElement, g: Gear, r: string, before: { enh: number; b
   el.onclick = () => el.remove();
 }
 /** 장비 상세 창 — 바뀌면 onChange (부른 화면 새로 그리기) */
+/** 룬 칸 (형철 10/18 「룬 칸을 눌러야 목록이 떠서 모르는 사람이 많음」): 칸마다 한 줄 — 꽂힌 룬 효과 + 바꾸기·빼기 / 빈 칸 + 「룬 꽂기」 · 남는 룬 수 · 빈 칸 자동 채우기 */
+function runeBox(g: Gear) {
+  if (!g.runes.length) return '<b class="sm">룬 칸</b><span class="xs mute">일반 등급 장비는 룬 칸이 없어요 (고급부터 1칸 · 전설 3칸)</span>';
+  const spare = spareRunes().length;
+  const filled = g.runes.filter((u) => u != null).length;
+  return `<div class="row"><b class="sm grow">룬 칸 ${filled}/${g.runes.length} <span class="xs dim">꽂으면 능력 +</span></b><span class="xs dim">남는 룬 ${spare}개</span>${spare && filled < g.runes.length ? '<button class="btn mini hi" data-rauto>빈 칸 자동</button>' : ''}</div>
+    <div class="col runebox">${g.runes.map((u, i) => {
+      const r = runeOf(u);
+      return r
+        ? `<div class="row rrow">${runeCell(r, `data-rs="${i}"`)}<span class="grow xs good">${runeText(r)}</span><button class="btn mini" data-rs="${i}">바꾸기</button><button class="btn mini" data-rout="${i}">빼기</button></div>`
+        : `<div class="row rrow empty">${runeCell(null, `data-rs="${i}"`)}<span class="grow xs mute">빈 칸</span><button class="btn mini hi" data-rs="${i}">${icon('rune')} 룬 꽂기</button></div>`;
+    }).join('')}</div>`;
+}
 export function gearPanel(g: Gear, onChange: () => void) {
   const m = document.createElement('div');
   m.className = 'modal';
@@ -72,8 +85,7 @@ export function gearPanel(g: Gear, onChange: () => void) {
         <div class="col">
           <div class="row"><b class="sm grow">부가 옵션</b><span class="xs dim">한 줄씩 바꾸기 ${icon('optTicket')} ${S.cur.optTicket ?? 0}</span></div>
           ${g.opts.map((o, i) => `<div class="row"><span class="grow md">${optText(o)}</span><button class="btn mini" data-reroll="${i}">바꾸기</button></div>`).join('')}
-          <b class="sm">룬 칸 ${g.runes.length ? '' : '(일반 등급은 없음)'}</b>
-          <div class="row">${g.runes.map((u, i) => runeCell(runeOf(u), `data-rs="${i}"`)).join('')}</div>
+          ${runeBox(g)}
         </div>
         <div class="col">
           <div class="row erow"><span class="grow md col">강화 +${g.enh}/${G.enhance.max} ${g.enh < G.enhance.max ? `<span class="xs dim">성공 ${Math.round(enhRate(g) * 100)}% · ${icon('enh')}${ec.stones} <b class="${(S.cur.enh ?? 0) >= ec.stones ? 'good' : 'bad'}">(보유 ${fmt(S.cur.enh ?? 0)})</b> ${icon('gold')}${fmt(ec.gold)}</span>` : ''}</span><button class="btn hi" data-a="enh" ${g.enh >= G.enhance.max ? 'disabled' : ''}>${icon('sk_hammer')} 강화</button></div>
@@ -88,6 +100,7 @@ export function gearPanel(g: Gear, onChange: () => void) {
     const pick = $('.pick', m);
     const choose = (title: string, html: string, wire: () => void) => {
       pick.hidden = false;
+      requestAnimationFrame(() => pick.scrollIntoView({ block: 'nearest' }));
       pick.innerHTML = `<div class="row"><b class="grow sm">${title}</b><button class="btn mini" data-x>${icon('close')}</button></div><div class="pk scroll">${html}</div>`;
       $('[data-x]', pick).onclick = () => (pick.hidden = true);
       wire();
@@ -168,12 +181,22 @@ export function gearPanel(g: Gear, onChange: () => void) {
           );
         }),
     );
+    $$('[data-rout]', m).forEach((b) => (b.onclick = () => (socket(g, +b.dataset.rout!, null), done('룬을 뺐어요'))));
+    m.querySelector<HTMLElement>('[data-rauto]')?.addEventListener('click', () => {
+      const n = autoRunes(g);
+      done(n ? `룬 ${n}개를 꽂았어요` : '꽂을 룬이 없어요');
+    });
     $$('[data-rs]', m).forEach(
       (b) =>
         (b.onclick = () => {
           const idx = +b.dataset.rs!;
-          const rs = Object.values(S.items).filter((x): x is Rune => x.kind === 'rune').sort((a, c) => c.grade - a.grade);
-          choose('꽂을 룬 (다른 장비에 꽂힌 것은 옮겨 와요)', `${g.runes[idx] != null ? '<button class="btn mini" data-ru="-1">빼기</button>' : ''}${rs.map((r) => `<div class="row">${runeCell(r)}<span class="grow xs">${runeText(r)}${r.in != null ? ' · 장착 중' : ''}</span><button class="btn mini" data-ru="${r.uid}">꽂기</button></div>`).join('') || '<span class="xs mute">룬이 없어요 (보스 스테이지 · 탑)</span>'}`, () =>
+          // 남는 룬 먼저 · 다른 장비에 꽂힌 룬은 어디에 꽂혀 있는지 (누르면 옮겨 옴) · 이 장비에 이미 꽂힌 것은 빼고
+          const rs = Object.values(S.items).filter((x): x is Rune => x.kind === 'rune' && x.in !== g.uid).sort((a, c) => +(a.in != null) - +(c.in != null) || c.grade - a.grade);
+          const where = (r: Rune) => {
+            const at = r.in != null ? gearOf(r.in) : null;
+            return at ? ` · <span class="bad">${esc(gearName(at))}${at.by ? `(${heroOf(at.by).name})` : ''}에 꽂힘</span>` : ' · <span class="good">남는 룬</span>';
+          };
+          choose(`룬 칸 ${idx + 1}에 꽂을 룬`, `${rs.map((r) => `<div class="row">${runeCell(r)}<span class="grow xs">${runeText(r)}${where(r)}</span><button class="btn mini${r.in == null ? ' hi' : ''}" data-ru="${r.uid}">${r.in == null ? '꽂기' : '옮겨 꽂기'}</button></div>`).join('') || '<span class="xs mute">룬이 없어요 · 보스 스테이지·도전의 탑에서 얻어요</span>'}`, () =>
             $$('[data-ru]', pick).forEach(
               (x) =>
                 (x.onclick = () => {

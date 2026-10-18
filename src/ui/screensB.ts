@@ -5,7 +5,7 @@ import { BONDS } from '../data/bonds';
 import { HEROES, heroOf } from '../data/heroes';
 import { JOB_IDS, JOBS, ZONE_NAME, ZONES, type Zone } from '../data/jobs';
 import { descPassive, descSkill } from '../data/skills';
-import { autoEquip, bagUsed, fitsHero, typeName, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
+import { autoEquip, bagUsed, bulkEquip, fitsHero, typeName, bulk, craft, equip, expandBag, freeSummonLeft, fuseRunes, gearOf, gearPower, PART_NAME, PARTS, RUNE_GRADE, SLOT_PART, sortedGear, summon, unequip, unequipAll, type Part, type SortKey } from '../game/gear';
 import { assignShards, awaken, awakenCost, canTranscend, exAtk, exNeed, exShards, exUp, heroStarCost, heroStarUp, retrait, skillCost, skillUp, transcend, TRAITS, usePotion } from '../game/growth';
 import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../game/heroes';
 import { buyCoin, buyHero, buyItem, buyPack, heroCost, heroStock, weeklyHero } from '../game/shop';
@@ -44,6 +44,19 @@ const say = (r: string, m: Record<string, string>) => {
 // ───────── 영웅 정보 ─────────
 /** 탭 4개 (FINAL_1018 §4): 일반 · 스킬 · 장비 · 성장 — 글씨만 · 탭마다 예전 칸 묶음 */
 const HERO_TABS: [string, string, string[]][] = [['info', '일반', ['info', 'costume']], ['skill', '스킬', ['skill']], ['gear', '장비', ['ex']], ['grow', '성장', ['grow', 'trans']], ['saga', '서사', ['saga']]];
+/** 파티 일괄 장착 확인 → 실행 (편성·영웅 정보 둘 다) */
+export function bulkAsk(after: () => void) {
+  const locked = partyIds().filter((x) => S.heroes[x]?.gearLock).map((x) => heroOf(x).name);
+  modal(`${icon('formation')} 파티 일괄 장착`, `<p class="dim">파티 영웅들에게 가방·다른 영웅의 장비 중 가장 좋은 것을 한 번에 껴 줘요.</p><p class="xs mute">파티 밖 영웅이 낀 장비도 가져와요 · 「장비 고정」한 영웅은 가져가지도 바꾸지도 않아요${locked.length ? ` (고정: ${locked.join(' · ')})` : ''}</p>`, [
+    ['취소', null],
+    ['일괄 장착', () => {
+      const n = bulkEquip(partyIds());
+      persist();
+      toast(n ? `${n}칸을 더 좋은 장비로 바꿨어요` : '더 좋은 장비가 없어요');
+      after();
+    }, true],
+  ]);
+}
 register('hero', {
   title: (p) => `${icon('heroes')} 영웅 정보 · ${heroOf(p.id as string).name}`,
   back: (p) => (p.from ? go('prep', p.from as Record<string, unknown>, false) : p.shop ? go('shop', { cat: 'hero' }, false) : go('heroes', {}, false)),
@@ -77,6 +90,7 @@ register('hero', {
             <div class="col sl"><button class="gi ex${hs?.ex ? ' on' : ' empty pic'}" data-tab="gear" title="전용 무기">${hs?.ex ? icon('exShard') : icon('exShard', 'slotpic')}${hs?.ex ? `<span class="st">${iconText('star').repeat(hs.ex)}</span>` : ''}</button><span class="xs mute">전용 무기</span></div>
             <div class="col sl"><button class="gi empty pic" data-treasure title="전용 보물">${icon('lock', 'slotpic')}</button><span class="xs mute">전용 보물</span></div></div>
           <div class="row"><button class="btn mini grow" data-auto ${own ? '' : 'disabled'}>자동 장착</button><button class="btn mini grow" data-off ${own ? '' : 'disabled'}>모두 해제</button></div>
+          <div class="row"><button class="btn mini grow${hs?.gearLock ? ' on' : ''}" data-glock ${own ? '' : 'disabled'}>${icon('lock')} ${hs?.gearLock ? '장비 고정 중' : '장비 고정'}</button><button class="btn mini grow" data-bulk>파티 일괄 장착</button></div>
           <div class="panel col stats">
             <div class="kv"><span>${icon('hp')}체력</span><b>${fmt(st.hp)}</b></div><div class="kv"><span>${icon('atk')}공격력</span><b>${fmt(st.atk)}</b></div><div class="kv"><span>${icon('def')}방어력</span><b>${fmt(st.def)}</b></div>
             ${capRow(`${icon('crit')}치명타`, 'crit', st.crit)}${capRow(`${icon('critDmg')}치명 피해`, 'critDmg', st.critDmg)}${capRow(`${icon('spd')}공격 속도`, 'spd', st.spd)}${capRow(`${icon('def')}받는 피해 감소`, 'dmgCut', st.dmgCut)}
@@ -97,6 +111,13 @@ register('hero', {
         toast(n ? `${n}칸 바꿨어요` : '더 좋은 장비가 없어요');
         draw();
       };
+      $('[data-glock]', root).onclick = () => {
+        S.heroes[id].gearLock = !S.heroes[id].gearLock;
+        persist();
+        toast(S.heroes[id].gearLock ? `${h.name} 장비를 고정했어요 · 일괄 장착이 가져가지 않아요` : '장비 고정을 풀었어요');
+        draw();
+      };
+      $('[data-bulk]', root).onclick = () => bulkAsk(draw);
       $('[data-off]', root).onclick = () => {
         unequipAll(id);
         persist();

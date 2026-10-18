@@ -23,6 +23,8 @@ export interface HeroSave {
   trans: number[];
   /** 전용 무기: 별 0 = 없음 · 1~5 */
   ex: number;
+  /** 장비 고정 (애착 영웅 · 일괄 장착이 이 영웅 장비를 가져가거나 바꾸지 않음 · 형철 10/18) */
+  gearLock?: boolean;
   /** 입은 코스튬 묶음 (예: 'festival') · 없으면 기본 */
   costume?: string | null;
   /** 장착한 장비 uid */
@@ -100,6 +102,8 @@ export interface SaveV6 {
   prologue: boolean;
   /** 원정대(계정) */
   acc: { name: string; lv: number; exp: number; /** 프로필 초상 영웅 id (없으면 파티 대장) */ avatar?: string };
+  /** 원정대 레벨 곡선 판 (2 = v1.0.23 다시 셈 끝남) */
+  accRev?: number;
   /** 행동력: 값 · 마지막으로 회복을 계산한 시각 */
   sta: { n: number; at: number };
   /** 부스터(전리품 2배) 끝나는 시각 */
