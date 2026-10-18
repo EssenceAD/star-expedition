@@ -445,3 +445,15 @@ body, #stage { font-weight: normal; }
 #stage .food .fpic { width: 56px; height: 56px; }
 /* 타이틀: 「화면을 눌러 시작」은 맨 아래 띠로 (영웅 얼굴을 가리지 않게) */
 #stage #title .tapgo { bottom: var(--s-sm); padding: var(--s-xxs) var(--s-xl); background: var(--px-veil); font-size: var(--fs-xl); }
+
+/* 10/18 PC 피드백 2 */
+/* 편성·영웅 카드: 직업 칩을 왼쪽 위 모서리로 → 아래는 이름·전투력만 (얼굴을 가리지 않게) */
+#stage .hcard .chips { position: absolute; z-index: 2; left: var(--s-xxs); top: var(--s-xxs); flex-direction: column; align-items: flex-start; max-width: 60%; padding: 0; }
+#stage .hcard .pt { background-position: center 10%; }
+/* 결과 화면 버튼 줄: 좁은 PC 비율에서 「다음」이 잘리지 않게 줄바꿈 */
+#stage .rcol > .row { flex-wrap: wrap; justify-content: center; }
+/* 이정표 사슬: 칸이 창 폭에 맞춰 줄어듦 (4번째 칸부터 창 밖으로 나가던 것) */
+#stage .mwin .chain { min-width: 0; }
+#stage .mwin .mcell { flex: 1 1 0; width: auto; min-width: 0; }
+#stage .mwin .mcell .nm { overflow-wrap: anywhere; }
+#stage .mwin .chain .link { flex: 0 0 var(--s-xs); min-width: 0; }
