@@ -13,7 +13,8 @@ import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
 import { TIPS } from '../data/tips';
 import { stageCost, useStamina } from '../game/account';
-import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
+import { buildRun, finishRun, lockOf, milesReady, MODE_NAME, nextMile, triesText, useTry, type Run } from '../game/content';
+import { pushNotice } from './notice';
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, stageName, unlocked, type StageId } from '../game/stage';
 import { partyIds, persist, S } from '../game/state';
 import { applyTheme, icon, iconText, T } from '../theme/tokens';
@@ -347,8 +348,20 @@ function showResult() {
   }
   const stars = starsOf(bb);
   const dps = partyDps(bb);
+  const before = new Set(milesReady().map((m) => m.id));
   const res = recordClear(st, { stars, time: bb.stats.time, dps, mvp: mvp.hero!.def.id });
   persist();
+  // 지도로 돌아가면 뜰 알림 카드 (S4): 첫 클리어 · 퍼펙트 · 이정표 달성 → 다음 이정표 · 장 개방
+  if (!run) {
+    const chStars = Array.from({ length: C.stages }, (_, i) => S.stages[`${st.c}-${i + 1}-${st.d}`]?.stars ?? 0).reduce((a, b) => a + b, 0);
+    if (res.first) pushNotice({ head: `스토리 · ${CHAPTERS[st.c - 1].name}`, text: `${stageName(st)} 클리어`, ic: 'adventure' });
+    if (res.firstThree) pushNotice({ head: '퍼펙트 클리어', text: `${st.c}장 별 ${chStars}/${C.stages * 3}`, ic: 'star' });
+    const done = milesReady().filter((m) => !before.has(m.id));
+    for (const m of done) pushNotice({ head: '이정표 달성', text: m.name, ic: 'mission' });
+    const nm = nextMile();
+    if (done.length && nm && !nm.done(S)) pushNotice({ head: '새 이정표가 열렸어요', text: nm.name, ic: 'mission' });
+    if (res.first && isBoss(st) && st.d === 0 && st.c < C.chapters) pushNotice({ head: CHAPTERS[st.c].name, text: `${st.c + 1}장 개방`, kind: 'chapter' });
+  }
   const allUp = bb.heroes.every((h) => !h.dead);
   const items: [string, string, number][] = [['gold', CUR_NAME.gold, res.got.gold], ['exp', '영웅 경험치', res.got.exp]];
   if (res.got.stardust) items.push(['stardust', CUR_NAME.stardust, res.got.stardust]);

@@ -11,6 +11,7 @@ import { cleared } from '../game/stage';
 import { persist, S } from '../game/state';
 import { icon } from '../theme/tokens';
 import { $$, esc, fmt, go, heroPortrait, medal, register, syncBar, tabLabel, toast } from './core';
+import { openMiles } from './milestones';
 
 const CC = CONFIG.content;
 const TABS: [string, string, string][] = [
@@ -82,7 +83,8 @@ register('portal', {
           <div class="col">${MILESTONES.map((m) => `<div class="kv"><span>${S.miles.includes(m.id) ? icon('check') : ready.includes(m) ? icon('badge') : icon('lock')} ${m.name}</span><b>${icon('stardust')}${CC.milestoneDust}</b></div>`).join('')}</div>`;
       }
       root.innerHTML = `<div class="body"><div class="col shopcats">${TABS.map(([k, n, ic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(ic, n)}${k === 'miles' && milesReady().length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
-      $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
+      // 이정표는 장별 사슬 창으로 (S5)
+      $$('[data-tab]', root).forEach((b) => (b.onclick = () => (b.dataset.tab === 'miles' ? openMiles() : ((tab = b.dataset.tab!), draw()))));
       $$('[data-league]', root).forEach((b) => (b.onclick = () => ((league = b.dataset.league as League), draw())));
       $$('[data-run]', root).forEach((b) => (b.onclick = () => goRun(JSON.parse(b.dataset.run!) as Run)));
       const cl = root.querySelector<HTMLElement>('[data-claim]');

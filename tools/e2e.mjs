@@ -51,6 +51,17 @@ await p.waitForTimeout(300);
 await shot('title');
 // 첫 진입: 원정 출발 → 1-1 필드에서 프롤로그 → 전투 → 승리 → 메인(모험 지도)
 await click('[data-go]');
+/** 메인 지도 도착: 처음 뜨는 이정표 창(S5)은 찍고 닫고 · 알림 카드(S4)는 걷어 냄 */
+let milesShot = false;
+async function toLobby() {
+  await p.waitForSelector('[data-screen="lobby"]');
+  await p.waitForTimeout(300);
+  if (await p.locator('.mwin').count()) {
+    if (!milesShot) ((milesShot = true), await shot('milestones'));
+    await click('.mwin [data-x]');
+  }
+  await p.evaluate(() => document.querySelectorAll('.notice').forEach((n) => n.remove()));
+}
 async function playStage(label) {
   await p.waitForSelector('[data-screen="battle"]');
   // 전투 전 로딩 팁 화면 (프롤로그 첫 전투엔 없음)
@@ -85,8 +96,14 @@ async function playStage(label) {
 await playStage('1-1');
 await click('#result [data-a="lobby"]');
 await p.waitForSelector('[data-screen="lobby"]');
+await p.waitForTimeout(200);
+await toLobby();
 await p.waitForTimeout(400);
 if (await p.locator('.modal').count()) await click('.modal .btn.hi');
+// 창이 닫히면 알림 카드(S4)가 차례로
+await p.waitForTimeout(500);
+if (await p.locator('.notice').count()) await shot('notice');
+await p.evaluate(() => document.querySelectorAll('.notice').forEach((n) => n.remove()));
 await shot('lobby');
 // 메인 지도 노드 → 스테이지 정보 창 (S3)
 await click('.mnode.now');
@@ -106,7 +123,7 @@ for (let i = 3; i <= Number(process.env.STAGES ?? 3); i++) {
   await playStage(`1-${i}`);
 }
 await click('#result [data-a="lobby"]');
-await p.waitForSelector('[data-screen="lobby"]');
+await toLobby();
 await click('[data-go="prep"]');
 await p.waitForSelector('[data-screen="prep"]');
 await click('[data-tab="back"]');
@@ -126,7 +143,7 @@ await p.evaluate(() => {
 });
 await click('[data-back]');
 await click('[data-back]');
-await p.waitForSelector('[data-screen="lobby"]');
+await toLobby();
 await click('[data-go="shop"]');
 await p.waitForSelector('[data-screen="shop"]');
 await click('[data-pack="starter"]');
@@ -200,7 +217,7 @@ await p.evaluate(() => {
 });
 await click('[data-back]');
 await click('[data-back]');
-await p.waitForSelector('[data-screen="lobby"]');
+await toLobby();
 await click('[data-go="adventure"]');
 await shot('field_map');
 await click('[data-portal="tower"]');
@@ -242,11 +259,17 @@ await content('raid', 'raid');
 await content('arena', 'arena');
 await content('world', 'world');
 await content('side', 'side');
+// 이정표 탭 → 장별 사슬 창 (S5): 칸 눌러 설명 · 닫기
 await click('[data-tab="miles"]');
+await p.waitForSelector('.mwin');
+await click('.mwin .mcell.ready, .mwin .mcell.todo');
 await shot('portal_miles');
+if (await p.locator('.mwin [data-all]:not([disabled])').count()) await click('.mwin [data-all]');
+await shot('miles_claimed');
+await click('.mwin [data-x]');
 // D덩어리: 미션(받기·바로가기) · 길드(가입·출석·길드 레이드) · 친구 · 랭킹 · 우편 · 채팅 · 설정
 await click('[data-back]');
-await p.waitForSelector('[data-screen="lobby"]');
+await toLobby();
 if (await p.locator('.modal .btn.hi').count()) await click('.modal .btn.hi');
 await shot('lobby_d');
 await click('[data-go="mission"]');
@@ -277,7 +300,7 @@ await p.evaluate(() => {
 await p.waitForFunction(() => !document.querySelector('#result').hidden, null, { timeout: 120000 });
 await shot('graid_result');
 await click('#result [data-a="lobby"]');
-await p.waitForSelector('[data-screen="lobby"]');
+await toLobby();
 await click('[data-go="friends"]');
 await click('[data-add]');
 await click('[data-gift]');
