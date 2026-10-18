@@ -28,6 +28,7 @@ import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
 import { coach, whenFree } from './coach';
+import { ready as audioReady } from '../core/audio/engine';
 import { openReport, opsOnLobby } from './ops';
 import { recruitShow } from './screensB';
 import { $, $$, CUR_NAME, esc, fitText, fmt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
@@ -53,14 +54,21 @@ register('title', {
   enter(root) {
     root.id = 'title';
     // 타이틀 (UI_KIT_1018 §2·§3): 광원 뺀 키아트 + 도트 로고 W.I.N.D + 「바람의 원정대」 · 화면을 눌러 시작
-    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D"><b class="sub">바람의 원정대</b></div>
+    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D 바람의 원정대"></div>
       <i class="twinkle">${Array.from({ length: 12 }, (_, i) => `<b style="--i:${i};left:${6 + i * 7.8}%;top:${4 + ((i * 37) % 23)}%"></b>`).join('')}</i>
       <button class="tapgo" data-go>${S.prologue ? '화면을 눌러 이어서 하기' : '화면을 눌러 시작'}</button>
       <div class="tpanel"><button class="btn mini" data-reset>처음부터</button></div>
       <div class="ver">v${__APP_VERSION__}</div>`;
     a2hsBanner(root);
+    // 소리는 첫 터치에야 열려서: 소리가 잠긴 채 들어왔으면 첫 터치 = 타이틀 곡(24) 시작, 두 번째 터치 = 출발
+    let hold = !audioReady();
     $('[data-go]', root).onclick = async () => {
       goFullscreen();
+      if (hold) {
+        hold = false;
+        $('[data-go]', root).textContent = '한 번 더 누르면 출발!';
+        return;
+      }
       // 첫 진입: 프롤로그(1-1 필드에서) → 1-1 전투 → 승리 → 로비 (STAR_PLAN_v2 §1-1)
       if (!S.prologue) go('battle', { stage: { c: 1, s: 1, d: 0 }, first: true });
       else go('lobby');

@@ -89,7 +89,7 @@ export function go(id: ScreenId, params: Record<string, unknown> = {}, push = tr
   // 배경음악: 화면마다 (전투는 battle.ts가 지역·모드별로) · 밤(20~6시) 로비는 밤 곡
   if (id !== 'battle') {
     const h = new Date().getHours();
-    music(({ title: 'title', shop: 'shop', hero: 'hero', heroes: 'hero', friends: 'friends', guild: 'guild', inn: 'night', library: 'story', capital: 'lobby', world: 'clear' } as Record<string, string>)[id] ?? (h >= 20 || h < 6 ? 'night' : 'lobby'));
+    music(({ title: 'title', shop: 'shop', hero: 'hero', heroes: 'hero', friends: 'friends', guild: 'guild', inn: 'inn', library: 'library', capital: 'capital', world: 'world' } as Record<string, string>)[id] ?? (h >= 20 || h < 6 ? 'night' : 'lobby'));
   }
   const root = document.createElement('div');
   root.className = s.title ? 'scr withbar' : 'scr';

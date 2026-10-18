@@ -1,6 +1,7 @@
 // 장비 칸(정사각 · 등급 테두리 · 왼쪽 위 티어 · 강화 수치 · 별) + 장비 상세 창(잠금·강화·별 올리기·티어·옵션 바꾸기·룬·전수·판매/분해)
 import { CONFIG } from '../config';
 import { jingle, sfx } from '../core/audio/sfx';
+import { haptic } from '../core/haptic';
 import { heroOf } from '../data/heroes';
 import {
   enhance, enhBand, enhCost, enhRate, feedable, gearBase, gearName, gearOf, gearPower, gradeName, optText, PART_NAME, removeItem, rerollKeep, rerollRoll, RUNE_GRADE, runeOf, runeValue, socket, starRate, starUp, tierCost, tierUp, transfer, transferPreview,
@@ -31,8 +32,8 @@ function enhShow(host: HTMLElement, g: Gear, r: string, before: { enh: number; b
   const up = r === 'ok' || r === 'great';
   const brk = up && enhBand(g.enh) > before.band;
   // 강화 소리: 구간 돌파·대성공 = 팡파르 · 성공 = 반짝 · 실패 = 뚝
-  if (brk || r === 'great') jingle('up');
-  else sfx(up ? 'rare' : 'fail', 0.8);
+  if (brk || r === 'great') (jingle('up'), haptic('legend'));
+  else (sfx(up ? 'rare' : 'fail', 0.8), haptic(up ? 'success' : 'fail'));
   const after = gearBase(g);
   const el = document.createElement('div');
   el.className = `enhfx${up ? ' up' : ' no'}${brk ? ' brk' : ''}`;

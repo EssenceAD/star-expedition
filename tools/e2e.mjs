@@ -122,6 +122,9 @@ await p.waitForTimeout(300);
 await shot('title');
 // 첫 진입: 원정 출발 → 1-1 필드에서 프롤로그 → 전투 → 승리 → 메인(모험 지도)
 await click('[data-go]');
+// 소리가 잠긴 채면 첫 터치는 타이틀 곡만 · 한 번 더 눌러 출발
+await p.waitForTimeout(200);
+if (await p.locator('#title [data-go]').count()) await click('#title [data-go]');
 /** 메인 지도 도착: 처음 뜨는 이정표 창(S5)은 찍고 닫고 · 알림 카드(S4)는 걷어 냄 */
 let milesShot = false;
 async function toLobby() {

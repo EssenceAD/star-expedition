@@ -13,23 +13,27 @@ const F: Record<string, string> = {
 };
 /** 장면 → 곡 번호들 (27곡 모두 어딘가에 씀) */
 export const MUSIC: Record<string, string[]> = {
-  title: ['01'],
+  // 화면 (형철 10/18: 타이틀 = 24 웅장한 곡 · 수도 = 25)
+  title: ['24'],
+  capital: ['25'],
+  world: ['20', '01'],
   lobby: ['02', '03', '05', '26'],
   night: ['06', '07', '08', '27'],
   shop: ['04'],
   hero: ['15', '18'],
   friends: ['14'],
-  guild: ['24'],
+  guild: ['13'],
+  inn: ['06', '26', '27'],
+  library: ['07', '16'],
   story: ['16'],
   recruit: ['13'],
-  five: ['25'],
   clear: ['17'],
   // 지역 전투 (CHAPTERS region)
   forest: ['09'], swamp: ['20'], mine: ['10'], ice: ['05'], abyss: ['19'], coast: ['21'], dune: ['20'], ember: ['22'], sky: ['22'], deep: ['19'],
   boss: ['11', '23'],
   bossLow: ['12'],
-  raid: ['23', '24'],
-  world: ['23'],
+  raid: ['23', '12'],
+  world_boss: ['23'],
   arena: ['12'],
   tower: ['19'],
   dungeon: ['10'],

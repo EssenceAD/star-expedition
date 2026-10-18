@@ -442,6 +442,9 @@ export function damage(b: Battle, by: Unit, to: Unit, mult: number, o: { crit?: 
   b.stop = Math.max(b.stop, crit ? K.hitstop.crit : K.hitstop.hit);
   if (crit) b.shake = Math.max(b.shake, K.shake.crit);
   b.sounds.push(crit ? 'crit' : 'hit');
+  // 햅틱 표시 (소리 아님 · ui/battle이 진동으로): 영웅이 한 번에 체력 18% 넘게 맞음 · 영웅 치명타
+  if (to.side === 'hero' && !to.ai && left >= to.max * 0.18) b.sounds.push('ouch');
+  else if (crit && by.side === 'hero' && !by.ai) b.sounds.push('hcrit');
   if (b.raid && to.mob?.boss && by.side === 'hero') raidOnHit(b, by, to, dmg, !!o.skill, o.st?.s === 'stun');
   if (to.hp <= 0) kill(b, to);
   return dmg;

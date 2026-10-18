@@ -8,6 +8,7 @@ import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
 import { music } from '../core/audio/music';
 import { coach } from './coach';
+import { haptic } from '../core/haptic';
 import { jingle } from '../core/audio/sfx';
 import { heroOf } from '../data/heroes';
 import { descSkill } from '../data/skills';
@@ -246,7 +247,7 @@ function setup() {
   b.auto = keepAuto;
   b.speed = keepSpeed;
   // 배경음악: 콘텐츠는 모드별 · 스토리는 그 장 지역 · 보스 스테이지는 보스곡
-  const RUN_BGM: Record<string, string> = { raid: 'raid', graid: 'raid', world: 'world', arena: 'arena', tower: 'tower', dungeon: 'dungeon', day: 'dungeon', side: 'story' };
+  const RUN_BGM: Record<string, string> = { raid: 'raid', graid: 'raid', world: 'world_boss', arena: 'arena', tower: 'tower', dungeon: 'dungeon', day: 'dungeon', side: 'story' };
   music(run ? (RUN_BGM[run.mode] ?? CHAPTERS[(Math.max(1, Number(run.arg) || 1) - 1) % CHAPTERS.length].region) : isBoss(st) ? 'boss' : CHAPTERS[st.c - 1].region);
   b.cutIns = flag('cutIn') && !getPref('cutOff', false) ? 'big' : 'off';
   $('#bAuto').setAttribute('aria-pressed', String(b.auto));
@@ -364,6 +365,7 @@ function beginRun(r: Run) {
 const ck = (ok: boolean) => `<i class="ck${ok ? ' on' : ''}">${icon(ok ? 'check' : 'cross')}</i>`;
 function showResult() {
   jingle(b!.phase === 'win' ? 'win' : 'lose');
+  haptic(b!.phase === 'win' ? 'success' : 'fail');
   // 외전 마지막 막을 이기면 끝 대사 → 결과
   const sideEnd = run?.mode === 'side' && b!.phase === 'win' && (run.sub ?? 1) === CONFIG.content.side.acts ? SIDE[String(run.arg)]?.clear : undefined;
   if (sideEnd) return playTalk(sideEnd, showRunResult);
@@ -632,7 +634,13 @@ register('battle', {
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
     // 한 프레임에 같은 소리는 한 번만 (회복·타격이 몰려도 띵띵띵 없게)
-    for (const s of new Set(b.sounds)) combatSynth(s, s === 'hit' ? 0.45 : s === 'heal' ? 0.5 : 1);
+    const snd = new Set(b.sounds);
+    // 햅틱: 크게 맞음·영웅 쓰러짐 = 묵직 · 보스 경고·영웅 치명타 = 톡
+    if (snd.has('ouch') || snd.has('down')) haptic('heavy');
+    else if (snd.has('warn') || snd.has('hcrit')) haptic('hit');
+    snd.delete('ouch');
+    snd.delete('hcrit');
+    for (const s of snd) combatSynth(s, s === 'hit' ? 0.45 : s === 'heal' ? 0.5 : 1);
     if ((b.phase === 'win' || b.phase === 'lose') && !shown) {
       shown = true;
       setTimeout(showResult, (b.phase === 'win' ? CONFIG.ui.resultDelayWin : CONFIG.ui.resultDelayLose) * 1000);
