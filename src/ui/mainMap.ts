@@ -37,14 +37,15 @@ function clamp() {
   if (layer) layer.style.transform = `translate(${at.x}px, ${at.y}px)`;
 }
 
-/** 노드 n 위에 서는 그림 하나 (DOM 캔버스 · 발 = 메달 윗변 · 노드 메달보다 앞) */
-function addFig(n: number, h: number, face: number, anim: Anim) {
+/** 노드 n 위에 서는 그림 하나 (DOM 캔버스 · 발 = 메달 윗변 · 노드 메달보다 앞) · [dx, dy] = 오른쪽·뒤로 비켜 서기(px) */
+function addFig(n: number, h: number, face: number, anim: Anim, [dx, dy] = [0, 0]) {
   const [x, y] = NODES[n - 1];
   const H = h + M.figPad;
   const cv = document.createElement('canvas');
   cv.className = 'mfig';
   cv.style.left = `${x}%`;
   cv.style.top = `${y}%`;
+  if (dx || dy) cv.style.transform = `translate(calc(-50% + ${dx}px), calc(-100% - ${7 + dy}px))`;
   cv.style.width = `${M.figW}px`;
   cv.style.height = `${H}px`;
   cv.width = Math.round(M.figW * view.dpr);
@@ -78,13 +79,13 @@ export function mainMapStart(el: HTMLElement, c: number, d: number, leadId: stri
   }
   if (!img.complete) img.addEventListener('load', fit, { once: true });
   fit();
-  // 장 보스 (마지막 스테이지 마지막 웨이브의 보스) — 시트가 없으면 받아 둠 · 왼쪽(길 쪽)을 봄
+  // 장 보스 (마지막 스테이지 마지막 웨이브의 보스) — 시트가 없으면 받아 둠 · 왼쪽(길 쪽)을 봄 · 노드 오른쪽 뒤에 섬
   const b = buildMobs({ c, s: NODES.length, d }).flat().find((m) => m.boss);
   if (b) {
     const { def } = animOf(b.kind.anims, 'idle');
     const dirs = [...new Set(def.frames.map((f) => f.split(':')[0]))].filter((x) => !hasSheet(view.art.sheet, x));
     if (dirs.length) void loadInto(view.art.sheet, dirs);
-    addFig(NODES.length, M.bossH, -1, { key: b.kind.anims.idle!.frames[0], frames: def.frames, def });
+    addFig(NODES.length, M.bossH, -1, { key: b.kind.anims.idle!.frames[0], frames: def.frames, def }, M.boss);
   }
   // 원정대장: 마지막으로 깬 노드 (장 처음이면 1번 노드)
   const art = artOf(heroOf(leadId));

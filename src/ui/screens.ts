@@ -104,8 +104,8 @@ register('lobby', {
       const id = { c, s: i + 1, d };
       const open = unlocked(id);
       const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
-      // 다음 노드 화살표: 메달 바로 위 · 그 노드에 원정대장(장 첫 노드)이나 보스가 서 있으면 그 머리 위
-      const fig = i === 0 && ns.s === 1 ? CONFIG.ui.mainMap.leadH : isBoss(id) ? CONFIG.ui.mainMap.bossH : 0;
+      // 다음 노드 화살표: 메달 바로 위 · 그 노드에 원정대장(장 첫 노드)이 서 있으면 그 머리 위 (보스는 오른쪽 뒤로 비켜 서서 메달 위가 비어 있음)
+      const fig = i === 0 && ns.s === 1 ? CONFIG.ui.mainMap.leadH : 0;
       return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}<i class="md">${icon(open ? 'battle' : 'lock')}</i><b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
     }).join('');
     root.innerHTML = `<div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div>
