@@ -46,7 +46,7 @@ register('title', {
   enter(root) {
     root.id = 'title';
     // 타이틀 (UI_KIT_1018 §2·§3): 광원 뺀 키아트 + 도트 로고 W.I.N.D + 「바람의 원정대」 · 화면을 눌러 시작
-    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D"><b class="sub">바람의 원정대</b><small>용사님 체크인 외전</small></div>
+    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D"><b class="sub">바람의 원정대</b></div>
       <i class="twinkle">${Array.from({ length: 12 }, (_, i) => `<b style="--i:${i};left:${6 + i * 7.8}%;top:${4 + ((i * 37) % 23)}%"></b>`).join('')}</i>
       <button class="tapgo" data-go>${S.prologue ? '화면을 눌러 이어서 하기' : '화면을 눌러 시작'}</button>
       <div class="tpanel"><button class="btn mini" data-reset>처음부터</button></div>
@@ -143,7 +143,7 @@ register('lobby', {
     $$('[data-mis]', root).forEach((b) => (b.onclick = () => go('mission', { tab: b.dataset.mis })));
     $('[data-miles]', root).onclick = () => openMiles();
     $('[data-attend]', root).onclick = () => (attendToday() ? attendPopup() : toast('오늘 출석 보상은 이미 받았어요'));
-    mainMapStart($('.mlayer', root), c, d, lead, ns.s);
+    mainMapStart($('.mlayer', root), c, lead, ns.s);
     offlinePopup();
     if (!document.querySelector('.modal')) attendPopup();
     // 새 장에 처음 들어오면 그 장 이정표 창을 한 번 (S5) · 첫 진입(프롤로그 직후)은 1장부터
@@ -164,7 +164,9 @@ function nodeHtml(id: StageId, open: boolean, st: string) {
   const n = starsAt(id);
   const md = isBoss(id) ? 'BOSS' : st === 'done' ? icon('check') : String(id.s);
   const stars = open && st === 'done' ? `<span class="mstars">${[0, 1, 2].map((k) => `<i class="${k < n ? 'on' : ''}">${icon('star')}</i>`).join('')}</span>` : '';
-  return `<i class="md">${md}</i><b class="pl">${id.c}-${id.s}</b>${stars}`;
+  // 보스 노드: 번호판 아래 그 장 보스 얼굴 (지도 위 보스 그림은 화살표를 가려서 뺌 · 형철 10/18)
+  const face = isBoss(id) ? `<i class="bface" style="background-image:url(${import.meta.env.BASE_URL}art/bosses2/${CHAPTERS[id.c - 1].region}/face.png)"></i>` : '';
+  return `<i class="md">${md}</i><b class="pl">${id.c}-${id.s}</b>${face}${stars}`;
 }
 /** 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027): 얻는 경험치·금화 · 적 카드(보스 BOSS) · 떨어지는 것 · [소탕][전투 준비] */
 export function stageInfo(st: StageId) {
@@ -212,7 +214,7 @@ function offlinePopup() {
   if (!o) return;
   const r = o.reward;
   modal(`${icon('offline')} 그동안 원정대는…`, `<p class="dim">${fmtTime(o.away)} 동안 ${stageName(o.stage)}에서 사냥했어요${o.away > o.seconds ? ` (최대 ${CONFIG.offline.maxHours}시간까지)` : ''}.</p>
-    <div class="rw row">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="panel col">${icon(k as string)}<span class="xs">${k === 'exp' ? '영웅 경험치' : CUR_NAME[k as string]}</span><b class="gold">+${fmt(v as number)}</b></div>`).join('')}</div>`, [
+    <div class="rw gifts">${[['gold', r.gold], ['exp', r.exp], ['enh', r.enh]].filter(([, v]) => v).map(([k, v]) => `<div class="rwc ${k}"><span>${icon(k as string)}</span>${k === 'exp' ? '영웅 경험치' : CUR_NAME[k as string]}<b>+${fmt(v as number)}</b></div>`).join('')}</div>`, [
     ['모두 받기', () => {
       const ups = claimOffline(o);
       persist();

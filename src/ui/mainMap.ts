@@ -1,11 +1,10 @@
 // 메인 = 모험 지도 (docs/RECOVER_1018.md S1 · 킹스레이드 영상 sheet_00 v1_010 · sheet_04 v2_001 · sheet_08 v3_025)
 //  장 지도 그림(map_<지역>.jpg)이 화면을 덮고, 노드 줄은 늘 위 HUD 밑 ~ 아래 메뉴 위(safe 띠) 안에 들어오게 (형철 10/18 ①④)
-//  캔버스: 지도만 · 노드 버튼(DOM)은 같은 자리(.mlayer)에 % · 원정대장·장 보스는 노드 위 작은 캔버스(.mfig)라 메달 바로 위·앞에 섬
+//  캔버스: 지도만 · 노드 버튼(DOM)은 같은 자리(.mlayer)에 % · 원정대장은 노드 위 작은 캔버스(.mfig) · 장 보스는 보스 노드 아래 얼굴라 메달 바로 위·앞에 섬
 import { CONFIG } from '../config';
 import { artOf, heroOf } from '../data/heroes';
 import { CHAPTERS } from '../data/story';
-import { buildMobs } from '../game/stage';
-import { animOf, drawFrame, frameAt, hasSheet, heightOf, loadInto } from '../sprite/sheet';
+import { animOf, drawFrame, frameAt, heightOf } from '../sprite/sheet';
 import { T } from '../theme/tokens';
 import { view } from './view';
 
@@ -76,7 +75,7 @@ function addFig(n: number, h: number, face: number, anim: Anim, [dx, dy] = [0, 0
 }
 
 /** 메인에 들어올 때: 지도 레이어 · 이 장 · 원정대장 · 다음 노드 n */
-export function mainMapStart(el: HTMLElement, c: number, d: number, leadId: string, next: number) {
+export function mainMapStart(el: HTMLElement, c: number, leadId: string, next: number) {
   layer = el;
   t = 0;
   figs = [];
@@ -101,14 +100,6 @@ export function mainMapStart(el: HTMLElement, c: number, d: number, leadId: stri
   img = imgs[src] ??= Object.assign(new Image(), { src });
   if (!img.complete) img.addEventListener('load', fit, { once: true });
   fit();
-  // 장 보스 (마지막 스테이지 마지막 웨이브의 보스) — 시트가 없으면 받아 둠 · 왼쪽(길 쪽)을 봄 · 노드 오른쪽 뒤에 섬
-  const b = buildMobs({ c, s: NODES.length, d }).flat().find((m) => m.boss);
-  if (b) {
-    const { def } = animOf(b.kind.anims, 'idle');
-    const dirs = [...new Set(def.frames.map((f) => f.split(':')[0]))].filter((x) => !hasSheet(view.art.sheet, x));
-    if (dirs.length) void loadInto(view.art.sheet, dirs);
-    addFig(NODES.length, M.bossH, -1, { key: b.kind.anims.idle!.frames[0], frames: def.frames, def }, M.boss);
-  }
   // 원정대장: 마지막으로 깬 노드 (장 처음이면 1번 노드)
   const art = artOf(heroOf(leadId));
   const { def } = animOf(art.anims, 'idle');

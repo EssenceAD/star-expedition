@@ -11,8 +11,7 @@ import { expNeed, fullStats, heroPower, levelCap, levelMax, owned } from '../gam
 import { buyCoin, buyHero, buyItem, buyPack, heroPrice, heroStock } from '../game/shop';
 import { bestCleared, powIdx } from '../game/stage';
 import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type GearSlot, type Rune } from '../game/state';
-import { icon, iconText, T } from '../theme/tokens';
-import { taglineOf } from '../data/taglines';
+import { icon, iconText } from '../theme/tokens';
 import { gachaShow } from './gacha';
 import { $, $$, comingSoon, CUR_NAME, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, register, skillIconUrl, syncBar, tabLabel, toast } from './core';
 import { buyCostume, costumeStock, hasCostume, setsOf, wearCostume } from '../game/costume';
@@ -294,7 +293,7 @@ export function heroShopCard(id: string) {
   const h = heroOf(id);
   const j = JOBS[h.job];
   // 오른쪽 위 직업 아이콘 원 (직업색 · MOBILE_REF §3-C)
-  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><i class="jobc" style="--jc:${T.battle.jobColor[h.job]}" title="${j.name}">${icon(h.job)}</i><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><span class="one fit" data-min="${CONFIG.ui.fit.desc}">${esc(taglineOf(id, h.title))}</span><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
+  return `<div class="panel col shopc hero" data-h="${id}"><div class="pt card" style="background-image:url(${heroPortrait(id)})"></div><div class="band"><div class="row xs chips"><span class="chip">${icon(`zone_${j.zone}`)} ${ZONE_NAME[j.zone]}</span><span class="chip">${icon(h.job)} ${j.name}</span></div><b class="fit" data-min="${CONFIG.ui.fit.name}">${esc(h.name)}</b><button class="btn hi" data-hero="${id}">${icon('stardust')}${fmt(heroPrice(id))}</button></div></div>`;
 }
 
 /** 영웅 영입 무대 (docs/ART_DONE_1017_3.md §2): recruit.jpg 위 가운데 전신 · 이름·직업·소개·값 → 영입하면 별빛 마법진에서 솟아오르는 합류 연출 */
