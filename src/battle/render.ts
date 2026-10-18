@@ -547,25 +547,26 @@ function drawCut(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: number) 
   // 컷인 그림은 고화질 일러스트 → 부드럽게 줄임 (도트 전투와 다름)
   ctx.imageSmoothingEnabled = true;
   if (im) {
+    // 그림은 띠 오른쪽 끝에 붙여 얼굴(그림 오른쪽)이 화면 안에 · 글씨는 왼쪽 빈 띠에 (얼굴을 가리던 것 · 고느끼 10/18)
     const ih = bh * 1.9;
     const iw = (im.width / im.height) * ih;
-    const ix = -W * 0.62 + ein * W * 0.28 + u * 70;
+    const ix = W / 2 - iw + (1 - ein) * W * 0.3 - u * 30;
     ctx.drawImage(im, ix, -ih * 0.42, iw, ih);
   }
   ctx.restore();
   ctx.fillStyle = B.cutBar;
   ctx.fillRect(-bw / 2, -bh / 2 - 3, bw * ein, 3);
   ctx.fillRect(-bw / 2, bh / 2, bw * ein, 3);
-  // 스킬 이름: 화면 오른쪽 안에 들어오게 (오른쪽 여백 · 길면 글씨를 줄임 · POLISH_1017 ③-3)
+  // 스킬 이름: 화면 왼쪽 띠에 (그림 얼굴을 가리지 않게 · 길면 글씨를 줄임 · POLISH_1017 ③-3)
   const room = W * CONFIG.combat.cutText.maxW;
   ctx.font = canvasFace(F.cutName);
   const tw = ctx.measureText(c.skill.name).width;
   if (tw > room) ctx.font = canvasFace(Math.floor((F.cutName * room) / tw));
-  ctx.textAlign = 'right';
+  ctx.textAlign = 'left';
   ctx.lineWidth = 10;
   ctx.lineJoin = 'round';
   ctx.strokeStyle = B.cutStroke;
-  const tx = W / 2 - CONFIG.combat.cutText.right + (1 - ein) * 60;
+  const tx = -W / 2 + CONFIG.combat.cutText.left - (1 - ein) * 60;
   ctx.strokeText(c.skill.name, tx, 22);
   ctx.fillStyle = B.white;
   ctx.fillText(c.skill.name, tx, 22);

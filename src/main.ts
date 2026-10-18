@@ -64,6 +64,17 @@ document.addEventListener('wheel', (e) => {
   e.preventDefault();
 }, { passive: false });
 document.addEventListener('touchmove', (e) => !scrollsInside(e.target as Element) && e.cancelable && e.preventDefault(), { passive: false });
+// 목록을 끌어 넘기다 손을 뗄 때 카드가 눌리지 않게: 누른 자리에서 일정 거리 넘게 움직였으면 그 클릭은 버림 (편성에서 스치기만 해도 영웅이 빠지던 것 · 고느끼 10/18)
+let downAt: { x: number; y: number } | null = null;
+let dragged = false;
+document.addEventListener('pointerdown', (e) => ((downAt = { x: e.clientX, y: e.clientY }), (dragged = false)), { capture: true, passive: true });
+document.addEventListener('pointermove', (e) => {
+  if (downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > CONFIG.ui.tapSlop) dragged = true;
+}, { capture: true, passive: true });
+document.addEventListener('click', (e) => {
+  if (dragged && scrollsInside(e.target as Element)) (e.stopPropagation(), e.preventDefault());
+  dragged = false;
+}, true);
 visualViewport?.addEventListener('resize', fit);
 document.addEventListener('focusout', () => setTimeout(fit, 300));
 fitView(stage, cv);

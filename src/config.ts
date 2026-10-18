@@ -72,7 +72,7 @@ export const CONFIG = {
     /** 몹 쓰러짐 (ANIM_1017 ③): 지역 몹 사라지는 초 · 장 보스 초 · 가라앉는 px · 흔들림 px (경고 중 떨림은 절반) · 맞은 칸을 보일 번쩍 세기 */
     mobDie: { sec: 0.4, bossSec: 1.0, sink: 18, shake: 3, hurtFlash: 0.3 },
     /** 컷인 스킬 이름: 오른쪽 여백(px) · 가장 넓은 폭(화면 비율) */
-    cutText: { right: 40, maxW: 0.5 },
+    cutText: { left: 64, maxW: 0.42 },
     /** 머리 위 작은 체력 바 (MOBILE_REF §3-A-1): 맞은 뒤 보이는 초 · 폭(키 대비) · 최소 폭 · 상태 아이콘 최대 개수 */
     headHp: { showSec: 2, wOfH: 0.42, minW: 28, icons: 4, markPx: 16 },
     /** 궁극기 범위 돔: 보이는 초 · 적 무리 양끝에서 더 넓힐 px · 진하기 */
@@ -444,6 +444,8 @@ export const CONFIG = {
     /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */
     fit: { step: 0.5, name: 13, desc: 10, tiny: 7, shrink: 0.9 },
     /** 큰 화면(PC · 게임 배율 이 값 이상)에서 정보 창을 이만큼 줄여 그림 (형철 10/18: PC에서 너무 커 보임) */
-    pcWin: { minScale: 1.8, scale: 0.72 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
+    pcWin: { minScale: 1.8, scale: 0.72 },
+    /** 이만큼(화면 px) 넘게 끌면 누름이 아니라 넘기기로 봄 */
+    tapSlop: 10, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;
 export type Config = typeof CONFIG;
