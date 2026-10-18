@@ -396,8 +396,8 @@ export const CONFIG = {
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
     screenVeil: ['adventure', 'heroes', 'hero', 'prep', 'shop', 'bag', 'portal', 'mission', 'friends', 'ranking', 'mail', 'settings', 'guild'] as string[],
-    /** 로비 걸어 다니는 영웅 (DENSITY §3 · FONT_FINAL2 §1 1.4배): 몇 명 · 발 y · 줄 간격 · 크기(전투 배율 대비) · 서로 떨어질 최소 간격(px) · 걷는 범위(너비 비율) · 속도 · 말풍선 확률·초 · 반짝이(초당) */
-    lobbyLife: { walkers: 5, y: 300, yStep: 18, scale: 0.63, minGap: 78, xMin: 0.3, xMax: 0.86, speed: 34, sayChance: 0, sayDur: 2.6, sparkPerSec: 2.2 }, speeds: [1, 1.5, 2], toastSec: 1.5,
+    /** 메인 모험 지도 (RECOVER_1018 S1): 화면 덮는 크기의 몇 배 · 처음 다음 노드를 둘 화면 비율 자리 · 끌기 시작 거리(px) · 원정대장·보스 크기(전투 키 대비) · 발 자리(노드 가운데에서 px) · 그림자 반지름 · 보스 노드에서 원정대장 비켜 서기(px) */
+    mainMap: { zoom: 1.15, focus: [0.5, 0.6] as [number, number], dragPx: 6, heroScale: 0.42, bossScale: 0.3, footDy: -16, shadowR: 14, leadDx: -34 }, speeds: [1, 1.5, 2], toastSec: 1.5,
     /** 로비 뜬 뒤 나머지 영웅 시트를 동시에 몇 개씩 받을지 (SPRITE_RES §C) */
     preloadAtOnce: 3,
     /** 로딩 막대가 이 초 동안 안 움직이면 「다시 시도」 · 그림 하나가 이 초 넘게 안 오면 건너뜀 (PLAYTEST §1) */

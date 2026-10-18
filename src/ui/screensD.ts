@@ -4,7 +4,7 @@ import { prefs, savePrefs, applyPrefs } from '../core/audio/engine';
 import { setPref, getPref } from '../core/save';
 import * as cloud from '../core/net/cloud';
 import { lockOf, triesText } from '../game/content';
-import { attend, attendToday, claim, claimAll, DAILY, eventLeft, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
+import { attend, attendToday, claim, claimAll, eventLeft, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
 import {
   addFriend, board, BOARD_NAME, buyGuild, checkTitles, claimAllMail, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
@@ -83,7 +83,6 @@ export function attendPopup() {
   ]);
 }
 export const missionBadge = () => (['d', 'w', 'r', 'ach'] as Kind[]).reduce((a, k) => a + readyOf(k).length, 0);
-export const dailyText = () => `${DAILY.filter((m) => isDone('d', m)).length}/${DAILY.length}`;
 
 // ───────── 길드 ─────────
 register('guild', {
