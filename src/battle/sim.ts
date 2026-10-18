@@ -225,11 +225,13 @@ export function makeBattle(setup: BattleSetup, o: { rnd?: () => number; w?: numb
   let gaps = 0;
   const all = [...setup.heroes, ...(setup.allies ?? [])];
   const places = setup.allies?.length ? K.places8 : K.places;
+  // 좁은 화면(폴드 펼침·패드처럼 정사각형에 가까운 창 · 너비 < wBase): 영웅 줄을 왼쪽으로 물려 적과 겹치지 않게 (웅스 10/18 폴드7)
+  const shift = Math.max(0, (CONFIG.view.wBase - (o.w ?? CONFIG.view.wBase)) * 0.5);
   const heroes = all.map((h, i): Unit => {
     const zone = ZONES.indexOf(h.zone);
     if (i > 0 && h.zone !== all[i - 1].zone && !setup.allies?.length) gaps++;
     const [px, y] = places[i % places.length];
-    const x = px - gaps * K.zoneGap;
+    const x = px - gaps * K.zoneGap - shift;
     const u = unit('hero', h.def.name, { hero: h, anims: h.art.anims, h: h.art.h, max: h.st.hp, atk: h.st.atk, def: h.st.def, rate: h.st.rate, crit: h.st.crit, critDmg: h.st.critDmg, x, y, zone, ai: i >= setup.heroes.length });
     if (setup.arena) {
       // 보스 전장: 파티 A(내 4) 위 줄 · 파티 B(AI 4) 아래 줄 — AI가 없으면 내 파티를 2명씩 나눔
@@ -292,7 +294,8 @@ function spawnWave(b: Battle) {
   const specs = b.setup.waves[b.wave];
   b.mobs = specs.map((m, i) => {
     const [ox, y] = m.boss ? K.bossSlot : K.mobSlots[i % K.mobSlots.length];
-    const x = b.w - ox;
+    // 좁은 화면이면 적 줄 간격도 화면 너비 비율로 좁힘
+    const x = b.w - Math.round(ox * Math.min(1, b.w / CONFIG.view.wBase));
     const hs = m.hero;
     const u = hs
       ? unit('mob', m.name, { mob: m, pvp: hs, anims: hs.art.anims, h: hs.art.h, max: m.hp, atk: m.atk, def: m.def, rate: m.rate, crit: hs.st.crit, critDmg: hs.st.critDmg, x: x + K.mobEnterFrom, y, zone: ZONES.indexOf(hs.zone), flip: true })
