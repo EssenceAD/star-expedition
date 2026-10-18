@@ -1456,3 +1456,5 @@ body { word-break: keep-all; }
 .mmain .tabs .tab { width: auto; min-width: max-content; }
 .fbcol { margin: var(--s-md) 0 0; }
 .tab .badge { right: 0; top: 0; }
+/* 입력칸은 글자 선택·입력 허용 (html·body의 user-select: none을 물려받으면 iOS 사파리에서 글자가 안 써짐 · 10/18) */
+input, textarea { user-select: text; -webkit-user-select: text; }
