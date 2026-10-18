@@ -1,11 +1,13 @@
 """W.I.N.D 로고를 무료 도트 글꼴(OFL)로 찍기 — tools/pixel_logo.py 와 같은 칠(위 크림 금 → 아래 주황 · 윗변 빛 · 아랫변 그늘 · 이중 외곽 · 그림자 · 별)
-   사용: python3 tools/pixel_logo_font.py 글꼴.ttf 크기 출력.png [글자]  · 글꼴은 안티앨리어싱 없이(1비트) 찍어 점이 또렷하게
-   지금 로고 (10/18): python3 tools/pixel_logo_font.py tools/fonts/Jacquard24-Regular.ttf 48 public/art/ui2/logo.png  (Jacquard 24 · OFL · tools/fonts/Jacquard24-OFL.txt) · 후보 비교 docs/captures/logo_fonts_1018.jpg"""
+   사용: python3 tools/pixel_logo_font.py 글꼴.ttf 크기 출력.png [글자] [굵기(가변 글꼴)]  · 글꼴은 안티앨리어싱 없이(1비트) 찍어 점이 또렷하게
+   지금 로고 (10/18 · 형철 스케치: 멋드러진 굵은 기울임 글씨를 도트로): python3 tools/pixel_logo_font.py tools/fonts/PlayfairDisplay-Italic.ttf 56 public/art/ui2/logo.png W.I.N.D. 900
+   (Playfair Display Black Italic · OFL · tools/fonts/PlayfairDisplay-OFL.txt) · 후보 비교 docs/captures/logo_calli_1018.jpg · 이전 도트 글꼴 비교 docs/captures/logo_fonts_1018.jpg"""
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
-def make(font_path, size, out, text='W.I.N.D.'):
+def make(font_path, size, out, text='W.I.N.D.', wght=None):
     f = ImageFont.truetype(font_path, size)
+    if wght: f.set_variation_by_axes([wght])
     l, t, r, b = f.getbbox(text)
     w, h = r - l + 4, b - t + 4
     m = Image.new('L', (w, h), 0)
@@ -52,4 +54,4 @@ def make(font_path, size, out, text='W.I.N.D.'):
 
 if __name__ == '__main__':
     a = sys.argv[1:]
-    print(make(a[0], int(a[1]), a[2], a[3] if len(a) > 3 else 'W.I.N.D.').size)
+    print(make(a[0], int(a[1]), a[2], a[3] if len(a) > 3 else 'W.I.N.D.', int(a[4]) if len(a) > 4 else None).size)

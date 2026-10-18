@@ -248,7 +248,10 @@ body, #stage { font-weight: normal; }
 
 /* ───── 14. 타이틀 (W.I.N.D 도트 로고 · 광원 뺀 키아트) ───── */
 #stage #title .logo { display: flex; flex-direction: column; align-items: center; gap: var(--s-xs); margin-top: var(--s-md); }
-#stage #title .logo .wind { width: 453px; max-width: 70%; height: auto; image-rendering: pixelated; filter: drop-shadow(0 var(--s-sm) 0 var(--px-veil)); }
+#stage #title .logo .lw { display: flex; flex-direction: column; align-items: flex-end; width: 464px; max-width: 70%; }
+#stage #title .logo .wind { width: 100%; height: auto; image-rendering: pixelated; filter: drop-shadow(0 var(--s-sm) 0 var(--px-veil)); }
+#stage #title .logo .kr { margin-top: calc(var(--s-xs) * -1); color: var(--px-text); font-size: var(--fs-md); letter-spacing: var(--s-xxs); text-shadow: var(--px-outline); }
+#stage #title .logo .full { color: var(--px-gold); font-size: var(--fs-sm); letter-spacing: var(--s-xxs); text-shadow: var(--px-outline); }
 #stage #title .logo .sub { padding: 0 var(--s-lg); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; color: var(--px-gold); font-size: var(--fs-xxl); text-shadow: var(--px-outline); }
 #stage #title .logo small { color: var(--px-text); text-shadow: var(--px-outline); letter-spacing: 0; }
 #stage #title .tapgo { position: absolute; left: 50%; bottom: calc(var(--s-xxl) + var(--s-xl)); transform: translateX(-50%); padding: 0; border: 0; background: none; color: var(--px-text); font-size: var(--fs-xxl); text-shadow: var(--px-outline); animation: v3Blink 1.6s ease-in-out infinite; }

@@ -53,8 +53,8 @@ const zoneTabs = (on: string, withUnowned = false) =>
 register('title', {
   enter(root) {
     root.id = 'title';
-    // 타이틀 (UI_KIT_1018 §2·§3): 광원 뺀 키아트 + 도트 로고 W.I.N.D + 「바람의 원정대」 · 화면을 눌러 시작
-    root.innerHTML = `<div class="logo"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D 바람의 원정대"></div>
+    // 타이틀 (UI_KIT_1018 §2·§3 · 형철 스케치 10/18): 광원 뺀 키아트 + 가운데 도트 로고 W.I.N.D + 오른쪽 아래 「바람의 원정대」 + 아래 작은 풀네임 · 화면을 눌러 시작
+    root.innerHTML = `<div class="logo"><div class="lw"><img class="wind px" src="${import.meta.env.BASE_URL}art/ui2/logo.png" alt="W.I.N.D 바람의 원정대"><b class="kr">바람의 원정대</b></div><small class="full">Wayfarers of the Infinite Night's Dawn</small></div>
       <i class="twinkle">${Array.from({ length: 12 }, (_, i) => `<b style="--i:${i};left:${6 + i * 7.8}%;top:${4 + ((i * 37) % 23)}%"></b>`).join('')}</i>
       <button class="tapgo" data-go>${S.prologue ? '화면을 눌러 이어서 하기' : '화면을 눌러 시작'}</button>
       <div class="tpanel"><button class="btn mini" data-reset>처음부터</button></div>
