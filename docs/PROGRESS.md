@@ -509,6 +509,12 @@
 - 길드 만들기/새로고침 · 장비 고유 이름(data/gearNames.ts) · 출석 7일 판 · 배속 펼침·유지 · 뒤로 가기 · 모바일 밀림 막기 · 상태 표시줄 자리 빼고 맞춤
 - 명세 점검(킹스레이드 대비) 남은 것: NEW HERO 연출·N 배지 · 업적 분류 · 친구 영웅 빌리기 · 우정 포인트 · 서버 공유 길드/월드 보스 · 결투장 실유저 덱 · 전용 무기 고유 옵션/룬 · 전용 보물 여러 개 · 별 해금 코스튬 · 장비 세트 효과 · STAT 미터 · 영입 증표 · 휴식 보너스 · 정복전류 랭킹 · 도감 · 제보 편지 · 체크인 연동 보너스 · 여관 방문 · 기간 영입 이벤트
 
+### v0.16.0 (10/18) — 월드맵·수도·여관·서사·튜토리얼
+- 새 화면: src/ui/screensE.ts (world · capital · inn · library) · 그림은 자리용 복사본 (screens/world·capital·inn·library.jpg) → docs/ASSET_SPEC_1018.md 대로 바꿔 넣기
+- 여관 src/game/inn.ts (인연 · 음식 버프 → fullStats · grant 금화/경험치) · 서사 src/game/saga.ts (9칸) · 튜토리얼 src/ui/coach.ts (전투·로비·영웅·상점·포탈·월드맵·수도) · 툴팁 src/ui/tip.ts
+- 시작 영웅 4명 + 따뜻한밤 튜토리얼 합류 · 미보유 영웅 대사 거름(playTalk) · 전투 시작 컷씬 · 영웅 목록 가로 · .narrow(패드) · NEW HERO · 휴식 보너스 · 이번 주 영입(heroCost) · 우정 포인트
+- 새로 만들 것(그림·글·서버) 명세: docs/ASSET_SPEC_1018.md
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

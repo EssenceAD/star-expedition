@@ -42,6 +42,8 @@ export function fitView(stage: HTMLElement, cv: HTMLCanvasElement, iw = viewport
   view.w = w;
   view.scale = k;
   stage.style.width = `${w}px`;
+  // 패드(4:3 · 5:4)처럼 폭이 좁은 화면: 꽉 채우고 메뉴는 촘촘하게 (.narrow)
+  stage.classList.toggle('narrow', w < V.narrow);
   stage.style.transform = `translate(-50%, -50%)${rot ? ` translateY(${Math.round((s.t - s.b) / 2)}px) rotate(90deg)` : ''} scale(${k})`;
   // HUD는 노치·홈바만큼 안으로 (게임 좌표 px) · 돌린 화면은 이미 그 자리를 뺐으니 0
   const [sl, sr] = rot ? [0, 0] : [s.l, s.r];

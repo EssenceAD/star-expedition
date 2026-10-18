@@ -132,11 +132,35 @@ export function gift(name: string, s: Save = S, now = Date.now()): 'ok' | 'done'
   if (s.friends.sent.includes(name)) return 'done';
   s.friends.sent.push(name);
   track('gift', 1, s, now);
+  addCur('friendPt', SO.friends.pt, s);
   if (s.friends.got < SO.friends.giftsPerDay) {
     s.friends.got++;
     s.sta.n += SO.friends.gift;
   }
   return 'ok';
+}
+
+/** 우정 포인트 상점 */
+export function buyFriendPt(id: string, s: Save = S): 'ok' | 'poor' {
+  const it = SO.friends.ptShop.find((x) => x.id === id)!;
+  if (!spend('friendPt', it.pt, s)) return 'poor';
+  for (const [k, n] of Object.entries(it.give)) {
+    if (k === 'stamina') s.sta.n += n;
+    else addCur(k, n, s);
+  }
+  return 'ok';
+}
+/** 휴식 보너스: 못 들어온 날만큼 (최대 7일) 우편으로 · 들어올 때마다 부름 → 쉰 날 수 */
+export function restBonus(s: Save = S, now = Date.now()): number {
+  const today = dayKey(now);
+  if (s.lastDay === today) return 0;
+  const prev = s.lastDay;
+  s.lastDay = today;
+  if (!prev) return 0;
+  const days = Math.min(7, Math.round((Date.parse(today) - Date.parse(prev)) / 86400000) - 1);
+  if (days <= 0) return 0;
+  addMail(s, '여관 주인', `${days}일 쉬었다 왔네요!`, '푹 쉬고 온 원정대에게 작은 보너스를 넣었어요.', { stardust: 30 * days, gold: 10000 * days }, now);
+  return days;
 }
 
 // ───────── 랭킹 · 랭커 칭호 ─────────

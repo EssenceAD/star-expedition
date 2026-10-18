@@ -13,7 +13,7 @@ export interface Step {
   press?: boolean;
 }
 /** 요소의 #stage 안 자리 (stage는 돌리고 키운 상태라 화면 좌표 대신 offset을 더함) */
-function rectIn(el: HTMLElement) {
+export function rectIn(el: HTMLElement) {
   let x = 0;
   let y = 0;
   const stage = $('#stage');
@@ -24,19 +24,23 @@ function rectIn(el: HTMLElement) {
   return { x, y, w: el.offsetWidth, h: el.offsetHeight };
 }
 const busy = () => !!document.querySelector('#stage .modal, #stage .notice, #stage .coach, #stage .talk, #stage .recruit');
-/** 창·알림이 다 닫힌 뒤 (지금 화면이 그대로면) 튜토리얼 한 번 */
-export function coach(key: string, steps: Step[], screen = currentScreen()) {
-  if (S.seen[`tut:${key}`]) return;
+/** 창·알림이 다 닫힌 뒤 (지금 화면이 그대로면) 한 번 */
+export function whenFree(f: () => void, screen = currentScreen()) {
   let tries = 0;
   const wait = window.setInterval(() => {
     if (currentScreen() !== screen || ++tries > 120) return clearInterval(wait);
     if (busy()) return;
     clearInterval(wait);
-    show(key, steps.filter((s) => document.querySelector(s.sel)));
+    f();
   }, 500);
 }
-function show(key: string, steps: Step[]) {
-  if (!steps.length) return;
+/** 창·알림이 다 닫힌 뒤 (지금 화면이 그대로면) 튜토리얼 한 번 */
+export function coach(key: string, steps: Step[], screen = currentScreen(), onEnd?: () => void) {
+  if (S.seen[`tut:${key}`]) return onEnd?.();
+  whenFree(() => show(key, steps.filter((s) => document.querySelector(s.sel)), onEnd), screen);
+}
+function show(key: string, steps: Step[], onEnd?: () => void) {
+  if (!steps.length) return onEnd?.();
   S.seen[`tut:${key}`] = true;
   persist();
   const el = document.createElement('div');
@@ -59,6 +63,7 @@ function show(key: string, steps: Step[]) {
     const s = steps[i];
     if (++i < steps.length) return draw();
     el.remove();
+    onEnd?.();
     if (s?.press) document.querySelector<HTMLElement>(s.sel)?.click();
   };
   el.onclick = (e) => {

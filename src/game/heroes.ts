@@ -1,5 +1,6 @@
 // 영웅 능력치 · 레벨 · 전투력 — 레벨 × 별 × (장비 기본 + 옵션·룬·초월·전용 무기 비율) · 소프트캡 (STAR_PLAN_v2 §2)
 import { CONFIG } from '../config';
+import { innBonus } from './inn';
 import { heroOf } from '../data/heroes';
 import { armorMatch, gearOf, gearStats } from './gear';
 import { exAtk, traitsOf } from './growth';
@@ -67,6 +68,10 @@ export function fullStats(id: string, s: Save = S): { st: Stats; raw: RawCaps } 
   addP('atkPct', exAtk(h.ex));
   // 전용 보물 (영웅 외전 클리어로 해금)
   if (s.treasure?.[id]) addP('atkPct', CONFIG.treasure.atkPct);
+  // 여관: 인연 단계 · 음식 버프
+  const inn = innBonus(id, s);
+  addP('atkPct', inn.atk);
+  addP('hpPct', inn.hp);
   st.hp = Math.round((st.hp * starM + (flat.hp ?? 0)) * (1 + (pct.hpPct ?? 0)));
   st.atk = Math.round((st.atk * starM + (flat.atk ?? 0)) * (1 + (pct.atkPct ?? 0)));
   st.def = Math.round((st.def * starM + (flat.def ?? 0)) * (1 + (pct.defPct ?? 0)));
@@ -109,5 +114,6 @@ export const owned = (id: string, s: Save = S) => !!s.heroes[id];
 export function join(id: string, s: Save = S): boolean {
   if (s.heroes[id]) return false;
   s.heroes[id] = newHero();
+  (s.fresh ??= []).push(id);
   return true;
 }

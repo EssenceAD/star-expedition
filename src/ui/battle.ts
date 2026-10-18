@@ -7,6 +7,7 @@ import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, 
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
 import { music } from '../core/audio/music';
+import { coach } from './coach';
 import { jingle } from '../core/audio/sfx';
 import { heroOf } from '../data/heroes';
 import { descSkill } from '../data/skills';
@@ -488,14 +489,43 @@ function begin(s: StageId) {
     }
   }
   persist();
-  const talk = () => {
-    if (!lines.length) return;
+  // 대사 → 전투 시작 컷씬 → (첫 전투면) 전투 튜토리얼
+  const after = () => startCut(s, () => {
+    if (!firstRun) return;
     talking = true;
-    playTalk(lines, () => (talking = false));
+    coach('battle', [
+      { sel: '#bar .hc .sk', text: '영웅 카드의 스킬을 누르면 바로 써요\n마나가 차면 반짝여요' },
+      { sel: '#bAuto', text: '「자동」을 켜면 스킬도 알아서 써요' },
+      { sel: '#bSpeed', text: '배속을 고르면 다음 판에도 그대로예요' },
+    ], undefined, () => (talking = false));
+  });
+  const talk = () => {
+    if (!lines.length) return after();
+    talking = true;
+    playTalk(lines, () => ((talking = false), after()));
   };
   // 프롤로그 첫 전투 말고는 로딩 화면(전신 그림 + 한 줄 팁) 뒤에 대사 · 전투 (RECOVER_1018 S3)
   if (firstRun) talk();
   else loadTip(s, talk);
+}
+/** 전투 시작 컷씬 (킹스레이드식): 파티 초상이 차례로 미끄러져 들어오고 「STAGE x-y」 · 그동안 전투 멈춤 */
+function startCut(s: StageId, done: () => void) {
+  const el = document.createElement('div');
+  el.className = 'bstart';
+  el.innerHTML = `<div class="bs-band"><div class="bs-faces">${partyIds().map((id, i) => `<i style="--i:${i};background-image:url(${heroPortrait(id)})"></i>`).join('')}</div><div class="bs-tx"><small>${s.c}장 · ${esc(CHAPTERS[s.c - 1].name)}</small><b>${fxt(`STAGE ${s.c}-${s.s}`)}</b><em>${isBoss(s) ? 'BOSS BATTLE' : 'BATTLE START'}</em></div></div>`;
+  $('#stage').append(el);
+  intro = true;
+  combatSynth('wave', 1);
+  let ended = false;
+  const end = () => {
+    if (ended) return;
+    ended = true;
+    el.remove();
+    intro = false;
+    done();
+  };
+  el.onclick = end;
+  setTimeout(end, 1600);
 }
 /** 전투 전 로딩 화면: 편성 영웅 하나 전신 + 장·스테이지 이름 + 한 줄 팁 · loadTipSec 동안(누르면 넘김) 전투는 멈춤 */
 function loadTip(s: StageId, done: () => void) {

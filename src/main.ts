@@ -9,12 +9,14 @@ import { img } from './ui/assets';
 import { applyTheme } from './theme/tokens';
 import { initAudioEngine } from './core/audio/engine';
 import { sfx } from './core/audio/sfx';
+import { initTips } from './ui/tip';
 import { $, currentScreen, go, scrollHints, tickChat, watchFit } from './ui/core';
 import { fitView, view } from './ui/view';
 import './ui/screens';
 import './ui/screensB';
 import './ui/screensC';
 import './ui/screensD';
+import './ui/screensE';
 import * as cloud from './core/net/cloud';
 import { battleArtWait, battleNow } from './ui/battle';
 import { gachaShow } from './ui/gacha';
@@ -25,6 +27,7 @@ import { makeGear } from './game/gear';
 applyTheme();
 // 소리: 첫 터치에 열림 (타이틀 터치부터 음악) · 버튼마다 「톡」 · 뒤로/닫기는 「닫힘」
 initAudioEngine();
+initTips();
 document.addEventListener('click', (e) => {
   const b = (e.target as Element).closest('button');
   if (!b || b.disabled) return;
@@ -52,6 +55,13 @@ const scrollsInside = (el: Element | null) => {
   }
   return false;
 };
+// 가로로 넘기는 목록(영웅 목록 등): PC 마우스 휠도 가로로
+document.addEventListener('wheel', (e) => {
+  const el = (e.target as Element).closest<HTMLElement>('.hscroll');
+  if (!el || el.scrollWidth <= el.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  el.scrollLeft += e.deltaY;
+  e.preventDefault();
+}, { passive: false });
 document.addEventListener('touchmove', (e) => !scrollsInside(e.target as Element) && e.cancelable && e.preventDefault(), { passive: false });
 visualViewport?.addEventListener('resize', fit);
 document.addEventListener('focusout', () => setTimeout(fit, 300));
@@ -59,7 +69,10 @@ fitView(stage, cv);
 
 // 로딩 화면 (docs/ART_DONE_1017_3.md §2): 아무 영웅 전신 + 칭호 + 한 줄
 {
-  const h = HEROES[Math.floor(Math.random() * HEROES.length)];
+  // 가진 영웅 중에서만 (처음엔 시작 4명)
+  loadSave();
+  const pool = HEROES.filter((x) => S.heroes[x.id]);
+  const h = pool[Math.floor(Math.random() * pool.length)] ?? HEROES[0];
   const ld = document.getElementById('loading')!;
   ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>바람의 원정대를 준비하고 있어요…</small></div>`;
 }
@@ -68,7 +81,6 @@ const B = import.meta.env.BASE_URL;
 // ───────── 그림 (SPRITE_RES_1017 §C: 처음엔 꼭 필요한 것만) ─────────
 // 꼭 필요한 것: 전투 기본 배경 · 치명타 별 · 타이틀 그림 · 지금 편성(메인 지도 원정대장 포함) · 영웅 키(칸 정보만)
 //  몹·보스 시트와 지역 배경은 그 전투 전에(ensureBattleArt) · 나머지 영웅 시트는 로비 뜬 뒤 뒤에서 · 컷인은 그 영웅이 나오는 전투 전에 · 레이드 보스 그림·콘텐츠 배경은 뒤에서
-loadSave();
 const firstHeroes = [...new Set([...partyIds(), ...Object.keys(S.heroes)])].slice(0, PARTY_MAX);
 const sheet: Art['sheet'] = { img: {}, cell: {}, base: {} };
 const bar = document.querySelector<HTMLElement>('#loading .ld-bar i');

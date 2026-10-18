@@ -11,6 +11,7 @@ import { addCur, dayKey, partyIds, S, track, type Save } from './state';
 import { boostMult, stageCost, useStamina } from './account';
 import { bagFull, dropGear, makeRune } from './gear';
 import { chapterFrom } from '../data/gearNames';
+import { foodMult } from './inn';
 import type { Gear, Rune } from './state';
 import { JOBS, ZONES } from '../data/jobs';
 
@@ -159,13 +160,14 @@ export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now(), s
   if (s.day.key !== dayKey(now)) s.day = { key: dayKey(now), runs: 0 };
   s.day.runs++;
   const bm = boostMult(s, now);
-  const gold = Math.round(r.gold * taperAt(s.day.runs) * bm);
+  const gold = Math.round(r.gold * taperAt(s.day.runs) * bm * foodMult('gold', s, now));
   const enh = r.enh * bm;
   addCur('gold', gold, s);
   addCur('stardust', r.stardust, s);
   addCur('enh', enh, s);
   const ups: string[] = [];
-  for (const id of ids) if (addExp(id, r.exp, s)) ups.push(id);
+  const exp = Math.round(r.exp * foodMult('exp', s, now));
+  for (const id of ids) if (addExp(id, exp, s)) ups.push(id);
   // 장비 드롭 (스테이지 판만 · 가방이 가득이면 없음) · 보스 스테이지 룬
   const gear: Gear[] = [];
   const runes: Rune[] = [];

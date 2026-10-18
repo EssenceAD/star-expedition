@@ -16,7 +16,7 @@ describe('저장', () => {
     expect(s.version).toBe(SAVE_VERSION);
     expect(s.pilot).toEqual({ clears: 4, best: 3 });
     expect(Object.keys(s.heroes)).toEqual(CONFIG.start.heroes);
-    expect(CONFIG.start.heroes.length).toBe(5);
+    expect(CONFIG.start.heroes.length).toBe(4);
     expect(s.cur.gold).toBe(CONFIG.start.gold);
   });
   it('망가진 저장 → 새로 · 빠진 칸은 채움 · 미래 버전은 건드리지 않음', () => {
