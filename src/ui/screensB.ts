@@ -14,6 +14,7 @@ import { capLeft, GEAR_SLOTS, partyIds, persist, rollTrack, S, type Gear, type G
 import { icon, iconText } from '../theme/tokens';
 import { gachaShow } from './gacha';
 import { jingle, sfx } from '../core/audio/sfx';
+import { haptic } from '../core/haptic';
 import { taglineOf } from '../data/taglines';
 import { coach } from './coach';
 import { claimSaga, SAGA, sagaGot, sagaLine } from '../game/saga';
@@ -30,9 +31,13 @@ const ilvNow = () => {
   const b = bestCleared();
   return b ? powIdx(b) : 0;
 };
+/** 초월 누를 때 묵직한 진동 (결과와 상관없이 「쿵」) */
+const transcendFx = () => haptic('legend');
 const say = (r: string, m: Record<string, string>) => {
   // 됐으면 반짝 · 안 됐으면 부드러운 「뚝」
-  sfx(/^(ok|0|great|up)$/.test(r) ? 'item' : 'place_bad', 0.7);
+  const ok = /^(ok|0|great|up)$/.test(r);
+  sfx(ok ? 'item' : 'place_bad', 0.7);
+  haptic(ok ? 'success' : 'tap');
   toast(m[r] ?? r);
 };
 
@@ -236,7 +241,7 @@ function wireTab(root: HTMLElement, id: string, draw: () => void) {
         row?.insertAdjacentHTML('beforeend', `<em class="lvfx">LEVEL UP! Lv.${S.heroes[id].skill[k]}</em>`);
       }),
   );
-  $$('[data-tr]', root).forEach((b) => (b.onclick = () => after(transcend(id, +b.dataset.tr! as 0 | 1), { ok: '초월!', poor: '초월석이나 금화가 모자라요', need: '조건이 모자라요', max: '최대 초월' })));
+  $$('[data-tr]', root).forEach((b) => (b.onclick = () => (transcendFx(), after(transcend(id, +b.dataset.tr! as 0 | 1), { ok: '초월!', poor: '초월석이나 금화가 모자라요', need: '조건이 모자라요', max: '최대 초월' }))));
   $$('[data-re]', root).forEach((b) => (b.onclick = () => (retrait(id, +b.dataset.re!), after('ok', { ok: '특성을 바꿨어요' }))));
   const sh = root.querySelector<HTMLElement>('[data-sh]');
   if (sh) sh.onclick = () => after(assignShards(id, 10) ? 'ok' : 'poor', { ok: '조각을 넣었어요', poor: '조각이 모자라요' });
@@ -359,6 +364,7 @@ export function recruitShow(id: string, done: () => void, gift = false) {
   };
   const joined = () => {
     jingle('recruit');
+    haptic('legend');
     el.classList.add('joined');
     el.innerHTML = `<div class="rc-circle"></div><div class="rc-frame"><div class="rc-face" style="background-image:url(${heroPortrait(id)})"></div></div><div class="rc-fb rise" style="background-image:url(${fullbodyUrl(id, null)})"></div><div class="rc-join">${fxt(`${h.name} 합류!`)}</div><span class="xs rc-tap">눌러서 계속</span>`;
     el.onclick = () => (el.remove(), gift && done());

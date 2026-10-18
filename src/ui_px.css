@@ -430,3 +430,5 @@ body, #stage { font-weight: normal; }
 #stage .innkeep .ik-say { position: absolute; left: var(--s-xs); right: var(--s-xs); top: var(--s-sm); margin: 0; padding: var(--s-xs) var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); text-shadow: none; font-size: var(--fs-sm); line-height: 1.35; }
 #stage .innkeep .ik-say b { display: block; color: var(--px-red); }
 #stage .food .fpic { width: 56px; height: 56px; }
+/* 타이틀: 「화면을 눌러 시작」은 맨 아래 띠로 (영웅 얼굴을 가리지 않게) */
+#stage #title .tapgo { bottom: var(--s-sm); padding: var(--s-xxs) var(--s-xl); background: var(--px-veil); font-size: var(--fs-xl); }

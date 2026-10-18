@@ -2,6 +2,7 @@
 //  그림: public/art/ui/gacha · 시간·흔들림 횟수는 CONFIG.ui.gacha · 누르면 바로 다 뒤집기 · 오른쪽 위 건너뛰기
 import { CONFIG } from '../config';
 import { combatSynth } from '../core/audio/combatSfx';
+import { haptic } from '../core/haptic';
 import type { Gear } from '../game/state';
 import { icon } from '../theme/tokens';
 import { $, $$ } from './core';
@@ -41,10 +42,12 @@ export function gachaShow(gears: Gear[], again: (() => void) | null, done: () =>
       void el.offsetWidth;
       el.classList.add('shake');
       combatSynth('crit', 0.8);
+      haptic('hit');
     } else if (k === 'legend') {
       fx.innerHTML = `${pic('beam_legend', 'beam')}${pic('sparkle', 'spark s1')}${pic('sparkle', 'spark s2')}<i class="white"></i>`;
       combatSynth('crit', 1);
       combatSynth('demolish', 1);
+      haptic('legend');
       setTimeout(() => (fx.innerHTML = ''), 1400);
       if (!flipAll && !skipped) await wait(G.legendSlow);
     } else combatSynth('hit', 0.5);
