@@ -510,3 +510,8 @@ body, #stage { font-weight: normal; }
 #stage [data-screen="library"] .cards > .shopc { height: auto; min-height: 0; overflow: hidden; }
 #stage [data-screen="library"] .cards > .shopc .row { flex-wrap: wrap; justify-content: center; gap: var(--s-xxs); }
 #stage [data-screen="library"] .cards > .shopc .row .btn.mini { flex: 0 1 auto; min-width: 0; }
+/* 피해량 미터 2 (10/18): 제목은 탭 위 한 줄 (겹침) · 손잡이 = 화살표 + 접기/펼치기 세로 글씨 */
+#stage #dpsL .dname { position: static; height: auto; margin: 0 0 var(--s-xxs); line-height: 1.2; text-align: center; }
+#stage #dps #bDps { width: 26px; height: auto; min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-xxs); padding: var(--s-xs) 0; }
+#stage #dps #bDps .ic { width: 14px; height: 14px; }
+#stage #dps #bDps span { writing-mode: vertical-rl; font-size: var(--fs-xs); line-height: 1; letter-spacing: var(--s-xxs); }
