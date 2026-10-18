@@ -6,7 +6,7 @@ import { haptic, hapticOn, setHaptic } from '../core/haptic';
 import { setPref, getPref } from '../core/save';
 import * as cloud from '../core/net/cloud';
 import { lockOf, triesText } from '../game/content';
-import { attend, attendToday, claim, claimAll, eventLeft, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
+import { attend, attendToday, claim, claimAll, eventLeft, eventToday, isClaimed, isDone, listOf, progress, readyOf, type Kind } from '../game/missions';
 import {
   addFriend, board, BOARD_NAME, buyGuild, buyFriendPt, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
@@ -47,7 +47,7 @@ register('mission', {
           }).join('')}</div>`;
       } else if (tab === 'ev') {
         const left = eventLeft();
-        body = `<div class="panel col"><b>${SO.event.name}</b><span class="sm dim">${left ? `남은 ${left}일` : '끝났어요'} · 출석할 때마다 별가루 ${SO.event.dust} · 지금까지 ${S.attend.ev}일</span>${left ? '' : '<span class="xs mute">다음 이벤트는 공지로 알려요</span>'}</div>`;
+        body = `<div class="panel col"><b>${SO.event.name}</b><span class="sm dim">${left ? `남은 ${left}일` : '끝났어요'} · 출석할 때마다 별가루 ${SO.event.dust} · 지금까지 ${S.attend.ev}일</span>${left ? '' : '<span class="xs mute">다음 이벤트는 공지로 알려요</span>'}${eventToday() ? `<button class="btn hi" data-tab="att">${icon('stardust')} 오늘 출석하고 별가루 ${SO.event.dust} 받기</button>` : left ? '<span class="xs gold">오늘 이벤트 보상은 받았어요 · 내일 또 만나요</span>' : ''}</div>`;
       } else {
         // 7일 판: 받은 날 ✓ · 오늘(받을 날) 빛 · 앞으로 받을 보상도 그림으로 미리 (형철 10/18)
         const got = S.attend.n % SO.attend.length;
@@ -56,7 +56,7 @@ register('mission', {
         body = `<b class="atth">오늘은 ${day}일째 출석${attendToday() ? ' · 보상을 받을 수 있어요' : ' · 내일 또 만나요'}</b><div class="attg">${SO.attend.map((g, i) => `<div class="panel col shopc att${i < got || (!attendToday() && i === (S.attend.n - 1) % SO.attend.length) ? ' on' : ''}${i === today ? ' now' : ''}"><b>${i + 1}일째</b><div class="ag">${Object.entries(g).map(([k, v]) => `<span>${icon(k)}<b>${fmt(v)}</b></span>`).join('')}</div>${i < got ? `<em class="done">${icon('check')}</em>` : ''}</div>`).join('')}</div>
           <button class="btn hi" data-att ${attendToday() ? '' : 'disabled'}>${attendToday() ? '오늘 출석하기' : '오늘 출석 완료'}</button>`;
       }
-      root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}${(k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
+      root.innerHTML = `<div class="body"><div class="col shopcats">${tabs.map(([k, n, pic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(pic, n)}${((k === 'd' || k === 'w' || k === 'r' || k === 'ach') && readyOf(k as Kind).length) || (k === 'ev' && eventToday()) || (k === 'att' && attendToday()) ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => ((tab = b.dataset.tab!), draw())));
       // 받기 → 보상 창 (아이콘·수량 크게 · FINAL §5)
       $$('[data-claim]', root).forEach((b) => (b.onclick = () => {
