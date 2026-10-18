@@ -341,3 +341,12 @@ body, #stage { font-weight: normal; }
 /* 길드: 만들기·새로고침 줄 · 이름 입력 */
 #stage .gtools { align-items: center; gap: var(--s-sm); margin-bottom: var(--s-sm); }
 #stage .gname-in { width: 100%; padding: var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); font: inherit; }
+/* 기능 열림 튜토리얼 (S6): 어둡게 + 밝은 네모 + 손가락 + 설명 2줄 */
+#stage .coach { position: absolute; inset: 0; z-index: 60; cursor: pointer; }
+#stage .coach .hole { position: absolute; border: var(--b-thick) solid var(--px-gold); box-shadow: 0 0 0 calc(var(--s-xxl) * 80) var(--px-veil), 0 0 var(--s-lg) var(--px-gold); animation: v3Pulse 1.2s ease-in-out infinite; pointer-events: none; }
+#stage .coach .finger { position: absolute; transform: translate(-50%, -100%); animation: v3Idle 0.8s ease-in-out infinite; pointer-events: none; }
+#stage .coach .finger.up { transform: translate(-50%, 0) rotate(180deg); }
+#stage .coach .finger .ic { width: 36px; height: 36px; }
+#stage .coach .ctext { position: absolute; left: 50%; top: var(--s-xl); width: min(520px, 80%); display: flex; flex-direction: column; align-items: center; gap: var(--s-xxs); padding: var(--s-md) var(--s-lg); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/paper.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; transform: translateX(-50%); color: var(--px-ink); text-shadow: none; font-size: var(--fs-xl); line-height: 1.4; text-align: center; animation: v3PopIn 0.35s ease-out both; }
+#stage .coach .ctext.low { top: auto; bottom: var(--s-xl); }
+#stage .coach .ctext small { margin-top: var(--s-xs); color: var(--px-ink); opacity: 0.7; font-size: var(--fs-sm); }

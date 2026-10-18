@@ -26,6 +26,7 @@ import { baseReward, buildMobs, byZone, canRepeat, diffOpen, isBoss, nextStage, 
 import { newSave, PARTY_MAX, partyIds, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
 import { repeatText } from './battle';
+import { coach } from './coach';
 import { $, $$, CUR_NAME, esc, fitText, fmt, go, heroPortrait, modal, refresh, register, starsHtml, syncBar, toast } from './core';
 
 const C = CONFIG.story;
@@ -166,6 +167,20 @@ register('lobby', {
     }
     // 전투에서 쌓인 알림 카드 (S4)
     playNotices();
+    // 기능 열림 튜토리얼 (S6): 진도에 맞는 것 하나만 · 창·알림이 다 닫힌 뒤
+    const did = (c2: number, s2: number) => starsAt({ c: c2, s: s2, d: 0 }) > 0;
+    if (!S.seen['tut:lobby'])
+      coach('lobby', [
+        { sel: '.mgo', text: '「전투 준비」를 누르면\n다음 스테이지로 바로 가요' },
+        { sel: '.mq.mile', text: '다음에 할 일은 여기 「다음 할 일」 카드에\n늘 떠 있어요' },
+        { sel: '.mside', text: '미션·이벤트·출석 보상도\n잊지 말고 받아요' },
+      ]);
+    else if (did(1, 1) && !S.seen['tut:hero'])
+      coach('hero', [{ sel: '.mdock [data-go="heroes"]', text: '장비를 얻었어요!\n「영웅」에서 장비를 껴 볼까요?', press: true }]);
+    else if (did(1, 3) && !S.seen['tut:shop'])
+      coach('shop', [{ sel: '.mdock [data-go="shop"]', text: '상점 「영웅」에서\n새 영웅을 원정대로 데려올 수 있어요', press: true }]);
+    else if (did(1, 10) && !S.seen['tut:portal'])
+      coach('portal', [{ sel: '.mdock [data-go="portal"]', text: '「콘텐츠」가 열렸어요\n토벌·던전·탑·결투장·레이드를 여기서 해요', press: true }]);
     // 메인이 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },
