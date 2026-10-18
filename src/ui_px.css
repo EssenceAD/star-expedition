@@ -540,3 +540,12 @@ body, #stage { font-weight: normal; }
 /* 설정 계정 줄: 회원가입 버튼까지 들어가면 좁은 폰에서 오른쪽이 잘림 → 줄바꿈 (10/18) */
 #stage .row.acct { flex-wrap: wrap; }
 #stage .row.acct input { flex: 1 1 140px; min-width: 0; }
+/* 전투 영웅 칸 (형철 10/18): 초상 아래 레벨 · 이름 옆 별·초월(초상 금빛 테) · 체력·마나 숫자 */
+#stage #bar .hc { grid-template-rows: 14px 30px 32px; }
+#stage #bar .hc .pt .lv { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; font-style: normal; font-size: var(--fs-xxs); line-height: 1.1; text-align: center; color: var(--px-text); text-shadow: var(--px-outlineSm); background: var(--px-barBg); }
+#stage #bar .hc .nm .st { font-style: normal; color: var(--c-starOn); }
+#stage #bar .hc .nm .trn { margin-left: var(--s-xs); font-style: normal; color: var(--c-starOn); }
+#stage #bar .hc.tr .pt { box-shadow: var(--px-glow); outline: var(--b-base) solid var(--c-starOn); }
+#stage #bar .hc .hp { height: 15px; overflow: visible; }
+#stage #bar .hc .mp { height: 13px; overflow: visible; }
+#stage #bar .hc .hp em, #stage #bar .hc .mp em { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; font-style: normal; font-size: var(--fs-xxs); line-height: 1; color: var(--px-text); text-shadow: var(--px-outlineSm); }

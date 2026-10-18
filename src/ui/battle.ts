@@ -74,10 +74,11 @@ function buildBar() {
     .filter((u) => !u.ai)
     .map((u, i) => {
       const h = u.hero!.def;
-      // 카드 = 틀 그림(hud_card) + 안쪽 창: 초상은 왼쪽 창 안(.framed-in) · 이름만 (FINAL §3-1)
-      return `<div class="hc framed" data-h="${i}"><div class="pt framed-in"><i style="background-image:url(${heroPortrait(h.id)})"></i></div>
-      <div class="nm">${h.name}</div>
-      <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
+      // 카드 = 틀 그림(hud_card) + 안쪽 창: 초상은 왼쪽 창 안(.framed-in) · 초상 아래 레벨 · 이름 옆 별(초월이면 반짝임N + 초상 금빛 테) · 체력·마나 숫자 (형철 10/18)
+      const tr = S.heroes[h.id]?.trans.length ?? 0;
+      return `<div class="hc framed${tr ? ' tr' : ''}" data-h="${i}"><div class="pt framed-in"><i style="background-image:url(${heroPortrait(h.id)})"></i><em class="lv">Lv${u.hero!.lv}</em></div>
+      <div class="nm">${h.name} <em class="st">${iconText('star')}${u.hero!.star ?? 1}</em>${tr ? `<em class="trn">${iconText('sparkle')}${tr}</em>` : ''}</div>
+      <div class="bars"><div class="hp"><i></i><s></s><em></em></div><div class="mp"><i></i><em></em></div></div>
       <div class="bf"></div>
       <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)"><i style="background-image:url(${skillIconUrl(h.id, k)})"></i><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"><i>AUTO</i></button></div></div>`;
     })
@@ -118,6 +119,8 @@ function syncHud() {
     $('.hp i', c).style.width = `${(u.hp / u.max) * 100}%`;
     $('.hp s', c).style.width = `${Math.min(100, (u.shield / u.max) * 100)}%`;
     $('.mp i', c).style.width = `${u.mana}%`;
+    $('.hp em', c).textContent = shortNum(Math.max(0, Math.ceil(u.hp)));
+    $('.mp em', c).textContent = String(Math.floor(u.mana));
     const bf = BUFF(u).map(([k, t]) => buffImg(k, t)).join('');
     const el = $('.bf', c);
     if (el.innerHTML !== bf) el.innerHTML = bf;
