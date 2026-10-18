@@ -83,6 +83,9 @@ register('portal', {
         body = `<div class="row"><b class="grow">이정표 ${S.miles.length}/${MILESTONES.length}</b><button class="btn hi" data-claim ${ready.length ? '' : 'disabled'}>모두 받기 (${ready.length})</button></div>
           <div class="col">${MILESTONES.map((m) => `<div class="kv"><span>${S.miles.includes(m.id) ? icon('check') : ready.includes(m) ? icon('badge') : icon('lock')} ${m.name}</span><b>${icon('stardust')}${CC.milestoneDust}</b></div>`).join('')}</div>`;
       }
+      // 탭마다 화면 배경 (CONFIG.ui.screenBg[탭] · 없으면 콘텐츠 기본) — 도전의 탑 = screens/tower.jpg (형철 10/18)
+      const sb = CONFIG.ui.screenBg[tab] ?? CONFIG.ui.screenBg.portal;
+      if (sb) root.style.setProperty('--scr-art', `url(${new URL(`${import.meta.env.BASE_URL}art/screens/${sb}.jpg`, location.href).href})`);
       root.innerHTML = `<div class="body"><div class="col shopcats">${TABS.map(([k, n, ic]) => `<button class="tab${tab === k ? ' on' : ''}" data-tab="${k}">${tabLabel(ic, n)}${k === 'miles' && milesReady().length ? ' <em class="badge">N</em>' : ''}</button>`).join('')}</div><div class="col grow scroll">${body}</div></div>`;
       // 이정표는 장별 사슬 창으로 (S5)
       $$('[data-tab]', root).forEach((b) => (b.onclick = () => (b.dataset.tab === 'miles' ? openMiles() : ((tab = b.dataset.tab!), draw()))));
