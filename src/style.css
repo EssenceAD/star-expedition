@@ -10,8 +10,8 @@ html, body { margin: 0; height: 100%; height: 100dvh; background: var(--c-bg); o
 /* iOS는 body overflow:hidden 이어도 손가락으로 페이지가 밀림 → 화면 고정 · 끝에서 튕김 없음 (형철 10/18 모바일 밀림·잘림) */
 html, body { position: fixed; inset: 0; width: 100%; overscroll-behavior: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 button { font-family: inherit; cursor: pointer; }
-#stage { position: absolute; left: 50%; top: 50%; height: 390px; overflow: hidden; background: var(--c-bg); }
-#cv { position: absolute; left: 0; top: 0; height: 390px; image-rendering: pixelated; }
+#stage { position: absolute; left: 50%; top: 50%; height: var(--viewH, 440px); overflow: hidden; background: var(--c-bg); }
+#cv { position: absolute; left: 0; top: 0; height: var(--viewH, 440px); image-rendering: pixelated; }
 #ui { position: absolute; inset: 0; }
 .ic { font-style: normal; }
 
