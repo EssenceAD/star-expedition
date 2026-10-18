@@ -189,16 +189,16 @@ register('lobby', {
       });
     } else if (!S.seen['tut:lobby'])
       coach('lobby', [
-        { sel: '.mgo', text: '「전투 준비」를 누르면\n다음 스테이지로 바로 가요' },
-        { sel: '.mq.mile', text: '다음에 할 일은 여기 「다음 할 일」 카드에\n늘 떠 있어요' },
-        { sel: '.mside', text: '미션·이벤트·출석 보상도\n잊지 말고 받아요' },
+        { sel: '.mgo', text: '「전투 준비」를 눌러 보세요!\n다음 스테이지로 바로 출발해요.' },
+        { sel: '.mq.mile', text: '할 일이 헷갈리면 「다음 할 일」 카드를 봐 주세요.\n제가 늘 적어 둘게요.' },
+        { sel: '.mside', text: '옆의 미션·이벤트·출석을 눌러서\n보상을 꼭 받아 가세요!' },
       ]);
     else if (did(1, 1) && !S.seen['tut:hero'])
-      coach('hero', [{ sel: '.mdock [data-go="heroes"]', text: '장비를 얻었어요!\n「영웅」에서 장비를 껴 볼까요?', press: true }]);
+      coach('hero', [{ sel: '.mdock [data-go="heroes"]', text: '장비를 얻었어요! 아래 「영웅」을 눌러\n영웅에게 장비를 껴 볼까요?', press: true }]);
     else if (did(1, 3) && !S.seen['tut:shop'])
-      coach('shop', [{ sel: '.mdock [data-go="shop"]', text: '상점 「영웅」에서\n새 영웅을 원정대로 데려올 수 있어요', press: true }]);
+      coach('shop', [{ sel: '.mdock [data-go="shop"]', text: '아래 「상점」을 눌러 보세요.\n「영웅」 칸에서 새 동료를 데려올 수 있어요.', press: true }]);
     else if (did(1, 10) && !S.seen['tut:portal'])
-      coach('portal', [{ sel: '.mdock [data-go="world"]', text: '「포탈」을 누르면 월드맵이 열려요\n수도·도전의 탑·세계수·레이드로 갈 수 있어요', press: true }]);
+      coach('portal', [{ sel: '.mdock [data-go="world"]', text: '아래 「포탈」을 눌러 월드맵을 열어 보세요.\n수도·도전의 탑·세계수·레이드로 갈 수 있어요.', press: true }]);
     // 메인이 뜬 뒤: 나머지 영웅 시트를 뒤에서 천천히 (SPRITE_RES §C)
     preloadRest();
   },

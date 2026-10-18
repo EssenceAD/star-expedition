@@ -1,6 +1,7 @@
 // 영웅 서사 (형철 10/18 · 킹스레이드 「영웅 이야기」식): 그 영웅을 키우면 한 칸씩 열리는 업적 + 보상
 //  칸 = [키, 제목, 조건, 보상] · 받은 칸은 s.saga[id] · 대사는 그 영웅 voice/concept에서
 import { heroOf } from '../data/heroes';
+import { SAGA_LINES } from '../data/saga';
 import { affLv } from './inn';
 import { addCur, S, type Save } from './state';
 
@@ -32,6 +33,8 @@ export function claimSaga(id: string, k: string, s: Save = S): Record<string, nu
 }
 /** 칸마다 한 줄 이야기 (그 영웅 말투) */
 export function sagaLine(id: string, i: number) {
+  const fixed = SAGA_LINES[id]?.[i];
+  if (fixed) return fixed;
   const h = heroOf(id);
   const v = h.voice ?? [];
   return v[i % Math.max(1, v.length)] ?? h.concept.split('.')[0];

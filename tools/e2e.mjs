@@ -38,7 +38,7 @@ await p.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/, async (route) =>
 p.on('pageerror', (e) => errors.push(String(e)));
 p.on('console', (m) => m.type() === 'error' && !m.text().startsWith('Failed to load resource') && errors.push(m.text()));
 p.on('response', (r) => r.status() >= 400 && !r.url().endsWith('/favicon.ico') && errors.push(`${r.status()} ${r.url()}`));
-p.on('requestfailed', (r) => errors.push(`실패 ${r.url()}`));
+p.on('requestfailed', (r) => !(/\.mp3(\?|$)/.test(r.url()) && /ABORTED/.test(r.failure()?.errorText ?? '')) && errors.push(`실패 ${r.url()} ${r.failure()?.errorText ?? ''}`)); // 곡이 바뀌어 끊긴 음악 받기는 정상
 let n = 0;
 // FINAL_1018 §7 자동 시험: 화면을 찍을 때마다 그 화면에서 어긋난 요소 수를 셈 → out/tests.json
 //  T1 틀 밖 튀어나옴: .framed-in 자식이 그 창 사각형 밖으로 나감
@@ -109,6 +109,15 @@ const skipTalk = async () => {
 };
 await p.goto(URL);
 await p.waitForFunction(() => window.__ready, null, { timeout: 15000 });
+// 화면을 넘겨 버리는 안내(마지막에 버튼을 대신 눌러 줌)는 미리 본 걸로 · 첫 로비·첫 전투 안내는 그대로
+await p.evaluate(() => ['hero', 'shop', 'portal', 'auto', 'world', 'capital'].forEach((k) => (window.__S().seen[`tut:${k}`] = true)));
+// 튜토리얼 손가락 안내 · 전투 시작 컷씬 · 튜토리얼 보상 합류 무대(v0.16): 사람처럼 1.2초 보고 눌러 넘김
+await p.evaluate(() => setInterval(() => ['.coach', '.bstart', '.recruit.gift', '.mwin [data-x]'].forEach((s) => {
+  const el = document.querySelector(s);
+  if (!el) return;
+  el.dataset.seenAt ??= String(Date.now());
+  if (Date.now() - Number(el.dataset.seenAt) > 1200) el.click();
+}), 300));
 await p.waitForTimeout(300);
 await shot('title');
 // 첫 진입: 원정 출발 → 1-1 필드에서 프롤로그 → 전투 → 승리 → 메인(모험 지도)

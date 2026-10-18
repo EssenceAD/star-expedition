@@ -375,14 +375,16 @@ body, #stage { font-weight: normal; }
 @keyframes bsBand { 0% { transform: scaleY(0); } 15%, 85% { transform: scaleY(1); } 100% { transform: scaleY(0); opacity: 0; } }
 @keyframes bsFace { from { transform: translateX(-120%); opacity: 0; } to { transform: none; opacity: 1; } }
 /* 월드맵·수도: 그림 위 자리 버튼 (아이콘 + 이름표) */
-#stage .wmap { position: absolute; inset: 0; }
-#stage .wspot { position: absolute; display: flex; flex-direction: column; align-items: center; gap: var(--s-xxs); padding: 0; border: 0; background: none; transform: translate(-50%, -50%); cursor: pointer; animation: v3Idle 2.4s ease-in-out infinite; }
+#stage .scr[data-screen='world'], #stage .scr[data-screen='capital'] { container-type: size; background: var(--px-ink); }
+/* 그림 비율(1672×940) 그대로 화면 안에 맞춤 → 좌표(%)가 그림과 딱 맞게 */
+#stage .wmap { position: absolute; left: 50%; top: 50%; width: min(100cqw, calc(100cqh * 1672 / 940)); aspect-ratio: 1672 / 940; transform: translate(-50%, -50%); background-position: center; background-size: cover; background-repeat: no-repeat; }
+#stage .wspot { position: absolute; display: flex; flex-direction: column; align-items: center; gap: var(--s-xxs); padding: 0; border: 0; background: none; transform: translate(-50%, -30%); cursor: pointer; animation: v3Idle 2.4s ease-in-out infinite; }
 #stage .wspot .ic { width: 34px; height: 34px; filter: var(--px-iconShadow); }
 #stage .wspot span { padding: var(--s-xxs) var(--s-sm); border: var(--px-edgeXs) solid transparent; border-image: url(/art/ui2/plate.png) 4 fill / var(--px-edgeXs) stretch; image-rendering: pixelated; color: var(--px-text); text-shadow: var(--px-outlineSm); font-size: var(--fs-md); white-space: nowrap; }
 #stage .wspot.big .ic { width: 48px; height: 48px; }
 #stage .wspot.big span { font-size: var(--fs-xl); color: var(--px-gold); }
-#stage .wspot.ch .ic { width: 22px; height: 22px; }
-#stage .wspot.ch span { font-size: var(--fs-sm); }
+#stage .wspot.ch .ic { display: none; }
+#stage .wspot.ch span { font-size: var(--fs-xs); padding: 0 var(--s-xs); }
 #stage .wspot.off { filter: saturate(0) brightness(0.6); animation: none; }
 #stage .wtip { position: absolute; left: 50%; bottom: var(--s-sm); margin: 0; transform: translateX(-50%); color: var(--px-text); text-shadow: var(--px-outline); }
 /* 여관 */
@@ -421,3 +423,10 @@ body, #stage { font-weight: normal; }
 #stage .updband { position: absolute; z-index: 90; left: 50%; top: var(--s-xs); padding: var(--s-xs) var(--s-lg); border: var(--px-edgeSm) solid transparent; border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; color: var(--px-text); text-shadow: var(--px-redText); font-size: var(--fs-md); transform: translateX(-50%); animation: v3Pulse 1.4s ease-in-out infinite; cursor: pointer; }
 #stage .rep { gap: var(--s-xs); }
 #stage .rep select, #stage .rep textarea { width: 100%; padding: var(--s-xs); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); font: inherit; font-size: var(--fs-md); resize: none; }
+/* 여관 주인 황짐승: 오른쪽 아래 전신 + 인사 말풍선 · 본문은 그만큼 비켜 줌 */
+#stage .scr[data-screen='inn'] .body { width: calc(100% - 170px); }
+#stage .innkeep { position: absolute; right: 0; bottom: 0; width: 170px; height: 100%; pointer-events: none; }
+#stage .innkeep .ik-fb { position: absolute; left: 0; right: 0; bottom: 0; height: 74%; background: center bottom / contain no-repeat; }
+#stage .innkeep .ik-say { position: absolute; left: var(--s-xs); right: var(--s-xs); top: var(--s-sm); margin: 0; padding: var(--s-xs) var(--s-sm); border: var(--b-base) solid var(--px-ink); background: var(--px-text); color: var(--px-ink); text-shadow: none; font-size: var(--fs-sm); line-height: 1.35; }
+#stage .innkeep .ik-say b { display: block; color: var(--px-red); }
+#stage .food .fpic { width: 56px; height: 56px; }

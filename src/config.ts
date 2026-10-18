@@ -157,7 +157,7 @@ export const CONFIG = {
       { id: 'skewer', name: '매운 불꼬치', desc: '공격력 +8%', eff: { atk: 0.08 } as Record<string, number>, gold: 20000, min: 60 },
       { id: 'pie', name: '황금 사과 파이', desc: '금화 +30%', eff: { gold: 0.3 } as Record<string, number>, gold: 12000, min: 60 },
       { id: 'tea', name: '별빛 허브차', desc: '경험치 +30%', eff: { exp: 0.3 } as Record<string, number>, gold: 12000, min: 60 },
-      { id: 'feast', name: '여관 주인 특선', desc: '공격력·체력 +5% · 금화·경험치 +15%', eff: { atk: 0.05, hp: 0.05, gold: 0.15, exp: 0.15 } as Record<string, number>, gold: 40000, min: 90 },
+      { id: 'feast', name: '황짐승 사장님 특선', desc: '공격력·체력 +5% · 금화·경험치 +15%', eff: { atk: 0.05, hp: 0.05, gold: 0.15, exp: 0.15 } as Record<string, number>, gold: 40000, min: 90 },
     ],
   },
   /** 처음 4명 · 따뜻한밤은 1-1 뒤 튜토리얼 보상으로 합류 (tutorialHero) */
@@ -414,7 +414,7 @@ export const CONFIG = {
     /** 전투 배경의 땅 띠(public/art/bgs/_ground.json)를 화면의 이 y 띠에 맞춰 그림 (발 자리 226~342가 땅 위 · FINAL §3-4) */
     groundScreen: [210, 385] as [number, number],
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
-    screenBg: { world: 'world', capital: 'capital', inn: 'inn', library: 'library', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
+    screenBg: { inn: 'inn', library: 'library', title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */
     bagShowMin: 27,
     /** 흐리게 까는 화면 (그림 위 반투명 막) */
