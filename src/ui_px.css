@@ -65,7 +65,7 @@ body, #stage { font-weight: normal; }
 /* ───── 4. 작은 부품 ───── */
 #stage .chip { border: 0; border-radius: 0; background: var(--px-well); color: var(--px-soft); text-shadow: var(--px-outlineSm); box-shadow: 0 0 0 var(--b-thin) var(--px-ink); }
 #stage .chip.on, #stage .bondl .chip.on, #stage .tband .chip.on { background: var(--px-red); color: var(--px-text); }
-#stage .xbar, #stage .bar, #stage #bar .hc .hp, #stage #bar .hc .mp, #stage .tband .xbar, #stage .bh { position: relative; border: var(--b-base) solid var(--px-ink); border-radius: 0; border-image: none; background: var(--px-barBg); box-shadow: none; overflow: hidden; }
+#stage .xbar, #stage .bar, #stage #bar .hc .hp, #stage #bar .hc .mp, #stage .tband .xbar { position: relative; border: var(--b-base) solid var(--px-ink); border-radius: 0; border-image: none; background: var(--px-barBg); box-shadow: none; overflow: hidden; }
 #stage .xbar i, #stage .bh i { border-radius: 0; background: var(--px-xp); box-shadow: inset 0 var(--b-base) 0 var(--px-barHi); }
 #stage .gi { border: var(--px-edgeSm) solid transparent; border-radius: 0; border-image: url(/art/ui2/slot.png) 3 fill / var(--px-edgeSm) stretch; image-rendering: pixelated; background: none; box-shadow: none; }
 #stage .gi > *, #stage .gi .ic.img:not(.px) { image-rendering: auto; }
@@ -239,3 +239,9 @@ body, #stage { font-weight: normal; }
 #stage .mgo.btn { border-image: url(/art/ui2/btn_red.png) 4 fill / var(--px-edge) stretch; }
 #stage .stats .kv b { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
 #stage .stats .kv .cap { flex-basis: auto; }
+#stage .bh { border-radius: 0; box-shadow: 0 0 0 var(--b-thin) var(--px-ink); }
+#stage .bh em { line-height: 1; }
+#stage #bar .sk .au { width: 46px; }
+#stage .hcard, #stage .shopc.hero { border-width: var(--b-base); }
+#stage .stats .kv { min-height: 0; padding: 0; line-height: 1.15; }
+#stage .bosscard .bimg { min-height: 0; }
