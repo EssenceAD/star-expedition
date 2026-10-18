@@ -478,3 +478,7 @@ body, #stage { font-weight: normal; }
 #stage .mq.mile:not(.ready) .mqd { display: none; }
 #stage .mainmap .mhud .mch { left: calc(max(var(--s-md), var(--safeL)) + 50px + 280px + var(--s-md)); }
 #stage.narrow .mainmap .mhud .mch { left: calc(max(var(--s-md), var(--safeL)) + 50px + 230px + var(--s-md)); }
+/* 레이드·길드 레이드 위쪽 (10/18 PC 피드백): 보스 바·부위 줄도 배속 버튼 오른쪽부터 · 보스 초상화는 칸 가운데에 꽉 */
+#stage #hud.raid #boss { left: 184px; right: 64px; }
+#stage #hud.raid #raidHud { left: 248px; right: 128px; }
+#stage #boss .bp { background-position: center; background-size: contain; background-repeat: no-repeat; overflow: hidden; }
