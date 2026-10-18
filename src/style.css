@@ -1121,33 +1121,34 @@ input, select, textarea { font-family: inherit; }
 /* ───────── 메인 = 모험 지도 (RECOVER_1018 S1 · 킹스레이드 영상 sheet_00 v1_010 · sheet_08 v3_025) ─────────
    지도 그림·원정대장·보스는 캔버스(mainMap.ts) · 노드·길·메뉴는 여기 · 바는 바탕 없이 지도 위에 */
 .scr.withbar.mainmap { top: 0; touch-action: none; }
-#topbar.onmap { background: linear-gradient(var(--c-barFade), transparent); border-bottom: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#topbar.onmap { background: none; border-bottom: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
 #topbar.onmap h2 { overflow: visible; }
 .prof { display: flex; align-items: center; gap: var(--s-sm); }
-.prof .pt { width: 32px; height: 32px; border-radius: 50%; border-width: var(--b-base); background-position: center 14%; }
+.prof .pf { position: relative; width: 46px; height: 46px; flex: none; margin-top: var(--s-sm); }
+.prof .pf .pt { position: absolute; left: 20%; top: 20%; width: 60%; height: 60%; border: 0; border-radius: 50%; background-position: center 14%; }
+.prof .pf .fr { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .prof .col { gap: var(--s-xs); width: 118px; }
 .prof b { font-size: var(--fs-md); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prof b em { font-style: normal; font-family: var(--f-num); color: var(--c-gold1); }
 .prof .xbar { height: 4px; }
 .prof .pwr { display: flex; align-items: center; gap: var(--s-xs); font-family: var(--f-num); font-size: var(--fs-md); color: var(--c-gold1); }
 .prof .pwr .ic { width: 16px; height: 16px; }
-.menubtn { width: 30px; height: 30px; padding: 0; border: 0; background: none; color: var(--c-gold1); filter: drop-shadow(var(--sh-drop)); }
+.menubtn { width: 30px; height: 30px; padding: 0; border: 0; background: none; color: var(--c-gold1); }
 .menubtn svg.ic { width: 26px; height: 26px; }
 
 .mlayer { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .mlayer > svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .mlayer polyline { fill: none; stroke: var(--c-gold0); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 0 13; vector-effect: non-scaling-stroke; opacity: 0.9; filter: drop-shadow(var(--sh-drop)); }
 .mnode { position: absolute; width: 76px; transform: translate(-50%, -16px); display: flex; flex-direction: column; align-items: center; gap: 0; padding: 0; border: 0; background: none; color: var(--c-ink); }
-.mnode .md { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: var(--b-thick) solid var(--c-gold3); background: radial-gradient(circle at 40% 30%, var(--c-gold0), var(--c-gold1) 55%, var(--c-gold3)); box-shadow: var(--sh-drop); font-style: normal; }
-.mnode .md .ic { width: 18px; height: 18px; }
-.mnode .pl { margin-top: var(--s-xs); padding: 0 var(--s-md); border-radius: var(--r-sm); border: var(--b-thin) solid var(--c-gold3); background: linear-gradient(var(--c-white), var(--c-gold0)); color: var(--c-ink); font-family: var(--f-num); font-size: var(--fs-sm); line-height: 1.4; white-space: nowrap; box-shadow: var(--sh-drop); }
+.mnode .md { width: 36px; height: 36px; display: block; }
+.mnode.boss .md { width: 47px; height: 47px; }
+.mnode .pl { margin-top: calc(var(--s-xs) * -1); min-width: 52px; padding: var(--s-xxs) var(--s-md); background: url(/art/ui/map/plate.png) center no-repeat; background-size: 100% 100%; color: var(--c-ink); font-family: var(--f-num); font-size: var(--fs-sm); line-height: 1.4; white-space: nowrap; text-align: center; text-shadow: none; }
 .mnode .pl em { font-style: normal; color: var(--c-bad); }
-.mnode .stars { font-size: var(--fs-sm); line-height: 1.1; text-shadow: var(--sh-textBack); }
-.mnode.now .md { border-color: var(--c-gold); background: radial-gradient(circle at 40% 30%, var(--c-warn), var(--c-warnDeep)); color: var(--c-white); box-shadow: var(--sh-glowHi); }
-.mnode.off .md { width: 24px; height: 24px; border-width: var(--b-base); border-color: var(--c-gold3); background: radial-gradient(circle at 40% 30%, var(--c-panelHi), var(--c-panelDeep)); }
-.mnode.off .md .ic { width: 12px; height: 12px; }
+.mstars { display: flex; gap: 0; margin-top: calc(var(--s-xxs) * -1); }
+.mstars img { width: 12px; height: 16px; }
+
 .mnode.off .pl { color: var(--c-panelDeep); }
-.mnode .arw { position: absolute; left: calc(50% - 14px); top: -30px; width: 28px; color: var(--c-gold1); font-style: normal; filter: drop-shadow(var(--sh-drop)); animation: arwBob 0.6s ease-in-out infinite alternate; }
+.mnode .arw { position: absolute; left: calc(50% - 14px); top: -30px; width: 28px; color: var(--c-gold1); font-style: normal; animation: arwBob 0.6s ease-in-out infinite alternate; }
 .mnode .arw .ic { width: 28px; height: 28px; }
 @keyframes arwBob { from { transform: translateY(-5px); } to { transform: translateY(0); } }
 /* 노드 위에 서는 원정대장·보스 (발 = 메달 윗변 · 메달보다 앞 · 누름은 노드로) */
@@ -1155,7 +1156,7 @@ input, select, textarea { font-family: inherit; }
 
 .mhud { position: absolute; inset: 0; pointer-events: none; }
 .mhud > * { pointer-events: auto; }
-.mch { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); height: 24px; display: flex; align-items: center; gap: var(--s-sm); padding: 0 var(--s-xxl); border: 0; background: linear-gradient(90deg, transparent, var(--c-glass) 18% 82%, transparent); color: var(--c-text); font-size: var(--fs-md); white-space: nowrap; }
+.mch { position: absolute; left: 50%; top: 38px; transform: translateX(-50%); height: 30px; display: flex; align-items: center; gap: var(--s-sm); padding: 0 var(--s-xl); border: 0; border-image: url(/art/ui/map/quest_panel.png) 60 92 fill / 9px 13px stretch; background: none; color: var(--c-text); font-size: var(--fs-md); white-space: nowrap; }
 .mch b { font-family: var(--f-hero); font-weight: var(--fw-hero); }
 .mch .ic { width: 16px; height: 16px; color: var(--c-starOn); }
 .mch span { font-family: var(--f-num); color: var(--c-gold1); }
@@ -1167,16 +1168,17 @@ input, select, textarea { font-family: inherit; }
 .sic span { margin-top: calc(var(--s-xs) * -1); font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-xs); text-shadow: var(--sh-outlineSm); }
 .sic .badge { top: 0; right: 0; }
 .mquest { position: absolute; left: calc(max(var(--s-md), var(--safeL)) + 50px); top: 46px; width: 250px; display: flex; flex-direction: column; gap: var(--s-xxs); }
-.mq { position: relative; height: 22px; display: flex; align-items: center; gap: var(--s-sm); padding: 0 var(--s-md); border: 0; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--c-glass) 65%, transparent); color: var(--c-text); font-size: var(--fs-md); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mq { position: relative; height: 26px; display: flex; align-items: center; gap: var(--s-sm); padding: 0 var(--s-lg); border: 0; border-image: url(/art/ui/map/quest_panel.png) 60 92 fill / 8px 12px stretch; background: none; color: var(--c-text); font-size: var(--fs-md); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mq em { font-style: normal; flex: none; color: var(--c-gold1); font-weight: var(--fw-bold); }
 .mq em.tag { padding: 0 var(--s-sm); border-radius: var(--r-sm); font-size: var(--fs-xs); line-height: 1.5; color: var(--c-ink); }
 .mq em.tag.mile { background: var(--c-gold1); }
 .mq em.tag.story { background: var(--c-info); color: var(--c-white); }
 .mq .badge { position: static; margin-left: var(--s-xs); }
-.mdock { position: absolute; left: max(var(--s-sm), var(--safeL)); bottom: 0; display: flex; gap: 0; padding-right: var(--s-xxl); background: linear-gradient(90deg, var(--c-barFade) 70%, transparent); border-top-right-radius: var(--r-lg); }
-.mgo { position: absolute; right: max(var(--s-lg), var(--safeR)); bottom: var(--s-lg); width: 78px; height: 78px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: var(--b-thick) solid var(--c-gold); background: radial-gradient(circle at 40% 30%, var(--c-warn), var(--c-warnDeep)); color: var(--c-white); box-shadow: var(--sh-glowHi); }
-.mgo svg.ic { width: 42px; height: 42px; }
-.mgo span { position: absolute; left: 50%; bottom: calc(var(--s-md) * -1); transform: translateX(-50%); white-space: nowrap; padding: 0 var(--s-md); border-radius: var(--r-sm); background: linear-gradient(var(--c-gold1), var(--c-gold3)); color: var(--c-ink); font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-md); }
+.mdock { position: absolute; left: max(var(--s-sm), var(--safeL)); bottom: 0; display: flex; gap: 0; }
+.mgo { position: absolute; right: max(var(--s-md), var(--safeR)); bottom: var(--s-xs); width: 92px; height: 92px; padding: 0; border: 0; background: none; }
+.mgo img { width: 100%; height: 100%; display: block; }
+
+.mgo span { position: absolute; left: 14%; right: 14%; top: 57%; height: 17%; display: flex; align-items: center; justify-content: center; white-space: nowrap; color: var(--c-ink); font-family: var(--f-hero); font-weight: var(--fw-hero); font-size: var(--fs-md); text-shadow: none; }
 .mmenu { position: absolute; right: max(var(--s-md), var(--safeR)); top: 40px; width: 140px; z-index: 13; }
 
 /* 스테이지 정보 창 (RECOVER_1018 S3 · 영상 sheet_08 v3_027) */
