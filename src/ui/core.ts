@@ -46,9 +46,9 @@ export const SCREEN_NAME: Record<ScreenId, string> = { title: '타이틀', lobby
 /** 화면 흐름: 이 화면에서 1탭으로 갈 수 있는 곳 [가는 곳, 누르는 것] (흐름도 · 탭 수 시험 · 실제 이동은 go()) */
 export const FLOW: Record<ScreenId, [ScreenId, string][]> = {
   title: [['battle', '원정 출발 (처음: 프롤로그 > 1-1)'], ['lobby', '원정 출발 (이어서)']],
-  lobby: [['adventure', '지도 노드 · 위 가운데 장 이름'], ['prep', '오른쪽 아래 「전투 준비」 · 왼쪽 위 스토리 줄 · 아래 편성'], ['portal', '포탈 (아래 줄) · 왼쪽 위 이정표 줄'], ['heroes', '영웅 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['friends', '친구 (아래 줄)'], ['guild', '길드 (아래 줄)'], ['mission', '미션·이벤트 (왼쪽 세로) · 업적 (≡ 메뉴)'], ['ranking', '≡ 메뉴 > 랭킹'], ['mail', '우편 (상단 바) · ≡ 메뉴'], ['settings', '≡ 메뉴 > 설정']],
+  lobby: [['adventure', '위 가운데 장 이름'], ['prep', '지도 노드 > 스테이지 정보 > 전투 준비 · 오른쪽 아래 「전투 준비」 · 왼쪽 위 스토리 줄 · 아래 편성'], ['portal', '포탈 (아래 줄) · 왼쪽 위 이정표 줄'], ['heroes', '영웅 (아래 줄)'], ['bag', '가방 (아래 줄)'], ['shop', '상점 (아래 줄 · 상단 바 [+])'], ['friends', '친구 (아래 줄)'], ['guild', '길드 (아래 줄)'], ['mission', '미션·이벤트 (왼쪽 세로) · 업적 (≡ 메뉴)'], ['ranking', '≡ 메뉴 > 랭킹'], ['mail', '우편 (상단 바) · ≡ 메뉴'], ['settings', '≡ 메뉴 > 설정']],
   adventure: [['prep', '스테이지 고르고 「전투 준비」'], ['portal', '지도 위 토벌·상급 던전·탑 입구'], ['lobby', '뒤로']],
-  prep: [['battle', '전투 시작'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로']],
+  prep: [['battle', '전투 시작 (로딩 팁 화면 뒤)'], ['hero', '영웅 카드 길게 > 정보'], ['adventure', '뒤로 (모험에서 왔을 때)'], ['lobby', '뒤로 (메인 지도에서 왔을 때)']],
   battle: [['portal', '콘텐츠 결과 > 콘텐츠'], ['lobby', '결과 > 로비'], ['adventure', '결과 > 모험'], ['battle', '결과 > 다시 / 다음'], ['prep', '패배 > 편성']],
   heroes: [['hero', '영웅 카드'], ['lobby', '뒤로']],
   hero: [['heroes', '뒤로']],

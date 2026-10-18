@@ -53,6 +53,11 @@ await shot('title');
 await click('[data-go]');
 async function playStage(label) {
   await p.waitForSelector('[data-screen="battle"]');
+  // 전투 전 로딩 팁 화면 (프롤로그 첫 전투엔 없음)
+  if (await p.locator('.bload').count()) {
+    await shot(`${label}_loading`);
+    await p.waitForSelector('.bload', { state: 'detached' });
+  }
   await p.waitForTimeout(300);
   if (await p.locator('.talk').count()) {
     await shot(`${label}_talk`);
@@ -83,6 +88,11 @@ await p.waitForSelector('[data-screen="lobby"]');
 await p.waitForTimeout(400);
 if (await p.locator('.modal').count()) await click('.modal .btn.hi');
 await shot('lobby');
+// 메인 지도 노드 → 스테이지 정보 창 (S3)
+await click('.mnode.now');
+await p.waitForSelector('.stagewin');
+await shot('stage_info');
+await p.evaluate(() => document.querySelector('.stagewin')?.remove());
 await click('[data-go="adventure"]');
 await p.waitForSelector('[data-screen="adventure"]');
 await shot('adventure');

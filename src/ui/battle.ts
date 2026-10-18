@@ -11,10 +11,11 @@ import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
+import { TIPS } from '../data/tips';
 import { stageCost, useStamina } from '../game/account';
 import { buildRun, finishRun, lockOf, MODE_NAME, triesText, useTry, type Run } from '../game/content';
-import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, unlocked, type StageId } from '../game/stage';
-import { persist, S } from '../game/state';
+import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, stageName, unlocked, type StageId } from '../game/stage';
+import { partyIds, persist, S } from '../game/state';
 import { applyTheme, icon, iconText, T } from '../theme/tokens';
 import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, skillIconUrl, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
@@ -49,6 +50,8 @@ const DPS_HEAD = { dealt: '피해량', healed: '회복량', taken: '받은 피�
 let paused = false;
 /** 전투 그림(영웅 시트·컷인)을 받는 중 */
 let artWait = false;
+/** 전투 전 로딩 팁 화면이 떠 있음 (전투 멈춤) */
+let loading = false;
 const hud = () => $('#hud');
 
 const BUFF = (u: Unit): [string, string][] =>
@@ -437,9 +440,34 @@ function begin(s: StageId) {
     }
   }
   persist();
-  if (!lines.length) return;
-  talking = true;
-  playTalk(lines, () => (talking = false));
+  const talk = () => {
+    if (!lines.length) return;
+    talking = true;
+    playTalk(lines, () => (talking = false));
+  };
+  // 프롤로그 첫 전투 말고는 로딩 화면(전신 그림 + 한 줄 팁) 뒤에 대사 · 전투 (RECOVER_1018 S3)
+  if (firstRun) talk();
+  else loadTip(s, talk);
+}
+/** 전투 전 로딩 화면: 편성 영웅 하나 전신 + 장·스테이지 이름 + 한 줄 팁 · loadTipSec 동안(누르면 넘김) 전투는 멈춤 */
+function loadTip(s: StageId, done: () => void) {
+  const ids = partyIds();
+  const id = ids[Math.floor(Math.random() * ids.length)] ?? 'woongs';
+  const el = document.createElement('div');
+  el.className = 'bload';
+  el.innerHTML = `<div class="bl-fb" style="background-image:url(${fullbodyUrl(id)})"></div><div class="bl-tx"><small>${s.c}장 · ${esc(CHAPTERS[s.c - 1].name)}</small><b>${stageName(s)}</b><p><em>TIP</em>${esc(TIPS[Math.floor(Math.random() * TIPS.length)])}</p><div class="ld-bar"><i></i></div></div>`;
+  $('#stage').append(el);
+  loading = true;
+  let ended = false;
+  const end = () => {
+    if (ended) return;
+    ended = true;
+    loading = false;
+    el.remove();
+    done();
+  };
+  el.onclick = end;
+  setTimeout(end, CONFIG.ui.loadTipSec * 1000);
 }
 
 register('battle', {
@@ -500,6 +528,8 @@ register('battle', {
     hud().classList.remove('raid', 'pvp');
     document.querySelectorAll('#stage > .vs, #stage > .cdown').forEach((e) => e.remove());
     intro = false;
+    loading = false;
+    document.querySelector('#stage > .bload')?.remove();
     $('#cv').onpointerdown = null;
     $('#result').hidden = true;
     b = null;
@@ -512,7 +542,7 @@ register('battle', {
       idleStep(b, dt);
       return render(ctx, view.art, b, performance.now() / 1000);
     }
-    if (paused || artWait) return void render(ctx, view.art, b, performance.now() / 1000);
+    if (paused || artWait || loading) return void render(ctx, view.art, b, performance.now() / 1000);
     step(b, dt);
     if (run?.mode === 'arena') aiEmote(b, dt);
     for (const s of b.sounds) combatSynth(s, s === 'hit' ? 0.45 : 1);
@@ -535,4 +565,4 @@ function renderIdle(ctx: CanvasRenderingContext2D, art: Art, dt: number) {
 /** 시험·녹화용 */
 export const battleNow = () => b;
 /** 이 전투 그림을 아직 받는 중인지 (캡처 도구가 기다림) */
-export const battleArtWait = () => artWait || intro;
+export const battleArtWait = () => artWait || intro || loading;
