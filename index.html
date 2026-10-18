@@ -14,11 +14,11 @@
 <title>별의 원정대 (가제)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@700;800;900&family=Noto+Serif+KR:wght@600;700&family=Luckiest+Guy&family=Cinzel:wght@600;700&display=swap" />
-  <script type="module" crossorigin src="./assets/main-CPyRnwgH.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/heroes-CEqkWT2F.js">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=Luckiest+Guy&display=swap" />
+  <script type="module" crossorigin src="./assets/main-BURUN6sB.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/heroes-DAOiRmZQ.js">
   <link rel="modulepreload" crossorigin href="./assets/engine-C_n80EYJ.js">
-  <link rel="stylesheet" crossorigin href="./assets/main-zOunaLgL.css">
+  <link rel="stylesheet" crossorigin href="./assets/main-BI3SjvcS.css">
 </head>
 <body>
 <div id="stage">
@@ -31,9 +31,8 @@
     <div id="stg"></div>
     <div id="tr">
       <button id="bPause" class="rb" aria-pressed="false" title="일시정지"></button>
-      <button id="bQuit" class="rb" title="포기"></button>
     </div>
-    <div id="pausedTag" hidden>일시정지</div>
+    <div id="pausedTag" hidden><b>일시정지</b><div class="pzrow"><button id="bResume" class="btn hi">계속하기</button><button id="bQuit" class="btn">포기하기</button></div></div>
     <div id="boss" hidden>
       <div class="bp"></div>
       <div class="bi">
@@ -47,7 +46,7 @@
     <div id="wave">WAVE 1</div>
     <div id="clock"></div>
     <div id="warn" hidden></div>
-    <div id="dps"><div id="dpsL"><div class="dh dtabs"><button data-dt="dealt">피해</button><button data-dt="healed">회복</button><button data-dt="taken">받은 피해</button></div><div class="rows"></div></div><button id="bDps" title="피해 판 접기"></button></div>
+    <div id="dps"><div id="dpsL"><div class="dname">피해량</div><div class="dh dtabs"><button data-dt="dealt">피해</button><button data-dt="healed">회복</button><button data-dt="taken">받은 피해</button></div><div class="rows"></div></div><button id="bDps" title="피해 판 접기"></button></div>
     <div id="pvpHud" hidden></div>
     <button id="bEmote" hidden title="감정 표현"></button>
     <div id="emoPop" hidden></div>
