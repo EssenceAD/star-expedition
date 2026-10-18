@@ -7,7 +7,7 @@ export const CONFIG = {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
     pxScale: 26 / 72,
     pxFallbackH: 390,
-    walkBob: 3,
+    walkBob: 0,
     /** 움직임 (SPRITE_RES §D): 대기 숨쉬기 세로 배율 폭·주기(초) · 피격 번쩍 최대 밝기 더함·사라지는 속도(1/초 → 0.08초) · 내딛기 들어가는 몫(나머지는 돌아옴) */
     breathe: { amp: 0.012, sec: 1.6 },
     hitFlash: { max: 0.5, bright: 1.2, fade: 12.5 },
@@ -329,8 +329,8 @@ export const CONFIG = {
     flashMax: 0.22,
     /** 두 줄 발 y · 파티 A(내 파티) x · 파티 B(AI·뒤쪽) x — 줄은 처음에 A 위 / B 아래 */
     lanes: [218, 280] as number[],
-    aX: [372, 330, 288, 246] as number[],
-    bX: [196, 154, 112, 70] as number[],
+    aX: [460, 418, 376, 334] as number[],
+    bX: [290, 248, 206, 164] as number[],
     /** 줄 바꿀 때 걸리는 시간(초) */
     laneMove: 0.25,
     /** 피해 순위에 보이는 수 (8명 다 보이면 아래 줄 영웅을 가림) */
@@ -389,7 +389,9 @@ export const CONFIG = {
     /** 어두운 톤 예외 (스타일 D 규칙 · 형철 10/17): 이 콘텐츠 전투만 남색 팔레트 */
     darkModes: ['tower', 'raid', 'world', 'graid'] as string[],
     /** 콘텐츠 전투 배경 (전투 제목 앞부분 = 콘텐츠 이름 → public/art/bgs/<값>.jpg) · 스토리는 bg.jpg */
-    battleBg: { '도전의 탑': 'tower', 레이드: 'raid', '월드 보스': 'raid', '길드 레이드': 'raid', 결투장: 'arena', '상급 던전': 'dungeon', '토벌 전투': 'dungeon', '요일 던전': 'daily' } as Record<string, string>,
+    battleBg: { '도전의 탑': 'tower', 레이드: 'raid', '월드 보스': 'world', '길드 레이드': 'graid', 결투장: 'arena', '상급 던전': 'dungeon', '토벌 전투': 'hunt', '요일 던전': 'daily', '영웅 외전': 'side' } as Record<string, string>,
+    /** 전투 배경의 땅 띠(public/art/bgs/_ground.json)를 화면의 이 y 띠에 맞춰 그림 (발 자리 226~342가 땅 위 · FINAL §3-4) */
+    groundScreen: [210, 385] as [number, number],
     /** 화면 배경 그림 (public/art/screens/<값>.jpg · DENSITY: 단색 대신 그림 · 영웅·편성/상점/가방은 전용 그림(SCREENS_1017) · 나머지 메뉴 화면은 로비 마을을 흐리게) · 로비는 캔버스에 직접(걸어 다니는 영웅) */
     screenBg: { title: 'title', guild: 'guild', adventure: 'map', heroes: 'heroes', hero: 'heroes', prep: 'heroes', shop: 'shop', bag: 'bag', portal: 'lobby', mission: 'lobby', friends: 'lobby', ranking: 'lobby', mail: 'lobby', settings: 'lobby' } as Record<string, string>,
     /** 가방: 빈 칸을 이만큼까지 보여 줘 화면을 채움 (DENSITY §3) */
@@ -401,6 +403,8 @@ export const CONFIG = {
     mainMap: { zoom: 1, dragPx: 6, nodeTop: 118, nodeBottom: 264, leadH: 64, bossH: 72, figW: 110, figPad: 14, figFoot: 6, boss: [34, 14] as [number, number] }, speeds: [1, 1.5, 2], toastSec: 1.5,
     /** 전투 전 로딩 팁 화면 초 (누르면 넘김 · RECOVER_1018 S3) */
     loadTipSec: 1.6,
+    /** 피해량 미터 줄 수 (넘치면 「+n」 · FINAL §3-3) */
+    dpsRows: 4,
     /** 넘치는 목록 끝 화살표 다시 재는 간격 (MASTER 1-3) */
     scrollHintMs: 300,
     /** 지도로 돌아왔을 때 알림 카드 하나 초 (RECOVER_1018 S4 · 장 개방 띠는 1.6배) */
@@ -413,7 +417,7 @@ export const CONFIG = {
     loadStallSec: 5,
     loadItemSec: 12,
     /** 글씨 자동 축소 (FONT_FINAL2 §2): 넘치면 step px씩 줄여 이 최소 크기까지 → 그래도 넘치면 말줄임 */
-    fit: { step: 0.5, name: 13, desc: 10, tiny: 7 },
+    fit: { step: 0.5, name: 13, desc: 10, tiny: 7, shrink: 0.9 },
     /** 큰 화면(PC · 게임 배율 이 값 이상)에서 정보 창을 이만큼 줄여 그림 (형철 10/18: PC에서 너무 커 보임) */
     pcWin: { minScale: 1.8, scale: 0.72 }, resultDelayWin: 1.6, resultDelayLose: 0.9 },
 } as const;

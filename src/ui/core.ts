@@ -24,6 +24,8 @@ export const skillIconUrl = (id: string, k: number) => `${BASE}art/skills/${id}_
 export const uiPic = (path: string, cls = 'up') => `<img class="${cls}" src="${BASE}art/ui/${path}.png" alt="">`;
 /** 탭 = 아이콘 + 글씨 */
 export const tabLabel = (pic: string, text: string) => `${uiPic(pic, 'ti')}<span>${text}</span>`;
+/** 틀 구조 (FINAL §1): .framed > .framed-in(초상 · 틀 구멍 모양으로 잘림) + .framed-frame(원형 틀 그림 · 맨 위) */
+export const framedPt = (url: string, cls = '') => `<span class="fpt framed ${cls}"><i class="framed-in" style="background-image:url(${url})"></i><img class="framed-frame" src="${BASE}art/ui/map/portrait_frame.png" alt=""></span>`;
 export const heroPortrait = (id: string) => (HD_PORTRAIT.has(id) ? `${BASE}art/portraits_hd/${id}.png` : portraitUrl(artOf(heroOf(id)).portrait));
 export const fmt = (n: number) => Math.round(n).toLocaleString('ko-KR');
 export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -228,46 +230,71 @@ export function fitText(root: ParentNode = document) {
     }
   }
 }
+/** 말줄임 없애기 (FINAL_1018 §2): 글씨가 칸을 넘치면 90%까지만 줄이고, 그래도 넘치면 두 줄로 · 글씨가 그대로면 다시 안 잼 */
+export function noClip(root: ParentNode = document) {
+  for (const el of $$('span, b, small, em, strong, p, label, h2, h3, button, div, td, a', root)) {
+    const t = el.textContent ?? '';
+    if (el.dataset.nc === t || el.closest('.fit:not(:scope), canvas')) continue;
+    if (!el.clientWidth || el.scrollWidth <= el.clientWidth + 1) continue;
+    if (![...el.childNodes].some((k) => k.nodeType === 3 && k.textContent!.trim())) continue;
+    el.dataset.nc = t;
+    // .fit은 fitText가 이미 줄였음 → 그래도 넘치면 두 줄
+    if (el.classList.contains('fit')) {
+      el.classList.add('two');
+      continue;
+    }
+    el.style.fontSize = el.style.whiteSpace = '';
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    const min = base * CONFIG.ui.fit.shrink;
+    let size = base;
+    while (el.scrollWidth > el.clientWidth + 1 && size > min) ((size = Math.max(min, size - CONFIG.ui.fit.step)), (el.style.fontSize = `${size}px`));
+    if (el.scrollWidth > el.clientWidth + 1) el.classList.add('two');
+  }
+}
 /** 화면이 바뀔 때마다 (DOM이 바뀐 다음 프레임에) 한 번 */
 export function watchFit(root: HTMLElement) {
   let queued = false;
   const run = () => {
     queued = false;
     fitText(root);
+    noClip(root);
   };
   new MutationObserver(() => {
     if (!queued) ((queued = true), requestAnimationFrame(run));
   }).observe(root, { childList: true, subtree: true });
   void document.fonts?.ready.then(run);
 }
-/** 넘치는 목록 끝 화살표 (MASTER 1-3 · 스크롤바 대신): 위·아래로 더 있을 때만 · #stage 위에 겹쳐 그림
- *  그림(ui/battle/scroll_up·down.png, MASTER §9-4)이 오기 전까지는 금색 화살표 아이콘 */
+/** 넘치는 목록 끝 화살표 (MASTER 1-3 · FINAL §0): 스크롤 목록(.scroll)의 안쪽 위·아래 끝에만 · 더 있을 때만 · 그림 ui/battle/scroll_up·down
+ *  #stage 위에 겹쳐 그리고 목록 사각형 안쪽에 둠 (목록과 같이 스크롤되지 않게) */
 const hints = new Map<HTMLElement, HTMLElement[]>();
 export function scrollHints(stage: HTMLElement) {
   for (const [el, hs] of hints) if (!el.isConnected) (hs.forEach((h) => h.remove()), hints.delete(el));
-  for (const el of $$('*', stage)) {
-    if (el.scrollHeight <= el.clientHeight + 1 || !/auto|scroll/.test(getComputedStyle(el).overflowY)) continue;
+  for (const el of $$('.scroll', stage)) {
     let hs = hints.get(el);
+    const over = el.scrollHeight > el.clientHeight + 1 && el.offsetParent !== null;
+    if (!over && !hs) continue;
     if (!hs) {
-      hs = ['up', 'dn'].map((k) => {
-        const h = document.createElement('i');
-        h.className = `scrollhint ${k}`;
-        h.innerHTML = icon('pointer');
+      hs = ['up', 'down'].map((d) => {
+        const h = document.createElement('img');
+        h.className = `scrollhint ${d}`;
+        h.src = `${BASE}art/ui/battle/scroll_${d}.png`;
+        h.alt = '';
         stage.append(h);
         return h;
       });
       hints.set(el, hs);
     }
-    // #stage 안 자리 (돌린 화면·배율과 상관없이 offset 합)
+    // #stage 안 자리 = offset 합 − 조상 스크롤 (배율·세로 돌림과 상관없음)
     let x = 0;
     let y = 0;
     for (let e: HTMLElement | null = el; e && e !== stage; e = e.offsetParent as HTMLElement | null) ((x += e.offsetLeft), (y += e.offsetTop));
+    for (let e = el.parentElement; e && e !== stage; e = e.parentElement) ((x -= e.scrollLeft), (y -= e.scrollTop));
     const [up, dn] = hs;
-    up.hidden = el.scrollTop <= 1;
-    dn.hidden = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+    up.hidden = !over || el.scrollTop <= 1;
+    dn.hidden = !over || el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
     up.style.left = dn.style.left = `${x + el.offsetWidth / 2}px`;
-    up.style.top = `${y}px`;
-    dn.style.top = `${y + el.offsetHeight}px`;
+    up.style.top = `${y + 2}px`;
+    dn.style.top = `${y + el.offsetHeight - 2}px`;
   }
 }
 /** 순위 표시: 1~3 금·은·동 메달 · 그 밖은 숫자 (PLAYTEST §7) */

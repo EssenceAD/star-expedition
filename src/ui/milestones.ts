@@ -41,7 +41,7 @@ export function openMiles(c0?: number) {
         <div class="chain">${ms.map((m, i) => `<button class="mcell ${stateOf(m)}${m === cur ? ' sel' : ''}" data-m="${m.id}"><i class="no">${i + 1}</i><span class="nm">${esc(m.name)}</span><span class="rw">${icon('stardust')}${DUST}</span>${stateOf(m) === 'got' ? '<em class="stamp">CLEAR</em>' : ''}</button>`).join('<i class="link"></i>')}</div>
         <div class="mdet"><div class="col grow"><b>${esc(cur.name)}</b><span class="dim">${esc(cur.desc)}</span></div>
           ${stateOf(cur) === 'ready' ? `<button class="btn hi" data-get>${icon('stardust')} 보상 받기</button>` : stateOf(cur) === 'todo' ? `<button class="btn" data-go>바로가기 ${icon('next')}</button>` : '<span class="gold">받았어요</span>'}</div>
-        <div class="row mfoot"><span class="xs mute">칸마다 별가루 ${DUST}</span><button class="btn hi" data-all ${milesReady().length ? '' : 'disabled'}>모두 받기 (${milesReady().length})</button></div>
+        <div class="row mfoot"><span class="xs mute">칸마다 별가루 ${DUST}</span>${milesReady().length ? `<button class="btn hi" data-all>모두 받기 (${milesReady().length})</button>` : ''}</div>
       </div></div>`;
     if (view.scale >= CONFIG.ui.pcWin.minScale) $('.panel', el).style.transform = `scale(${CONFIG.ui.pcWin.scale})`;
     $('[data-x]', el).onclick = close;
@@ -56,7 +56,7 @@ export function openMiles(c0?: number) {
       draw();
     };
     $('[data-get]', el)?.addEventListener('click', () => claim([cur.id]));
-    $('[data-all]', el).onclick = () => claim();
+    $('[data-all]', el)?.addEventListener('click', () => claim());
     $('[data-go]', el)?.addEventListener('click', () => {
       close();
       go(cur.go[0] as never, cur.go[1]);

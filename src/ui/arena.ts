@@ -68,9 +68,11 @@ export function pvpHudHtml(b: Battle, r: Run) {
   const P = plates(r);
   const capL = b.heroes[0]?.hero?.def.id;
   const capR = foes(b)[0]?.def.id;
-  return `<div class="tm me"><i class="cap" style="background-image:url(${capL ? heroPortrait(capL) : ''})"></i><div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.me.name)} · ${P.me.score}점</span></div></div>
+  // 양쪽 초상 = 원형 틀 그림(ui/map/portrait_frame) 안 (FINAL §3-2)
+  const cap = (id?: string) => `<span class="cap framed"><i class="framed-in" style="background-image:url(${id ? heroPortrait(id) : ''})"></i><img class="framed-frame" src="${import.meta.env.BASE_URL}art/ui/map/portrait_frame.png" alt=""></span>`;
+  return `<div class="tm me">${cap(capL)}<div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.me.name)} · ${P.me.score}점</span></div></div>
     <div class="tclock"><b></b></div>
-    <div class="tm op"><div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.op.name)} · ${P.op.score}점</span></div><i class="cap" style="background-image:url(${capR ? heroPortrait(capR) : ''})"></i></div>`;
+    <div class="tm op"><div class="tb"><div class="bh"><i></i><em></em></div><span class="nm">${esc(P.op.name)} · ${P.op.score}점</span></div>${cap(capR)}</div>`;
 }
 const pct = (us: Unit[]) => {
   const max = us.reduce((a, u) => a + u.max, 0);

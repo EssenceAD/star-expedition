@@ -1217,11 +1217,9 @@ input, select, textarea { font-family: inherit; }
 .hcard .zn.job { width: 24px; height: 24px; padding: 0; border-radius: 50%; overflow: hidden; border: var(--b-thin) solid var(--c-gold1); background: none; box-shadow: var(--sh-drop); }
 .hcard .zn.job img { display: block; width: 100%; height: 100%; }
 
-/* 넘치는 목록 끝 화살표 (MASTER 1-3 · 스크롤바 대신 · 그림 오면 교체) */
-.scrollhint { position: absolute; z-index: 30; width: 22px; height: 16px; transform: translate(-50%, 0); color: var(--c-gold1); pointer-events: none; font-style: normal; }
-.scrollhint.dn { transform: translate(-50%, -100%); }
-.scrollhint.up svg { transform: rotate(180deg); }
-.scrollhint svg.ic { width: 22px; height: 16px; }
+/* 넘치는 목록 끝 화살표 (FINAL §0 · 그림 ui/battle/scroll_up·down · 목록 안쪽 위·아래) */
+.scrollhint { position: absolute; z-index: 30; width: 18px; height: 20px; transform: translate(-50%, 0); pointer-events: none; }
+.scrollhint.down { transform: translate(-50%, -100%); }
 
 /* 이정표 창 (RECOVER_1018 S5 · 영상 sheet_07 v3_018~020): 왼쪽 안내 NPC + 말풍선 · 오른쪽 장 탭 · 할 일 사슬 · 칸 설명 */
 .mwin .panel.mw { position: relative; width: 780px; max-width: none; height: 350px; max-height: none; display: flex; flex-direction: row; gap: var(--s-md); padding: var(--s-md); overflow: visible; }
@@ -1259,3 +1257,200 @@ input, select, textarea { font-family: inherit; }
 .notice.chapter b { font-family: var(--f-ui); font-weight: var(--fw-ui); font-size: var(--fs-h1); color: var(--c-gold1); text-shadow: var(--sh-outline); }
 .notice.chapter span { color: var(--c-text); font-size: var(--fs-lg); }
 @keyframes noticeIn { from { opacity: 0; margin-top: calc(var(--s-lg) * -1); } to { opacity: 1; margin-top: 0; } }
+
+/* ═════════ FINAL_1018 (마지막 덮어쓰기 · 틀 = 그림 · 안쪽 창(.framed-in)에만 내용) ═════════ */
+/* 공통 틀 구조 (FINAL §1): .framed 크기 고정 · .framed-in = 안쪽 창(overflow hidden) · 틀 그림은 .framed 배경(맨 아래) 또는 .framed-frame(맨 위) */
+.framed { position: relative; }
+.framed-in { position: absolute; overflow: hidden; }
+.framed-frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+
+/* §3-1 전투 아래 영웅 카드: hud_card 그림(722×200) · 왼쪽 초상 창 = 그림의 2.6~26% × 9.5~90% */
+#bar .hc { display: block; width: 203px; height: 98px; padding: 0; border: 0; box-shadow: none; background: url(/art/ui/kit/hud_card.png) left top no-repeat; background-size: 100% 100%; }
+#bar .hc .pt { left: 2.6%; top: 9.5%; width: 23.4%; height: 81%; border: 0; border-radius: var(--r-md); background: none; }
+#bar .hc .pt i { position: absolute; inset: 0; background: center 14% / cover no-repeat; }
+#bar .hc .nm { position: absolute; left: 30%; right: 4%; top: 9%; height: 18px; margin: 0; line-height: 18px; font-size: var(--fs-lg); white-space: nowrap; overflow: hidden; }
+#bar .hc .bars { position: absolute; left: 30%; right: 4%; top: 30%; display: flex; flex-direction: column; gap: var(--s-xxs); }
+#bar .hc .hp, #bar .hc .mp { position: relative; height: 7px; padding: 0; border: 0; border-image: none; background: url(/art/ui/kit2/bar.png) center no-repeat; background-size: 100% 100%; }
+#bar .hc .hp i, #bar .hc .mp i { position: absolute; left: 3%; top: 24%; bottom: 24%; height: auto; max-width: 94%; }
+#bar .hc .hp s { left: 3%; top: 24%; bottom: 24%; height: auto; max-width: 94%; }
+#bar .hc .bf { position: absolute; left: 30%; right: 4%; top: 46%; height: 13px; display: flex; gap: var(--s-xxs); overflow: hidden; }
+#bar .hc .bf img { width: 13px; height: 13px; }
+#bar .hc .sk { position: absolute; left: 29%; right: 3%; bottom: 5%; height: 34px; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-xxs); align-items: center; justify-items: center; }
+/* 스킬 = 받침 그림(kit2/socket 195×192 · 안쪽 원 = 26%·23%·26%·26%) 안에 아이콘 · 숫자 없음 · 쿨다운 숫자는 아이콘의 45% 이하 */
+#bar .sk button { position: relative; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: url(/art/ui/kit2/socket.png) center no-repeat; background-size: 100% 100%; transform: none; animation: none; }
+#bar .sk button i { position: absolute; left: 24%; top: 22%; right: 24%; bottom: 25%; border-radius: 50%; background: center / cover no-repeat; }
+#bar .sk button b { position: absolute; left: 24%; top: 22%; right: 24%; bottom: 25%; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--c-shade); font-size: var(--fs-xs); color: var(--c-white); text-shadow: var(--sh-cdNum); }
+#bar .sk button.cd b { display: flex; }
+#bar .sk button.cd::before { inset: 22% 24% 25% 24%; border-radius: 50%; }
+#bar .sk button.ok { filter: none; box-shadow: none; }
+#bar .sk button.ok i { box-shadow: var(--sh-glowHi); }
+#bar .sk button.nomana::after { display: none; }
+#bar .sk button.nomana i { filter: saturate(0.3) brightness(0.8); }
+#bar .sk .au { width: 34px; height: 34px; background: url(/art/ui/kit2/socket.png) center no-repeat; background-size: 100% 100%; filter: none; }
+#bar .sk .au i { position: absolute; left: 22%; top: 20%; right: 22%; bottom: 23%; background: var(--hud-hero-auto-off) center / contain no-repeat; }
+#bar .sk .au[aria-pressed="true"] i { background-image: var(--hud-hero-auto-on); }
+#bar .sk .au[aria-pressed="true"] { filter: drop-shadow(var(--sh-glowHi)); }
+
+/* §3-2 전투 위쪽: 「자동」「×1」은 버튼 아래 작은 판(kit2/pill) 안 · 시간 = time_plate 그림 · ▾ 없음 · 포기는 일시정지 메뉴 안 */
+#hud #tl { gap: var(--s-md); }
+#hud #tl .rb span { top: 100%; padding: 0 var(--s-sm); min-width: 34px; line-height: 14px; text-align: center; background: url(/art/ui/kit2/pill.png) center no-repeat; background-size: 100% 100%; font-size: var(--fs-xxs); color: var(--c-white); text-shadow: none; }
+#hud #tl .rb::after, #hud #tl .rb::before { display: none; }
+#clock { width: 78px; height: 30px; padding: 0; justify-content: center; border: 0; border-radius: 0; box-shadow: none; background: url(/art/ui/battle/time_plate.png) center no-repeat; background-size: 100% 100%; color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+#clock.low { border: 0; color: var(--c-bad); }
+#pausedTag { display: flex; flex-direction: column; align-items: center; gap: var(--s-md); padding: var(--s-lg) var(--s-xxl); z-index: 40; border: 0; border-image: url(/art/ui/kit2/popup.png) 78 fill / 22px stretch; pointer-events: auto; }
+#pausedTag[hidden] { display: none; }
+#pausedTag .pzrow { display: flex; gap: var(--s-md); }
+#pausedTag .btn { font-size: var(--fs-md); }
+#hud #pausedTag #bQuit { position: static; width: auto; height: auto; background-image: none; }
+/* 레이드·월드 보스 바: 남은 시간·누적 피해는 판(time_plate) 안 · 부위 이름은 바 위 작은 판, 바는 그 아래 */
+#hud.raid #boss .bs { padding: var(--s-xs) var(--s-md); background: url(/art/ui/battle/time_plate.png) center no-repeat; background-size: 100% 100%; text-shadow: var(--sh-outlineSm); }
+#rParts button { display: flex; flex-direction: column; align-items: stretch; gap: var(--s-xxs); padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+#rParts button span { align-self: center; padding: 0 var(--s-sm); line-height: 13px; background: url(/art/ui/kit2/pill.png) center no-repeat; background-size: 100% 100%; color: var(--c-white); }
+#rParts button[aria-pressed="true"] span { filter: drop-shadow(var(--sh-glowHi)); }
+#rParts button .bh { position: relative; margin: 0; }
+/* 결투장 위: 양쪽 초상 = 원형 틀 안 · 이름·점수는 바 아래 줄 (겹침 없음) · 시간 = 그림 판 */
+#pvpHud .cap { position: relative; display: block; width: 40px; height: 40px; border: 0; border-radius: 0; background: none; }
+#pvpHud .cap .framed-in { left: 20%; top: 20%; width: 60%; height: 60%; border-radius: 50%; background: center 15% / cover no-repeat; }
+#pvpHud .bh em { line-height: 12px; }
+#pvpHud .tb { gap: var(--s-xs); }
+#pvpHud .nm { line-height: 14px; }
+#pvpHud .tclock { padding: var(--s-xs) var(--s-lg); border: 0; border-radius: 0; box-shadow: none; background: url(/art/ui/battle/time_plate.png) center no-repeat; background-size: 100% 100%; }
+#pvpHud .tclock b { color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+/* 줄 바꾸기 · 결투장 이모트 = 둥근 그림 버튼 (ui/battle/btn_round) */
+#bDodge, #bEmote { border: 0; border-radius: 0; box-shadow: none; background: url(/art/ui/battle/btn_round.png) center no-repeat; background-size: 100% 100%; color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+
+/* §3-3 피해량 미터: 위 양피지 이름판에 제목 · 그림 탭 · 줄은 판 안쪽 · 「/초」는 막대 밖 오른쪽 · 손잡이 kit2/handle · 접어 둠 · 폭 = 필드 18% 안 */
+#dps { --dpsW: 148px; }
+#dpsL { width: 148px; }
+#dpsL .dname { position: absolute; left: 22%; right: 22%; top: var(--s-sm); height: 18px; line-height: 18px; text-align: center; font-size: var(--fs-sm); color: var(--c-ink); text-shadow: none; white-space: nowrap; overflow: hidden; }
+#dpsL .dtabs button { height: 16px; padding: 0 var(--s-sm); border: 0; border-radius: 0; background: url(/art/ui/kit2/tab_off.png) center no-repeat; background-size: 100% 100%; font-size: var(--fs-xxs); }
+#dpsL .dh.dtabs button.on { background-image: url(/art/ui/kit2/tab_on.png); color: var(--c-white); text-shadow: var(--sh-outlineSm); }
+#dpsL .rows { overflow: hidden; }
+#dpsL .dr { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-rows: 12px 8px; column-gap: var(--s-xs); row-gap: var(--s-xxs); height: auto; margin: 0 0 var(--s-xs); }
+#dpsL .dr .pt { grid-row: 1 / 3; width: 18px; height: 18px; }
+#dpsL .dr .g { grid-column: 2; grid-row: 2; height: 6px; }
+#dpsL .dr > small { grid-column: 3; grid-row: 2; position: static; line-height: 8px; font-size: var(--fs-xxs); color: var(--c-textSoft); text-shadow: var(--sh-textSm); }
+#dpsL .more { text-align: center; font-size: var(--fs-xs); color: var(--c-gold1); }
+#dps #bDps { width: 22px; height: 44px; margin-top: var(--s-xl); padding: 0; border: 0; border-radius: 0; background: url(/art/ui/kit2/handle.png) center no-repeat; background-size: 100% 100%; color: transparent; }
+
+/* §3-5 보스 초상: 원형 틀(ui/map/portrait_frame) 안 · 그 보스 그림에서 잘라 냄 */
+#boss .bp { position: relative; width: 50px; height: 50px; border: 0; clip-path: none; border-radius: 0; background: none; }
+#boss .bp { background: center / 60% 60% no-repeat; }
+#boss .bp::after { content: ''; position: absolute; inset: 0; background: url(/art/ui/map/portrait_frame.png) center no-repeat; background-size: 100% 100%; }
+/* §3-6 결과: 뒤 막 0.55 · 통계판·보상·버튼이 화면 안 (줄바꿈 허용) · 보상 카드 한 크기 · 노란 1px 테두리 없음 · 레이드 바·줄 바꾸기 숨김 */
+#result { background: var(--c-resultVeil); }
+#hud:has(#result:not([hidden])) :is(#raidHud, #bDodge) { display: none; }
+.rcol { left: 46%; right: max(var(--s-xl), var(--safeR)); }
+.why.band { max-width: 100%; white-space: normal; }
+.rcol .rw div.rwc, .rw div { box-shadow: none; }
+.rcol .rw div.rwc { width: 84px; min-width: 84px; height: 96px; }
+.rtable { max-width: 100%; }
+.rtable .tg { width: 14px; height: 14px; vertical-align: -2px; }
+
+/* §2 글씨: 말줄임(…) 없음 · 넘치면 noClip()이 90%까지 줄이고 그래도 넘치면 .two(두 줄) */
+* { text-overflow: clip !important; }
+.two { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.15; }
+/* §5 그림 탭 (kit2/tab_off·tab_on 9-slice) · 알약 없음 */
+.tab, .tab.on, .shopcats .tab, .shopcats .tab.on, #dpsL .dtabs button { border: 0; border-radius: 0; box-shadow: none; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-image: url(/art/ui/kit2/tab_off.png) 62 fill / 10px stretch; color: var(--c-text); text-shadow: var(--sh-outlineSm); }
+.tab.on, .shopcats .tab.on, #dpsL .dh.dtabs button.on { border-image: url(/art/ui/kit2/tab_on.png) 65 fill / 10px stretch; color: var(--c-white); }
+.tab:disabled { filter: brightness(0.6) saturate(0.5); }
+/* 회색 버튼 대신 그림 버튼을 어둡게 */
+.btn:disabled { filter: brightness(0.62) saturate(0.55); }
+/* 빈칸 = ui/battle/slot_empty (장비 6칸 · 룬 · 가방 · 편성 빈자리) */
+.gi.empty, .gi.empty.pic, .gi.slot, .party .pcard.empty, .lfp .pt.s.empty { border: 0; border-image: none; border-radius: 0; box-shadow: none; opacity: 1; background: url(/art/ui/battle/slot_empty.png) center no-repeat; background-size: 100% 100%; }
+.gi.empty .slotpic { width: 46%; height: 46%; opacity: 0.4; }
+/* 설정 토글 = ui/battle/toggle_on·off · 글씨 한 줄 */
+input[type='checkbox'] { -webkit-appearance: none; appearance: none; flex: none; width: 12px; height: 28px; margin: 0; border: 0; vertical-align: middle; background: url(/art/ui/battle/toggle_off.png) center / contain no-repeat; cursor: pointer; }
+input[type='checkbox']:checked { background-image: url(/art/ui/battle/toggle_on.png); }
+label:has(> input[type='checkbox']) { display: inline-flex; align-items: center; gap: var(--s-xs); flex: 0 0 auto; white-space: nowrap; }
+/* 1-1 대화창 = kit2/dialog(양피지) + 말하는 이 kit2/nameplate */
+.talk .tx { border: 0; border-radius: 0; background: none; border-image: url(/art/ui/kit2/dialog.png) 66 fill / 24px stretch; padding: var(--s-xl) var(--s-xxl) var(--s-lg); color: var(--c-ink); text-shadow: none; }
+.talk .who { display: inline-block; margin-top: calc(var(--s-xl) * -1); padding: var(--s-xxs) var(--s-xxl); border-image: url(/art/ui/kit2/nameplate.png) 33 fill / 12px stretch; color: var(--c-gold1); font-size: var(--fs-lg); }
+.talk .say { color: var(--c-ink); text-shadow: none; }
+/* 로딩: 그 장 지역 배경을 흐리게 */
+.bload { isolation: isolate; overflow: hidden; }
+.bload .bl-bg { position: absolute; inset: 0; z-index: -1; background: var(--blbg) center / cover no-repeat; filter: blur(6px) brightness(0.5); transform: scale(1.06); }
+/* 타이틀: 안내 글씨·처음부터 = 판 안 */
+#title .tpanel { display: flex; flex-direction: column; align-items: center; gap: var(--s-xs); padding: var(--s-md) var(--s-xxl); border-image: url(/art/ui/kit2/plate.png) 81 fill / 20px stretch; }
+#title .tpanel .tip { margin: 0; }
+/* 미션 토스트 = 화면 위 가운데 · 보상 창 아이콘 크게 */
+.toast { left: 50%; right: auto; top: 56px; transform: translateX(-50%); }
+.rw.gifts.big .rwc { min-width: 96px; padding: var(--s-md); font-size: var(--fs-md); }
+.rw.gifts.big .rwc .ic { width: 48px; height: 48px; }
+.rw.gifts.big .rwc b { font-size: var(--fs-xl); }
+/* 영웅 카드: 직업 그림은 카드 안 왼쪽 위 (원 테두리 없음) · 편성 표시도 틀 안 */
+.hcard .zn.job { left: 7%; top: 6%; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; }
+.hcard.in::before { right: 7%; top: 22%; width: 18px; height: 18px; border-radius: 0; box-shadow: none; background: url(/art/ui/kit2/check.png) center / contain no-repeat; }
+/* 편성: 하단 설명 판 안 · 팀 레벨 %는 바 오른쪽 */
+.fdesc { white-space: normal; }
+.tband .tpct { flex: none; font-style: normal; font-size: var(--fs-xxs); color: var(--c-white); }
+/* 영웅 정보: 글씨 탭 4개 · 성장 판 별 그림 · 가로 넘침 없음 · 능력치 한 판 */
+.tabs.htabs .tab { flex: 1; min-width: 0; padding: 0 var(--s-sm); }
+.road2 { flex-wrap: wrap; row-gap: var(--s-xxs); max-width: 100%; }
+.road2 .stpic { width: 14px; height: 14px; }
+.road2 .stp, .road2 .dots { display: inline-flex; align-items: center; gap: 0; }
+hr.tsep { width: 100%; margin: var(--s-xs) 0; border: 0; border-top: var(--b-thin) solid var(--c-line); }
+.eq .stats.scroll { overflow: visible; }
+.eq .stats .kv { min-height: 0; }
+/* 콘텐츠: 탑 판 = 내용 크기 · 외전 카드 가운데 · 왼쪽 메뉴 아이콘 한 크기 */
+.panel.tower { align-self: center; width: max-content; max-width: 100%; }
+.tstat .tgift { display: inline-flex; align-items: center; gap: var(--s-xxs); font-size: var(--fs-xl); }
+.cards.sides { justify-content: center; align-content: center; grid-template-columns: repeat(4, minmax(0, 170px)); }
+.shopcats .tab .ti, .shopcats .tab .ic { width: 28px; height: 28px; flex: none; object-fit: contain; }
+/* 모험(옛 지도) 노드 = 메인 지도와 같은 그림 (메달 + 번호판 + 별) */
+.fmap-in .node, .fmap-in .node.done, .fmap-in .node.now, .fmap-in .node.off, .fmap-in .node.boss, .fmap-in .node.sel { width: 64px; height: auto; border: 0; border-radius: 0; outline: 0; box-shadow: none; background: none; filter: none; opacity: 1; animation: none; gap: 0; }
+.fmap-in .node .md { width: 32px; height: 32px; }
+.fmap-in .node.boss .md { width: 42px; height: 42px; }
+.fmap-in .node .pl { margin-top: calc(var(--s-xxs) * -1); padding: 0 var(--s-sm); background: url(/art/ui/map/plate.png) center no-repeat; background-size: 100% 100%; color: var(--c-ink); font-size: var(--fs-xs); line-height: 1.4; text-shadow: none; white-space: nowrap; }
+.fmap-in .node.sel .md { filter: drop-shadow(var(--sh-glowHi)); }
+.fmap-in .node .mstars img { width: 10px; height: 12px; }
+/* §1 그림 쪽이 아닌 코드 원인: .btn.hi 노란 그라데이션 바탕이 금색 구매 버튼 그림 밖으로 보였음 · 미션 줄 밖 회색 = .panel 유리 바탕 */
+.btn.hi { background: none; }
+/* 줄(미션·업적·친구) = kit2/row 9-slice · 글씨는 금테 안쪽 */
+.panel.mrow, .panel.frow { border: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-image: url(/art/ui/kit2/row.png) 85 fill / 16px stretch; padding: var(--s-sm) var(--s-xl); }
+/* 소환 결과 뒤 막 0.75 */
+.gacha { background: var(--c-summonVeil); }
+.row.gbtns { flex-wrap: wrap; row-gap: var(--s-xs); }
+/* 원형 틀 초상 (.fpt): 초상은 틀 구멍(원)으로 잘림 · 틀 그림이 맨 위 */
+.fpt { display: inline-block; width: 40px; height: 40px; flex: none; }
+.fpt .framed-in { left: 19%; top: 19%; width: 62%; height: 62%; border-radius: 50%; background: center 15% / cover no-repeat; }
+.row.fpts { gap: 0; justify-content: center; }
+/* 장비 창 강화 줄: 제목·숫자 / 설명 두 줄 · 버튼 폭 같게 */
+.gp .erow > .col { gap: 0; font-variant-numeric: tabular-nums; }
+.gp .erow > .btn { min-width: 96px; justify-content: center; }
+select.tab { -webkit-appearance: none; appearance: none; }
+/* 영웅 정보 전신: 확대 없이 칸 안에 (머리 위 여백 · 위 HUD 아래에서 시작) */
+.fbcol { margin-top: var(--s-md); overflow: hidden; }
+.fbcol .fb { top: 4%; bottom: 0; height: auto; max-width: 100%; transform: translateX(-50%); left: 50%; background-position: center bottom; background-size: contain; }
+/* 넘침 원인 (T3): 메뉴 배경 흐림 막이 오른쪽·아래로 나가던 것 · 메인 지도는 끌어서 보는 창(.pan) 안에서만 */
+.scr.artbg.veiled::before { right: 0; bottom: 0; }
+.mview.pan { position: absolute; inset: 0; overflow: hidden; }
+/* 켜진 탭이 눈에 띄게 · 탭 글씨는 한 줄 (자리 = 글씨 폭) */
+.tab.on { filter: brightness(1.2) drop-shadow(var(--sh-glowHi)); }
+.tab { flex-shrink: 0; white-space: nowrap; }
+.tab .badge { position: absolute; }
+/* 소환 결과: 바닥 마법진은 결과가 열리면 숨김 (폰에서 화면 아래로 잘리던 것) */
+.gacha.opened .stage { display: none; }
+/* 모험 지도: 지도 그림 전체가 판 안에 (위아래 잘림 없음 · 남는 쪽은 판 바탕) */
+.fmap { container-type: size; }
+.fmap-in { left: 50%; top: 50%; width: min(100cqw, 100cqh * 1672 / 941); height: auto; transform: translate(-50%, -50%); }
+/* 스킬 줄: 이름·설명 칸이 버튼에 밀려 0이 되던 것 (PC) · 버튼은 내용 폭까지만 */
+.skl > .col { flex: 1 1 0; min-width: 50%; }
+.skl > .btn { flex: 0 1 auto; max-width: 46%; }
+/* 두 줄 자르기(…) 없음 → 줄 수 대신 fitText가 크기를 줄임 · 한국어는 낱말 단위로 줄바꿈 */
+.fit2, .skd { -webkit-line-clamp: unset; }
+body { word-break: keep-all; }
+/* 로딩: 흐린 배경은 확대 없이 · 전신·글씨 폭은 화면 비율로 (PC 좁은 논리 폭에서 넘치던 것) */
+.bload .bl-bg { transform: none; }
+.bload .bl-fb { width: 38%; max-width: 300px; }
+.bload .bl-tx { width: 46%; max-width: 360px; }
+/* 영웅 상점 카드 칩 줄: 높이 = 내용 (칩 아래가 잘리던 것) */
+.shopc.hero .band { grid-template-rows: auto auto auto 1fr; }
+.shopc.hero .band .chips { overflow: visible; }
+/* 메인 지도: 장 이름 판은 진행 2줄 판 오른쪽에 (PC 좁은 논리 폭에서 겹치던 것) */
+.mch { left: calc(max(var(--s-md), var(--safeL)) + 50px + 250px + var(--s-md)); transform: none; }
+/* 왼쪽 세로 메뉴 탭은 칸에 맞춰 줄어듦 (한 줄 고정은 가로 탭만) · 이정표 장 탭 = 글씨 폭 · 영웅 전신 칸은 화면 아래로 안 나감 */
+.shopcats .tab { flex-shrink: 1; min-height: 0; white-space: normal; }
+.mmain .tabs .tab { width: auto; min-width: max-content; }
+.fbcol { margin: var(--s-md) 0 0; }
+.tab .badge { right: 0; top: 0; }

@@ -65,16 +65,16 @@ export function gearPanel(g: Gear, onChange: () => void) {
         <button class="btn mini" data-a="lock">${icon('lock')} ${g.lock ? '잠금 풀기' : '잠금'}</button><button class="btn mini" data-a="close">${icon('close')}</button></div>
       <div class="grid2">
         <div class="col">
-          <b class="sm">부가 옵션 (한 줄씩 바꾸기: ${icon('optTicket')} ${S.cur.optTicket ?? 0})</b>
+          <div class="row"><b class="sm grow">부가 옵션</b><span class="xs dim">한 줄씩 바꾸기 ${icon('optTicket')} ${S.cur.optTicket ?? 0}</span></div>
           ${g.opts.map((o, i) => `<div class="row"><span class="grow md">${optText(o)}</span><button class="btn mini" data-reroll="${i}">바꾸기</button></div>`).join('')}
           <b class="sm">룬 칸 ${g.runes.length ? '' : '(일반 등급은 없음)'}</b>
           <div class="row">${g.runes.map((u, i) => runeCell(runeOf(u), `data-rs="${i}"`)).join('')}</div>
         </div>
         <div class="col">
-          <div class="row"><span class="grow md">강화 +${g.enh}/${G.enhance.max} ${g.enh < G.enhance.max ? `<span class="xs dim">성공 ${Math.round(enhRate(g) * 100)}% · ${icon('enh')}${ec.stones} ${icon('gold')}${fmt(ec.gold)}</span>` : ''}</span><button class="btn hi" data-a="enh" ${g.enh >= G.enhance.max ? 'disabled' : ''}>${icon('sk_hammer')} 강화</button></div>
-          <div class="row"><span class="grow md">별 ${g.star}/5 ${g.star < 5 ? `<span class="xs dim">성공 ${(starRate(g) * 100).toFixed(1)}% · 같은 ${gradeName(g.grade)} ${PART_NAME[g.part]} 먹이기 ${icon('gold')}${fmt(G.starUp.gold[g.star - 1])}</span>` : ''}</span><button class="btn mini" data-a="star" ${g.star >= 5 ? 'disabled' : ''}>별 올리기</button></div>
-          <div class="row"><span class="grow md">티어 T${g.tier} ${tc ? `<span class="xs dim">5성 뒤 · ${icon('tierMat')}${tc.mats} ${icon('gold')}${fmt(tc.gold)}</span>` : ''}</span><button class="btn mini" data-a="tier" ${tc ? '' : 'disabled'}>티어 올리기</button></div>
-          <div class="row"><span class="grow md">전수 <span class="xs dim">이 장비 강화를 같은 부위로 옮기기 (+${G.transfer.minEnh} 이상)</span></span><button class="btn mini" data-a="transfer" ${g.enh >= G.transfer.minEnh ? '' : 'disabled'}>전수</button></div>
+          <div class="row erow"><span class="grow md col">강화 +${g.enh}/${G.enhance.max} ${g.enh < G.enhance.max ? `<span class="xs dim">성공 ${Math.round(enhRate(g) * 100)}% · ${icon('enh')}${ec.stones} ${icon('gold')}${fmt(ec.gold)}</span>` : ''}</span><button class="btn hi" data-a="enh" ${g.enh >= G.enhance.max ? 'disabled' : ''}>${icon('sk_hammer')} 강화</button></div>
+          <div class="row erow"><span class="grow md col">별 ${g.star}/5 ${g.star < 5 ? `<span class="xs dim">성공 ${(starRate(g) * 100).toFixed(1)}% · 같은 ${gradeName(g.grade)} ${PART_NAME[g.part]} 먹이기 ${icon('gold')}${fmt(G.starUp.gold[g.star - 1])}</span>` : ''}</span><button class="btn mini" data-a="star" ${g.star >= 5 ? 'disabled' : ''}>별 올리기</button></div>
+          <div class="row erow"><span class="grow md col">티어 T${g.tier} ${tc ? `<span class="xs dim">5성 뒤 · ${icon('tierMat')}${tc.mats} ${icon('gold')}${fmt(tc.gold)}</span>` : ''}</span><button class="btn mini" data-a="tier" ${tc ? '' : 'disabled'}>티어 올리기</button></div>
+          <div class="row erow"><span class="grow md col">전수 <span class="xs dim">이 장비 강화를 같은 부위로 옮기기 (+${G.transfer.minEnh} 이상)</span></span><button class="btn mini" data-a="transfer" ${g.enh >= G.transfer.minEnh ? '' : 'disabled'}>전수</button></div>
           <div class="row"><button class="btn mini grow" data-a="sell" ${g.lock || g.by ? 'disabled' : ''}>판매 ${icon('gold')}${fmt(G.sell[g.grade])}</button><button class="btn mini grow" data-a="salvage" ${g.lock || g.by ? 'disabled' : ''}>분해 ${icon('enh')}${G.salvage[g.grade]}</button></div>
         </div>
       </div>

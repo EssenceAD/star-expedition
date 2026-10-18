@@ -78,7 +78,7 @@ export function guildBoss(s: Save = S, now = Date.now()) {
   const board = guildBoard(s, now);
   const dealt = board.reduce((a, x) => a + x.raid, 0);
   const max = SO.guild.raidHp * (g ? 1 + g.lv * 0.1 : 1);
-  return { name: `길드 레이드 · ${CHAPTER_MOBS[hashStr(weekOf(now)) % CHAPTER_MOBS.length].boss}`, max, hp: Math.max(0, max - dealt) };
+  return { name: '길드 레이드 · 서리 용', max, hp: Math.max(0, max - dealt) };
 }
 export const GUILD_SHOP = [
   { id: 'g_book', name: '스킬북 ×2', price: 60, give: { skillBook: 2 } },

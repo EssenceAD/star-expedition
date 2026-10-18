@@ -484,6 +484,19 @@
 - 장별 지도 9장 다시 뽑음(길이 가운데 띠를 따라 가로) → 노드 모두 길 위 · 영웅 카드 직업 원(public/art/jobs)
 - 정보 창: 적 이름 한 줄(넘치면 글씨 줄임) · PC(배율 ≥ 1.8)에서는 0.72배
 
+### v0.13.0 (10/18) — FINAL_1018 한 번에 (묶음 B + S4·S5 + 메인 지도 그림 포함)
+- §0 스크롤 화살표: 실제 스크롤 목록(.scroll) 안쪽 위·아래 끝에만 · ui/battle/scroll_up·down
+- §1 틀 구조 .framed / .framed-in / .framed-frame (전투 카드·결투장 초상·결투장 시작 상대 초상 · core.framedPt) · 미션·친구 줄 kit2/row 9-slice · 금색 구매 버튼 밖 노란 사각 = .btn.hi CSS 바탕이었음(그림 문제 아님)
+- §2 말줄임 없음: core.noClip() — 넘치면 90%까지 줄이고 그래도 넘치면 두 줄(.two)
+- §3 전투 HUD(카드·위쪽·미터·보스 초상·결과) · 땅 띠 _ground.json · 결과 화면 경고 줄 글씨 숨김
+- §4 영웅 정보 탭 4개 · 성장 판 별 그림 · 전신 확대 없이 칸 안 · 능력치 스크롤 없음
+- §5 그림 탭(kit2/tab_on·off) · slot_empty · toggle_on·off · 대화창 dialog+nameplate · 로딩 지역 배경 흐리게 · 타이틀 판 · 모험 노드 = 메인 지도 노드 그림 · 탑 판(지금 층·다음 보상·주간 최고) · 모두 받기(0) 숨김 · 보상 창 · 토스트 위 가운데
+- §6 mobs2/tower·daily·side · bosses2/tower · graidboss/anim1 「서리 용」 (stage.mobsAt o.region · mobs.OWN_MOBS · bigBoss('graidboss'))
+- 시험(tools/e2e.mjs): T1 틀 밖 · T2 글꼴 · T3 의도치 않은 넘침(.scroll·.pan 제외) · T4 잘린 글씨 · T5 화면 밖 → 숫자는 docs/captures/after_1018/final/tests_*.json
+- 최종 시험(폰 844×390 · PC 1920×1040 · 67장): 폰 T1 0 · T2 0 · T3 2 · T4 0 · T5 0 / PC T1 0 · T2 0 · T3 19 · T4 0 · T5 0
+  - 남은 것: PC 전투 화면 #stage 가로 11px(4번째 영웅 카드 오른쪽 끝 자동 칸이 잘림) · 콘텐츠 월드 보스·외전 화면 세로 넘침
+- 시트: docs/captures/after_1018/final (phone_s*.jpg · pc_s*.jpg · tests_*.json)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

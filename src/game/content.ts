@@ -124,11 +124,11 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
     case 'tower': {
       const f = +r.arg;
       const boss = f % CC.tower.bossEvery === 0;
-      return base(s, `${MODE_NAME.tower} ${f}층`, mobsAt(towerP(f), boss ? 'gwg|B' : 'ggw|wgww', ((f - 1) % 10) + 1, { boss: boss ? `탑의 파수꾼 (${f}층)` : undefined }), 4);
+      return base(s, `${MODE_NAME.tower} ${f}층`, mobsAt(towerP(f), boss ? 'gwg|B' : 'ggw|wgww', ((f - 1) % 10) + 1, { boss: boss ? `탑의 파수꾼 (${f}층)` : undefined, region: 'tower' }), 4);
     }
     case 'day': {
       const L = +r.arg;
-      return base(s, `${MODE_NAME.day} · ${DAY_NAME[dayKind(now)]} ${L}단계`, mobsAt(L * CC.day.step, 'sss|gsg|wgw', 1 + (kstDay(now) % 3), { hp: 1.2 }), kstDay(now) % 10);
+      return base(s, `${MODE_NAME.day} · ${DAY_NAME[dayKind(now)]} ${L}단계`, mobsAt(L * CC.day.step, 'sss|gsg|wgw', 1 + (kstDay(now) % 3), { hp: 1.2, region: 'daily' }), kstDay(now) % 10);
     }
     case 'raid': {
       const p = top(s) + CC.raid.add;
@@ -173,15 +173,15 @@ export function buildRun(r: Run, s: Save = S, now = Date.now()): BattleSetup {
       const gb = guildBoss(s, now);
       const mobs = mobsAt(top(s) + CONFIG.social.guild.raidAdd, 'B', 6, { hp: 1000, boss: gb.name, patterns: [PATTERNS.slam, PATTERNS.focus, PATTERNS.quake] });
       mobs[0][0].partBase = mobs[0][0].hp / 1000 * CC.world.partBase;
-      // 월드 보스는 자기 그림 (불꽃 날개 마왕 · 레이드·골렘 그림 같이 쓰던 것 · ANIM_1017 ④)
-      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('worldboss') };
+      // 길드 레이드는 자기 그림 「서리 용」 (FINAL_1018 §6 · 레이드와 같은 배치)
+      mobs[0][0].kind = { ...mobs[0][0].kind, anims: bigBoss('graidboss') };
       return base(s, `${MODE_NAME.graid} · ${CONFIG.social.guild.raidSec}초 동안 피해 주기`, mobs, 6, { limit: CONFIG.social.guild.raidSec, timeUp: 'win', arena: true });
     }
     case 'side': {
       const id = String(r.arg);
       const act = r.sub ?? (s.side[id] ?? 0) + 1;
       const p = pOfLv(s.heroes[id]?.lv ?? 1) + CC.side.add;
-      const set = base(s, `${MODE_NAME.side} · ${heroOf(id).name} ${act}막`, mobsAt(p, act === CC.side.acts ? 'gw|B' : 'gsg|wgw', 1 + (hashStr(id) % 3), { boss: act === CC.side.acts ? `${heroOf(id).name}의 그림자` : undefined }), hashStr(id) % 10);
+      const set = base(s, `${MODE_NAME.side} · ${heroOf(id).name} ${act}막`, mobsAt(p, act === CC.side.acts ? 'gw|B' : 'gsg|wgw', 1 + (hashStr(id) % 3), { boss: act === CC.side.acts ? `${heroOf(id).name}의 그림자` : undefined, region: 'side' }), hashStr(id) % 10);
       // 외전은 그 영웅이 꼭 파티에 (모자라면 첫 자리를 바꿈)
       const ids = partyIds(s).includes(id) ? partyIds(s) : [id, ...partyIds(s).slice(0, 3)];
       set.heroes = buildHeroes({ ...s, party: ids });

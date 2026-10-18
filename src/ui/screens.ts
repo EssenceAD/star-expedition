@@ -47,8 +47,8 @@ register('title', {
     root.id = 'title';
     root.innerHTML = `<div class="logo"><small>용사님 체크인 외전</small><b>${fxt('별의 원정대')}</b></div>
       <button class="btn hi big" data-go>원정 출발</button>
-      <p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
-      <div class="row"><button class="btn mini" data-reset>처음부터</button></div>
+      <div class="tpanel"><p class="tip">${S.prologue ? '이어서 하기 · 자동 저장' : '처음이면 프롤로그 다음 바로 첫 전투'}</p>
+      <div class="row"><button class="btn mini" data-reset>처음부터</button></div></div>
       <div class="ver">v${__APP_VERSION__}</div>`;
     a2hsBanner(root);
     $('[data-go]', root).onclick = async () => {
@@ -85,7 +85,7 @@ function buffChips() {
 /** 「팀 레벨」 띠 (로비·편성 · MOBILE_REF §3-C-3): 원정대 레벨 · 경험치 % 막대 · 켜진 버프 */
 export function teamBand(extra = '') {
   const p = Math.min(100, (S.acc.exp / accNeed(S.acc.lv)) * 100);
-  return `<div class="tband"><div class="row"><span class="tl">팀 레벨</span><b class="lv">${S.acc.lv}</b><div class="xbar grow"><i style="width:${p}%"></i><em>${Math.floor(p)}%</em></div>${extra}</div><div class="buffs">${buffChips() || '<span class="xs mute">켜진 버프 없음</span>'}</div></div>`;
+  return `<div class="tband"><div class="row"><span class="tl">팀 레벨</span><b class="lv">${S.acc.lv}</b><div class="xbar grow"><i style="width:${p}%"></i></div><em class="tpct">${Math.floor(p)}%</em>${extra}</div><div class="buffs">${buffChips() || '<span class="xs mute">켜진 버프 없음</span>'}</div></div>`;
 }
 
 // ───────── 메인 = 모험 지도 (RECOVER_1018 S1·S2 배치 · 킹스레이드 영상 그대로) ─────────
@@ -115,7 +115,7 @@ register('lobby', {
       const stars = open ? `<span class="mstars">${[0, 1, 2].map((k) => mapPic(k < starsAt(id) ? 'star_on' : 'star_off')).join('')}</span>` : '';
       return `<button class="mnode ${st}${isBoss(id) ? ' boss' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${st === 'now' ? `<i class="arw"${fig ? ` style="top:-${fig + CONFIG.ui.mainMap.figPad + 20}px"` : ''}>${icon('pointer')}</i>` : ''}${mapPic(medal, 'md')}<b class="pl">${c}-${i + 1}${isBoss(id) ? ' <em>BOSS</em>' : ''}</b>${stars}</button>`;
     }).join('');
-    root.innerHTML = `<div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div>
+    root.innerHTML = `<div class="mview pan"><div class="mlayer"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${NODES.map(([x, y]) => `${x},${y}`).join(' ')}" /></svg>${nodes}</div></div>
       <div class="mhud">
         <button class="mch" data-go="adventure"><b>${c}장 · ${esc(ch.name)}</b>${icon('star')}<span>${stars}/${NODES.length * 3}</span><i class="dn">${icon('pointer')}</i></button>
         <div class="mquest">
@@ -231,7 +231,9 @@ function fieldMap(c: number, d: number, sel: StageId) {
       const open = unlocked(id);
       // 둥근 메달: 깬 곳 금 · 지금 갈 곳 파랑 빛 · 잠김 회색 자물쇠 · 아래 별 3개 (PLAYTEST §8)
       const st = !open ? 'off' : starsAt(id) > 0 ? 'done' : 'now';
-      return `<button class="node ${st}${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}><b>${open ? `${c}-${i + 1}` : icon('lock')}</b>${open ? starsHtml(starsAt(id)) : ''}</button>`;
+      // 메인 지도와 같은 노드 그림 (FINAL §5): 메달 4종 + 번호판 + 별
+      const medal = isBoss(id) ? 'node_boss' : !open ? 'node_lock' : st === 'now' ? 'node_next' : 'node_clear';
+      return `<button class="node ${st}${isBoss(id) ? ' boss' : ''}${sel.s === i + 1 ? ' sel' : ''}" style="left:${x}%;top:${y}%" data-s="${i + 1}" ${open ? '' : 'disabled'}>${mapPic(medal, 'md')}<b class="pl">${c}-${i + 1}</b>${open ? `<span class="mstars">${[0, 1, 2].map((k) => mapPic(k < starsAt(id) ? 'star_on' : 'star_off')).join('')}</span>` : ''}</button>`;
     }).join('')}
     ${here ? `<div class="me-pin" style="left:${NODES[here - 1][0]}%;top:${NODES[here - 1][1] - 12}%"><div class="pt s" style="background-image:url(${heroPortrait(lead)})"></div></div>` : ''}
     </div><div class="gates"><button class="btn mini" data-portal="hunt">${icon('battle')} 토벌</button><button class="btn mini" data-portal="dungeon">${icon('bag')} 상급 던전</button><button class="btn mini" data-portal="tower">${icon('tower')} 도전의 탑</button></div>
@@ -361,9 +363,9 @@ register('prep', {
           <div class="col grow">
             ${zoneTabs(tab)}
             <div class="roster grow scroll">${mine.map((h) => card(h.id, `<span class="xs gold">${fmt(heroPower(h.id))}</span>`, ids.includes(h.id) ? 'in' : '')).join('')}${notMine.map((h) => card(h.id, `<span class="lk">${icon('lock')}</span>`).replace('data-h=', 'data-lk=')).join('')}</div>
-            <span class="xs mute">카드를 눌러 넣고 빼요 (최대 ${PARTY_MAX}명) · 위치(전방·중앙·후방)는 직업으로 정해지고 전투에서 그 순서로 서요 · 길게 누르면 영웅 정보</span>
+            <span class="xs mute fdesc">카드를 눌러 넣고 빼요 (최대 ${PARTY_MAX}명) · 길게 누르면 영웅 정보</span>
           </div>
-          <div class="col side">
+          <div class="col side scroll">
             <div class="panel col">
               ${teamBand()}
               <div class="party">${[0, 1, 2, 3].map((i) => {

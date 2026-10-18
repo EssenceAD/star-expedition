@@ -6,6 +6,9 @@
 export const T = {
   /** 2단계 스타일 D 「밝은 원정」 (형철 10/17 승인 · docs/style/board_D.png): 크림·아이보리 양피지 패널 + 금 테두리 · 하늘색 주 버튼 · 주황 특수 · 남색은 글자·얇은 테두리만 */
   color: {
+    /** 결과 화면 뒤 막 0.55 · 소환 결과 뒤 막 0.75 (FINAL §3-6·§5) */
+    resultVeil: 'rgba(10,8,24,0.55)',
+    summonVeil: 'rgba(10,8,24,0.75)',
     bg: '#f6eedb',
     bg2: '#fffaf0',
     panel: '#fbf3e0',
@@ -139,6 +142,9 @@ export const T = {
     creamInk: '#5b3a1e',
   } as Record<string, string>,
   colorDark: {
+    /** 결과 화면 뒤 막 0.55 · 소환 결과 뒤 막 0.75 (FINAL §3-6·§5) */
+    resultVeil: 'rgba(10,8,24,0.55)',
+    summonVeil: 'rgba(10,8,24,0.75)',
     bg: '#0b0918',
     bg2: '#151131',
     panel: '#1d1840',

@@ -7,7 +7,6 @@ import { bossOf, canCast, has, idleStep, makeBattle, mvpOf, partyDps, relayout, 
 import { raidDodge, raidSummary } from '../battle/raid';
 import { combatSynth } from '../core/audio/combatSfx';
 import { heroOf } from '../data/heroes';
-import { JOBS } from '../data/jobs';
 import { descSkill } from '../data/skills';
 import { SIDE } from '../data/side';
 import { CHAPTERS, PROLOGUE, type Line } from '../data/story';
@@ -18,7 +17,7 @@ import { pushNotice } from './notice';
 import { buildStage, canRepeat, isBoss, recordClear, repeatBattle, stageName, unlocked, type StageId } from '../game/stage';
 import { partyIds, persist, S } from '../game/state';
 import { applyTheme, icon, iconText, T } from '../theme/tokens';
-import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, portraitUrl, register, skillIconUrl, toast, CUR_NAME } from './core';
+import { $, $$, esc, fmt, fullbodyUrl, fxt, go, heroPortrait, modal, playTalk, register, skillIconUrl, toast, CUR_NAME } from './core';
 import { getPref, setPref } from '../core/save';
 import { gearCell, runeCell } from './gearui';
 import { flag } from '../core/flags';
@@ -45,7 +44,8 @@ let intro = false;
 /** 첫 진입 (프롤로그 → 1-1 → 로비) */
 let firstRun = false;
 /** DPS 판: 펼침(기억함) · 탭 피해·회복·받은 피해 (MOBILE_REF §3-A-4) */
-let dpsOpen = getPref('dpsOpen', true);
+// 피해량 미터는 기본 접힘 (FINAL §3-3)
+let dpsOpen = getPref('dpsOpen', false);
 let dpsTab: 'dealt' | 'healed' | 'taken' = 'dealt';
 const DPS_HEAD = { dealt: '피해량', healed: '회복량', taken: '받은 피해' } as const;
 let paused = false;
@@ -55,11 +55,14 @@ let artWait = false;
 let loading = false;
 const hud = () => $('#hud');
 
+/** 버프·디버프 → 그림 (public/art/buffs · FINAL §3-1) · 그림이 없는 것은 가까운 그림 (치명타↑·공격력↓ = mark · 둔화 = freeze) */
+const BUFF_ART: Record<string, string> = { shield: 'shield', guard: 'defUp', taunt: 'taunt', regen: 'regen', atkUp: 'atkUp', spdUp: 'speedUp', critUp: 'mark', atkDown: 'mark', stun: 'stun', silence: 'silence', slow: 'freeze', burn: 'burn' };
 const BUFF = (u: Unit): [string, string][] =>
   ([
     [u.shield > 0, 'shield', '보호막'], [has(u, 'guard'), 'guard', '받는 피해 감소'], [has(u, 'taunt'), 'taunt', '도발'], [has(u, 'regen'), 'regen', '회복'], [has(u, 'atkUp'), 'atkUp', '공격력 증가'],
     [has(u, 'spdUp'), 'spdUp', '공격 속도 증가'], [has(u, 'critUp'), 'critUp', '치명타 증가'], [has(u, 'atkDown'), 'atkDown', '공격력 감소'], [has(u, 'stun'), 'stun', '기절'], [has(u, 'silence'), 'silence', '침묵'], [has(u, 'slow'), 'slow', '둔화'], [has(u, 'burn'), 'burn', '화상'],
-  ] as [boolean, string, string][]).filter((x) => x[0]).map(([, k, t]) => [iconText(k), t]);
+  ] as [boolean, string, string][]).filter((x) => x[0]).map(([, k, t]) => [BUFF_ART[k], t]);
+const buffImg = (k: string, t: string) => `<img src="${import.meta.env.BASE_URL}art/buffs/${k}.png" alt="" title="${t}">`;
 
 function buildBar() {
   const bar = $('#bar');
@@ -67,11 +70,12 @@ function buildBar() {
     .filter((u) => !u.ai)
     .map((u, i) => {
       const h = u.hero!.def;
-      return `<div class="hc" data-h="${i}"><div class="pt" style="background-image:url(${heroPortrait(h.id)})"></div>
-      <div class="nm">${h.name}<small>${JOBS[h.job].name} Lv.${u.hero!.lv}</small></div>
+      // 카드 = 틀 그림(hud_card) + 안쪽 창: 초상은 왼쪽 창 안(.framed-in) · 이름만 (FINAL §3-1)
+      return `<div class="hc framed" data-h="${i}"><div class="pt framed-in"><i style="background-image:url(${heroPortrait(h.id)})"></i></div>
+      <div class="nm">${h.name}</div>
       <div class="bars"><div class="hp"><i></i><s></s></div><div class="mp"><i></i></div></div>
       <div class="bf"></div>
-      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)" style="background-image:url(${skillIconUrl(h.id, k)})"><em>${s.cost}</em><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"></button></div></div>`;
+      <div class="sk">${h.skills.map((s, k) => `<button data-s="${k}" title="${s.name} · ${descSkill(s)} (마나 ${s.cost} · ${s.cd}초)"><i style="background-image:url(${skillIconUrl(h.id, k)})"></i><b></b></button>`).join('')}<button class="au" aria-pressed="false" title="이 영웅만 자동"><i></i></button></div></div>`;
     })
     .join('');
   $$('.hc', bar).forEach((c) => {
@@ -85,15 +89,32 @@ function buildBar() {
   });
 }
 
+/** 보스 초상: 그 보스 대기 그림 첫 칸의 머리 부분을 잘라 원형 틀에 (FINAL §3-5 · 늘 이끼 골렘이던 것) · 그림이 오면 한 번만 */
+let bossFace = '';
+function syncBossFace(bb: Battle) {
+  const m = bb.mobs.find((x) => x.mob?.boss);
+  const key = m?.anims.idle?.frames[0];
+  if (!m || !key || bossFace === key) return;
+  const im = view.art.sheet.img[key];
+  const c = view.art.sheet.cell[key];
+  if (!im || !c) return;
+  const side = Math.min(c.w, c.h * 0.55);
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 96;
+  cv.getContext('2d')!.drawImage(im, c.x + (c.w - side) / 2, c.y, side, side, 0, 0, 96, 96);
+  $('#boss .bp').style.backgroundImage = `url(${cv.toDataURL()})`;
+  bossFace = key;
+}
 function syncHud() {
   const bb = b!;
+  syncBossFace(bb);
   $$('.hc', $('#bar')).forEach((c) => {
     const u = bb.heroes[+c.dataset.h!];
     c.classList.toggle('dead', u.dead);
     $('.hp i', c).style.width = `${(u.hp / u.max) * 100}%`;
     $('.hp s', c).style.width = `${Math.min(100, (u.shield / u.max) * 100)}%`;
     $('.mp i', c).style.width = `${u.mana}%`;
-    const bf = BUFF(u).map(([i, t]) => `<span title="${t}">${i}</span>`).join('');
+    const bf = BUFF(u).map(([k, t]) => buffImg(k, t)).join('');
     const el = $('.bf', c);
     if (el.innerHTML !== bf) el.innerHTML = bf;
     $$<HTMLButtonElement>('button[data-s]', c).forEach((btn) => {
@@ -146,11 +167,13 @@ function syncHud() {
   if (ck.textContent !== ct) ck.textContent = ct;
   ck.classList.toggle('low', left <= CONFIG.ui.clockLowSec);
   if (dpsOpen) {
-    const sorted = [...bb.heroes].sort((a, c) => c[dpsTab] - a[dpsTab]).slice(0, bb.raid ? CONFIG.raidArena.rankShow : undefined);
+    // 4줄까지 · 넘치면 「+n」 (레이드 8인 · FINAL §3-3)
+    const all = [...bb.heroes].sort((a, c) => c[dpsTab] - a[dpsTab]);
+    const sorted = all.slice(0, CONFIG.ui.dpsRows);
     const top = Math.max(1, sorted[0][dpsTab]);
     const t = Math.max(1, bb.stats.time);
     // 한 줄 = 초상화 · 이름 · 직업색 막대 + 초당 · 값 (BATTLE_HUD §3)
-    const rows = sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u[dpsTab])}</b><div class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i><small>${shortNum(u[dpsTab] / t)}/초</small></div></div>`).join('');
+    const rows = sorted.map((u) => `<div class="dr"><i class="pt" style="background-image:url(${heroPortrait(u.hero!.def.id)})"></i><span class="nm">${u.name}</span><b>${shortNum(u[dpsTab])}</b><div class="g"><i style="width:${(u[dpsTab] / top) * 100}%;background:${T.battle.jobColor[u.hero!.def.job]}"></i></div><small>${shortNum(u[dpsTab] / t)}/초</small></div>`).join('') + (all.length > sorted.length ? `<div class="more">+${all.length - sorted.length}</div>` : '');
     const el = $('#dpsL .rows');
     if (el.innerHTML !== rows) el.innerHTML = rows;
   }
@@ -178,13 +201,15 @@ function speedLabel() {
 }
 function setPaused(on: boolean) {
   paused = on;
+  // 포기는 일시정지 메뉴 안 (FINAL §3-2)
   $('#bPause').setAttribute('aria-pressed', String(on));
   $('#pausedTag').hidden = !on;
 }
 function dpsLabel() {
   $('#dps').classList.toggle('open', dpsOpen);
-  $('#bDps').textContent = iconText(dpsOpen ? 'fold' : 'open');
+  $('#bDps').textContent = '';
   $('#bDps').title = dpsOpen ? '피해 판 접기' : '피해 판 펼치기';
+  $('#dpsL .dname').textContent = b?.raid && dpsTab === 'dealt' ? '피해 순위' : DPS_HEAD[dpsTab];
   $$<HTMLButtonElement>('#dpsL [data-dt]').forEach((t) => {
     t.classList.toggle('on', t.dataset.dt === dpsTab);
     t.textContent = t.dataset.dt === 'dealt' && b?.raid ? '피해 순위' : DPS_HEAD[t.dataset.dt as typeof dpsTab].replace('량', '');
@@ -241,8 +266,8 @@ function setup() {
   resetAiEmote();
   $('#result').hidden = true;
   shown = false;
-  const boss = b.setup.waves.flat().find((m) => m.boss);
-  if (boss?.portrait) $('#boss .bp').style.backgroundImage = `url(${portraitUrl(boss.portrait)})`;
+  $('#boss .bp').style.backgroundImage = '';
+  bossFace = '';
 }
 
 /** 콘텐츠 결과 (토벌·던전·탑·요일·레이드·월드 보스·결투장·외전) */
@@ -281,7 +306,7 @@ function showRunResult() {
   const rows: [string, string][] = [['콘텐츠', MODE_NAME[r.mode]], ['시간', `${Math.floor(bb.stats.time)}초`], ['총 피해', shortNum(bb.stats.dealt)], ['초당', shortNum(partyDps(bb))], ['MVP', `<b class="hn">${esc(mvp.name)}</b>`]];
   if (rs) {
     rows.push(['페이즈', `${rs.phase}페이즈까지`], ['회피', `직접 ${rs.dodges.manual} · 자동 ${rs.dodges.auto} · 맞음 ${rs.dodges.hit}`]);
-    for (const p of rs.parts) rows.push([`${icon('target')} ${esc(p.name)}`, p.broken ? `${ck(true)} ${esc(p.top)}` : ck(false)]);
+    for (const p of rs.parts) rows.push([`<img class="tg" src="${UI_ART}battle/target.png" alt=""> ${esc(p.name)}`, p.broken ? `${ck(true)} ${esc(p.top)}` : ck(false)]);
   }
   const table = `<div class="rtable">${rows.map(([k, v]) => `<span>${k}</span><b>${v}</b>`).join('')}${o.lines.map((l) => `<em>${esc(l)}</em>`).join('')}</div>`;
   $('#result').innerHTML = `${emb(head, win || scoreRun)}<div class="rcol">
@@ -468,7 +493,9 @@ function loadTip(s: StageId, done: () => void) {
   const id = ids[Math.floor(Math.random() * ids.length)] ?? 'woongs';
   const el = document.createElement('div');
   el.className = 'bload';
-  el.innerHTML = `<div class="bl-fb" style="background-image:url(${fullbodyUrl(id)})"></div><div class="bl-tx"><small>${s.c}장 · ${esc(CHAPTERS[s.c - 1].name)}</small><b>${stageName(s)}</b><p><em>TIP</em>${esc(TIPS[Math.floor(Math.random() * TIPS.length)])}</p><div class="ld-bar"><i></i></div></div>`;
+  // 뒤 = 그 장 지역 배경을 흐리게 (FINAL §5)
+  el.style.setProperty('--blbg', `url(${new URL(`${import.meta.env.BASE_URL}art/bgs/region_${CHAPTERS[s.c - 1].region}.jpg`, document.baseURI).href})`);
+  el.innerHTML = `<div class="bl-bg"></div><div class="bl-fb" style="background-image:url(${fullbodyUrl(id)})"></div><div class="bl-tx"><small>${s.c}장 · ${esc(CHAPTERS[s.c - 1].name)}</small><b>${stageName(s)}</b><p><em>TIP</em>${esc(TIPS[Math.floor(Math.random() * TIPS.length)])}</p><div class="ld-bar"><i></i></div></div>`;
   $('#stage').append(el);
   loading = true;
   let ended = false;
@@ -517,6 +544,7 @@ register('battle', {
       $('#emoPop').hidden = true;
     }));
     // 포기: 멈추고 확인 창 (양피지 패널)
+    $('#bResume').onclick = () => setPaused(false);
     $('#bQuit').onclick = () => {
       if (!b || (b.phase !== 'fight' && b.phase !== 'walk')) return;
       const was = paused;

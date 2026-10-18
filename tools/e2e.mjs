@@ -40,9 +40,12 @@ p.on('console', (m) => m.type() === 'error' && !m.text().startsWith('Failed to l
 p.on('response', (r) => r.status() >= 400 && !r.url().endsWith('/favicon.ico') && errors.push(`${r.status()} ${r.url()}`));
 p.on('requestfailed', (r) => errors.push(`실패 ${r.url()}`));
 let n = 0;
-// MASTER_1018 자동 시험: 화면을 찍을 때마다 그 화면에서 어긋난 요소 수를 셈 → out/tests.json
+// FINAL_1018 §7 자동 시험: 화면을 찍을 때마다 그 화면에서 어긋난 요소 수를 셈 → out/tests.json
+//  T1 틀 밖 튀어나옴: .framed-in 자식이 그 창 사각형 밖으로 나감
 //  T2 글꼴: 보이는 글씨 요소의 글꼴 첫 이름이 UI 글꼴(Gothic A1)이 아님 (전투 피해 숫자 Luckiest Guy는 캔버스라 제외)
-//  T3 스크롤바: 실제 기기라면 스크롤바가 보일 요소 (아래 설명)
+//  T3 의도치 않은 넘침: 스크롤 목록(.scroll)·끌어서 보는 지도(.pan)가 아닌 상자(overflow ≠ visible)에서 scroll > client (글씨 요소는 T4)
+//  T4 잘린 글씨: 글씨를 가진 요소의 scrollWidth > clientWidth
+//  T5 화면 밖: 보이는 요소(잘라 내는 조상 안쪽 부분)가 화면 사각형 밖으로 나감
 const UI_FONT = 'Gothic A1';
 const report = [];
 const measure = () =>
@@ -57,21 +60,41 @@ const measure = () =>
       return true;
     };
     const name = (e) => `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).join('.') : ''}`;
-    const t2 = [], t3 = [];
+    const t1 = [], t2 = [], t3 = [], t4 = [], t5 = [];
+    const W = innerWidth, H = innerHeight, E = 1.5;
     for (const e of document.querySelectorAll('body *')) {
       if (!(e instanceof HTMLElement) || !vis(e)) continue;
       const c = getComputedStyle(e);
       const own = [...e.childNodes].some((k) => k.nodeType === 3 && k.textContent.trim());
       if (own && c.fontFamily.split(',')[0].replace(/["']/g, '').trim() !== UI_FONT) t2.push(`${name(e)} ${c.fontFamily.split(',')[0]}`);
-      if (c.display === 'inline' || c.display === 'contents') continue;
-      // 시험 브라우저(헤드리스)는 스크롤바를 숨겨서 그리므로, 「실제 기기라면 스크롤바가 보일 곳」을 셈:
-      //  넘치는 내용 + overflow auto/scroll + scrollbar-width가 none이 아님 (가로·세로 따로)
-      const sb = c.scrollbarWidth !== 'none';
-      const ox = /auto|scroll/.test(c.overflowX) && e.scrollWidth > e.clientWidth + 1;
-      const oy = /auto|scroll/.test(c.overflowY) && e.scrollHeight > e.clientHeight + 1;
-      if (sb && (ox || oy || c.overflowX === 'scroll' || c.overflowY === 'scroll')) t3.push(`${name(e)}${ox ? ' 가로' : ''}${oy ? ' 세로' : ''}`);
+      // T5: 잘라 내는 조상과 겹치는 부분만 · 그 부분이 화면 밖으로
+      let r = e.getBoundingClientRect();
+      let [x0, y0, x1, y1] = [r.left, r.top, r.right, r.bottom];
+      for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) {
+        const ac = getComputedStyle(a);
+        if (ac.overflowX !== 'visible' || ac.overflowY !== 'visible') {
+          const ar = a.getBoundingClientRect();
+          ((x0 = Math.max(x0, ar.left)), (y0 = Math.max(y0, ar.top)), (x1 = Math.min(x1, ar.right)), (y1 = Math.min(y1, ar.bottom)));
+        }
+      }
+      if (x1 - x0 > E && y1 - y0 > E && (x0 < -E || y0 < -E || x1 > W + E || y1 > H + E)) t5.push(`${name(e)} ${Math.round(x0)},${Math.round(y0)}~${Math.round(x1)},${Math.round(y1)}`);
+      if (e.classList.contains('framed-in')) {
+        const fr = e.getBoundingClientRect();
+        for (const k of e.children) {
+          const kr = k.getBoundingClientRect();
+          if (kr.width && (kr.left < fr.left - E || kr.top < fr.top - E || kr.right > fr.right + E || kr.bottom > fr.bottom + E)) t1.push(`${name(e.parentElement)} > ${name(k)}`);
+        }
+      }
+      if (c.display === 'inline' || c.display === 'contents' || e.tagName === 'CANVAS') continue;
+      if (own) {
+        if (e.scrollWidth > e.clientWidth + 1) t4.push(`${name(e)} 「${e.textContent.trim().slice(0, 16)}」 ${e.scrollWidth}>${e.clientWidth}`);
+      } else if (!e.classList.contains('scroll') && !e.classList.contains('pan')) {
+        const ox = c.overflowX !== 'visible' && e.scrollWidth > e.clientWidth + 1;
+        const oy = c.overflowY !== 'visible' && e.scrollHeight > e.clientHeight + 1;
+        if (ox || oy) t3.push(`${name(e)}${ox ? ` 가로 ${e.scrollWidth}>${e.clientWidth}` : ''}${oy ? ` 세로 ${e.scrollHeight}>${e.clientHeight}` : ''}`);
+      }
     }
-    return { t2, t3 };
+    return { t1, t2, t3, t4, t5 };
   }, UI_FONT);
 const shot = async (name) => {
   const file = `${String(++n).padStart(2, '0')}_${name}`;
@@ -244,7 +267,7 @@ await shot('hero_info');
 await click('[data-tab="skill"]');
 await shot('hero_skill');
 // 코스튬 탭에서 입기 → 전신 그림이 코스튬으로
-await click('[data-tab="costume"]');
+await click('[data-tab="info"]');
 await click('[data-wear="festival"]');
 await p.waitForTimeout(300);
 await shot('hero_costume');
@@ -315,7 +338,12 @@ await shot('lobby_d');
 await click('[data-go="mission"]');
 await p.waitForSelector('[data-screen="mission"]');
 await shot('mission');
-if (await p.locator('[data-all]:not([disabled])').count()) await click('[data-all]');
+// 모두 받기 → 보상 창(아이콘·수량 크게)을 찍고 닫음
+if (await p.locator('[data-all]:not([disabled])').count()) {
+  await click('[data-all]');
+  await shot('mission_reward');
+  await click('.modal .btn.hi');
+}
 await click('[data-tab="ach"]');
 await shot('mission_ach');
 await click('[data-back]');
@@ -378,7 +406,7 @@ await click('.modal .btn.hi');
 writeFileSync(`${out}/tests.json`, JSON.stringify(report, null, 1));
 const sum = (k) => report.reduce((a, r) => a + r[k].length, 0);
 const bad = (k) => report.filter((r) => r[k].length).length;
-console.log(`T2 글꼴 어긋남 ${sum('t2')}개 (${bad('t2')}/${report.length}화면) · T3 스크롤바 ${sum('t3')}개 (${bad('t3')}/${report.length}화면)`);
+console.log(['t1', 't2', 't3', 't4', 't5'].map((k) => `${k.toUpperCase()} ${sum(k)}개 (${bad(k)}/${report.length}화면)`).join(' · '));
 await br.close();
 srv.close();
 console.log(errors.length ? `오류 ${errors.length}개:\n${errors.join('\n')}` : '오류 없음', `· 사진 ${n}장 → ${out}`);

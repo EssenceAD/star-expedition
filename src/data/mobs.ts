@@ -69,7 +69,7 @@ export function regionBoss(region: string): AnimSet {
  *  anim1 = 장 보스와 같은 배치 (대기 2 · 내려찍기 2 · 광선 2 · 포효 · 그로기) · anim2 = 피격 움찔 · 부위 파괴 후 대기 2 · 분노 대기 · 분노 휩쓸기 · 쓰러짐→무너짐→잔해
  *  상태별 칸 고르기는 render.drawRaidBoss (그로기·움찔·경고·분노·부위 파괴)
  */
-export function bigBoss(dir: 'raidboss' | 'worldboss'): AnimSet {
+export function bigBoss(dir: 'raidboss' | 'worldboss' | 'graidboss'): AnimSet {
   const a = (r: number, c: number) => `${dir}/anim1:r${r}c${c}`;
   const z = (r: number, c: number) => `${dir}/anim2:r${r}c${c}`;
   return {
@@ -78,9 +78,16 @@ export function bigBoss(dir: 'raidboss' | 'worldboss'): AnimSet {
     skill1: { frames: [a(0, 3), a(0, 3)], fps: 3, loop: false },
     skill2: { frames: [a(1, 1), a(1, 1)], fps: 3, loop: false },
     skill3: { frames: [a(1, 2), a(1, 2)], fps: 3, loop: false },
-    down: { frames: [z(1, 1), z(1, 2), z(1, 3)], fps: 1, loop: false, durs: [0.4, 0.4, 0.4] },
+    // 길드 레이드 「서리 용」은 anim1만 있음 → 쓰러짐은 비틀거림 칸
+    down: dir === 'graidboss' ? { frames: [a(1, 3)], fps: 1, loop: false } : { frames: [z(1, 1), z(1, 2), z(1, 3)], fps: 1, loop: false, durs: [0.4, 0.4, 0.4] },
   };
 }
+/** 탑·요일·외전 전용 몹 이름 (mobs2/<모드> r0 · r1 · r2 = 슬라임·고블린·늑대 자리) */
+export const OWN_MOBS = {
+  tower: ['가고일', '빈 갑옷 기사', '마법서'],
+  daily: ['금화 슬라임', '경험치 물약', '수정 거북'],
+  side: ['그림자 정령', '그림자 병사', '그림자 사냥개'],
+} as const;
 /** 패턴 → 경고 동안 보여 줄 준비 칸 · 터질 때 동작 */
 export const BOSS_PREP: Record<'slam' | 'beam' | 'focus' | 'roar' | 'quake', { cell: string; act: 'skill1' | 'skill2' | 'skill3' }> = {
   slam: { cell: 'r0c2', act: 'skill1' },

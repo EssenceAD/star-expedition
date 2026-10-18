@@ -2,6 +2,7 @@
 //  · 이펙트(빛줄기·기둥·파티클·흔들림·번쩍임) · 피해 숫자(만·억 · 겹침 없음은 sim.placeNum) · 일러스트 컷인 · 인연 말풍선
 //  색·글꼴은 전부 theme/tokens 에서
 import { CONFIG } from '../config';
+import groundJson from '../../public/art/bgs/_ground.json';
 import { animOf, drawFrame, frameAt, heightOf, lenOf, type Sheet } from '../sprite/sheet';
 import { canvasFace, canvasFont, elemColor, iconText, T } from '../theme/tokens';
 import { has, shortNum, type Battle, type Fx, type Unit } from './sim';
@@ -28,6 +29,18 @@ export interface Art {
 }
 /** 이 전투 배경 그림 · 전용 배경이면 지역 색 안 씀 */
 const bgOf = (art: Art, key?: string) => (key && art.bgs?.[key] ? { im: art.bgs[key], own: true } : { im: art.bg, own: false });
+/** 배경 그림의 땅 띠(public/art/bgs/_ground.json · 그림 높이 비율)를 화면 발 띠(CONFIG.ui.groundScreen)에 맞춘 그림 높이·위 y (FINAL §3-4)
+ *  화면을 다 덮도록 (위 y ≤ 0 · 아래 ≥ 화면 높이) */
+const GR = groundJson as unknown as Record<string, [number, number]>;
+export function bgFit(key?: string) {
+  const [t, bt] = (key && GR[key]) || GR._default;
+  const [sy0, sy1] = CONFIG.ui.groundScreen;
+  let h = (sy1 - sy0) / (bt - t);
+  let y0 = sy0 - t * h;
+  if (y0 > 0) ((h = sy0 / t), (y0 = 0));
+  if (y0 + h < LH) h = LH - y0;
+  return { h, y0 };
+}
 
 // 보조 캔버스는 화면 해상도(view.dpr)로 — 1배로 그린 뒤 늘리면 도트가 뭉개지고 2~3px씩 툭툭 끊김 (SPRITE_RES_1017 §A)
 //  그 안은 논리 px로 그리고(setTransform dpr) 본 캔버스엔 논리 크기를 지정해 붙인다
@@ -145,8 +158,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, art: Art, u: Unit, now: number)
   }
   ctx.globalAlpha = 1;
   if (u.dead) return;
-  // 자리표시자 영웅: 이름표 (그림이 아직 없다는 표시)
-  if (sp && (u.ai || u.pvp)) tag(ctx, u.ai && !sp.def.name.endsWith('(AI)') ? `${sp.def.name} (AI)` : sp.def.name, x, y + 12);
+  // 발밑·머리 위 맨글씨 이름표는 그리지 않음 (FINAL §3-2 · 결투장 「그롬」 등)
   // 보호막 · 기절 · 침묵 · 화상
   // 보호막이 남아 있는 동안: 그림 1↔2를 shieldLoopSec마다 · 알파 0.7로 몸에 겹침 (그림이 없으면 예전 타원)
   const FA = CONFIG.combat.fxArt;
@@ -191,24 +203,12 @@ function headHp(ctx: CanvasRenderingContext2D, u: Unit, x: number, y: number, H:
   const gap = F.stun + 2;
   marks.forEach((k, i) => ctx.fillText(iconText(k), x + (i - (marks.length - 1) / 2) * gap, top - 4));
 }
-function tag(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
-  ctx.font = canvasFont(F.tag, 'bold', false);
-  ctx.textAlign = 'center';
-  // 불투명 네모 대신 글씨 테두리 + 그림자 (PLAYTEST §0-7)
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = B.tagEdge;
-  ctx.strokeText(text, x, y + 1);
-  ctx.fillStyle = B.tagText;
-  ctx.fillText(text, x, y + 1);
-}
 
 // ───────── 배경 (그림 1장을 장마다 색 바꾸기) ─────────
 function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: number, region: number, key?: string) {
   const { im, own } = bgOf(art, key);
   if (im) {
-    const y0 = -160;
-    const h = LH - y0;
+    const { h, y0 } = bgFit(own ? key : undefined);
     const w = (im.width / im.height) * h;
     const o = -((s * 0.25) % w);
     ctx.filter = own ? 'none' : (B.region[region] ?? 'none');
@@ -221,6 +221,8 @@ function background(ctx: CanvasRenderingContext2D, art: Art, s: number, W: numbe
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, LH);
   }
+  // 전용 배경 그림은 그 그림의 땅 그대로 (덧칠 길·자갈·풀 막대 없음 · FINAL §3-1 「초록 세로 막대」)
+  if (own) return;
   const gy = GROUND - 30;
   const road = ctx.createLinearGradient(0, gy, 0, LH);
   road.addColorStop(0, B.road0);
@@ -597,6 +599,9 @@ export function render(ctx: CanvasRenderingContext2D, art: Art, b: Battle, now: 
 const RA = CONFIG.raidArena;
 const BW = 760;
 const BH = 640;
+/** 전투 표시 그림 (조준 · 부위 파괴) */
+const markImg = (n: string) => Object.assign(new Image(), { src: `${import.meta.env.BASE_URL}art/ui/battle/${n}.png` });
+const MARK = { tgt: markImg('target'), brk: markImg('part_break') };
 const bossCv = document.createElement('canvas');
 const bx = bossCv.getContext('2d')!;
 /** 다층 배경 (멀수록 느리게 · 페이즈마다 색) */
@@ -605,13 +610,15 @@ function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: n
   const { im, own } = bgOf(art, b.setup.bg);
   const tint = `${own ? 'none' : (B.region[b.setup.region] ?? 'none')} ${B.phaseTint[Math.min(r.phase, B.phaseTint.length - 1)]}`.replace(/none ?/g, '').trim() || 'none';
   if (im) {
+    const fit = bgFit(own ? b.setup.bg : undefined);
     RA.parallax.forEach(([sp, sc], i) => {
-      const h = (LH + 160) * sc;
+      // 맨 앞 층 = 땅 띠를 발 띠에 맞춘 크기 · 뒤 층은 그 배율
+      const h = i === 0 ? fit.h : fit.h * sc;
       const w = (im.width / im.height) * h;
       const o = -(((b.t * 30 * sp) % w) + w) % w;
       ctx.globalAlpha = i === 0 ? 1 : 0.55;
       ctx.filter = `${tint === 'none' ? '' : tint} brightness(${0.7 + i * 0.15})`.trim();
-      for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), LH - h + (i === 0 ? 40 : 90 + i * 20), Math.ceil(w) + 1, h);
+      for (let x = o; x < W; x += w) ctx.drawImage(im, Math.floor(x), i === 0 ? fit.y0 : LH - h + 90 + i * 20, Math.ceil(w) + 1, h);
     });
     ctx.globalAlpha = 1;
     ctx.filter = 'none';
@@ -619,7 +626,8 @@ function raidBackground(ctx: CanvasRenderingContext2D, art: Art, b: Battle, W: n
   // 두 줄 바닥 + 경고 줄
   const half = Math.abs(RA.lanes[1] - RA.lanes[0]) / 2;
   RA.lanes.forEach((y, i) => {
-    const warn = r.warnLane === i;
+    // 결과 화면에서는 경고 줄·글씨 없음 (FINAL §3-6)
+    const warn = r.warnLane === i && b.phase !== 'win' && b.phase !== 'lose';
     ctx.fillStyle = warn ? `${B.laneWarn}${0.22 + 0.25 * Math.abs(Math.sin(b.t * 14))})` : B.laneBand;
     ctx.fillRect(0, y - half + 4, W * RA.bossX - 60, half * 2 - 8);
     ctx.fillStyle = B.laneEdge;
@@ -648,7 +656,7 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
     return [cx + px * H * 0.9, fy - up * H, w * H * 0.9, h * H] as const;
   };
   const dir = ref.split(':')[0].split('/')[0];
-  const big = dir === 'raidboss' || dir === 'worldboss';
+  const big = dir === 'raidboss' || dir === 'worldboss' || dir === 'graidboss';
   let bxShake = 0;
   if (big) {
     // 레이드·월드 보스 동작 (ANIM_1017 ④): 상태마다 칸을 고름
@@ -732,39 +740,22 @@ function drawRaidBoss(ctx: CanvasRenderingContext2D, art: Art, u: Unit, b: Battl
     const px = u.x - cx + x + w / 2;
     const py = u.y - fy + y + h / 2;
     const rr = Math.min(w, h) * 0.32;
+    // 조준 그림 (ui/battle/target · 부서지면 part_break 잠깐) — CSS·선 그리기 대신 (FINAL §3-5)
     if (p.broken) {
       const t = p.brokenT ?? 0;
-      if (t > 0.6) continue;
+      if (t > 0.6 || !MARK.brk.complete) continue;
       ctx.globalAlpha = 1 - t / 0.6;
-      ctx.strokeStyle = B.weakRing;
-      ctx.lineWidth = 3;
-      for (let i = 0; i < 6; i++) {
-        const a0 = (i / 6) * Math.PI * 2 + t * 2;
-        ctx.beginPath();
-        ctx.arc(px + Math.cos(a0) * t * 30, py + Math.sin(a0) * t * 30, rr, a0, a0 + 0.7);
-        ctx.stroke();
-      }
+      const s2 = rr * 2.6 * (1 + t * 0.4);
+      ctx.drawImage(MARK.brk, px - s2 / 2, py - s2 / 2, s2, s2);
       ctx.globalAlpha = 1;
       continue;
     }
-    if (u.dead) continue;
+    if (u.dead || !MARK.tgt.complete) continue;
     const on = p === fp;
     const pulse = 0.5 + 0.5 * Math.sin(now * 4);
-    ctx.globalAlpha = on ? 0.55 + 0.35 * pulse : 0.28;
-    ctx.strokeStyle = B.weakRing;
-    ctx.lineWidth = on ? 3 : 2;
-    ctx.beginPath();
-    ctx.arc(px, py, rr * (on ? 1 + 0.06 * pulse : 0.9), 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(px, py, rr * 0.45, 0, Math.PI * 2);
-    ctx.stroke();
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      ctx.beginPath();
-      ctx.moveTo(px + dx * rr * 0.7, py + dy * rr * 0.7);
-      ctx.lineTo(px + dx * rr * 1.25, py + dy * rr * 1.25);
-      ctx.stroke();
-    }
+    ctx.globalAlpha = on ? 0.7 + 0.3 * pulse : 0.35;
+    const s2 = rr * 2.4 * (on ? 1 + 0.06 * pulse : 0.9);
+    ctx.drawImage(MARK.tgt, px - s2 / 2, py - s2 / 2, s2, s2);
     ctx.globalAlpha = 1;
   }
   if (r.downT > 0) {

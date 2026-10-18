@@ -2,7 +2,7 @@
 import { CONFIG } from '../config';
 import { activeBonds } from '../data/bonds';
 import { artOf, heroOf, HEROES } from '../data/heroes';
-import { CHAPTER_MOBS, MOB_KINDS, MOB_ROW, PATTERNS, regionBoss, regionMob, type MobKind, type RegionMobId } from '../data/mobs';
+import { CHAPTER_MOBS, MOB_KINDS, MOB_ROW, OWN_MOBS, PATTERNS, regionBoss, regionMob, type MobKind, type RegionMobId } from '../data/mobs';
 import { CHAPTERS } from '../data/story';
 import { T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
@@ -85,26 +85,28 @@ export function buildMobs(st: StageId): MobSpec[][] {
   return mobsAt(powIdx(st), waveText(st), st.c);
 }
 /** 강함 지수 p · 웨이브 글자 · 장(이름·색·보스 패턴) · 배수(정예·레이드) → 적 입력 (스토리·토벌·탑·던전 공용) */
-export function mobsAt(p: number, waves: string, chapter: number, o: { hp?: number; atk?: number; boss?: string; patterns?: MobSpec['patterns'] } = {}): MobSpec[][] {
+export function mobsAt(p: number, waves: string, chapter: number, o: { hp?: number; atk?: number; boss?: string; patterns?: MobSpec['patterns']; region?: keyof typeof OWN_MOBS } = {}): MobSpec[][] {
   const g = Math.pow(C.grow, p);
   const cm = CHAPTER_MOBS[(chapter - 1) % CHAPTER_MOBS.length];
-  return varyWaves(waves).split('|').map((w) =>
+  return (o.region ? waves : varyWaves(waves)).split('|').map((w) =>
     [...w].map((ch): MobSpec => {
       const base = MOB_KINDS[KIND[ch]];
       const boss = base.id === 'golem';
       // 지역 그림 (ANIM_1017 ③): 장의 지역 몹 3종 · 장 보스 — 그림 자체가 지역 색이라 색 바꾸기 없음
-      const region = CHAPTERS[(chapter - 1) % CHAPTERS.length].region;
-      const kind = { ...base, anims: boss ? regionBoss(region) : regionMob(region, MOB_ROW[base.id as RegionMobId]) };
+      // 탑·요일·외전은 자기 몹 그림 (FINAL_1018 §6 · mobs2/<tower|daily|side> r0~r2 · 탑 보스 bosses2/tower)
+      const home = CHAPTERS[(chapter - 1) % CHAPTERS.length].region;
+      const region = o.region ?? home;
+      // 외전 보스 그림은 따로 없어 장 보스 그림 그대로
+      const kind = { ...base, anims: boss ? regionBoss(o.region === 'side' ? home : region) : regionMob(region, MOB_ROW[base.id as RegionMobId]) };
       const bm = boss ? C.boss : { hp: 1, atk: 1, def: 1 };
       return {
-        kind, boss, name: boss ? (o.boss ?? cm.boss) : cm.names[kind.id as RegionMobId],
+        kind, boss, name: boss ? (o.boss ?? cm.boss) : o.region ? OWN_MOBS[o.region][MOB_ROW[kind.id as RegionMobId]] : cm.names[kind.id as RegionMobId],
         hp: Math.round(C.mob.hp * kind.hp * bm.hp * g * (o.hp ?? 1)),
         atk: Math.round(C.mob.atk * kind.atk * bm.atk * g * (o.atk ?? 1)),
         def: Math.round(C.mob.def * kind.def * bm.def * g),
         rate: kind.rate,
         tint: 0,
         patterns: boss ? (o.patterns ?? cm.patterns.map((k) => PATTERNS[k])) : undefined,
-        portrait: boss ? 'boss_golem' : undefined,
       };
     }),
   );
