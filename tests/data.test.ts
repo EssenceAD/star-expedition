@@ -73,7 +73,7 @@ describe('데이터', () => {
 });
 
 describe('멤버 영웅 관계 (docs/MEMBERS.md · HEROES_ADD_4)', () => {
-  it('멤버 영웅 17명 = 실멤버 길드 「별의 원정대」 명단 (개척자 5 + 추가 멤버 11 + 황짐승)', async () => {
+  it('멤버 영웅 17명 = 실멤버 길드 「윈드」 명단 (개척자 5 + 추가 멤버 11 + 황짐승)', async () => {
     const { GUILDS } = await import('../src/game/social');
     const want = ['웅스', '고느끼', '이카몰리', '왈왈콩선생', '따뜻한밤', '세르미뉴', '클레이네', '팬더', '부브', '하응', '이치애', '재희아빠', '유월', '깡토끼', '딸기망고모찌', '신야군', '황짐승'];
     expect(GUILDS.find((g) => g.real)!.members.sort()).toEqual(want.sort());

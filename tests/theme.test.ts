@@ -52,9 +52,9 @@ describe('테마 토큰 밖 리터럴 금지', () => {
   });
 });
 
-// MASTER_1018 T2: 글꼴 하나 (UI = Gothic A1 · 예외 전투 피해 숫자 Luckiest Guy) — 다른 글꼴이 나오면 실패
+// T2: 글꼴 하나 (UI v3 · 갈무리 도트 글꼴 · public/fonts 에서 @font-face 로 받음) — 다른 글꼴이 나오면 실패
 describe('T2 글꼴 하나', () => {
-  const ALLOWED = ['Gothic A1', 'Luckiest Guy', 'Apple SD Gothic Neo', 'Malgun Gothic'];
+  const ALLOWED = ['Galmuri11', 'Galmuri9'];
   it('tokens.ts 글꼴 이름은 허용 목록뿐 · 글꼴 값은 ui·dmg 둘', () => {
     const src = strip(readFileSync(join(ROOT, 'theme/tokens.ts'), 'utf8'));
     const font = src.slice(src.indexOf('font: {'), src.indexOf('size: {', src.indexOf('font: {')));
@@ -64,7 +64,7 @@ describe('T2 글꼴 하나', () => {
   });
   it('CSS 글꼴은 var(--f-ui) 또는 inherit만 · 다른 --f- 변수 없음', () => {
     const bad = all.filter((f) => f.p.endsWith('.css')).flatMap(({ p, src }) =>
-      lines(src, /font-family|var\(--f-/).filter(([, l]) => /var\(--f-(?!ui\))/.test(l) || [...l.matchAll(/font-family\s*:\s*([^;}]*)/g)].some((m) => !/^(var\(--f-ui\)|inherit)$/.test(m[1].trim()))).map(([n, l]) => `${p}:${n} ${l.trim()}`),
+      lines(src, /font-family|var\(--f-/).filter(([, l]) => !l.startsWith('@font-face') && ( /var\(--f-(?!ui\))/.test(l) || [...l.matchAll(/font-family\s*:\s*([^;}]*)/g)].some((m) => !/^(var\(--f-ui\)|inherit)$/.test(m[1].trim())))).map(([n, l]) => `${p}:${n} ${l.trim()}`),
     );
     expect(bad).toEqual([]);
   });
@@ -72,7 +72,7 @@ describe('T2 글꼴 하나', () => {
     const bad = all.filter((f) => f.p.endsWith('.ts')).flatMap(({ p, src }) => lines(src, /\.font\s*=/).filter(([, l]) => !/\.font\s*=\s*canvas(Font|Face)\(/.test(l)).map(([n, l]) => `${p}:${n} ${l.trim()}`));
     expect(bad).toEqual([]);
   });
-  it('index.html 은 Gothic A1 · Luckiest Guy 만 받음', () => {
+  it('index.html 은 바깥 글꼴을 받지 않음 (갈무리만 · 허용 목록)', () => {
     const html = readFileSync(join(ROOT, '..', 'index.html'), 'utf8');
     const fams = [...html.matchAll(/family=([^&"]+)/g)].map((m) => decodeURIComponent(m[1].split(':')[0]).replace(/\+/g, ' '));
     expect(fams.filter((f) => !ALLOWED.includes(f))).toEqual([]);

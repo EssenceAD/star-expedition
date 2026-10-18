@@ -497,6 +497,12 @@
   - 남은 것: PC 전투 화면 #stage 가로 11px(4번째 영웅 카드 오른쪽 끝 자동 칸이 잘림) · 콘텐츠 월드 보스·외전 화면 세로 넘침
 - 시트: docs/captures/after_1018/final (phone_s*.jpg · pc_s*.jpg · tests_*.json)
 
+### v0.14.0 (10/18) — UI v3 도트 · W.I.N.D · 스토리 확정본
+- UI: 미드저니 HUD 그림 걷어 내고 코드로 찍은 도트 그림 (tools/pixel_ui.py · pixel_icons2.py · pixel_logo.py → public/art/ui2) · 화면 꾸밈 src/ui_px.css 한 벌 · 글꼴 갈무리 11 (public/fonts · OFL)
+- 이름 W.I.N.D 「바람의 원정대」 · 타이틀 도트 로고 · 메인 대표 영웅 그림 뺌
+- 스토리: docs/STORY_FINAL_1018.md 그대로 (264줄 + 프롤로그 5) · mid3·mid6 · 첫 진입은 프롤로그 다음 1장 시작 대사 · 사투리 잔재 0 · tools/story_e2e.mjs 50/50
+- 시험(폰 68장): T1 0 · T2 0 · T3 12 · T4 0 · T5 0 · PC 63화면은 길드 레이드 결과 대기 시간 초과로 미완
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

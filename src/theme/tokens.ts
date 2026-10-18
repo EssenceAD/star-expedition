@@ -227,15 +227,16 @@ export const T = {
   font: {
     /** 글씨 하나 (MASTER_1018 1-2 · 형철 10/18 견본 A): 화면·캔버스 모든 글씨 = Gothic A1 800 · 예외는 전투 피해 숫자 하나(dmg)
      *  index.html에서 Google Fonts(OFL)로 이 둘만 받음 · 숫자는 전역 tabular-nums */
-    ui: '"Gothic A1", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
-    /** 전투 피해 숫자 (캔버스 · 타격감) */
-    dmg: '"Luckiest Guy", "Gothic A1", sans-serif',
-    /** 굵기 하나 (Gothic A1 800) */
-    w: '800',
-    size: { xxs: '8px', xs: '9px', sm: '12px', md: '12px', base: '12px', lg: '14px', xl: '14px', xxl: '17px', h2: '20px', h1: '40px', logo: '54px' },
+    ui: '"Galmuri11", "Galmuri9", monospace',
+    /** 전투 피해 숫자 (캔버스 · 도트 굵은 글씨) */
+    dmg: '"Galmuri11", monospace',
+    /** 굵기: 본문 = 보통 · 제목·숫자는 <b> 로 Bold 얼굴 */
+    w: '400',
+    /** 도트 글꼴은 12px 배수에서 칸이 또렷 (갈무리 11 = 12px 칸) */
+    size: { xxs: '12px', xs: '12px', sm: '12px', md: '12px', base: '12px', lg: '12px', xl: '12px', xxl: '24px', h2: '24px', h1: '36px', logo: '48px' },
     weight: { normal: '600', bold: '700', black: '700' },
     /** 캔버스 글자 크기 (px 숫자) */
-    canvas: { num: 20, numBig: 26, numCrit: 34, critLabel: 13, cutName: 38, cutHero: 15, stun: 13, tag: 10 },
+    canvas: { num: 24, numBig: 24, numCrit: 36, critLabel: 12, cutName: 36, cutHero: 12, stun: 12, tag: 12 },
   },
   space: { xxs: '1px', xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '18px', xxl: '28px' },
   radius: { sm: '3px', md: '8px', pill: '999px', lg: '12px', cut: '10px 3px 10px 3px', cutSm: '8px 2px 8px 2px', cutLg: '14px 4px 14px 4px', tabR: '0 8px 8px 0' },
@@ -266,6 +267,69 @@ export const T = {
   kitImg: { ring: 'skill_ring', hud: 'hud_card', back: 'btn_back', close: 'btn_close' } as Record<string, string>,
   /** 전투 HUD 그림 (public/art/ui/battle · docs/BATTLE_HUD_1017.md) → var(--hud-이름) */
   hudImg: ['auto_off', 'auto_on', 'speed_1', 'speed_2', 'giveup', 'pause', 'hero_auto_off', 'hero_auto_on', 'dps_panel', 'dps_tab', 'wave_banner', 'cd_overlay'],
+  /** UI v3 도트 (형철 10/18 확정 · docs/proto/ui_v3_board.png): 어두운 나무 도트 판 · 붉은 도트 버튼 · 크림 글씨 + 1칸 외곽선 → var(--px-이름) */
+  px: {
+    ink: '#1a0f08', text: '#fff4dc', soft: '#e3cfa6', mute: '#b8a080', dim: '#8a7458', gold: '#ffd766', goldDeep: '#c98a2c', red: '#e8473a', blue: '#4a8cff', green: '#4bd46a',
+    edge: '8px', edgeSm: '6px', edgeXs: '4px',
+    outline: '1px 0 0 #1a0f08, -1px 0 0 #1a0f08, 0 1px 0 #1a0f08, 0 -1px 0 #1a0f08, 1px 1px 0 #1a0f08, -1px 1px 0 #1a0f08, 1px -1px 0 #1a0f08, -1px -1px 0 #1a0f08',
+    outlineSm: '1px 0 0 #1a0f08, -1px 0 0 #1a0f08, 0 1px 0 #1a0f08, 0 -1px 0 #1a0f08',
+    lightText: '0 1px 0 rgba(255,240,200,0.6)',
+    redText: '0 1px 0 #3c0c04, 1px 0 0 #3c0c04, -1px 0 0 #3c0c04, 0 -1px 0 #3c0c04',
+    iconShadow: 'drop-shadow(1px 0 0 #1a0f08) drop-shadow(-1px 0 0 #1a0f08) drop-shadow(0 1px 0 #1a0f08) drop-shadow(0 -1px 0 #1a0f08) drop-shadow(0 2px 0 rgba(0,0,0,0.45))',
+    well: 'rgba(12,7,3,0.55)', veil: 'rgba(10,6,2,0.55)', veilHi: 'rgba(10,6,2,0.72)', lineSoft: 'rgba(214,162,96,0.3)',
+    barBg: '#0c0703', barHi: 'rgba(255,255,255,0.35)',
+    hp: '#4bd46a', mp: '#3d8cf0', xp: '#ffc94a', cd: 'rgba(0,0,0,0.62)',
+    glow: '0 0 0 2px #ffe08a, 0 0 10px #ffd766', glowHi: '0 0 0 2px #ffe08a, 0 0 16px 3px #ffd766',
+    ring: '0 0 0 2px #1a0f08, 0 0 0 4px #d6a260', ringOn: '0 0 0 2px #1a0f08, 0 0 0 4px #ffd766',
+    nodeDone: '#ffc94a', nodeDoneSh: 'inset -3px -3px 0 #c98a2c, inset 3px 3px 0 #fff0b0',
+    nodeNow: '#4a8cff', nodeNowSh: 'inset -3px -3px 0 #2856b8, inset 3px 3px 0 #a8ccff, 0 0 0 3px #fff',
+    nodeOff: '#7a7f90', nodeOffSh: 'inset -3px -3px 0 #4e5262, inset 3px 3px 0 #a8acba',
+    nodeBoss: '#e04a3a', nodeBossSh: 'inset -3px -3px 0 #9a2618, inset 3px 3px 0 #ff9a80',
+    gradeCommon: '#a89a80', gradeUncommon: '#4fb36a', gradeRare: '#4aa8ff', gradeEpic: '#b46cff', gradeLegend: '#ffb547',
+    good: 'rgba(40,150,70,0.9)', bad: 'rgba(190,40,40,0.9)',
+  } as Record<string, string>,
+  /** UI v2 「모험 수첩」 (형철 10/18 확정 · docs/proto/theme_t1c.png): 틀 그림 없이 코드로 그린 양피지 판 · 갈색 잉크 · 붉은 밀랍 버튼 → var(--pa-이름) */
+  pa: {
+    ink: '#3b2614', ink2: '#6b2e12', mute: '#7a5a3a', dim: '#a08060', line: '#8a5a18', lineSoft: 'rgba(90,60,30,0.18)', gold: '#b5832d', goldHi: '#ffd77a', wax: '#9a2618', blue: '#2f5d8a', white: '#ffffff', cream: '#fff4e0',
+    paper: 'linear-gradient(#fbf1dc, #ecd9b4)',
+    paperFlat: '#f3e4c3',
+    paperDeep: '#e3cfa6',
+    paperShadow: '0 8px 20px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(255,250,235,0.7), inset 0 0 0 3px rgba(138,90,24,0.35), inset 0 0 26px rgba(150,100,40,0.25)',
+    paperShadowSm: '0 3px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,250,235,0.7), inset 0 0 14px rgba(150,100,40,0.2)',
+    corner: 'radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top left / 8px 8px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top right / 8px 8px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom left / 8px 8px no-repeat, radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom right / 8px 8px no-repeat',
+    topLine: 'linear-gradient(90deg, transparent, #b5832d, transparent)',
+    btn: 'linear-gradient(#fdf6e6, #e3cc9c)',
+    btnShadow: '0 2px 0 rgba(90,50,10,0.5), inset 0 1px 0 #fff',
+    waxBtn: 'linear-gradient(#d0503a, #9a2618)',
+    waxShadow: '0 0 0 1px #3c0c04, 0 3px 0 #3c0c04, inset 0 1px 0 #ff9a80',
+    waxText: '0 1px 0 #3c0c04',
+    shine: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent)',
+    bar: '#d9c39a',
+    barDark: 'rgba(30,18,6,0.75)',
+    barShadow: '0 0 0 1px #8a5a18, inset 0 1px 2px rgba(0,0,0,0.3)',
+    hp: 'linear-gradient(90deg, #36b866, #7cf0a2)',
+    mp: 'linear-gradient(90deg, #2f7fe0, #7cc6ff)',
+    xp: 'linear-gradient(90deg, #c98f34, #ffd77a)',
+    ring: '0 0 0 2px #fbf1dc, 0 0 0 3px #8a5a18, 0 3px 6px rgba(0,0,0,0.5)',
+    ringOn: '0 0 0 2px #ffd77a, 0 0 0 3px #9a2618, 0 0 12px rgba(255,215,122,0.8)',
+    outline: '0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000, 0 0 6px rgba(0,0,0,0.6)',
+    iconOutline: 'drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 2px 3px rgba(0,0,0,0.7))',
+    veil: 'rgba(40,24,10,0.35)',
+    veilHi: 'rgba(40,24,10,0.55)',
+    glow: '0 0 0 2px #ffe08a, 0 0 12px 2px rgba(255,214,120,0.85)',
+    glowHi: '0 0 0 2px #ffe08a, 0 0 18px 5px rgba(255,214,120,0.95)',
+    gradeCommon: '#a89a80', gradeUncommon: '#4fb36a', gradeRare: '#3d8fe0', gradeEpic: '#9b5de5', gradeLegend: '#e09a2a',
+    nodeDone: 'radial-gradient(circle at 40% 35%, #ffe8a8, #d39a3c 60%, #8a5a18)',
+    nodeNow: 'radial-gradient(circle at 40% 35%, #a9d0ff, #3f7df0 60%, #1d3a8a)',
+    nodeOff: 'radial-gradient(circle at 40% 35%, #8a90a8, #4a5068)',
+    nodeBoss: 'radial-gradient(circle at 40% 35%, #ff9a8a, #c7363a 60%, #5e1015)',
+    nodeRing: '0 0 0 2px #fff3c4, 0 0 0 4px #8a5a18, 0 4px 8px rgba(0,0,0,0.6)',
+    nodeRingNow: '0 0 0 2px #fff, 0 0 0 4px #1d3a8a, 0 0 18px #6aa8ff',
+    nodeText: '#3a2405',
+    cdVeil: 'rgba(5,8,20,0.72)',
+    buffUp: 'linear-gradient(#9dffb8, #2fbf63)',
+    buffDown: 'linear-gradient(#ffb0a0, #d8402e)',
+  } as Record<string, string>,
   shadow: {
     /** 쿨다운 숫자 검은 외곽선 (POLISH_1017 ③-7) */
     cdNum: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 -2px 0 #000, -2px 0 0 #000, 2px 0 0 #000, 0 2px 0 #000',
@@ -340,6 +404,9 @@ export const T = {
     slowBar: '#66c8ff',
     shield: 'rgba(170,225,255,0.7)',
     stun: '#ffe36b',
+    markGood: 'rgba(40,150,80,0.85)',
+    markBad: 'rgba(190,40,40,0.85)',
+    markEdge: '#fff3c4',
     silence: '#c79bff',
     burn: '#ff7a3d',
     warnFloor: 'rgba(255,50,30,',
@@ -490,20 +557,27 @@ export const ICON_SVG: Record<string, [string, boolean?]> = {
   /** 메인 지도 다음 노드 화살표 · 장 이름 펼침 (RECOVER_1018 S1) */
   pointer: ['M12 22 3 12h5V2h8v10h5z', true],
   menu: ['M4 6h16M4 12h16M4 18h16'],
+  event: ['M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z'],
+  attend: ['M4 6h16v14H4zM4 10h16M8 3v5M16 3v5M9 15l2 2 4-4'],
+  pause: ['M8 5v14M16 5v14'],
+  star: ['M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z', true],
 };
 /** 그림 아이콘 (재화·재료 · public/art/items/<이름>.png · docs/ART_DONE_1017_2.md) — 있으면 글자 아이콘 대신 */
 /** 그림 아이콘 (public/art/ui/… · HARMONY §1) — 있으면 이것 먼저 */
-export const ICON_UI: Record<string, string> = {
-  stamina: 'icons/stamina', gold: 'icons/gold', stardust: 'icons/stardust', lock: 'icons/lock', power: 'icons/power', plusArt: 'icons/plus',
-  hp: 'icons/hp', atk: 'icons/atk', def: 'icons/def', crit: 'icons/crit', critDmg: 'icons/critdmg', spd: 'icons/speed', mana: 'icons/mana', levelup: 'icons/levelup',
-  arenaCoin: 'menu/arena', towerCoin: 'menu/tower', exShard: 'icons/slot_exclusive',
-  mail: 'menu/mail', chat: 'menu/chat', heroes: 'menu/heroes', formation: 'menu/formation', content: 'menu/content', bag: 'menu/bag', mission: 'menu/mission', achieve: 'menu/achieve',
-  friend: 'menu/friend', shop: 'menu/shop', event: 'menu/trophy', attend: 'menu/daily', guild: 'menu/guild', ranking: 'menu/ranking', settings: 'menu/settings', world: 'menu/worldboss', raid: 'menu/raid', adventure: 'menu/adventure',
+/** 도트 아이콘 (UI v3 · tools/pixel_ui.py · pixel_icons2.py → public/art/ui2/icons) — 키 → 파일 이름 */
+export const ICON_PX: Record<string, string> = {
+  heroes: 'hero', recruit: 'hero', formation: 'team', bag: 'bag', shop: 'shop', friend: 'friend', guild: 'guild', content: 'portal', mission: 'mission', event: 'event', attend: 'attend',
+  mail: 'mail', settings: 'gear', chat: 'chat', ranking: 'trophy', achieve: 'trophy', back: 'back', next: 'next', close: 'close', cross: 'close', check: 'check', lock: 'lock', star: 'star', join: 'star',
+  repeat: 'repeat', auto: 'auto', rotate: 'repeat', adventure: 'adventure', story: 'story', sk_hammer: 'sk_hammer', craft: 'sk_hammer', rune: 'rune', pointer: 'pointer', open: 'pointer', warn: 'warn',
+  tower: 'tower', target: 'target', summon: 'summon', skip: 'skip', sweep: 'skip', power: 'power', offline: 'offline', menu: 'menu', emote: 'emote', badge: 'badge', chest: 'chest', booster: 'booster',
+  hp: 'hp', atk: 'atk', battle: 'atk', weapon: 'atk', def: 'def', armor: 'def', spd: 'spd', crit: 'crit', critDmg: 'critDmg', mana: 'mana', pause: 'pause', plusArt: 'plus', levelup: 'pointer',
+  guildCoin: 'guildCoin', arenaCoin: 'arenaCoin', towerCoin: 'towerCoin', tierMat: 'tierMat', exShard: 'exShard', treasureShard: 'treasureShard', bossMat: 'bossMat', token: 'token',
+  zone_front: 'zone_front', zone_mid: 'zone_mid', zone_back: 'zone_back', raid: 'power', coop: 'power', world: 'target', worldBoss: 'target', arena: 'atk', day: 'attend', guildRaid: 'guild', acc: 'badge',
 };
 export const ICON_IMG: Record<string, string> = { gold: 'm_gold', stardust: 'm_stardust', enh: 'm_enh', awakenStone: 'm_awaken', transStone: 'm_trans', exp: 'm_exp', skillBook: 'm_skillbook', optTicket: 'm_reroll', stamina: 'm_stamina', summon: 'm_summon' };
 export function icon(key: string, cls = 'ic'): string {
-  if (ICON_UI[key]) return `<img class="${cls} img ui" src="${import.meta.env.BASE_URL}art/ui/${ICON_UI[key]}.png" alt="">`;
   if (ICON_IMG[key]) return `<img class="${cls} img" src="${import.meta.env.BASE_URL}art/items/${ICON_IMG[key]}.png" alt="">`;
+  if (ICON_PX[key]) return `<img class="${cls} img px" src="${import.meta.env.BASE_URL}art/ui2/icons/${ICON_PX[key]}.png" alt="">`;
   const sv = ICON_SVG[key];
   if (sv) return `<svg class="${cls} svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${sv[0]}" fill="${sv[1] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   const v = T.icon[key] ?? '·';
@@ -514,7 +588,7 @@ export const iconText = (key: string) => T.icon[key] ?? '·';
 export const gradeColor = (g: keyof typeof T.grade) => T.grade[g];
 export const elemColor = (e: string) => (T.elem as Record<string, string>)[e] ?? T.color.text;
 /** 캔버스 글꼴 문자열 */
-export const canvasFont = (px: number, _weight?: unknown, num = true) => (num ? `${px}px ${T.font.dmg}` : canvasFace(px));
+export const canvasFont = (px: number, _weight?: unknown, num = true) => (num ? `700 ${px}px ${T.font.dmg}` : canvasFace(px));
 /** 캔버스 UI 글씨 (이름·경고·페이즈·부위·컷인 · 피해 숫자 말고 전부) */
 export const canvasFace = (px: number) => `${T.font.w} ${px}px ${T.font.ui}`;
 
@@ -536,9 +610,11 @@ export function applyTheme(m: Mode = 'glass', root: HTMLElement = document.docum
   for (const [k, v] of Object.entries(T.radius)) set(`--r-${k}`, v);
   for (const [k, v] of Object.entries(T.border)) set(`--b-${k}`, v);
   for (const [k, v] of Object.entries(T.fx)) set(`--fx-${k}`, v);
-  const kit = (f: string) => `url("${new URL(`${import.meta.env.BASE_URL}art/ui/kit/${f}.png`, location.href).href}")`;
-  for (const [k, [f, slice, w, nofill]] of Object.entries(T.kit)) set(`--kit-${k}`, `${kit(f)} ${slice}${nofill ? '' : ' fill'} / ${w} / 0 stretch`);
-  for (const [k, f] of Object.entries(T.kitImg)) set(`--kimg-${k}`, kit(f));
-  for (const f of T.hudImg) set(`--hud-${f.replace(/_/g, '-')}`, `url("${new URL(`${import.meta.env.BASE_URL}art/ui/battle/${f}.png`, location.href).href}")`);
+  // UI v3: 미드저니 틀·버튼 그림은 지움 (변수는 남기고 none → 옛 규칙이 그림을 못 그림)
+  for (const k of Object.keys(T.kit)) set(`--kit-${k}`, 'none');
+  for (const k of Object.keys(T.kitImg)) set(`--kimg-${k}`, 'none');
+  for (const f of T.hudImg) set(`--hud-${f.replace(/_/g, '-')}`, 'none');
+  for (const [k, v] of Object.entries(T.pa)) set(`--pa-${k}`, v);
+  for (const [k, v] of Object.entries(T.px)) set(`--px-${k}`, v);
   for (const [k, v] of Object.entries(T.shadow)) set(`--sh-${k}`, m === 'light' ? (T.shadowLight[k] ?? v) : v);
 }

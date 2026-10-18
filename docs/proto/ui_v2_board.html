@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ko"><script>document.documentElement.className = new URLSearchParams(location.search).get("t") || "";</script><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── 새 UI 시스템 시안: 틀 그림 0장 · 전부 코드로 그림 ── */
+:root {
+  --glass: rgba(12, 16, 34, 0.78);
+  --glass-2: rgba(22, 28, 56, 0.86);
+  --line: rgba(240, 205, 130, 0.38);
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --gold: #f3cd72; --gold-d: #c98f34;
+  --ink: #eef1ff; --mute: #9ca6cc; --dim: #6f7aa3;
+  --act: #4a86ff; --hp: #4fd37f; --mp: #4aa8ff; --bad: #ff5d6c;
+  --r: 10px; --r-s: 7px;
+  --sh: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #0b0e1c; font-family: 'Gothic A1', sans-serif; font-weight: 700; color: var(--ink); word-break: keep-all; }
+.frame { position: relative; width: 844px; height: 390px; overflow: hidden; background: center / cover no-repeat; }
+/* 공통 부품 */
+.glass { background: var(--glass); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--sh), inset 0 1px 0 var(--line-soft); backdrop-filter: blur(6px); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 16px; border-radius: var(--r-s); font: 800 14px 'Gothic A1'; color: var(--ink); background: linear-gradient(#26305e, #1a2147); border: 1px solid rgba(140, 170, 255, 0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 0 rgba(0,0,0,.4); }
+.btn.gold { color: #2a1a05; background: linear-gradient(#ffe39a, #e6aa47); border-color: #ffefc0; }
+.btn.sm { height: 26px; padding: 0 10px; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--mute); font-size: 11px; }
+.bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.55); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; }
+.bar.hp i { background: linear-gradient(90deg, #36b866, #7cf0a2); }
+.bar.mp i { background: linear-gradient(90deg, #2f7fe0, #7cc6ff); }
+.tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line-soft); }
+.tabs b { padding: 6px 2px 7px; font-size: 13px; color: var(--mute); }
+.tabs b.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--gold); }
+.pt { border-radius: 50%; background: center 18% / cover no-repeat; box-shadow: 0 0 0 2px var(--gold-d), 0 0 0 3px rgba(0,0,0,.6); }
+.slot { position: relative; width: 52px; height: 52px; border-radius: var(--r-s); background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.08), rgba(0,0,0,.35)); border: 1px solid var(--line-soft); }
+.slot img { position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); object-fit: contain; }
+.slot.epic { border-color: #b46cff; box-shadow: inset 0 0 12px rgba(180,108,255,.35); }
+.slot.legend { border-color: #ffb547; box-shadow: inset 0 0 12px rgba(255,181,71,.35); }
+.slot.rare { border-color: #4aa8ff; box-shadow: inset 0 0 12px rgba(74,168,255,.3); }
+.slot.empty::after { content: '+'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-size: 18px; }
+.ic { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.label { position: absolute; left: 10px; top: 8px; z-index: 20; padding: 2px 8px; border-radius: 4px; background: #ff3d6e; color: #fff; font-size: 12px; }
+
+/* A 전투 HUD */
+.hud-top { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 14px; }
+.hud-top .w { font-size: 13px; color: var(--gold); letter-spacing: 1px; }
+.hud-top .t { font-size: 15px; font-variant-numeric: tabular-nums; }
+.hud-top .s { font-size: 11px; color: var(--mute); }
+.rbtn { position: absolute; top: 10px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
+.rbtn small { position: absolute; top: 38px; font-size: 10px; color: var(--mute); white-space: nowrap; }
+.rbtn.on { border-color: var(--gold); color: var(--gold); }
+.party { position: absolute; left: 10px; right: 10px; bottom: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.hc { display: grid; grid-template-columns: 46px 1fr; grid-template-rows: auto auto 1fr; column-gap: 8px; height: 82px; padding: 7px 8px; }
+.hc .pt { grid-row: 1 / 3; width: 46px; height: 46px; }
+.hc .nm { font-size: 13px; line-height: 16px; display: flex; justify-content: space-between; }
+.hc .nm em { font-style: normal; font-size: 10px; color: var(--mute); }
+.hc .bars { display: grid; gap: 3px; align-content: start; padding-top: 3px; }
+.hc .bar.mp { height: 4px; }
+.hc .sk { grid-column: 1 / 3; display: flex; gap: 6px; align-items: end; justify-content: space-between; }
+.sk .s { position: relative; width: 30px; height: 30px; border-radius: 50%; background: center / cover; box-shadow: 0 0 0 1.5px rgba(255,255,255,.25); }
+.sk .s.cd::after { content: attr(data-cd); position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: conic-gradient(rgba(0,0,0,0) var(--p), rgba(5,8,20,.72) 0); text-shadow: 0 1px 2px #000; }
+.sk .s.ready { box-shadow: 0 0 0 1.5px var(--gold), 0 0 10px rgba(243,205,114,.7); }
+.sk .buffs { display: flex; gap: 3px; margin-right: auto; padding-left: 2px; }
+.sk .buffs img { width: 14px; height: 14px; }
+.sk .au { width: 26px; height: 18px; border-radius: 9px; font-size: 9px; display: grid; place-items: center; background: rgba(255,255,255,.08); color: var(--mute); }
+.sk .au.on { background: rgba(74,134,255,.35); color: #fff; }
+.dmg-h { position: absolute; left: 0; top: 70px; width: 22px; height: 60px; border-radius: 0 8px 8px 0; display: grid; place-items: center; }
+
+/* B 메인 지도 */
+.prof { position: absolute; left: 10px; top: 8px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 4px; }
+.prof .pt { width: 32px; height: 32px; }
+.prof b { font-size: 13px; } .prof .xp { width: 90px; height: 4px; } .prof em { font-style: normal; color: var(--gold); font-size: 12px; }
+.curs { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
+.cur { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 4px 0 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.cur img { width: 20px; height: 20px; }
+.cur .plus { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: rgba(243,205,114,.2); color: var(--gold); font-size: 14px; }
+.quest { position: absolute; left: 10px; top: 56px; width: 236px; display: grid; gap: 4px; }
+.quest div { display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 10px; font-size: 12px; }
+.quest em { font-style: normal; font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--gold); color: #2a1a05; }
+.quest em.st { background: var(--act); color: #fff; }
+.chap { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); height: 28px; padding: 0 14px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.chap span { color: var(--gold); }
+.node { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; }
+.node i { width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #ffe8a8, #d39a3c 60%, #8a5a18); box-shadow: 0 0 0 2px #fff6, 0 3px 6px #0008; display: grid; place-items: center; font-style: normal; font-size: 12px; color: #3a2405; }
+.node.now i { background: radial-gradient(circle at 40% 35%, #a9d0ff, #3f7df0 60%, #1d3a8a); color: #fff; box-shadow: 0 0 0 2px #fff, 0 0 14px #6aa8ff; }
+.node.lock i { background: radial-gradient(circle at 40% 35%, #8a90a8, #4a5068); color: #cfd3e3; }
+.node.boss i { width: 40px; height: 40px; background: radial-gradient(circle at 40% 35%, #ff9a8a, #c7363a 60%, #5e1015); color: #fff; }
+.node b { font-size: 10px; padding: 0 6px; border-radius: 6px; background: var(--glass); border: 1px solid var(--line); }
+.node .st { font-size: 9px; color: var(--gold); letter-spacing: -1px; }
+.dock { position: absolute; left: 10px; bottom: 8px; display: flex; gap: 4px; padding: 4px 6px; }
+.dock div { width: 54px; display: grid; justify-items: center; gap: 2px; padding: 4px 0; border-radius: 8px; font-size: 11px; color: var(--mute); }
+.dock div .ic { width: 22px; height: 22px; color: var(--ink); }
+.dock div.dot::before { content: ''; position: absolute; }
+.go { position: absolute; right: 12px; bottom: 12px; width: 140px; white-space: nowrap; height: 52px; font-size: 17px; border-radius: 12px; }
+
+/* C 영웅 정보 */
+.scr-bg::before { content: ''; position: absolute; inset: 0; background: rgba(8,10,24,.55); }
+.topbar { position: absolute; left: 0; right: 0; top: 0; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 10px; background: linear-gradient(rgba(6,8,20,.9), rgba(6,8,20,.6)); border-bottom: 1px solid var(--line-soft); }
+.topbar .back { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
+.topbar h2 { margin: 0; font-size: 16px; flex: 1; }
+.hlist { position: absolute; left: 10px; top: 54px; bottom: 10px; width: 62px; display: grid; gap: 8px; align-content: start; }
+.hlist .pt { width: 46px; height: 46px; margin: 0 auto; }
+.hlist .pt.on { box-shadow: 0 0 0 2px var(--gold), 0 0 12px rgba(243,205,114,.6); }
+.fb { position: absolute; left: 70px; top: 50px; bottom: 0; width: 210px; background: center bottom / contain no-repeat; }
+.info { position: absolute; left: 270px; top: 54px; width: 330px; bottom: 10px; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.info h3 { margin: 0; font-size: 20px; display: flex; align-items: baseline; gap: 8px; }
+.info h3 small { font-size: 12px; color: var(--gold); }
+.info .sub { font-size: 12px; color: var(--mute); }
+.pw { font-size: 13px; } .pw b { color: var(--gold); font-size: 16px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.grow { flex: 1; }
+.kv { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
+.kv span { color: var(--mute); }
+.eq { position: absolute; right: 10px; top: 54px; width: 224px; bottom: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.eq .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; justify-items: center; }
+.stars { color: var(--gold); letter-spacing: 1px; font-size: 12px; }
+
+/* D 상점 */
+.side { position: absolute; left: 10px; top: 54px; bottom: 10px; width: 120px; display: grid; gap: 4px; align-content: start; padding: 6px; }
+.side b { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 7px; font-size: 13px; color: var(--mute); }
+.side b.on { background: rgba(243,205,114,.14); color: var(--ink); box-shadow: inset 3px 0 0 var(--gold); }
+.cards { position: absolute; left: 142px; right: 10px; top: 54px; bottom: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.card { position: relative; border-radius: var(--r); overflow: hidden; background: center 15% / cover; border: 1px solid var(--line); box-shadow: var(--sh); }
+.card::after { content: ''; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(6,8,20,.95)); }
+.card .in { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 1; display: grid; gap: 4px; justify-items: center; text-align: center; }
+.card .in b { font-size: 16px; } .card .in .sub { font-size: 11px; color: var(--mute); }
+.card .job { position: absolute; left: 6px; top: 6px; z-index: 1; width: 22px; height: 22px; padding: 3px; border-radius: 6px; background: rgba(6,8,20,.7); }
+.card .tagr { position: absolute; right: 6px; top: 6px; z-index: 1; }
+.modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 360px; padding: 14px 16px; display: grid; gap: 10px; z-index: 5; }
+.modal h4 { margin: 0; font-size: 15px; }
+.gifts { display: flex; gap: 8px; justify-content: center; }
+.gift { width: 74px; display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 8px; background: rgba(255,255,255,.05); font-size: 11px; color: var(--mute); }
+.gift img { width: 40px; height: 40px; } .gift b { color: var(--ink); font-size: 13px; }
+.veil { position: absolute; inset: 0; background: rgba(6,8,20,.6); z-index: 4; }
+
+/* ── 더 화려하게: 금테 두 줄 · 모서리 보석 · 위 빛줄 · 금 글씨 · 광택 버튼 ── */
+.hc.glass, .quest .glass, .cur.glass { position: relative; }
+.glass { background: linear-gradient(180deg, rgba(30,38,82,.94), rgba(11,14,34,.93)); border: 1px solid #c9973f;
+  box-shadow: 0 8px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,224,150,.22), inset 0 1px 12px rgba(120,150,255,.12); }
+.glass::before { content: ''; position: absolute; inset: -3px; pointer-events: none;
+  background:
+    radial-gradient(circle at 3px 3px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top left / 7px 7px no-repeat,
+    radial-gradient(circle at 4px 3px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) top right / 7px 7px no-repeat,
+    radial-gradient(circle at 3px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom left / 7px 7px no-repeat,
+    radial-gradient(circle at 4px 4px, #fff3c4 0 1.5px, #e0a845 2px 3px, transparent 3.5px) bottom right / 7px 7px no-repeat; }
+.glass::after { content: ''; position: absolute; left: 18%; right: 18%; top: -1px; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, #fff0b8, transparent); box-shadow: 0 0 6px #ffd27a; }
+.rbtn.glass, .cur.glass, .back.glass, .dmg-h.glass { border-radius: 999px; }
+.rbtn.glass::before, .cur.glass::before, .back.glass::before, .dmg-h.glass::before, .quest .glass::before { display: none; }
+.gold-t, .info h3 > .nmx, .topbar h2, .modal h4, .card .in b, .hud-top .w { background: linear-gradient(#fff6d6, #f3cd72 55%, #c98f34); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(0,0,0,.8)); }
+.btn { position: relative; overflow: hidden; border: 1px solid #8aa6ff66; background: linear-gradient(#3a4a8e, #1d2659 55%, #161c45); }
+.btn.gold { border: 1px solid #fff0bf; background: linear-gradient(#fff2c0, #f2c45f 45%, #c98a2c 55%, #e7b14d); color: #3a2203; text-shadow: 0 1px 0 rgba(255,255,255,.5); box-shadow: 0 0 0 1px #7a4c10, 0 3px 0 #5a3508, 0 0 14px rgba(243,205,114,.45), inset 0 1px 0 #fff; }
+.btn::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 45%; background: linear-gradient(rgba(255,255,255,.28), rgba(255,255,255,0)); pointer-events: none; }
+.bar { height: 7px; border-radius: 4px; background: #05070f; box-shadow: 0 0 0 1px #7b5a22, inset 0 1px 2px #000; }
+.bar i { box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+.pt { box-shadow: 0 0 0 2px #f3cd72, 0 0 0 3px #6b4510, 0 0 0 4px rgba(255,230,160,.35), 0 3px 8px #000; }
+.tabs b.on { box-shadow: inset 0 -2px 0 var(--gold), 0 6px 10px -6px rgba(243,205,114,.9); color: #fff3cf; }
+.side b.on { background: linear-gradient(90deg, rgba(243,205,114,.28), rgba(243,205,114,.04)); box-shadow: inset 3px 0 0 var(--gold); color: #fff3cf; }
+.slot { box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 1px #8a6526; }
+.slot.epic { box-shadow: inset 0 0 14px rgba(180,108,255,.45), 0 0 0 1px #b46cff, 0 0 8px rgba(180,108,255,.4); }
+.slot.legend { box-shadow: inset 0 0 14px rgba(255,181,71,.45), 0 0 0 1px #ffb547, 0 0 8px rgba(255,181,71,.45); }
+.slot.rare { box-shadow: inset 0 0 14px rgba(74,168,255,.4), 0 0 0 1px #4aa8ff, 0 0 8px rgba(74,168,255,.35); }
+.sk .s { box-shadow: 0 0 0 1.5px #c9973f, 0 0 0 2.5px #000; }
+.sk .s.ready { box-shadow: 0 0 0 2px #ffe08a, 0 0 12px 2px rgba(255,214,120,.85); }
+.card { border: 1px solid #c9973f; box-shadow: 0 8px 18px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,224,150,.25); }
+.node i { box-shadow: 0 0 0 2px #fff3c4, 0 0 0 4px #8a5a18, 0 4px 8px #000a; }
+.node.now i { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1d3a8a, 0 0 18px #6aa8ff; }
+.node b { background: linear-gradient(#2a3470, #121735); border: 1px solid #c9973f; }
+.go { position: absolute !important; box-shadow: 0 0 0 1px #7a4c10, 0 4px 0 #5a3508, 0 0 22px rgba(255,206,110,.65), inset 0 1px 0 #fff !important; }
+.topbar { border-bottom: 1px solid #c9973f; box-shadow: 0 1px 0 rgba(255,224,150,.25), 0 4px 12px rgba(0,0,0,.4); }
+.quest em { box-shadow: 0 0 6px rgba(243,205,114,.6); }
+
+/* ════ 테마 1: 모험 수첩 (양피지 · 갈색 잉크 · 붉은 밀랍) ════ */
+html.t1 { --ink: #3b2614; --mute: #7a5a3a; --dim: #a08060; --gold: #b5832d; --gold-d: #8a5a18; --line-soft: rgba(90,60,30,.18); }
+html.t1 .glass { background: linear-gradient(#fbf1dc, #ecd9b4); border: 1px solid #8a5a18; box-shadow: 0 8px 20px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,250,235,.7), inset 0 0 0 3px rgba(138,90,24,.35), inset 0 0 26px rgba(150,100,40,.25); color: var(--ink); }
+html.t1 .glass::after { background: linear-gradient(90deg, transparent, #b5832d, transparent); box-shadow: none; }
+html.t1 .info h3 > .nmx, html.t1 .topbar h2, html.t1 .modal h4, html.t1 .hud-top .w { background: none; color: #6b2e12; -webkit-text-fill-color: #6b2e12; filter: none; }
+html.t1 .topbar { background: linear-gradient(#f6e7c6, #e6cf9f); border-bottom: 2px solid #8a5a18; }
+html.t1 .topbar h2 { color: #6b2e12; }
+html.t1 .btn { background: linear-gradient(#fdf6e6, #e3cc9c); color: #4a2e12; border: 1px solid #8a5a18; text-shadow: none; }
+html.t1 .btn.gold { background: linear-gradient(#d0503a, #9a2618); color: #fff4e0; border-color: #5e1408; box-shadow: 0 0 0 1px #3c0c04, 0 3px 0 #3c0c04, inset 0 1px 0 #ff9a80; text-shadow: 0 1px 0 #3c0c04; }
+html.t1 .bar { background: #d9c39a; box-shadow: 0 0 0 1px #8a5a18, inset 0 1px 2px rgba(0,0,0,.3); }
+html.t1 .tabs b { color: var(--mute); } html.t1 .tabs b.on { color: #6b2e12; box-shadow: inset 0 -2px 0 #9a2618; }
+html.t1 .side b.on { background: rgba(154,38,24,.12); box-shadow: inset 3px 0 0 #9a2618; color: #6b2e12; }
+html.t1 .chip { background: rgba(138,90,24,.15); color: #6b2e12; }
+html.t1 .quest em { background: #9a2618; color: #fff4e0; box-shadow: none; } html.t1 .quest em.st { background: #2f5d8a; }
+html.t1 .node b { background: #fbf1dc; color: #3b2614; border-color: #8a5a18; }
+html.t1 .card .in b { background: none; color: #fff4e0; -webkit-text-fill-color: #fff4e0; filter: drop-shadow(0 1px 1px #000); }
+html.t1 .card { border: 2px solid #e8d2a6; box-shadow: 0 0 0 1px #8a5a18, 0 8px 18px rgba(0,0,0,.5); }
+html.t1 .slot { background: #e3cfa6; } html.t1 .slot.empty::after { color: #8a6a40; }
+html.t1 .scr-bg::before { background: rgba(40,24,10,.35); }
+html.t1 .hc .nm em, html.t1 .info .sub, html.t1 .kv span { color: var(--mute); }
+html.t1 .pt { box-shadow: 0 0 0 2px #fbf1dc, 0 0 0 3px #8a5a18, 0 3px 6px rgba(0,0,0,.5); }
+html.t1 .sk .s { box-shadow: 0 0 0 1.5px #8a5a18; }
+html.t1 .cur .plus { background: #9a2618; color: #fff; }
+html.t1 .dock div .ic { color: #6b2e12; } html.t1 .dock div { color: #6b2e12; }
+html.t1 .rbtn.on { color: #9a2618; }
+html.t1 .gift { background: rgba(138,90,24,.12); } html.t1 .gift b { color: #3b2614; }
+html.t1 .veil { background: rgba(40,24,10,.5); }
+
+/* ════ 테마 2: 별빛 성좌 (보랏빛 밤하늘 · 별가루 · 분홍·하늘 무지갯빛) ════ */
+html.t2 { --gold: #ffd7f2; --gold-d: #b48cff; --ink: #f7f2ff; --mute: #c6b7ef; --dim: #8f7fc4; --line-soft: rgba(220,200,255,.14); }
+html.t2 .glass { background:
+    radial-gradient(1px 1px at 20% 30%, #fff 50%, transparent), radial-gradient(1px 1px at 70% 60%, #fff 50%, transparent), radial-gradient(1.5px 1.5px at 40% 80%, #ffe6ff 50%, transparent), radial-gradient(1px 1px at 85% 20%, #fff 50%, transparent),
+    linear-gradient(160deg, rgba(58,32,110,.93), rgba(20,14,52,.93) 60%, rgba(34,22,80,.93));
+  border: 1px solid transparent; border-image: linear-gradient(120deg, #ffb3e6, #b8a2ff, #8ee8ff, #ffb3e6) 1; box-shadow: 0 8px 24px rgba(20,0,60,.5), 0 0 16px rgba(180,140,255,.25); }
+html.t2 .glass::before { display: none; }
+html.t2 .glass::after { background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 8px #e0c8ff; }
+html.t2 .rbtn.glass, html.t2 .cur.glass, html.t2 .back.glass, html.t2 .dmg-h.glass { border-image: none; border: 1px solid #c8a8ff; }
+html.t2 .info h3 > .nmx, html.t2 .topbar h2, html.t2 .modal h4, html.t2 .card .in b, html.t2 .hud-top .w { background: linear-gradient(90deg, #ffd1f0, #fff, #b9ecff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 6px rgba(220,180,255,.6)); }
+html.t2 .btn { background: linear-gradient(#4a2f8e, #2a1a5e); border: 1px solid #b48cff; }
+html.t2 .btn.gold { background: linear-gradient(110deg, #ff9ad8, #c9a2ff 45%, #8ee0ff); color: #2a1050; border: 1px solid #fff; box-shadow: 0 0 16px rgba(220,160,255,.7), inset 0 1px 0 #fff; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+html.t2 .bar { background: #120a2e; box-shadow: 0 0 0 1px #6a4fb0; }
+html.t2 .bar.hp i { background: linear-gradient(90deg, #4be0a0, #b0ffd8); } html.t2 .bar.mp i { background: linear-gradient(90deg, #6aa8ff, #d6b6ff); }
+html.t2 .tabs b.on { color: #fff; box-shadow: inset 0 -2px 0 #ff9ad8, 0 6px 10px -6px #ff9ad8; }
+html.t2 .side b.on { background: linear-gradient(90deg, rgba(255,154,216,.25), transparent); box-shadow: inset 3px 0 0 #ff9ad8; }
+html.t2 .pt { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #b48cff, 0 0 12px rgba(200,160,255,.7); }
+html.t2 .sk .s.ready { box-shadow: 0 0 0 2px #fff, 0 0 14px 3px rgba(255,170,230,.9); }
+html.t2 .quest em { background: #ff9ad8; color: #2a1050; } html.t2 .quest em.st { background: #8ee0ff; color: #0e2a40; }
+html.t2 .topbar { background: linear-gradient(rgba(40,20,90,.95), rgba(20,12,50,.7)); border-bottom: 1px solid #b48cff; box-shadow: 0 0 14px rgba(180,140,255,.35); }
+html.t2 .node i { background: radial-gradient(circle at 40% 35%, #fff, #ffc2ec 45%, #b48cff); box-shadow: 0 0 0 2px #fff, 0 0 12px #ffb3e6; color: #4a1f7a; }
+html.t2 .node.now i { background: radial-gradient(circle at 40% 35%, #fff, #8ee0ff 50%, #4a7cff); }
+html.t2 .node b { background: rgba(30,16,70,.9); border-color: #b48cff; }
+html.t2 .card { border: 1px solid #c8a8ff; box-shadow: 0 0 14px rgba(180,140,255,.45); }
+html.t2 .scr-bg::before { background: linear-gradient(rgba(30,10,70,.55), rgba(10,6,30,.65)); }
+html.t2 .cur .plus { background: rgba(255,154,216,.3); color: #fff; }
+html.t2 .go { box-shadow: 0 0 26px rgba(255,170,230,.8) !important; }
+
+/* ════ 테마 3: 하얀 유리 (밝은 반투명 흰 판 · 하늘색 포인트 · 기울어진 띠) ════ */
+html.t3 { --ink: #1c2a44; --mute: #5b6b8c; --dim: #8a98b6; --gold: #2b8cff; --gold-d: #1f6fd6; --line-soft: rgba(30,60,120,.12); }
+html.t3 .glass { background: linear-gradient(rgba(255,255,255,.9), rgba(236,244,255,.86)); border: 0; border-radius: 12px; box-shadow: 0 10px 24px rgba(10,30,80,.3), inset 0 0 0 1px rgba(255,255,255,.9), inset 0 -3px 0 rgba(43,140,255,.25); color: var(--ink); backdrop-filter: blur(10px); }
+html.t3 .glass::before { display: none; }
+html.t3 .glass::after { left: 12px; right: auto; top: 0; width: 36px; height: 3px; border-radius: 0 0 3px 3px; background: #2b8cff; box-shadow: none; }
+html.t3 .rbtn.glass::after, html.t3 .cur.glass::after, html.t3 .back.glass::after, html.t3 .dmg-h.glass::after, html.t3 .quest .glass::after { display: none; }
+html.t3 .info h3 > .nmx, html.t3 .topbar h2, html.t3 .modal h4, html.t3 .hud-top .w { background: none; color: #12305e; -webkit-text-fill-color: #12305e; filter: none; }
+html.t3 .card .in b { background: none; color: #fff; -webkit-text-fill-color: #fff; filter: drop-shadow(0 1px 2px #000); }
+html.t3 .topbar { background: linear-gradient(90deg, rgba(255,255,255,.95), rgba(235,244,255,.85)); border-bottom: 0; box-shadow: 0 4px 14px rgba(10,30,80,.25); }
+html.t3 .topbar h2 { font-style: italic; letter-spacing: -.5px; }
+html.t3 .btn { background: #fff; color: #1f4f9a; border: 1px solid #b8d4ff; border-radius: 8px; transform: skewX(-8deg); text-shadow: none; box-shadow: 0 2px 0 #a8c4ee; }
+html.t3 .btn.gold { background: linear-gradient(#4aa2ff, #1f6fd6); color: #fff; border: 0; box-shadow: 0 3px 0 #164d9c, 0 6px 14px rgba(31,111,214,.45); text-shadow: none; }
+html.t3 .btn::after { display: none; }
+html.t3 .bar { background: #dbe6f7; box-shadow: none; }
+html.t3 .tabs b { color: var(--mute); } html.t3 .tabs b.on { color: #12305e; box-shadow: inset 0 -3px 0 #2b8cff; }
+html.t3 .side b { color: var(--mute); } html.t3 .side b.on { background: #2b8cff; color: #fff; box-shadow: none; transform: skewX(-8deg); }
+html.t3 .chip { background: #e4eefc; color: #1f4f9a; }
+html.t3 .pt { box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(10,30,80,.4); }
+html.t3 .sk .s { box-shadow: 0 0 0 2px #fff; } html.t3 .sk .s.ready { box-shadow: 0 0 0 2px #2b8cff, 0 0 10px rgba(43,140,255,.8); }
+html.t3 .sk .au { background: #e4eefc; color: #5b6b8c; } html.t3 .sk .au.on { background: #2b8cff; color: #fff; }
+html.t3 .hc .nm em, html.t3 .info .sub, html.t3 .kv span { color: var(--mute); }
+html.t3 .quest em { background: #ffb020; color: #fff; box-shadow: none; } html.t3 .quest em.st { background: #2b8cff; }
+html.t3 .node i { box-shadow: 0 0 0 3px #fff, 0 4px 8px rgba(0,0,0,.4); }
+html.t3 .node b { background: #fff; color: #1c2a44; border: 0; }
+html.t3 .slot { background: #eef4fc; box-shadow: inset 0 0 0 1px #cddcf2; } html.t3 .slot.empty::after { color: #9fb2d2; }
+html.t3 .card { border: 3px solid #fff; border-radius: 12px; box-shadow: 0 8px 18px rgba(10,30,80,.35); }
+html.t3 .scr-bg::before { background: rgba(200,220,255,.25); }
+html.t3 .cur .plus { background: #2b8cff; color: #fff; }
+html.t3 .dock div .ic, html.t3 .dock div { color: #1f4f9a; }
+html.t3 .rbtn.on { color: #2b8cff; }
+html.t3 .gift { background: #eef4fc; } html.t3 .gift b { color: #12305e; }
+html.t3 .veil { background: rgba(20,40,90,.35); }
+html.t3 .hud-top .t { color: #12305e; }
+
+/* ════ 1번 확정 + 만족도 아이디어 (t1b) ════ */
+.leadfb { display: none; }
+html.t1b .leadfb { display: block; position: absolute; right: 118px; bottom: 0; width: 230px; height: 300px; background: center bottom / contain no-repeat; filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)); pointer-events: none; }
+html.t1b .leadfb::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 2px; height: 14px; border-radius: 50%; background: radial-gradient(rgba(0,0,0,.45), transparent 70%); z-index: -1; }
+/* 아래 메뉴: 판 없이 아이콘 + 글씨만 (진한 외곽선·그림자로 어떤 배경에서도 읽힘) */
+html.t1b .dock { background: none; border: 0; box-shadow: none; backdrop-filter: none; gap: 2px; }
+html.t1b .dock::before, html.t1b .dock::after { display: none; }
+html.t1b .dock div { color: #fff; font-size: 12px; font-weight: 800; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000, 0 0 6px rgba(0,0,0,.6); }
+html.t1b .dock div .ic { width: 28px; height: 28px; color: #fff; stroke-width: 2.4; filter: drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 2px 3px rgba(0,0,0,.7)); }
+/* 정보 적은 곳은 판 없이 그림자 글씨 */
+html.t1b .chap { background: none; border: 0; box-shadow: none; backdrop-filter: none; color: #fff; font-size: 15px; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 2px 4px #000; }
+html.t1b .chap::before, html.t1b .chap::after { display: none; }
+html.t1b .chap span { color: #ffd77a; }
+/* 영웅 정보: 전신을 더 크게 (일러스트가 주인공) */
+html.t1b #C .fb { left: 60px; top: 30px; width: 260px; }
+html.t1b #C .info { left: 300px; width: 300px; }
+
+/* ════ t1c: 영웅 정보 전신 꽉 · 판 없는 아이콘 확대 적용 · 움직임 ════ */
+/* 전신 그림 36장은 모두 900×900 안 세로 30~890에 인물 → 한 규칙으로 머리 = 위 바 바로 아래, 발 = 화면 아래 */
+html.t1c #C .hlist { z-index: 2; }
+html.t1c #C .fb { left: 4px; top: 36px; bottom: -10px; width: 358px; background-position: center top; background-size: contain; }
+html.t1c #C .info { left: 300px; }
+/* 판 없이: 아이콘 + 진한 외곽선 글씨 (자동·배속·일시정지·뒤로·재화·웨이브) */
+html.t1c .rbtn.glass, html.t1c .back.glass, html.t1c .cur.glass, html.t1c .hud-top.glass, html.t1c .dmg-h.glass { background: none; border: 0; box-shadow: none; backdrop-filter: none; }
+html.t1c .rbtn .ic, html.t1c .back .ic { width: 26px; height: 26px; color: #fff; stroke-width: 2.6; filter: drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 0 1.5px #2a1606) drop-shadow(0 2px 3px rgba(0,0,0,.7)); }
+html.t1c .rbtn small { color: #fff; font-size: 11px; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000; }
+html.t1c .rbtn.on .ic { color: #ffd77a; }
+html.t1c .cur, html.t1c .hud-top .t, html.t1c .hud-top .s { color: #fff; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000; }
+html.t1c .cur { font-size: 14px; }
+html.t1c .cur img { width: 22px; height: 22px; filter: drop-shadow(0 1px 2px #000); }
+html.t1c .hud-top .w { color: #ffd77a; -webkit-text-fill-color: #ffd77a; text-shadow: 0 0 2px #2a1606, 0 0 2px #2a1606, 0 1px 3px #000; }
+html.t1c .hud-top .t { font-size: 18px; }
+html.t1c .topbar .back .ic { color: #6b2e12; filter: none; }
+html.t1c .topbar .cur { color: #3b2614; text-shadow: none; }
+/* 움직임 */
+@keyframes pulse { 50% { box-shadow: 0 0 0 2px #ffe08a, 0 0 18px 5px rgba(255,214,120,.95); } }
+html.t1c .sk .s.ready { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes shine { 0% { left: -60%; } 60%, 100% { left: 130%; } }
+html.t1c .go::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; transform: skewX(-20deg); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: shine 1.8s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.04); } }
+html.t1c .go { animation: breathe 1.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translate(-50%, -6px); } }
+html.t1c .node.now::before { content: '▼'; position: absolute; left: 50%; top: -20px; transform: translateX(-50%); color: #ffd77a; font-size: 14px; text-shadow: 0 0 2px #2a1606, 0 1px 3px #000; animation: bob .7s ease-in-out infinite; }
+@keyframes idle { 50% { transform: translateY(-3px) scaleY(1.01); } }
+html.t1c .leadfb { animation: idle 2.2s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes pop { 0% { transform: translate(-50%, -50%) scale(.7); opacity: 0; } 70% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); } }
+html.t1c .modal { animation: pop .45s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes giftIn { 0% { transform: scale(0) rotate(-20deg); } 80% { transform: scale(1.15); } 100% { transform: scale(1); } }
+html.t1c .gift img { animation: giftIn .5s .3s cubic-bezier(.2,.9,.3,1.4) both; }
+@keyframes spark { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
+html.t1c .gift { position: relative; }
+html.t1c .gift::after { content: '✦'; position: absolute; right: 6px; top: 4px; color: #ffd77a; font-size: 14px; text-shadow: 0 0 6px #ffb020; animation: spark 1.1s .6s ease-in-out infinite; }
+</style></head><body>
+<!-- SVG 아이콘 묶음 -->
+<svg width="0" height="0" style="position:absolute">
+ <symbol id="i-auto" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/></symbol>
+ <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+ <symbol id="i-fast" viewBox="0 0 24 24"><path d="M4 6l7 6-7 6zM13 6l7 6-7 6z"/></symbol>
+ <symbol id="i-hero" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"/></symbol>
+ <symbol id="i-team" viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2 20a7 7 0 0 1 14 0M16 4a3.5 3.5 0 0 1 0 7M18 13.5a7 7 0 0 1 4 6.5"/></symbol>
+ <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+ <symbol id="i-shop" viewBox="0 0 24 24"><path d="M4 9l2-5h12l2 5M4 9h16v11H4zM4 9a3 3 0 0 0 5 0 3 3 0 0 0 6 0 3 3 0 0 0 5 0"/></symbol>
+ <symbol id="i-friend" viewBox="0 0 24 24"><path d="M12 21s-8-4.5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6.5-8 11-8 11z"/></symbol>
+ <symbol id="i-guild" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+ <symbol id="i-portal" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></symbol>
+ <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+ <symbol id="i-sword" viewBox="0 0 24 24"><path d="M14 4h6v6L9 21l-6-6zM5 13l6 6"/></symbol>
+</svg>
+
+<!-- A 전투 -->
+<div class="frame" id="A" style="background-image:url(/out/proto/field.png)">
+ <span class="label">A · 전투 HUD</span>
+ <div class="rbtn glass on" style="left:12px"><svg class="ic"><use href="#i-auto"/></svg><small>자동</small></div>
+ <div class="rbtn glass" style="left:56px"><svg class="ic"><use href="#i-fast"/></svg><small>×1</small></div>
+ <div class="hud-top glass"><span class="w">WAVE 1/2</span><span class="t">2:56</span><span class="s">숲 동굴 1-1</span></div>
+ <div class="rbtn glass" style="right:12px"><svg class="ic"><use href="#i-pause"/></svg></div>
+ <div class="dmg-h glass"><svg class="ic" style="width:14px"><use href="#i-fast"/></svg></div>
+ <div class="party">
+  <div class="hc glass"><div class="pt" style="background-image:url(/public/art/portraits_hd/woongs.png)"></div><div class="nm">웅스 <em>전방</em></div><div class="bars"><div class="bar hp"><i style="width:82%"></i></div><div class="bar mp"><i style="width:40%"></i></div></div>
+   <div class="sk"><span class="buffs"><img src="/public/art/buffs/atkUp.png"></span><i class="s cd" data-cd="6" style="--p:35%;background-image:url(/public/art/skills/woongs_0.png)"></i><i class="s cd" data-cd="12" style="--p:15%;background-image:url(/public/art/skills/woongs_1.png)"></i><i class="s" style="background-image:url(/public/art/skills/woongs_2.png)"></i><b class="au on">AUTO</b></div></div>
+  <div class="hc glass"><div class="pt" style="background-image:url(/public/art/portraits_hd/gonu.png)"></div><div class="nm">고느끼 <em>중앙</em></div><div class="bars"><div class="bar hp"><i style="width:100%"></i></div><div class="bar mp"><i style="width:70%"></i></div></div>
+   <div class="sk"><span class="buffs"></span><i class="s ready" style="background-image:url(/public/art/skills/gonu_0.png)"></i><i class="s cd" data-cd="4" style="--p:60%;background-image:url(/public/art/skills/gonu_1.png)"></i><i class="s cd" data-cd="20" style="--p:5%;background-image:url(/public/art/skills/gonu_2.png)"></i><b class="au on">AUTO</b></div></div>
+  <div class="hc glass"><div class="pt" style="background-image:url(/public/art/portraits_hd/ikamolly.png)"></div><div class="nm">이카몰리 <em>후방</em></div><div class="bars"><div class="bar hp"><i style="width:64%"></i></div><div class="bar mp"><i style="width:90%"></i></div></div>
+   <div class="sk"><span class="buffs"><img src="/public/art/buffs/shield.png"><img src="/public/art/buffs/regen.png"></span><i class="s ready" style="background-image:url(/public/art/skills/ikamolly_0.png)"></i><i class="s" style="background-image:url(/public/art/skills/ikamolly_1.png)"></i><i class="s cd" data-cd="9" style="--p:40%;background-image:url(/public/art/skills/ikamolly_2.png)"></i><b class="au">AUTO</b></div></div>
+  <div class="hc glass"><div class="pt" style="background-image:url(/public/art/portraits_hd/walwal.png)"></div><div class="nm">왈왈콩선생 <em>후방</em></div><div class="bars"><div class="bar hp"><i style="width:95%"></i></div><div class="bar mp"><i style="width:20%"></i></div></div>
+   <div class="sk"><span class="buffs"></span><i class="s cd" data-cd="3" style="--p:80%;background-image:url(/public/art/skills/walwal_0.png)"></i><i class="s" style="background-image:url(/public/art/skills/walwal_1.png)"></i><i class="s cd" data-cd="15" style="--p:25%;background-image:url(/public/art/skills/walwal_2.png)"></i><b class="au on">AUTO</b></div></div>
+ </div>
+</div>
+
+<!-- B 메인 지도 -->
+<div class="frame" id="B" style="background-image:url(/public/art/screens/map.jpg)">
+ <span class="label" style="top:auto;bottom:70px">B · 메인 지도</span>
+ <div class="prof glass"><div class="pt" style="background-image:url(/public/art/portraits_hd/woongs.png)"></div><div><b><em>Lv.12</em> 원정대장</b><div class="bar xp" style="margin-top:4px"><i style="width:45%;background:var(--gold)"></i></div></div></div>
+ <div class="chap glass">1장 · 숲 동굴 <span>★ 9/30</span></div>
+ <div class="curs"><div class="cur glass"><img src="/public/art/items/m_stamina.png">53/60<i class="plus">+</i></div><div class="cur glass"><img src="/public/art/items/m_gold.png">15,300<i class="plus">+</i></div><div class="cur glass"><img src="/public/art/items/m_stardust.png">182<i class="plus">+</i></div></div>
+ <div class="quest"><div class="glass"><em>이정표</em>1-3 클리어</div><div class="glass"><em class="st">스토리</em>1-4 클리어</div></div>
+ <div class="node" style="left:16%;top:70%"><i>✓</i><b>1-1</b><span class="st">★★★</span></div>
+ <div class="node" style="left:28%;top:74%"><i>✓</i><b>1-2</b><span class="st">★★☆</span></div>
+ <div class="node" style="left:40%;top:62%"><i>✓</i><b>1-3</b><span class="st">★☆☆</span></div>
+ <div class="node now" style="left:52%;top:56%"><i>4</i><b>1-4</b></div>
+ <div class="node lock" style="left:63%;top:48%"><i>5</i><b>1-5</b></div>
+ <div class="node lock" style="left:73%;top:40%"><i>6</i><b>1-6</b></div>
+ <div class="node boss lock" style="left:86%;top:46%"><i>BOSS</i><b>1-10</b></div>
+ <div class="dock glass">
+  <div><svg class="ic"><use href="#i-hero"/></svg>영웅</div><div><svg class="ic"><use href="#i-team"/></svg>편성</div><div><svg class="ic"><use href="#i-bag"/></svg>가방</div><div><svg class="ic"><use href="#i-shop"/></svg>상점</div><div><svg class="ic"><use href="#i-friend"/></svg>친구</div><div><svg class="ic"><use href="#i-guild"/></svg>길드</div><div><svg class="ic"><use href="#i-portal"/></svg>콘텐츠</div>
+ </div>
+ <div class="leadfb" style="background-image:url(/public/art/fullbody/woongs.png)"></div>
+ <div class="btn gold go"><svg class="ic"><use href="#i-sword"/></svg>전투 준비</div>
+</div>
+
+<!-- C 영웅 정보 -->
+<div class="frame scr-bg" id="C" style="background-image:url(/public/art/screens/heroes.jpg)">
+ <div class="topbar"><div class="back glass"><svg class="ic"><use href="#i-back"/></svg></div><h2>영웅 정보</h2><div class="cur glass"><img src="/public/art/items/m_gold.png">15,300</div><div class="cur glass"><img src="/public/art/items/m_stardust.png">182</div></div>
+ <span class="label" style="top:auto;bottom:10px">C · 영웅 정보</span>
+ <div class="hlist"><div class="pt on" style="background-image:url(/public/art/portraits_hd/woongs.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/gonu.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/ikamolly.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/walwal.png)"></div><div class="pt" style="background-image:url(/public/art/portraits_hd/hwang.png)"></div></div>
+ <div class="fb" style="background-image:url(/public/art/fullbody/woongs.png)"></div>
+ <div class="info glass">
+  <h3><span class="nmx">웅스</span> <small>★★☆☆☆</small><span class="chip">각성 1</span></h3>
+  <div class="sub">첫 번째 칼날 · 전사 · 전방</div>
+  <div class="pw">전투력 <b>30,391</b></div>
+  <div class="tabs"><b class="on">성장</b><b>스킬</b><b>장비</b><b>일반</b></div>
+  <div class="row"><span class="grow" style="font-size:13px">레벨 <b>2</b> / 30</span><span class="sub">38 / 264</span></div>
+  <div class="bar" style="height:6px"><i style="width:15%;background:var(--gold)"></i></div>
+  <div class="row"><img src="/public/art/items/m_exp.png" style="width:22px"><span class="grow" style="font-size:12px">경험치 물약 20개</span><span class="btn sm">1개</span><span class="btn sm">10개</span></div>
+  <div class="row"><div class="grow"><div style="font-size:13px">각성 1/5</div><div class="sub">레벨 상한 30 → 40 · 레벨 30 필요</div></div><span class="btn sm gold">각성</span></div>
+ </div>
+ <div class="eq glass">
+  <div class="slots"><div class="slot epic"><img src="/public/art/items/w_bow_epic.png"></div><div class="slot rare"><img src="/public/art/items/armor_rare.png"></div><div class="slot legend"><img src="/public/art/items/acc_necklace_legend.png"></div><div class="slot empty"></div><div class="slot empty"></div><div class="slot empty"></div></div>
+  <div class="row"><span class="btn sm grow">자동 장착</span><span class="btn sm grow">모두 해제</span></div>
+  <div class="kv"><span>체력</span>24,225</div><div class="kv"><span>공격력</span>1,684</div><div class="kv"><span>방어력</span>1,662</div><div class="kv"><span>치명타</span>15%</div><div class="kv"><span>공격 속도</span>4.1%</div>
+ </div>
+</div>
+
+<!-- D 상점 + 보상 창 -->
+<div class="frame scr-bg" id="D" style="background-image:url(/public/art/screens/shop.jpg)">
+ <div class="topbar"><div class="back glass"><svg class="ic"><use href="#i-back"/></svg></div><h2>상점</h2><div class="cur glass"><img src="/public/art/items/m_gold.png">15,300</div><div class="cur glass"><img src="/public/art/items/m_stardust.png">182</div></div>
+ <span class="label" style="top:auto;bottom:10px;z-index:9">D · 상점 + 보상 창</span>
+ <div class="side glass"><b>스페셜</b><b>재화·소모품</b><b class="on">영웅</b><b>코스튬</b><b>장비 소환</b><b>특수 재화</b></div>
+ <div class="cards">
+  <div class="card" style="background-image:url(/public/art/portraits_hd/hwang.png)"><img class="job" src="/public/art/jobs/druid.png"><div class="in"><b>황짐승</b><span class="sub">드루이드 · 중앙</span><span class="btn sm gold"><img src="/public/art/items/m_stardust.png" style="width:16px">3,000</span></div></div>
+  <div class="card" style="background-image:url(/public/art/portraits_hd/kleine.png)"><img class="job" src="/public/art/jobs/mage.png"><div class="in"><b>클레이네</b><span class="sub">마법사 · 후방</span><span class="btn sm gold"><img src="/public/art/items/m_stardust.png" style="width:16px">3,000</span></div></div>
+  <div class="card" style="background-image:url(/public/art/portraits_hd/panda.png)"><img class="job" src="/public/art/jobs/knight.png"><div class="in"><b>팬더</b><span class="sub">기사 · 전방</span><span class="btn sm gold"><img src="/public/art/items/m_stardust.png" style="width:16px">3,000</span></div></div>
+  <div class="card" style="background-image:url(/public/art/portraits_hd/warmnight.png)"><img class="job" src="/public/art/jobs/archer.png"><div class="in"><b>따뜻한밤</b><span class="sub">궁수 · 후방</span><span class="btn sm gold"><img src="/public/art/items/m_stardust.png" style="width:16px">3,000</span></div></div>
+ </div>
+ <div class="veil"></div>
+ <div class="modal glass"><h4>1개 받았어요</h4><div class="gifts"><div class="gift"><img src="/public/art/items/m_stardust.png"><b>+20</b>별가루</div><div class="gift"><img src="/public/art/items/m_gold.png"><b>+10,000</b>금화</div></div><div class="row" style="justify-content:center"><span class="btn gold">확인</span></div></div>
+</div>
+</body></html>

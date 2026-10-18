@@ -1,4 +1,4 @@
-// 별의 원정대 (가제) 1단계: 부팅 → 테마 토큰 → 그림 → 저장 불러오기 → 타이틀 · 매 프레임 지금 화면 tick (전투 화면은 캔버스 직접, 나머지는 배경만)
+// W.I.N.D 「바람의 원정대」 1단계: 부팅 → 테마 토큰 → 그림 → 저장 불러오기 → 타이틀 · 매 프레임 지금 화면 tick (전투 화면은 캔버스 직접, 나머지는 배경만)
 import { CONFIG } from './config';
 import { renderBg, type Art } from './battle/render';
 import { loadFlags } from './core/flags';
@@ -42,7 +42,7 @@ fitView(stage, cv);
 {
   const h = HEROES[Math.floor(Math.random() * HEROES.length)];
   const ld = document.getElementById('loading')!;
-  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>별의 원정대를 준비하고 있어요…</small></div>`;
+  ld.innerHTML = `<div class="ld-fb" style="background-image:url(${import.meta.env.BASE_URL}art/fullbody/${h.id}.png)"></div><div class="ld-tx"><small>${h.title}</small><b>${h.name}</b><span>「${h.voice?.[0] ?? h.concept.split('.')[0]}」</span><div class="ld-bar"><i></i></div><small>바람의 원정대를 준비하고 있어요…</small></div>`;
 }
 await loadFlags();
 const B = import.meta.env.BASE_URL;
@@ -80,14 +80,15 @@ const stall = setInterval(() => {
 }, 1000);
 if (bar) bar.classList.add('real');
 track(setPxHeights());
+// 도트 글꼴 (갈무리 · public/fonts) — 캔버스 글씨가 첫 프레임부터 도트로
+track(Promise.all(['400 12px Galmuri11', '700 12px Galmuri11'].map((f) => document.fonts.load(f))).catch(() => null));
 track(loadInto(sheet, heroDirs(firstHeroes)));
 const bgP = track(img(`${B}art/bg.jpg`).catch(() => null));
-const critP = track(img(`${B}art/ui/battle/crit_burst.png`).catch(() => null));
 track(img(`${B}art/screens/${CONFIG.ui.screenBg.title}.jpg`).catch(() => null));
 await Promise.all(jobs);
 const bgs: Record<string, HTMLImageElement> = {};
 for (const k of new Set(Object.values(CONFIG.ui.battleBg))) img(`${B}art/bgs/${k}.jpg`).then((im) => (bgs[k] = im)).catch(() => {});
-view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: await critP, fx: null };
+view.art = { sheet, bg: await bgP, cutin: {}, bgs, critBurst: null, fx: null };
 // 스킬 이펙트 그림은 뒤에서 (오기 전까진 선 그리기 · ANIM_1017 ②)
 void loadFxArt().then((a) => (view.art.fx = a));
 // 긴 글씨는 줄 수를 늘리지 않고 크기를 줄여 맞춤 (메뉴 화면 · 결과 창)
@@ -131,7 +132,7 @@ document.addEventListener('visibilitychange', () => document.hidden && void auto
 if (q.get('go')) {
   const [c, st, d] = (q.get('go') === '1' ? '1-10-0' : q.get('go')!).split('-').map(Number);
   S.prologue = true;
-  S.seen[`${c}:intro`] = S.seen[`${c}:preBoss`] = true;
+  S.seen[`${c}:intro`] = S.seen[`${c}:mid3`] = S.seen[`${c}:mid6`] = S.seen[`${c}:preBoss`] = true;
   S.sta.n = Math.max(S.sta.n, 999);
   go('battle', { stage: { c, s: st, d: d || 0 } });
   const b = battleNow();

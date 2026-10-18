@@ -18,7 +18,7 @@ export const gearCell = (g: Gear | null, attrs = '', label = '', pic = '') =>
   g
     ? `<button class="gi g-${gradeKey(g.grade)} eb${enhBand(g.enh)}${g.lock ? ' locked' : ''}" ${attrs} title="${gearName(g)} +${g.enh}"><span class="t">T${g.tier}</span>${artOf(g)}${g.enh ? `<span class="e">+${g.enh}</span>` : ''}<span class="st">${iconText('star').repeat(g.star)}</span>${g.by ? `<span class="by">${heroOf(g.by).name.slice(0, 2)}</span>` : ''}${g.lock ? `<span class="lk">${icon('lock')}</span>` : ''}</button>`
     : pic
-      ? `<button class="gi empty pic" ${attrs} title="${label} · 비어 있음"><img class="slotpic" src="${import.meta.env.BASE_URL}art/ui/icons/${pic}.png" alt=""></button>`
+      ? `<button class="gi empty pic" ${attrs} title="${label} · 비어 있음">${icon(pic === 'slot_weapon' ? 'weapon' : pic === 'slot_armor' ? 'armor' : 'acc', 'slotpic')}</button>`
       : `<button class="gi empty" ${attrs}><span class="xs good">장착 가능</span><span class="xs mute">${label}</span></button>`;
 export const runeCell = (r: Rune | null, attrs = '') =>
   r ? `<button class="gi rune r${r.grade}" ${attrs} title="${RUNE_GRADE[r.grade]} 룬">${G.art.have ? `<i class="art" style="background-image:url(${import.meta.env.BASE_URL}art/${G.art.dir}/rune_${Math.min(4, r.grade)}.png)"></i>` : icon('rune')}<span class="st">${RUNE_GRADE[r.grade]}</span></button>` : `<button class="gi empty" ${attrs}><span class="xs mute">룬 칸</span></button>`;
