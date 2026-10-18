@@ -254,9 +254,10 @@ async function notice() {
 // 😊 빠른 채팅 (MOBILE_REF §2): 자주 쓰는 말 8 + 감정 4 · 누르면 바로 보냄 · 키보드 없이
 const QUICK = SO.quick;
 export const quickHtml = () => `<div class="qpop" hidden>${QUICK.phrases.map((t) => `<button class="tab" data-q="${esc(t)}">${esc(t)}</button>`).join('')}${QUICK.emotes.map((k) => `<button class="tab emo" data-qe="${k}">${icon(k)}</button>`).join('')}</div>`;
+const linesHtml = (ch: ChatLine['ch']) =>
+  S.chat.filter((l) => l.ch === ch && (aiChatOn() || !isAiLine(l))).slice(-30).map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>';
 export function chatHtml(ch: ChatLine['ch']) {
-  const lines = S.chat.filter((l) => l.ch === ch && (aiChatOn() || !isAiLine(l))).slice(-30);
-  return `<div class="chatbox"><div class="chatlog scroll" data-log>${lines.map((l) => `<div class="cl${l.me ? ' me' : ''}"><b>${l.title ? `<span class="chip on">${esc(l.title)}</span> ` : ''}${esc(l.name)}</b> ${esc(l.text)}</div>`).join('') || '<span class="mute xs">아직 조용해요</span>'}</div>
+  return `<div class="chatbox"><div class="chatlog scroll" data-log>${linesHtml(ch)}</div>
     ${quickHtml()}<div class="row chatrow"><button class="btn mini qbtn" data-quick title="빠른 채팅">${icon('emote')}</button><input class="tab grow chatin" data-in maxlength="${SO.chat.max}" enterkeyhint="send" placeholder="${ch === 'world' ? '월드 채팅' : '길드 채팅'} (로그인하면 다른 사람에게도)"><button class="btn mini hi" data-send>보내기</button></div></div>`;
 }
 /** 키보드가 가린 만큼 (게임 좌표 px) → 채팅 판을 남은 자리에 꽉 차게 (돌린 화면이면 게임 오른쪽·왼쪽이 화면 아래·위) */
@@ -273,19 +274,67 @@ function kbFit() {
   st.style.setProperty(a, `${Math.round(top)}px`);
   st.style.setProperty(b, `${Math.round(bot)}px`);
 }
+/** 세로로 든 폰(게임을 90° 돌려 그림)에서 쓰는 채팅 시트 — 키보드는 폰 방향(세로)으로만 뜨니 채팅도 세로로 똑바로 (형철 10/18 아이폰 「채팅 화면만 돌아감」)
+ *  #stage 밖 body에 붙여 돌림 없이 · 키보드 위 남은 자리(visualViewport)에 꽉 차게 · 키보드를 닫거나 닫기를 누르면 사라짐 */
+function portraitChat(ch: ChatLine['ch'], post: (text: string) => boolean) {
+  const el = document.createElement('div');
+  el.className = 'pchat';
+  el.innerHTML = `<div class="row pchead"><b class="grow">${ch === 'world' ? '월드 채팅' : '길드 채팅'}</b><button class="btn mini" data-x>${icon('close')} 닫기</button></div><div class="pclog scroll" data-log>${linesHtml(ch)}</div><div class="row pcrow"><input class="grow" data-in maxlength="${SO.chat.max}" enterkeyhint="send" placeholder="메시지 입력"><button class="btn hi" data-send>보내기</button></div>`;
+  document.body.append(el);
+  const inp = el.querySelector<HTMLInputElement>('[data-in]')!;
+  const log = el.querySelector<HTMLElement>('[data-log]')!;
+  const vv = visualViewport;
+  const fit = () => {
+    if (vv) Object.assign(el.style, { left: `${vv.offsetLeft}px`, top: `${vv.offsetTop}px`, width: `${vv.width}px`, height: `${vv.height}px` });
+    log.scrollTop = log.scrollHeight;
+  };
+  const close = () => {
+    vv?.removeEventListener('resize', fit);
+    vv?.removeEventListener('scroll', fit);
+    el.remove();
+  };
+  const say = () => {
+    if (!post(inp.value)) return;
+    inp.value = '';
+    log.innerHTML = linesHtml(ch);
+    log.scrollTop = log.scrollHeight;
+  };
+  vv?.addEventListener('resize', fit);
+  vv?.addEventListener('scroll', fit);
+  fit();
+  // 누른 그 손길 안에서 바로 커서 → 아이폰도 키보드가 뜸
+  inp.focus();
+  // 보내기·닫기 누를 때 입력칸 포커스를 뺏지 않게 (키보드가 닫히며 시트가 사라지지 않게)
+  $$('button', el).forEach((b) => (b.onpointerdown = (e) => e.preventDefault()));
+  el.querySelector<HTMLElement>('[data-send]')!.onclick = say;
+  el.querySelector<HTMLElement>('[data-x]')!.onclick = () => inp.blur();
+  inp.onkeydown = (e) => {
+    if (e.key === 'Enter' && !e.isComposing) say();
+  };
+  inp.onblur = close;
+}
 function wireChat(root: HTMLElement, ch: ChatLine['ch'], draw: () => void) {
   const send = root.querySelector<HTMLElement>('[data-send]');
   const inp = root.querySelector<HTMLInputElement>('[data-in]');
   if (!send || !inp) return;
-  const say = (text: string) => {
+  const post = (text: string) => {
     const line = sendChat(text, ch);
-    if (!line) return;
+    if (!line) return false;
     persist();
     void cloud.postChat({ ch, guild: S.guild.id, name: line.name, title: line.title, text: line.text });
     draw();
+    return true;
+  };
+  const say = (text: string) => {
+    if (!post(text)) return;
     // 다시 그린 뒤에도 이어서 쓸 수 있게 입력칸에 커서
     root.querySelector<HTMLInputElement>('[data-in]')?.focus();
   };
+  // 세로로 든 폰: 돌린 게임 안 입력칸은 키보드를 띄우지 않고 세로 채팅 시트를 엶
+  if (view.rotated && matchMedia('(pointer: coarse)').matches) {
+    inp.readOnly = true;
+    inp.onclick = () => portraitChat(ch, post);
+  }
   send.onclick = () => say(inp.value);
   // 한글 조합 중 Enter는 글자 확정만 (조합 중에 보내면 마지막 글자가 깨짐)
   //  꼭 블록으로: on* 처리기가 false를 돌려주면 그 키 입력이 막힘 → Enter 말고 모든 키가 안 써지던 것 (10/18 PC 채팅)
@@ -297,7 +346,7 @@ function wireChat(root: HTMLElement, ch: ChatLine['ch'], draw: () => void) {
   const st = $('#stage');
   inp.onfocus = () => {
     // 화면 키보드가 없는 PC(마우스)에서는 원래 배치 그대로 (탭·닫기 버튼이 사라지던 것 · 10/18)
-    if (!matchMedia('(pointer: coarse)').matches) return;
+    if (!matchMedia('(pointer: coarse)').matches || inp.readOnly) return;
     kbFit();
     box.classList.add('kb');
     st.classList.add('typing');

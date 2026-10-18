@@ -3,6 +3,8 @@
 //  ③ 업데이트 뒤 첫 화면 패치노트 카드 ④ 잡히지 않은 오류 서버 기록 ⑤ 하루 한 번 세이브 백업 3개 + 설정에서 되살리기
 import { logEvents, markRepliesRead, myReplies, sendLetter, who, type ReplyRow } from '../core/net/cloud';
 import { getPref, setPref } from '../core/save';
+import { CONFIG } from '../config';
+import { capRefund } from '../game/saga';
 import { addMail } from '../game/social';
 import { dayKey, migrate, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
@@ -167,7 +169,19 @@ function deliverGifts() {
     addMail(S, '운영자', g.title, g.body, g.give);
     n++;
   }
-  if (!n) return;
+  if (n) (persist(), toast('우편함에 운영자 선물이 왔어요'));
+  void capGift();
+}
+/** v1.0.24 서사·이정표 별가루 보상: 서버 기록으로 확인한 계정(운영자·웅스 · 10/18 주간 별가루 3,600 상한 도달) + 이 기기에서 이번 주 상한에 닿은 저장 */
+const CAP_HIT = ['b402b30f-b3bc-462c-acc6-fbea1da8398f', '8e8970d1-babf-49dc-a303-ea1d896cc33a'];
+async function capGift() {
+  const key = 'gift:v1.0.24-dust';
+  if (S.seen[key]) return;
+  const hit = (S.track?.w['earn:stardust'] ?? 0) >= (CONFIG.econ.cap.stardust ?? Infinity) || CAP_HIT.includes((await who())?.uid ?? '');
+  const dust = capRefund(S);
+  if (S.seen[key] || !hit || !dust) return;
+  S.seen[key] = true;
+  addMail(S, '운영자', '서사·이정표 별가루 보상', '주간 별가루 상한(3,600)에 닿은 뒤에는 서사·이정표 보상의 별가루가 「받았어요」만 뜨고 들어가지 않았어요. 받은 시각 기록이 없어서, 지금까지 받은 서사·이정표 별가루 전부에 10%를 더해 보내드려요. 이제 서사·이정표·업적 보상은 상한과 상관없이 들어와요. 불편을 드려 미안해요!', { stardust: dust });
   persist();
   toast('우편함에 운영자 선물이 왔어요');
 }

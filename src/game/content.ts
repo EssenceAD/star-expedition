@@ -440,6 +440,7 @@ export const milesReady = (s: Save = S) => MILESTONES.filter((m) => !s.miles.inc
 export function claimMiles(s: Save = S, ids?: string[]): number {
   const ready = milesReady(s).filter((m) => !ids || ids.includes(m.id));
   for (const m of ready) s.miles.push(m.id);
-  addCur('stardust', ready.length * CC.milestoneDust, s);
+  // 한 번만 받는 보상 → 주간 상한 밖 (형철 10/18 「이정표 별가루 안 들어옴」)
+  addCur('stardust', ready.length * CC.milestoneDust, s, true);
   return ready.length;
 }

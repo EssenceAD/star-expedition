@@ -60,12 +60,13 @@ export function listOf(k: Kind, s: Save = S, now = Date.now()) {
 }
 export const readyOf = (k: Kind, s: Save = S, now = Date.now()) => listOf(k, s, now).filter((m) => isDone(k, m, s) && !isClaimed(k, m, s));
 export const readyAll = (s: Save = S, now = Date.now()) => (['d', 'w', 'r', 'ach'] as Kind[]).reduce((a, k) => a + readyOf(k, s, now).length, 0);
-const give = (g: Record<string, number>, s: Save) => Object.entries(g).forEach(([k, v]) => addCur(k, v, s));
+const give = (g: Record<string, number>, s: Save, free = false) => Object.entries(g).forEach(([k, v]) => addCur(k, v, s, free));
 export function claim(k: Kind, id: string, s: Save = S, now = Date.now()): boolean {
   const m = listOf(k, s, now).find((x) => x.id === id);
   if (!m || !isDone(k, m, s) || isClaimed(k, m, s)) return false;
   claimedOf(k, s).push(m.id);
-  give(m.give, s);
+  // 업적은 한 번만 받는 보상 → 주간 상한 밖 · 일일·주간·반복 미션은 상한 안 그대로
+  give(m.give, s, k === 'ach');
   return true;
 }
 export function claimAll(k: Kind, s: Save = S, now = Date.now()): number {

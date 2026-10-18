@@ -608,6 +608,8 @@
 
 - v1.0.23: 원정대 곡선 10·1.2 · perSta 3 · recalcAccount(accRev 2 · track.all.sta) · runeBox/autoRunes/spareRunes · .pick sticky 아래 · bulkEquip/gearLock · 시험 equip.test.ts
 
+- v1.0.24: 서사·이정표·업적 addCur free(주간 상한 밖) · capRefund(받은 서사·이정표 별가루 ×1.1) 우편 gift:v1.0.24-dust (운영자·웅스 uid + 이번 주 상한 도달) · 세로 폰 채팅 시트 portraitChat(.pchat · body · visualViewport) · 시험 cap.test.ts
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것
