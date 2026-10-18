@@ -6,7 +6,7 @@ import { CHAPTER_MOBS, MOB_KINDS, MOB_ROW, OWN_MOBS, PATTERNS, regionBoss, regio
 import { CHAPTERS } from '../data/story';
 import { T } from '../theme/tokens';
 import type { BattleSetup, HeroSpec, MobSpec } from '../battle/setup';
-import { addExp, join, statsOf } from './heroes';
+import { addExp, expNeed, join, statsOf } from './heroes';
 import { addCur, dayKey, partyIds, S, track, type Save } from './state';
 import { boostMult, stageCost, useStamina } from './account';
 import { bagFull, dropGear, makeRune } from './gear';
@@ -142,14 +142,17 @@ export function taperAt(n: number): number {
   for (const [upto, r] of R.taper) if (n <= upto) return r;
   return R.taper[R.taper.length - 1][1];
 }
-/** 한 판 보상 (첫 클리어·별 3개 보너스는 따로 firstBonus) */
-export function baseReward(st: StageId, rnd: () => number = Math.random, ids: string[] = partyIds()): Reward {
+/** 한 판 보상 (첫 클리어·별 3개 보너스는 따로 firstBonus) · first = 처음 깨는 판 (초반 퍼주기는 이때만 · 소탕·방치는 그대로) */
+export function baseReward(st: StageId, rnd: () => number = Math.random, ids: string[] = partyIds(), first = false): Reward {
   const p = powIdx(st);
   const dm = R.diffMult[st.d];
   const chest = ids.includes('warmnight') && rnd() < R.chest.chance;
+  const boss = isBoss(st) ? 2 : 1;
+  // 초반 퍼주기 (첫 클리어만): 1 (p < full) → 0 (p ≥ end)
+  const f = first ? Math.min(1, Math.max(0, (R.early.end - p) / (R.early.end - R.early.full))) : 0;
   return {
-    gold: Math.round(R.gold.base * Math.pow(R.gold.grow, p) * dm * (chest ? R.chest.gold : 1) * (isBoss(st) ? 2 : 1)),
-    exp: Math.round(R.exp.base * Math.pow(R.exp.grow, p) * dm * (isBoss(st) ? 2 : 1)),
+    gold: Math.round(R.gold.base * Math.pow(R.gold.grow, p) * dm * (chest ? R.chest.gold : 1) * boss * (1 + f * R.early.gold)),
+    exp: Math.round(Math.max(R.exp.base * Math.pow(R.exp.grow, p), f * R.early.lvShare * expNeed(recLevel(st))) * dm * boss),
     stardust: rnd() < R.dust.chance ? R.dust.n * (st.d + 1) : 0,
     enh: rnd() < R.enh.chance ? R.enh.n * (st.d + 1) : 0,
     chest,
@@ -208,8 +211,9 @@ export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () =
   track('stage', 1, s, now);
   if (isBoss(st)) track('boss', 1, s, now);
   const ids = partyIds(s);
-  const r = baseReward(st, rnd, ids);
+  const r = baseReward(st, rnd, ids, first);
   if (first) r.stardust += isBoss(st) ? R.firstDustBoss : R.firstDust;
+  if (first && CONFIG.firstRefund) s.sta.n += stageCost(st.d);
   if (firstThree) r.stardust += R.threeStarDust;
   const got = grant(r, ids, s, now, st, rnd);
   // 장 클리어(보통 x-10 처음) → 지역 전설 합류

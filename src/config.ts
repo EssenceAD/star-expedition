@@ -3,7 +3,7 @@
 export const CONFIG = {
   /** 논리 화면: 높이 고정 · 너비는 창 비율에 맞춰 (화면 꽉 채우기) */
   // 10/18 정식 오픈 피드백(「전체적으로 너무 커서 가운데로 몰려 보임」): 논리 높이 390 → 440 = 전 화면 약 0.89배로 줌 아웃 · 너비 범위도 같은 비율
-  view: { h: 440, wMin: 812, wMax: 1083, wBase: 952, ground: 254, narrow: 722 },
+  view: { h: 440, hMax: 520, wMin: 812, wMax: 1083, wBase: 952, ground: 254, narrow: 722 },
   combat: {
     /** 영웅 전투 도트 배율 (모든 영웅 같은 값 · 시트 머리 48px → 화면 26px · docs/SPRITES_1017.md) · 시트를 못 불렀을 때 키 · 걷기 들썩임(px) */
     // 10/18 웅스 피드백(「너무 가까워 야차룰 뜨는 느낌」): 킹스레이드처럼 멀리서 보게 0.8배 (26 → 21)
@@ -129,6 +129,9 @@ export const CONFIG = {
   reward: {
     gold: { base: 300, grow: 1.06 },
     exp: { base: 40, grow: 1.065 },
+    /** 초반 퍼주기 (v1.0.10 · 형철 10/18 「튜토리얼대로 하면 2-8에서 Lv.3·추천 12」): 첫 클리어 판만 · 강함 지수 p < full 까지는 경험치 ≥ 추천 레벨 한 칸의 lvShare
+     *  · full~end 사이 줄어듦 · 금화도 같은 비율로 최대 gold배 더 → 스토리를 한 번씩만 깨도 영웅 레벨이 추천 레벨을 따라감 */
+    early: { full: 20, end: 40, lvShare: 0.7, gold: 1 },
     /** 첫 클리어 별가루 · 보스 스테이지 · 별 3개 처음 */
     firstDust: 20,
     firstDustBoss: 100,
@@ -146,8 +149,10 @@ export const CONFIG = {
   },
   /** 행동력 (KR 문법): 최대 = base + perLv × (원정대 레벨 − 1) · regenSec초마다 1 · 원정대 레벨업 때 가득 · 최대를 넘겨 쌓일 수 있음(보상·구매) */
   stamina: { base: 60, perLv: 2, regenSec: 300, cost: [6, 8, 10] as number[], buyDust: 50, buyN: 60 },
-  /** 원정대(계정) 레벨: 쓴 행동력 1 = 경험치 1 · 다음 레벨 = round(base × lv^pow) */
-  account: { exp: { base: 30, pow: 1.35 }, max: 99 },
+  /** 원정대(계정) 레벨: 쓴 행동력 1 = 경험치 1 · 다음 레벨 = round(base × lv^pow) — 초반 레벨업(=행동력 가득)이 잦게 30·1.35 → 10·1.5 (v1.0.10) */
+  account: { exp: { base: 10, pow: 1.5 }, max: 99 },
+  /** 첫 클리어는 쓴 행동력을 돌려받음 (초반 행동력 모자람 · v1.0.10) */
+  firstRefund: false,
   /** 반복 전투: 별 3개 스테이지 · 즉시 끝남 · 행동력 n × 비용 */
   repeat: { choices: [1, 3, 5, 10, 20] as number[], minStars: 3 },
   /** 부스터: 전리품 2배 · 1시간 · 금화로 (게임 재화만) */

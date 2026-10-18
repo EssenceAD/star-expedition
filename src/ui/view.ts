@@ -1,11 +1,11 @@
-// 화면 크기 · 캔버스 · 그림 (main.ts가 채움) — 화면 꽉 채우기: 높이 CONFIG.view.h 고정, 너비는 창 비율(wMin~wMax)
+// 화면 크기 · 캔버스 · 그림 (main.ts가 채움) — 화면 꽉 채우기: 높이 CONFIG.view.h (좁은 화면은 hMax까지), 너비는 창 비율(wMin~wMax)
 //  wMin 720 (10/18 폴드·패드): 정사각형에 가까운 화면도 전장을 넓게 → 위아래 여백은 늘지만 영웅·몹이 몰려 보이지 않게 (웅스·고느끼 피드백)
 import { CONFIG } from '../config';
 import type { Art } from '../battle/render';
 
 export const view = {
   w: CONFIG.view.wBase as number,
-  h: CONFIG.view.h,
+  h: CONFIG.view.h as number,
   scale: 1,
   /** 화면 1논리px = 실제 몇 px (보조 캔버스도 이 해상도로 · SPRITE_RES_1017) */
   dpr: 1,
@@ -40,11 +40,14 @@ export function fitView(stage: HTMLElement, cv: HTMLCanvasElement, iw = viewport
   const s = safeInsets();
   const [gw, gh] = rot ? [ih - s.t - s.b, iw] : [iw, ih];
   const w = Math.round(Math.max(V.wMin, Math.min(V.wMax, (gw / gh) * V.h)));
-  const k = Math.min(gw / w, gh / V.h);
+  // 폭이 wMin에 걸린(좁은) 화면은 높이를 hMax까지 늘려 위아래 검은 띠 없이 채움 (고느끼 10/18 폴드8 와이드)
+  const h = Math.round(Math.max(V.h, Math.min(V.hMax, (w * gh) / gw)));
+  const k = Math.min(gw / w, gh / h);
   view.w = w;
+  view.h = h;
   view.scale = k;
   stage.style.width = `${w}px`;
-  stage.style.setProperty('--viewH', `${V.h}px`);
+  stage.style.setProperty('--viewH', `${h}px`);
   // 패드(4:3 · 5:4)처럼 폭이 좁은 화면: 꽉 채우고 메뉴는 촘촘하게 (.narrow)
   stage.classList.toggle('narrow', w < V.narrow);
   stage.style.transform = `translate(-50%, -50%)${rot ? ` translateY(${Math.round((s.t - s.b) / 2)}px) rotate(90deg)` : ''} scale(${k})`;
@@ -56,7 +59,7 @@ export function fitView(stage: HTMLElement, cv: HTMLCanvasElement, iw = viewport
   const dpr = Math.min(3, (window.devicePixelRatio || 1) * k);
   view.dpr = dpr;
   cv.width = Math.round(w * dpr);
-  cv.height = Math.round(V.h * dpr);
+  cv.height = Math.round(h * dpr);
   view.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   view.ctx.imageSmoothingEnabled = false;
   for (const f of view.onResize) f(w);

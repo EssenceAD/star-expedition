@@ -34,6 +34,13 @@ document.addEventListener('click', (e) => {
   if (!b || b.disabled) return;
   sfx(b.matches('[data-back], .x, [data-close]') ? 'close' : 'tap', 0.5);
 }, { capture: true });
+// ESC (PC): 맨 위 창의 닫기·취소 버튼 → 없으면 화면의 뒤로 버튼 (형철 10/18 「esc 눌러도 팝업이 안 닫힘」)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || e.isComposing) return;
+  const top = [...document.querySelectorAll<HTMLElement>('#stage .modal')].pop();
+  const pick = (root: ParentNode) => [...root.querySelectorAll<HTMLButtonElement>('button')].find((b) => !b.disabled && b.offsetParent && (b.matches('[data-back], .x, [data-close]') || ['닫기', '취소'].includes(b.textContent!.trim())));
+  (top ? pick(top) : pick($('#stage')))?.click();
+});
 const stage = $('#stage');
 const cv = $('#cv') as HTMLCanvasElement;
 view.ctx = cv.getContext('2d')!;
