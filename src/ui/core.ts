@@ -162,15 +162,17 @@ export function syncBar() {
 }
 let chatT = 0;
 let pollT = 0;
-let lastReal = Date.now() - 3600e3;
+let lastTs = new Date(Date.now() - 3600e3).toISOString();
 /** 채팅 한 줄 티커 (main 루프에서 매 프레임): AI 한 줄을 월드 채팅에 쌓고 보여 줌 · 로그인했으면 20초마다 실유저 채팅도 받아 섞음 */
 export function tickChat(dt: number) {
   pollT -= dt;
   if (pollT <= 0) {
     pollT = 20;
-    void cloud.recentChat(lastReal).then((rows) => {
+    void cloud.recentChat(lastTs).then((rows) => {
       for (const r of rows) {
-        lastReal = Math.max(lastReal, r.at);
+        lastTs = r.ts;
+        // 이미 받은 줄은 건너뜀 (같은 이름·글·시각)
+        if (S.chat.some((l) => l.at === r.at && l.name === r.name && l.text === r.text)) continue;
         if (r.ch === 'guild' && r.guild !== S.guild.id) continue;
         if (r.name === S.acc.name && S.chat.some((l) => l.me && l.text === r.text)) continue;
         // 내가 올린 소식이 돌아온 것은 건너뜀

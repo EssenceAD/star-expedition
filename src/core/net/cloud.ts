@@ -116,12 +116,13 @@ export async function postChat(line: { ch: 'world' | 'guild'; guild: string | nu
   const { error } = await sb.from('star_chat').insert({ ch: line.ch, guild: line.guild, name: line.name.slice(0, 16), title: line.title ?? null, text: line.text.slice(0, 60) });
   return why(error);
 }
-/** 최근 채팅 (실유저) */
-export async function recentChat(since: number): Promise<{ name: string; title: string | null; text: string; at: number; ch: 'world' | 'guild'; guild: string | null }[]> {
+/** 최근 채팅 (실유저) · since = 서버가 준 created_at 글자 그대로 (마이크로초까지)
+ *  밀리초로 잘라 물으면 마지막 줄이 늘 「그 뒤」라 20초마다 다시 오던 것 (따밤 10/19 「ㅎㅇ」 무한 반복) */
+export async function recentChat(since: string): Promise<{ name: string; title: string | null; text: string; at: number; ts: string; ch: 'world' | 'guild'; guild: string | null }[]> {
   if (!sb || sandbox() || !(await who())) return [];
-  const { data, error } = await sb.from('star_chat').select('name,title,text,created_at,ch,guild').gt('created_at', new Date(since).toISOString()).order('created_at', { ascending: true }).limit(30);
+  const { data, error } = await sb.from('star_chat').select('name,title,text,created_at,ch,guild').gt('created_at', since).order('created_at', { ascending: true }).limit(30);
   if (error || !data) return [];
-  return data.map((r) => ({ name: r.name as string, title: (r.title as string | null) ?? null, text: r.text as string, at: Date.parse(r.created_at as string), ch: r.ch as 'world' | 'guild', guild: (r.guild as string | null) ?? null }));
+  return data.map((r) => ({ name: r.name as string, title: (r.title as string | null) ?? null, text: r.text as string, at: Date.parse(r.created_at as string), ts: r.created_at as string, ch: r.ch as 'world' | 'guild', guild: (r.guild as string | null) ?? null }));
 }
 
 // ───────── 제보·건의 편지 · 운영자 답장 · 오류 기록 (「체크인」 bug_letters · my_letter_replies · log_events 그대로 · 같은 서버) ─────────

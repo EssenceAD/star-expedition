@@ -612,6 +612,8 @@
 
 - v1.0.25: .pchat padding-top/left/right = max(--s-md, env(safe-area-inset-*))
 
+- v1.0.26: recentChat since = 서버 created_at 글자 그대로(마이크로초) · 받은 줄 중복 건너뜀 · dedupeChat 불러올 때 · 시험 chatdedupe.test.ts
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

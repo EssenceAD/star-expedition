@@ -231,6 +231,18 @@ export function pushChat(line: ChatLine, s: Save = S) {
   s.chat.push(line);
   if (s.chat.length > SO.chat.keep) s.chat.splice(0, s.chat.length - SO.chat.keep);
 }
+/** 같은 줄(채널·이름·글·시각)이 여러 번 쌓인 것 하나로 (v1.0.26 · 서버 채팅이 20초마다 다시 오던 것 정리) → 지운 줄 수 */
+export function dedupeChat(s: Save = S): number {
+  const seen = new Set<string>();
+  const n = s.chat.length;
+  s.chat = s.chat.filter((l) => {
+    const k = `${l.ch}|${l.name}|${l.text}|${l.at}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return n - s.chat.length;
+}
 /** 내 글 (1단계: 이 기기에만 · 서버가 붙으면 cloud.ts가 올림) */
 export function sendChat(text: string, ch: ChatLine['ch'] = 'world', s: Save = S, now = Date.now()): ChatLine | null {
   const t = text.trim().slice(0, SO.chat.max);
