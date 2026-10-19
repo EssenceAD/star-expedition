@@ -26,6 +26,7 @@ import { requestSkill } from './battle/sim';
 import { makeGear } from './game/gear';
 import { setReal } from './game/real';
 import { recalcAccount } from './game/account';
+import { dedupeChat } from './game/social';
 
 applyTheme();
 // 소리: 첫 터치에 열림 (타이틀 터치부터 음악) · 버튼마다 「톡」 · 뒤로/닫기는 「닫힘」
@@ -94,6 +95,8 @@ fitView(stage, cv);
   loadSave();
   // 원정대 레벨 곡선을 바꿨으니 지금까지 쓴 행동력으로 한 번 다시 셈 (v1.0.23)
   recalcAccount();
+  // 서버 채팅이 20초마다 다시 쌓였던 줄 정리 (v1.0.26)
+  dedupeChat();
   persist();
   const pool = HEROES.filter((x) => S.heroes[x.id]);
   const h = pool[Math.floor(Math.random() * pool.length)] ?? HEROES[0];
