@@ -614,6 +614,8 @@
 
 - v1.0.26: recentChat since = 서버 created_at 글자 그대로(마이크로초) · 받은 줄 중복 건너뜀 · dedupeChat 불러올 때 · 시험 chatdedupe.test.ts
 
+- v1.0.27: DUST_CAP_1021 · addCur 실제 가산량 반환 · recordClear 첫 클리어·★3 free · grant dustCut · 결과 카드 capped · HUD dcap · 설정 도움말 · capGift2(hardFirstDust · 따밤 1,488) · 경제 목표 3~5명(형철 결정)
+
 ## 2. ChatGPT 그림 뽑는 방법 (반드시 이대로)
 1. **Claude in Chrome**으로 형철 브라우저의 chatgpt.com 사용. 모드는 Chat. 한 영웅 묶음은 **같은 대화 안에서** 이어 뽑기(일관성). 새 묶음이면 새 대화(이전 디자인 섞임 방지)
 2. **개척자 5명(woongs·gonu·ikamolly·walwal·warmnight)은 반드시 「체크인」 초상화 첨부**: `star_<id>.png`(신화) + `p_<id>.png`(평소). 글 설명만으로 뽑지 말 것

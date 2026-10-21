@@ -10,7 +10,7 @@ import { attend, attendToday, claim, claimAll, eventLeft, eventToday, isClaimed,
 import {
   addFriend, aiChatOn, isAiLine, board, BOARD_NAME, buyGuild, buyFriendPt, checkTitles, claimAllMail, createGuild, claimMail, donate, friendLv, friendSuggest, gift, GUILD_SHOP, guildAttend, guildBoard, guildBoss, guildOf, GUILDS, joinGuild, leaveGuild, myRank, removeFriend, sendChat, TITLE_OF, type Board,
 } from '../game/social';
-import { dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
+import { capLeft, dayKey, migrate, newSave, persist, S, setSave, type ChatLine } from '../game/state';
 import { HEROES } from '../data/heroes';
 import { icon, iconText } from '../theme/tokens';
 import { view } from './view';
@@ -403,6 +403,7 @@ register('settings', {
               : `<span class="xs dim">「체크인」 아이디·비밀번호로 로그인하면 클라우드 저장·실유저 채팅이 켜져요</span><div class="row acct"><input class="tab" data-id placeholder="아이디"><input class="tab" data-pw type="password" placeholder="비밀번호"><button class="btn hi" data-login>로그인</button><button class="btn" data-guest>게스트로</button><button class="btn" data-signup>회원가입</button></div>`}</div>
           <div class="panel col"><b>원정대</b><div class="row"><input class="tab grow" data-name maxlength="10" value="${esc(S.acc.name)}"><button class="btn mini" data-rename>이름 바꾸기</button></div>
             <div class="row"><span class="sm">칭호</span><select class="tab" data-title><option value="">없음</option>${S.titles.own.map((t) => `<option ${S.titles.on === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select><span class="xs mute">랭킹 ${SO.titleTop}위 안이면 얻어요</span></div></div>
+          <div class="panel col"><b>도움말</b><span class="xs dim">별가루 주간 상한 ${fmt(CONFIG.econ.cap.stardust)}은 반복 파밍(판 드랍·소탕)에만 걸려요 · 첫 클리어·별 3개·서사·이정표·업적·우편 보상은 상한과 상관없이 들어와요 · 월요일 0시에 초기화 (이번 주 ${fmt(CONFIG.econ.cap.stardust - capLeft('stardust'))} / ${fmt(CONFIG.econ.cap.stardust)})</span></div>
           <div class="panel col"><b>소리 · 화면</b>
             <div class="row toggles"><label class="sm grow"><input type="checkbox" data-bgm ${prefs.bgmOn ? 'checked' : ''}> 배경음악</label><label class="sm grow"><input type="checkbox" data-sfx ${prefs.sfxOn ? 'checked' : ''}> 효과음</label><label class="sm grow"><input type="checkbox" data-cut ${getPref('cutOff', false) ? '' : 'checked'}> 스킬 컷인</label><label class="sm grow"><input type="checkbox" data-hpall ${getPref('hpAlways', false) ? 'checked' : ''}> 머리 위 체력 바 늘 보기</label><label class="sm grow"><input type="checkbox" data-full ${getPref('fullscreen', true) ? 'checked' : ''}> 전체 화면 (안드로이드)</label><label class="sm grow"><input type="checkbox" data-haptic ${hapticOn() ? 'checked' : ''}> 진동 (크게 맞을 때·강화·뽑기)</label></div></div>
           <div class="row"><button class="btn" data-report>${icon('mail')} 제보·건의</button><button class="btn" data-backup>${icon('repeat')} 세이브 백업</button></div>

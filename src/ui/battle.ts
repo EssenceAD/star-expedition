@@ -405,7 +405,7 @@ function showResult() {
   }
   const allUp = bb.heroes.every((h) => !h.dead);
   const items: [string, string, number][] = [['gold', CUR_NAME.gold, res.got.gold], ['exp', '영웅 경험치', res.got.exp]];
-  if (res.got.stardust) items.push(['stardust', CUR_NAME.stardust, res.got.stardust]);
+  if (res.got.stardust || res.got.dustCut) items.push(['stardust', CUR_NAME.stardust, res.got.stardust]);
   if (res.got.enh) items.push(['enh', CUR_NAME.enh, res.got.enh]);
   const next: StageId = st.s < C.stages ? { ...st, s: st.s + 1 } : { c: st.c + 1, s: 1, d: st.d };
   const hasNext = st.c <= C.chapters && next.c <= C.chapters && unlocked(next);
@@ -413,7 +413,7 @@ function showResult() {
     r.innerHTML = `${emb('승리!', true, stars)}<div class="rcol"><p class="why band">클리어 ${ck(true)} · 아무도 안 쓰러짐 ${ck(allUp)} · ${bb.setup.starTime}초 안 ${ck(bb.stats.time <= bb.setup.starTime)}<br>
       시간 ${Math.floor(bb.stats.time)}초 · 총 피해 ${shortNum(bb.stats.dealt)} · 초당 ${shortNum(dps)}${res.newBest ? ' <b class="gold">최고 기록!</b>' : ''} · MVP <b class="hn">${mvp.name}</b> ${shortNum(mvp.dealt)}
       ${res.got.chest ? `<br>${icon('chest')} 따뜻한밤이 숨은 상자를 찾았어요 (금화 더)` : ''}${res.got.ups.length ? `<br><span class="emb lv inl px">${fxt('레벨 업!')}</span> ${res.got.ups.map((id) => heroOf(id).name).join(' · ')}` : ''}${res.joined ? `<br><b class="gold">${heroOf(res.joined).name} 합류!</b>` : ''}</p>
-      <div class="rw">${items.map(([k, n, v]) => `<div class="rwc ${k}"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
+      <div class="rw">${items.map(([k, n, v]) => (k === 'stardust' && res.got.dustCut ? `<div class="rwc ${k} capped" title="이번 주 파밍 별가루 상한 · 월요일 0시 초기화"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b><small>주간 상한 ${fmt(CONFIG.econ.cap.stardust)} 도달</small></div>` : `<div class="rwc ${k}"><span>${icon(k)}</span>${n}<b>+${fmt(v)}</b></div>`)).join('')}${res.got.gear.map((g) => gearCell(g)).join('')}${res.got.runes.map((r) => runeCell(r)).join('')}</div>
       ${firstRun ? `<div class="row"><button class="btn hi big" data-a="lobby">원정대 여관으로 ${icon('next')}</button></div>` : `<div class="row"><button class="btn" data-a="lobby">로비</button><button class="btn" data-a="adv">${icon('adventure')} 모험</button><button class="btn" data-a="again">다시 ${icon('stamina')}${stageCost(st.d)}</button>${canRepeat(st) ? `<button class="btn" data-a="repeat">${icon('repeat')} 반복 ×${REPEAT_N}</button>` : ''}${hasNext ? `<button class="btn hi" data-a="next">다음 ${icon('next')}</button>` : ''}</div>`}</div>`;
     r.hidden = false;
     // 별이 박힐 때마다 「쾅」

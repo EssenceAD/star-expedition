@@ -133,7 +133,7 @@ function doc() {
   out.push(
     '## 읽는 법',
     `- 별가루 출처: 스토리 첫 클리어 ${CONFIG.reward.firstDust}(보스 ${CONFIG.reward.firstDustBoss}) · 별 3개 처음 ${CONFIG.reward.threeStarDust} · 판마다 ${CONFIG.reward.dust.chance * 100}% 확률로 ${CONFIG.reward.dust.n}×(난이도+1) · 탑 처음 깬 층 · 월드 보스 · 이정표 ${CONFIG.content.milestoneDust} · 레이드 · 미션·출석`,
-    '- 목표 (B 보강 §4 · 형철 10/17): 보통(하루 30~40분)이 30일에 영웅 3~4명 (1~1.5주에 1명) · 헤비 ÷ 보통 최대 1.5배 · 합류는 스토리 핵심만',
+    '- 목표 (B 보강 §4 · 형철 10/17 → 10/21 DUST_CAP 첫 클리어·★3 상한 밖으로 3~5명): 보통(하루 30~40분)이 30일에 영웅 3~5명 · 헤비 ÷ 보통 최대 1.5배 · 합류는 스토리 핵심만',
     '- 주간 상한을 채우면 별가루·영웅 재료는 그 주엔 더 안 들어오고, 사냥은 계속 (금화·경험치·장비)',
     '- 초월은 5성 영웅부터라 30일 안에는 거의 안 함 (별가루를 영웅 사는 데 다 쓰는 가정) — 긴 목표',
     '',
@@ -149,10 +149,10 @@ describe('경제 시뮬', () => {
     expect(idx(h)).toBeGreaterThanOrEqual(idx(n));
     expect(idx(n)).toBeGreaterThanOrEqual(idx(l));
   });
-  it('B 보강 §4 목표: 보통 30일에 영웅 3~4명 구매 · 헤비 ÷ 보통 1.5배 이하', () => {
+  it('B 보강 §4 목표: 보통 30일에 영웅 3~5명 구매 · 헤비 ÷ 보통 1.5배 이하 (10/21 형철 결정: 4 → 5)', () => {
     const [n, h] = ['normal', 'heavy'].map((k) => sim(k).at(-1)!);
     expect(n.bought).toBeGreaterThanOrEqual(3);
-    expect(n.bought).toBeLessThanOrEqual(4);
+    expect(n.bought).toBeLessThanOrEqual(5);
     expect(h.bought / n.bought).toBeLessThanOrEqual(1.5);
     expect(h.dustTotal / n.dustTotal).toBeLessThanOrEqual(1.5);
   });
