@@ -269,7 +269,8 @@ export const setSave = (s: Save) => (S = s);
 
 export const cur = (k: string, s: Save = S) => s.cur[k] ?? 0;
 /** 재화 더하기 · 별가루·영웅 재료는 주간 획득 상한 (CONFIG.econ.cap · free = 우편 보상처럼 상한 밖) */
-export function addCur(k: string, n: number, s: Save = S, free = false) {
+/** → 실제로 더한 양 (주간 상한에 깎이면 그만큼 적게) */
+export function addCur(k: string, n: number, s: Save = S, free = false): number {
   const cap = CONFIG.econ.cap[k];
   // 주가 바뀌는 건 track()/rollTrack이 (그 시각으로) 비움 — 여기서는 지금 주 칸에 셈
   if (n > 0 && cap && !free && s.track) {
@@ -277,8 +278,12 @@ export function addCur(k: string, n: number, s: Save = S, free = false) {
     n = Math.min(n, Math.max(0, cap - got));
     s.track.w[`earn:${k}`] = got + n;
   }
-  s.cur[k] = Math.max(0, Math.round((s.cur[k] ?? 0) + n));
+  const before = s.cur[k] ?? 0;
+  s.cur[k] = Math.max(0, Math.round(before + n));
+  return s.cur[k] - before;
 }
+/** 이번 주 파밍 별가루 상한에 닿았나 */
+export const dustCapped = (s: Save = S) => capLeft('stardust', s) <= 0;
 /** 이번 주 더 얻을 수 있는 양 (상한 없는 재화는 Infinity) */
 export function capLeft(k: string, s: Save = S) {
   const cap = CONFIG.econ.cap[k];

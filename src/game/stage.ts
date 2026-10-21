@@ -166,7 +166,8 @@ export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now(), s
   const gold = Math.round(r.gold * taperAt(s.day.runs) * bm * foodMult('gold', s, now));
   const enh = r.enh * bm;
   addCur('gold', gold, s);
-  addCur('stardust', r.stardust, s);
+  // 판 드랍 별가루만 주간 상한 안 (반복 파밍) → 실제 들어간 양 · 깎인 양
+  const dust = addCur('stardust', r.stardust, s);
   addCur('enh', enh, s);
   const ups: string[] = [];
   const exp = Math.round(r.exp * foodMult('exp', s, now));
@@ -183,7 +184,7 @@ export function grant(r: Reward, ids: string[], s: Save = S, now = Date.now(), s
       runes.push(ru);
     }
   }
-  return { ...r, gold, enh, ups, boosted: bm > 1, gear, runes };
+  return { ...r, gold, enh, stardust: dust, dustCut: r.stardust - dust, ups, boosted: bm > 1, gear, runes };
 }
 
 export interface ClearInfo {
@@ -191,6 +192,17 @@ export interface ClearInfo {
   time: number;
   dps: number;
   mvp: string;
+}
+/** DUST_CAP_1021 보상: 어려움·지옥(d ≥ 1) 깬 스테이지의 첫 클리어(+보스) · ★3 별가루 합 — 받은 시각 기록이 없어 전부 */
+export function hardFirstDust(s: Save = S): number {
+  let n = 0;
+  for (const [k, rec] of Object.entries(s.stages)) {
+    const [c, st, d] = k.split('-').map(Number);
+    if (!(d >= 1) || !(rec?.clears > 0)) continue;
+    n += isBoss({ c, s: st, d }) ? R.firstDustBoss : R.firstDust;
+    if (rec.stars >= 3) n += R.threeStarDust;
+  }
+  return n;
 }
 /** 승리 기록 + 첫 클리어 보너스 + 장 클리어 합류 → 이번에 받은 것 */
 export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () => number = Math.random, now = Date.now()) {
@@ -212,10 +224,10 @@ export function recordClear(st: StageId, info: ClearInfo, s: Save = S, rnd: () =
   if (isBoss(st)) track('boss', 1, s, now);
   const ids = partyIds(s);
   const r = baseReward(st, rnd, ids, first);
-  if (first) r.stardust += isBoss(st) ? R.firstDustBoss : R.firstDust;
   if (first && CONFIG.firstRefund) s.sta.n += stageCost(st.d);
-  if (firstThree) r.stardust += R.threeStarDust;
   const got = grant(r, ids, s, now, st, rnd);
+  // DUST_CAP_1021 (따밤 제보): 첫 클리어·★3 별가루는 한 번만 받는 보상 → 주간 상한 밖 (상한에 닿으면 결과 창에만 뜨고 0이 들어가던 것)
+  got.stardust += addCur('stardust', (first ? (isBoss(st) ? R.firstDustBoss : R.firstDust) : 0) + (firstThree ? R.threeStarDust : 0), s, true);
   // 장 클리어(보통 x-10 처음) → 지역 전설 합류
   let joined: string | null = null;
   if (first && isBoss(st) && st.d === 0) {

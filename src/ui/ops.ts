@@ -5,6 +5,7 @@ import { logEvents, markRepliesRead, myReplies, sendLetter, who, type ReplyRow }
 import { getPref, setPref } from '../core/save';
 import { CONFIG } from '../config';
 import { capRefund } from '../game/saga';
+import { hardFirstDust } from '../game/stage';
 import { addMail } from '../game/social';
 import { dayKey, migrate, persist, S, setSave } from '../game/state';
 import { icon } from '../theme/tokens';
@@ -171,6 +172,20 @@ function deliverGifts() {
   }
   if (n) (persist(), toast('우편함에 운영자 선물이 왔어요'));
   void capGift();
+  void capGift2();
+}
+/** DUST_CAP_1021 (따밤 제보): 상한에 닿은 뒤 어려움·지옥 첫 클리어·별 3개 별가루가 결과 창에만 뜨고 0 — 서버 기록(따밤) + 이번 주 상한 도달 저장 */
+const CAP_HIT2 = ['d74b728b-9d32-4d50-8bfd-736c26086482'];
+async function capGift2() {
+  const key = 'gift:v1.0.26-cap2';
+  if (S.seen[key]) return;
+  const hit = (S.track?.w['earn:stardust'] ?? 0) >= (CONFIG.econ.cap.stardust ?? Infinity) || CAP_HIT2.includes((await who())?.uid ?? '');
+  const dust = hardFirstDust(S);
+  if (S.seen[key] || !hit || !dust) return;
+  S.seen[key] = true;
+  addMail(S, '운영자', '어려움·지옥 첫 클리어 별가루 보상', '주간 별가루 상한에 닿은 뒤 어려움·지옥 첫 클리어·별 3개 보상이 결과 창에만 뜨고 들어가지 않았어요. 이번 주 깬 어려움·지옥 스테이지의 첫 클리어·별 3개 별가루를 전부 다시 보내드려요. 이제 첫 클리어 보상은 상한과 상관없이 들어와요. 미안해요!', { stardust: dust });
+  persist();
+  toast('우편함에 운영자 선물이 왔어요');
 }
 /** v1.0.24 서사·이정표 별가루 보상: 서버 기록으로 확인한 계정(운영자·웅스 · 10/18 주간 별가루 3,600 상한 도달) + 이 기기에서 이번 주 상한에 닿은 저장 */
 const CAP_HIT = ['b402b30f-b3bc-462c-acc6-fbea1da8398f', '8e8970d1-babf-49dc-a303-ea1d896cc33a'];

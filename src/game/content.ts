@@ -249,10 +249,12 @@ export interface Outcome {
   gear: Gear[];
   runes: Rune[];
 }
+/** 목록엔 실제로 들어간 양 · 주간 상한에 깎이면 한 줄로 알려 줌 (DUST_CAP_1021) */
 const give = (k: string, n: number, s: Save, o: Outcome) => {
   if (!n) return;
-  addCur(k, n, s);
-  o.items.push([k, n]);
+  const got = addCur(k, n, s);
+  o.items.push([k, got]);
+  if (got < n) o.lines.push(`이번 주 ${k === 'stardust' ? '별가루' : '획득'} 상한에 닿아 ${n - got}만큼 못 받았어요 (월요일 0시에 초기화)`);
 };
 /** 전투가 끝났을 때 (승리·준 피해) → 보상 · 기록 */
 export function finishRun(r: Run, res: { win: boolean; dealt: number; heroes: string[] }, s: Save = S, rnd: () => number = Math.random, now = Date.now()): Outcome {

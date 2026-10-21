@@ -7,7 +7,7 @@ import { SPEAKER, type Line } from '../data/story';
 import * as cloud from '../core/net/cloud';
 import { aiChatOn, aiLine, mailUnread, pushChat } from '../game/social';
 import { buyStamina, staMax, staNextSec, stamina } from '../game/account';
-import { cur, newsBus, persist, S, type ChatLine } from '../game/state';
+import { cur, dustCapped, newsBus, persist, S, type ChatLine } from '../game/state';
 import { fullbodyPath } from '../game/costume';
 import { icon, iconText } from '../theme/tokens';
 import { music } from '../core/audio/music';
@@ -122,7 +122,7 @@ function drawBar(id: ScreenId, s: Screen, p: Record<string, unknown>) {
   bar.innerHTML = `${backBtn}<h2>${title}</h2><div class="curs">
     <span class="cur" title="행동력">${icon('stamina')}<b data-sta></b><button class="plus" data-plus="sta" title="채우기">${icon('plusArt', 'pl')}</button></span>
     <span class="cur" title="금화">${icon('gold')}<b data-cur="gold">${fmt(cur('gold'))}</b><button class="plus" data-plus="gold" title="상점">${icon('plusArt', 'pl')}</button></span>
-    <span class="cur" title="별가루">${icon('stardust')}<b data-cur="stardust">${fmt(cur('stardust'))}</b><button class="plus" data-plus="stardust" title="상점">${icon('plusArt', 'pl')}</button></span>
+    <span class="cur" title="별가루">${icon('stardust')}<b data-cur="stardust">${fmt(cur('stardust'))}</b><i class="dcap" data-dustcap title="이번 주 파밍 별가루 상한 도달 · 월요일 0시 초기화 · 첫 클리어·서사 보상은 계속 들어와요" ${dustCapped() ? '' : 'hidden'}>${icon('lock')}</i><button class="plus" data-plus="stardust" title="상점">${icon('plusArt', 'pl')}</button></span>
     <button class="medalbtn" data-ic="mail" title="우편">${icon('mail')}${mailUnread() ? `<em class="badge">${mailUnread()}</em>` : ''}</button><button class="medalbtn" data-ic="chat" title="채팅">${icon('chat')}</button>${id === 'lobby' ? `<button class="menubtn" data-menu title="메뉴">${icon('menu')}</button>` : ''}</div>`;
   const b = $('[data-back]', bar);
   if (b) b.onclick = () => (typeof s.back === 'function' ? s.back(p) : go('lobby', {}, false));
@@ -343,7 +343,11 @@ export const medal = (i: number) => `<i class="rk r${Math.min(i + 1, 4)}">${i + 
 export const fxt = (text: string, cls = '') => `<span class="fxt ${cls}" data-t="${esc(text)}"><span>${esc(text)}</span></span>`;
 export const comingSoon = (what: string, chunk: string) => toast(`${what}: 준비 중이에요 (1단계 ${chunk}덩어리)`);
 
-export const syncCur = (root: ParentNode = document) => $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));
+export const syncCur = (root: ParentNode = document) => {
+  $$('[data-cur]', root).forEach((e) => (e.textContent = fmt(cur(e.dataset.cur!))));
+  // DUST_CAP_1021: 주간 파밍 별가루 상한에 닿으면 별가루 칸에 🔒
+  $$('[data-dustcap]', root).forEach((e) => (e.hidden = !dustCapped()));
+};
 export const CUR_NAME: Record<string, string> = { gold: '금화', stardust: '별가루', enh: '강화석', exp: '경험치 물약', stamina: '행동력', tierMat: '티어 재료', exShard: '전용 무기 조각', arenaCoin: '결투장 코인', towerCoin: '탑 코인', skillBook: '스킬북', awakenStone: '각성석', transStone: '초월석', optTicket: '옵션 티켓', guildCoin: '길드 코인', friendPt: '우정 포인트' };
 /** 재화·소모품 쓰임새 한 줄 (상점 카드 · 형철 10/18 #14) */
 export const CUR_DESC: Record<string, string> = { gold: '강화·각성·성장에 두루 써요', stardust: '영웅·코스튬·장비 소환에 써요', enh: '장비 강화에 써요', exp: '영웅 레벨을 올려요', tierMat: '장비 티어를 올려요', exShard: '영웅 전용 무기를 만들고 별을 올려요', arenaCoin: '결투장 코인 상점에서 써요', towerCoin: '탑 코인 상점에서 써요', skillBook: '영웅 스킬 레벨을 올려요', awakenStone: '각성 · 레벨 상한을 올려요', transStone: '영웅 초월 특성을 열어요', optTicket: '장비 옵션 한 줄을 바꿔요', guildCoin: '길드 상점에서 써요' };

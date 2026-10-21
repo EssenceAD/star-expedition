@@ -580,3 +580,9 @@ body, #stage { font-weight: normal; }
 /* 장비 창 고르기 목록(룬·먹일 장비·전수): 창 아래쪽에 붙어 늘 보이게 (스크롤 아래에 숨어 있던 것 · 형철 10/18) */
 #stage .modal .gp .pick:not([hidden]) { position: sticky; bottom: calc(-1 * var(--s-md)); z-index: 5; margin: 0 calc(-1 * var(--s-md)); padding: var(--s-sm) var(--s-md); background: var(--px-barBg); border-top: var(--b-base) solid var(--c-gold); box-shadow: 0 calc(-1 * var(--s-md)) var(--s-lg) var(--c-shade); }
 #stage .gp .rrow .xs { line-height: 1.2; }
+/* DUST_CAP_1021: 주간 파밍 별가루 상한 — 결과 카드 흐리게 · 별가루 칸 🔒 */
+#stage .rwc.capped { opacity: 0.55; }
+#stage .rwc.capped small { display: block; font-size: var(--fs-xs); color: var(--c-bad); }
+#stage .cur .dcap { display: inline-flex; margin-left: var(--s-xxs); }
+#stage .cur .dcap[hidden] { display: none; }
+#stage .cur .dcap .ic { width: 10px; height: 10px; }
