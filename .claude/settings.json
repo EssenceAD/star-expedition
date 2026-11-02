@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": { "source": "github", "repo": "DietrichGebert/ponytail" }
+    },
+    "pixelfx": {
+      "source": { "source": "github", "repo": "patch-gg/pixelfx" }
+    }
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": true,
+    "pixelfx@pixelfx": true
+  }
+}
